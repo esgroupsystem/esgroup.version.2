@@ -40,6 +40,7 @@
     <link href="{{ asset('vendors/leaflet.markercluster/MarkerCluster.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/leaflet.markercluster/MarkerCluster.Default.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/flatpickr/flatpickr.min.css') }}" rel="stylesheet">
+    <link href="{{ asset('vendors/dropzone/dropzone.css') }}" rel="stylesheet">
 
     <!-- ===============================================-->
     <!--    Theme CSS -->
@@ -112,11 +113,33 @@
     <script src="{{ asset('vendors/list.js/list.min.js') }}"></script>
     <script src="{{ asset('vendors/swiper/swiper-bundle.min.js') }}"></script>
     <script src="{{ asset('vendors/typed.js/typed.umd.js') }}"></script>
+    <script src="{{ asset('vendors/dropzone/dropzone-min.js') }}"></script>
+
+    <script>
+        if (window.Dropzone) {
+            Dropzone.autoDiscover = false;
+        }
+        window.__dropzone_initialized = false;
+    </script>
+
     <script src="{{ asset('assets/js/theme.js') }}"></script>
 
-    <!-- ===============================================-->
-    <!--    Falcon Config -->
-    <!-- ===============================================-->
+    <script>
+        const __originalDropzoneInit = window.dropzoneInit;
+
+        window.dropzoneInit = function () {
+            if (window.__dropzone_initialized) {
+                return; // Skip 2nd initialization
+            }
+            window.__dropzone_initialized = true;
+            __originalDropzoneInit();
+        };
+    </script>
+
+    <script src="{{ asset('assets/js/theme-control.js') }}"></script>
+    <script src="{{ asset('assets/js/theme-dashboard-fixed.js') }}"></script>
+
+
     <script>
         window.CONFIG = {
             theme: 'light',
@@ -125,19 +148,6 @@
         };
     </script>
 
-    <!-- ===============================================-->
-    <!--    Falcon Theme Control -->
-    <!-- ===============================================-->
-    <script src="{{ asset('assets/js/theme-control.js') }}"></script>
-
-    <!-- ===============================================-->
-    <!--    Falcon Dashboard Scripts -->
-    <!-- ===============================================-->
-    <script src="{{ asset('assets/js/theme-dashboard-fixed.js') }}"></script>
-
-    <!-- ===============================================-->
-    <!--    SimpleBar Scroll Init -->
-    <!-- ===============================================-->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.my-scrollbar').forEach(el => new SimpleBar(el));

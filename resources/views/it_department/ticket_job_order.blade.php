@@ -29,7 +29,7 @@
                         </p>
                     </div>
                     <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
-                        <a href="#" class="btn btn-primary">
+                        <a href="{{ route('tickets.createjoborder.index') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i> Create Ticket
                         </a>
                     </div>
@@ -65,9 +65,7 @@
                          "valueNames":["ticket_id","requester","department","status","date"],
                          "page":10,
                          "pagination":true
-                     }'
-                >
-
+                     }'>
                     <div class="table-responsive scrollbar">
                         <table class="table table-hover table-striped fs-10 mb-0">
                             <thead class="bg-200 text-900">

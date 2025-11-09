@@ -13,6 +13,9 @@ use App\Http\Controllers\IT_Department\TicketController;
 
 // Landing page (login/register modal)
 Route::get('/', [AuthController::class, 'showLogin'])->name('landing');
+// ✅ Login page route (REQUIRED by Laravel)
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+
 
 // Authentication Routes
 Route::controller(AuthController::class)->group(function () {
@@ -55,6 +58,9 @@ Route::middleware(['auth'])->group(function () {
         ->controller(TicketController::class)
         ->group(function () {
             Route::get('/job-order', 'index')->name('joborder.index');
+            Route::get('/create-job-order', 'createjobordersIndex')->name('createjoborder.index');
+
+
             Route::get('/cctv', 'cctvindex')->name('cctv.index');
         });
 });
