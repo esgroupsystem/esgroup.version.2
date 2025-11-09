@@ -1,4 +1,4 @@
-@extends('layouts.landing')
+@extends('layouts.app')
 @section('title', '419 Page Expired')
 
 @section('content')
