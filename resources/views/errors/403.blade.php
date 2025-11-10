@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.landing')
 @section('title', '403 Forbidden')
 
 @section('content')
@@ -28,10 +28,10 @@
 
                         <hr>
                         <p>
-                            If you believe this is an error, <a href="mailto:info@example.com">contact support</a>.
+                            If you believe this is an error, <a href="mailto:support@esgroup.com.ph">contact support</a>.
                         </p>
 
-                        <a href="/" class="btn btn-primary btn-sm mt-3">
+                        <a href="{{ route('dashboard.index') }}" class="btn btn-primary btn-sm mt-3">
                             <span class="fas fa-home me-2"></span> Go home
                         </a>
                     </div>

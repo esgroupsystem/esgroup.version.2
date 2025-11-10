@@ -94,12 +94,6 @@
                                                 <option value="REMOVING HEADSTAB OF TICKET">REMOVING HEADSTAB OF TICKET</option>
                                                 <option value="USING STUB TICKET">USING STAB TICKET</option>
                                                 <option value="WRONG CLOSING / OPEN">WRONG CLOSING / OPEN</option>
-                                                <option value="WRONG TIME AND DATE">WRONG TIME AND DATE</option>
-                                                <option value="CCTV DVR ISSUE">CCTV DVR ISSUE</option>
-                                                <option value="CCTV MONITOR ISSUE">CCTV MONITOR ISSUE</option>
-                                                <option value="CCTV USB PORT DEFECTIVE">CCTV USB PORT DEFECTIVE</option>
-                                                <option value="CAMERA NO SIGNAL">CAMERA NO SIGNAL</option>
-                                                <option value="CCTV CAMERA BROKEN WIRES">CCTV CAMERA BROKEN WIRES</option>
                                                 <option value="OTHERS">OTHERS</option>
                                         </select>
                                     </div>

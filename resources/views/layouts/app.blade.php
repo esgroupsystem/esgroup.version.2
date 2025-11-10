@@ -142,7 +142,7 @@
                     <button type="button" class="btn-close ms-3" data-bs-dismiss="toast"></button>
                 </div>`;
                 document.querySelector(".flash-toast-container").appendChild(toast);
-                setTimeout(() => toast.classList.remove("show"), 3000);
+                setTimeout(() => toast.classList.remove("show"), 2000);
             });
             flashMessages.forEach(e => e.remove());
         });

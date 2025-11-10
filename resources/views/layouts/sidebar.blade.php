@@ -9,8 +9,8 @@
 
     <div class="d-flex align-items-center ms-3 ms-sm-4">
         <div class="toggle-icon-wrapper">
-            <button class="btn navbar-toggler-humburger-icon navbar-vertical-toggle"
-                data-bs-toggle="tooltip" data-bs-placement="left" title="Toggle Navigation">
+            <button class="btn navbar-toggler-humburger-icon navbar-vertical-toggle" data-bs-toggle="tooltip"
+                data-bs-placement="left" title="Toggle Navigation">
                 <span class="navbar-toggle-icon">
                     <span class="toggle-line"></span>
                 </span>
@@ -33,10 +33,9 @@
                 <!-- ✅ DASHBOARD -->
                 <li class="nav-item">
                     <a class="nav-link dropdown-indicator d-flex justify-content-between align-items-center"
-                    href="#dashboardMenu"
-                    data-bs-toggle="collapse"
-                    aria-expanded="{{ request()->is('dashboard*') ? 'true' : 'false' }}"
-                    aria-controls="dashboardMenu">
+                        href="#dashboardMenu" data-bs-toggle="collapse"
+                        aria-expanded="{{ request()->is('dashboard*') ? 'true' : 'false' }}"
+                        aria-controls="dashboardMenu">
 
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
@@ -51,21 +50,21 @@
 
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}"
-                               href="{{ route('dashboard.index') }}">
+                                href="{{ route('dashboard.index') }}">
                                 Default
                             </a>
                         </li>
 
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/analytics') ? 'active' : '' }}"
-                               href="{{ route('dashboard.analytics') }}">
+                                href="{{ route('dashboard.analytics') }}">
                                 Analytics
                             </a>
                         </li>
 
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/crm') ? 'active' : '' }}"
-                               href="{{ route('dashboard.crm') }}">
+                                href="{{ route('dashboard.crm') }}">
                                 CRM
                             </a>
                         </li>
@@ -93,40 +92,31 @@
                 </li>
 
 
-                <!-- ✅ IT MANAGEMENT -->
+                <!-- ✅ IT TICKETS (No Parent Menu) -->
                 <li class="nav-item">
-                    <a class="nav-link dropdown-indicator d-flex justify-content-between align-items-center"
-                    href="#itMenu"
-                    data-bs-toggle="collapse"
-                    aria-expanded="{{ request()->is('tickets/*') ? 'true' : 'false' }}"
-                    aria-controls="itMenu">
-
+                    <a class="nav-link {{ request()->is('tickets/job-order') ? 'active' : '' }}"
+                        href="{{ route('tickets.joborder.index') }}">
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
-                                <span class="fas fa-tools"></span>
+                                <span class="fas fa-ticket-alt"></span>
                             </span>
-                            <span class="nav-link-text ps-1">IT Management</span>
+                            <span class="nav-link-text ps-1">Tickets Job Order</span>
                         </div>
-
                     </a>
-
-                    <ul class="nav collapse {{ request()->is('tickets/*') ? 'show' : '' }}" id="itMenu">
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('tickets/job-order') ? 'active' : '' }}"
-                               href="{{ route('tickets.joborder.index') }}">
-                                Tickets Job Order
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
-                               href="{{ route('tickets.cctv.index') }}">
-                                CCTV Concern
-                            </a>
-                        </li>
-                    </ul>
-
                 </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
+                        href="{{ route('tickets.cctv.index') }}">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-video"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">CCTV Concern</span>
+                        </div>
+                    </a>
+                </li>
+
 
             </ul>
         </div>

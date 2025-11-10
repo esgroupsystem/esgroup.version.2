@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.landing')
 @section('title', '404 Not Found')
 
 @section('content')
@@ -34,7 +34,7 @@
                             If you believe this is an error, <a href="mailto:support@esgroup.com.ph">contact us</a>.
                         </p>
 
-                        <a class="btn btn-primary btn-sm mt-3" href="/">
+                        <a class="btn btn-primary btn-sm mt-3" href="{{ route('dashboard.index') }}">
                             <span class="fas fa-home me-2"></span>
                             Take me home
                         </a>

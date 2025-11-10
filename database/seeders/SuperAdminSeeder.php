@@ -22,5 +22,19 @@ class SuperAdminSeeder extends Seeder
                 'email_verified_at' => now()
             ]
         );
+
+        User::updateOrCreate(
+
+            ['email' => 'esit.lenberd@gmail.com'],
+            [
+                'username'        => 'lenberd',
+                'full_name'       => 'Lenberd Ilaw',
+                'password'        => Hash::make('123123'),
+                'role'            => 'IT Officer',
+                'status'          => 'online',
+                'account_status'  => 'active',
+                'email_verified_at' => now()
+            ]
+        );
     }
 }

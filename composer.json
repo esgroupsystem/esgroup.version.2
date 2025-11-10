@@ -31,7 +31,11 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/"
-        }
+        },
+        "files": [
+        "app/Helpers/Notifier.php"
+    ]
+        
     },
     "scripts": {
         "setup": [

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.landing')
 @section('title', '503 Service Unavailable')
 
 @section('content')

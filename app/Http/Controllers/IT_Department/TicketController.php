@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\IT_Department;
 
+use App\Helpers\Notifier;
 use App\Http\Controllers\Controller;
+use App\Mail\JobOrderCreatedMail;
 use App\Models\BusDetail;
 use App\Models\JobOrder;
 use App\Models\JobOrderFile;
@@ -12,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class TicketController extends Controller
 {
@@ -72,18 +75,18 @@ class TicketController extends Controller
 
             return DB::transaction(function () use ($validated, $request, $user) {
 
-            $bus = BusDetail::where('body_number', $validated['body_number'])->first();
+                $bus = BusDetail::where('body_number', $validated['body_number'])->first();
 
-            if (!$bus) {
-                Log::warning('Bus not found', ['body_number' => $validated['body_number']]);
-                flash("Selected bus does not exist.")->error();
-                return back()->withInput();
-            }
+                if (! $bus) {
+                    Log::warning('Bus not found', ['body_number' => $validated['body_number']]);
+                    flash('Selected bus does not exist.')->error();
 
-            // ✅ Auto-fill fields based on bus_details record
-            $validated['garage']        = $bus->garage;
-            $validated['bus_name']      = $bus->name;
-            $validated['plate_number']  = $bus->plate_number;
+                    return back()->withInput();
+                }
+
+                $validated['garage'] = $bus->garage;
+                $validated['bus_name'] = $bus->name;
+                $validated['plate_number'] = $bus->plate_number;
 
                 $job = JobOrder::create([
                     'bus_detail_id' => $bus->id,
@@ -129,12 +132,18 @@ class TicketController extends Controller
                     'user_id' => optional($user)->id,
                 ]);
 
+                // ✅ Send notification email (reusable)
+                Notifier::notifyRoles(
+                    ['IT Head', 'IT Officer'],
+                    new JobOrderCreatedMail($job)
+                );
+
                 flash("Job Order #{$job->id} created successfully!")->success();
 
                 return redirect()->route('tickets.joborder.index');
             });
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
 
             // Log validation errors
             Log::warning('Job Order Validation Failed', [
