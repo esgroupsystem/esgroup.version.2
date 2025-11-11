@@ -25,7 +25,22 @@ class TicketController extends Controller
     */
     public function index()
     {
-        return view('it_department.ticket_job_order');
+        $pending = JobOrder::with('bus')
+            ->where('job_status', 'Pending')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $progress = JobOrder::with('bus')
+            ->where('job_status', 'In Progress')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        $completed = JobOrder::with('bus')
+            ->where('job_status', 'Completed')
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return view('it_department.ticket_job_order', compact('pending', 'progress', 'completed'));
     }
 
     public function cctvindex()
@@ -38,6 +53,44 @@ class TicketController extends Controller
         $buses = BusDetail::orderBy('body_number')->get();
 
         return view('it_department.create_joborder', compact('buses'));
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | View of details files Routes
+    |--------------------------------------------------------------------------
+    */
+
+    public function view($id)
+    {
+        $job = JobOrder::with('bus', 'files', 'logs.user')->findOrFail($id);
+
+        $existingViewLog = JobOrderLog::where('joborder_id', $job->id)
+            ->where('user_id', Auth::id())
+            ->where('action', 'viewed')
+            ->first();
+
+        if ($existingViewLog) {
+            $existingViewLog->update([
+                'meta' => [
+                    'message' => 'User viewed the job order details',
+                ],
+            ]);
+        } else {
+            
+            JobOrderLog::create([
+                'joborder_id' => $job->id,
+                'user_id' => Auth::id(),
+                'action' => 'viewed',
+                'meta' => [
+                    'message' => 'User viewed the job order details',
+                ],
+            ]);
+        }
+
+        $logs = $job->logs()->orderBy('created_at', 'desc')->get();
+
+        return view('it_department.view_joborder', compact('job', 'logs'));
     }
 
     /*
@@ -101,7 +154,7 @@ class TicketController extends Controller
                     'job_status' => $validated['job_status'],
                     'job_assign_person' => $validated['job_assign_person'] ?? null,
                     'job_date_filled' => now(),
-                    'job_creator' => optional($user)->name,
+                    'job_creator' => optional($user)->full_name,
                     'driver_name' => $validated['driver_name'] ?? null,
                     'conductor_name' => $validated['conductor_name'] ?? null,
                     'direction' => $validated['direction'] ?? null,

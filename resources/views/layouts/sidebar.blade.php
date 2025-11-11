@@ -1,16 +1,19 @@
-<nav class="navbar navbar-light navbar-vertical navbar-expand-xl">
+<nav class="navbar navbar-light navbar-vertical navbar-expand-xl px-4 px-lg-7">
 
     <script>
-        var navbarStyle = localStorage.getItem("navbarStyle");
+        const navbarStyle = localStorage.getItem("navbarStyle");
         if (navbarStyle && navbarStyle !== 'transparent') {
-            document.querySelector('.navbar-vertical').classList.add(`navbar-${navbarStyle}`);
+            document.querySelector('.navbar-vertical')
+                .classList.add(`navbar-${navbarStyle}`);
         }
     </script>
 
-    <div class="d-flex align-items-center ms-3 ms-sm-4">
+    <div class="d-flex align-items-center">
         <div class="toggle-icon-wrapper">
-            <button class="btn navbar-toggler-humburger-icon navbar-vertical-toggle" data-bs-toggle="tooltip"
-                data-bs-placement="left" title="Toggle Navigation">
+            <button class="btn navbar-toggler-humburger-icon navbar-vertical-toggle"
+                    data-bs-toggle="tooltip"
+                    data-bs-placement="left"
+                    title="Toggle Navigation">
                 <span class="navbar-toggle-icon">
                     <span class="toggle-line"></span>
                 </span>
@@ -19,8 +22,7 @@
 
         <a class="navbar-brand" href="#">
             <div class="d-flex align-items-center py-3">
-                <img class="me-2" src="../assets/img/icons/spot-illustrations/falcon.png" width="40">
-                <span class="font-sans-serif text-primary">falcon</span>
+                <span class="font-sans-serif text-primary">Jell Group</span>
             </div>
         </a>
     </div>
@@ -30,12 +32,13 @@
             <ul class="navbar-nav flex-column mb-3" id="navbarVerticalNav">
 
 
-                <!-- ✅ DASHBOARD -->
+                {{-- DASHBOARD --}}
                 <li class="nav-item">
                     <a class="nav-link dropdown-indicator d-flex justify-content-between align-items-center"
-                        href="#dashboardMenu" data-bs-toggle="collapse"
-                        aria-expanded="{{ request()->is('dashboard*') ? 'true' : 'false' }}"
-                        aria-controls="dashboardMenu">
+                       href="#dashboardMenu"
+                       data-bs-toggle="collapse"
+                       aria-expanded="{{ request()->is('dashboard*') ? 'true' : 'false' }}"
+                       aria-controls="dashboardMenu">
 
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
@@ -43,35 +46,35 @@
                             </span>
                             <span class="nav-link-text ps-1">Dashboard</span>
                         </div>
-
                     </a>
 
-                    <ul class="nav collapse {{ request()->is('dashboard*') ? 'show' : '' }}" id="dashboardMenu">
+                    <ul class="nav collapse {{ request()->is('dashboard*') ? 'show' : '' }}"
+                        id="dashboardMenu">
 
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}"
-                                href="{{ route('dashboard.index') }}">
+                               href="{{ route('dashboard.index') }}">
                                 Default
                             </a>
                         </li>
 
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/analytics') ? 'active' : '' }}"
-                                href="{{ route('dashboard.analytics') }}">
+                               href="{{ route('dashboard.analytics') }}">
                                 Analytics
                             </a>
                         </li>
 
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/crm') ? 'active' : '' }}"
-                                href="{{ route('dashboard.crm') }}">
+                               href="{{ route('dashboard.crm') }}">
                                 CRM
                             </a>
                         </li>
 
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/support-desk') ? 'active' : '' }}"
-                                href="#">
+                               href="#">
                                 Support Desk
                                 <span class="badge rounded-pill ms-2 badge-subtle-success">New</span>
                             </a>
@@ -81,10 +84,12 @@
                 </li>
 
 
-                <!-- ✅ LABEL -->
+                {{-- LABEL --}}
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                        <div class="col-auto navbar-vertical-label">IT Department</div>
+                        <div class="col-auto navbar-vertical-label">
+                            IT Department
+                        </div>
                         <div class="col ps-0">
                             <hr class="mb-0 navbar-vertical-divider">
                         </div>
@@ -92,10 +97,10 @@
                 </li>
 
 
-                <!-- ✅ IT TICKETS (No Parent Menu) -->
+                {{-- TICKETS JOB ORDER --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('tickets/job-order') ? 'active' : '' }}"
-                        href="{{ route('tickets.joborder.index') }}">
+                       href="{{ route('tickets.joborder.index') }}">
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
                                 <span class="fas fa-ticket-alt"></span>
@@ -105,9 +110,10 @@
                     </a>
                 </li>
 
+                {{-- CCTV CONCERN --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
-                        href="{{ route('tickets.cctv.index') }}">
+                       href="{{ route('tickets.cctv.index') }}">
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
                                 <span class="fas fa-video"></span>
@@ -117,8 +123,8 @@
                     </a>
                 </li>
 
-
             </ul>
         </div>
     </div>
+
 </nav>

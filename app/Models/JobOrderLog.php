@@ -17,4 +17,9 @@ class JobOrderLog extends Model
     {
         return $this->belongsTo(JobOrder::class);
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

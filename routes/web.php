@@ -60,6 +60,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/job-order', 'index')->name('joborder.index');
             Route::get('/create-job-order', 'createjobordersIndex')->name('createjoborder.index');
             Route::post('/store-job-order', 'storeJoborders')->name('storejoborder.post');
+            Route::get('/tickets/job-order/view/{id}','view')->name('joborder.view');
 
             Route::get('/cctv', 'cctvindex')->name('cctv.index');
         });

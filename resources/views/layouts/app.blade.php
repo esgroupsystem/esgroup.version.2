@@ -63,10 +63,14 @@
     <main class="main" id="top">
         @include('layouts.sidebar')
 
-        <div class="content">
-            @include('layouts.header')
+<div class="content">
+
+    <div class="container-fluid px-4 px-lg-7">
+        @include('layouts.header')
             @yield('content')
         </div>
+    </div>
+
     </main>
 
     <script src="{{ asset('vendors/popper/popper.min.js') }}"></script>
