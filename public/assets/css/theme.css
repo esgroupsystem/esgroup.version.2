@@ -31446,3 +31446,9 @@ html[data-bs-theme=dark] .bg-priority-low:checked {
   width: 13.75rem;
 }
 /*# sourceMappingURL=theme.css.map */
+.alert.alert-success,
+.alert.alert-info,
+.alert.alert-warning,
+.alert.alert-danger {
+    display: none !important;
+}

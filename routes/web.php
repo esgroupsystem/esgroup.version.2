@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IT_Department\TicketController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,14 +16,12 @@ Route::get('/', [AuthController::class, 'showLogin'])->name('landing');
 // ✅ Login page route (REQUIRED by Laravel)
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 
-
 // Authentication Routes
 Route::controller(AuthController::class)->group(function () {
     Route::post('/login', 'login')->middleware('throttle:5,1')->name('login.post');
     Route::post('/register', 'register')->name('register.post');
     Route::post('/logout', 'logout')->name('logout');
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -46,7 +44,6 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/crm', 'crmindex')->name('crm');
         });
 
-
     /*
     |--------------------------------------------------------------------------
     | IT Department Routes (Only HR/Admin)
@@ -57,11 +54,20 @@ Route::middleware(['auth'])->group(function () {
         ->name('tickets.')
         ->controller(TicketController::class)
         ->group(function () {
+
             Route::get('/job-order', 'index')->name('joborder.index');
             Route::get('/create-job-order', 'createjobordersIndex')->name('createjoborder.index');
             Route::post('/store-job-order', 'storeJoborders')->name('storejoborder.post');
-            Route::get('/tickets/job-order/view/{id}','view')->name('joborder.view');
 
+            Route::get('/job-order/view/{id}', 'view')->name('joborder.view');
+            Route::post('/joborder/{id}/accept', 'acceptTask')->name('joborder.accept');
+            Route::post('/joborder/{id}/done', 'markAsDone')->name('joborder.done');
+            Route::post('/joborder/{id}/add-note', 'addNote')->name('joborder.addnote');
+            Route::post('/tickets/joborder/{id}/addfile', 'addFiles')->name('joborder.addfile');
+            Route::put('/joborder/{id}/update', 'update')->name('joborder.update');
+            
+
+            // CCTV Management for Safety Officer
             Route::get('/cctv', 'cctvindex')->name('cctv.index');
         });
 });

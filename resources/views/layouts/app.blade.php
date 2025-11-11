@@ -57,19 +57,20 @@
 
 <body>
 
-    <div class="flash-toast-container position-fixed top-0 end-0 p-3" style="z-index:99999;"></div>
-    @include('flash::message')
-
     <main class="main" id="top">
         @include('layouts.sidebar')
 
-<div class="content">
+        <div class="content">
 
-    <div class="container-fluid px-4 px-lg-7">
-        @include('layouts.header')
-            @yield('content')
+            <div class="flash-toast-container position-fixed top-0 end-0 p-3" style="z-index:99999;"></div>
+
+            @include('flash::message')
+
+            <div class="container-fluid px-4 px-lg-7">
+                @include('layouts.header')
+                @yield('content')
+            </div>
         </div>
-    </div>
 
     </main>
 

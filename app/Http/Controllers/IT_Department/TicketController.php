@@ -9,12 +9,14 @@ use App\Models\BusDetail;
 use App\Models\JobOrder;
 use App\Models\JobOrderFile;
 use App\Models\JobOrderLog;
+use App\Models\JobOrderNote;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use carbon\Carbon;
 
 class TicketController extends Controller
 {
@@ -63,7 +65,7 @@ class TicketController extends Controller
 
     public function view($id)
     {
-        $job = JobOrder::with('bus', 'files', 'logs.user')->findOrFail($id);
+        $job = JobOrder::with('bus', 'files', 'logs.user', 'notes.user')->findOrFail($id);
 
         $existingViewLog = JobOrderLog::where('joborder_id', $job->id)
             ->where('user_id', Auth::id())
@@ -77,7 +79,7 @@ class TicketController extends Controller
                 ],
             ]);
         } else {
-            
+
             JobOrderLog::create([
                 'joborder_id' => $job->id,
                 'user_id' => Auth::id(),
@@ -229,5 +231,136 @@ class TicketController extends Controller
                 ->with('debug', app()->environment('local') ? $e->getMessage() : null)
                 ->withInput();
         }
+    }
+
+    public function addNote(Request $request, $id)
+    {
+        $request->validate([
+            'reason' => 'required|string',
+            'details' => 'nullable|string',
+        ]);
+
+        JobOrderNote::create([
+            'joborder_id' => $id,
+            'user_id' => Auth::id(),
+            'reason' => $request->reason,
+            'details' => $request->details,
+        ]);
+
+        JobOrderLog::create([
+            'joborder_id' => $id,
+            'user_id' => Auth::id(),
+            'action' => 'added note',
+            'meta' => ['reason' => $request->reason],
+        ]);
+
+        return back();
+    }
+
+    public function addFiles(Request $request, $id)
+    {
+        $job = JobOrder::findOrFail($id);
+
+        $request->validate([
+            'files.*' => ['required', 'file', 'max:5120'],
+        ]);
+
+        // Save uploaded files
+        if ($request->hasFile('files')) {
+            foreach ($request->file('files') as $upload) {
+
+                $stored = $upload->store("joborders/{$job->id}", 'public');
+
+                JobOrderFile::create([
+                    'job_id' => $job->id,
+                    'file_name' => $upload->getClientOriginalName(),
+                    'file_path' => $stored,
+                ]);
+            }
+
+            // Log activity
+            JobOrderLog::create([
+                'joborder_id' => $job->id,
+                'user_id' => Auth::id(),
+                'action' => 'added file',
+                'meta' => [
+                    'file_count' => count($request->file('files')),
+                ],
+            ]);
+        }
+        flash('Files uploaded successfully.')->info();
+
+        return back();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Update files Routes
+    |--------------------------------------------------------------------------
+    */
+
+    public function acceptTask($id)
+    {
+        $job = JobOrder::findOrFail($id);
+
+        // Prevent duplicate accepting
+        if ($job->job_status !== 'Pending') {
+            return back();
+        }
+
+        $job->update([
+            'job_assign_person' => Auth::user()->full_name,
+            'job_status' => 'In Progress',
+        ]);
+
+        JobOrderLog::create([
+            'joborder_id' => $job->id,
+            'user_id' => Auth::id(),
+            'action' => 'accepted task',
+            'meta' => ['message' => 'Task accepted by IT officer'],
+        ]);
+
+        return back();
+    }
+
+    public function markAsDone($id)
+    {
+        $job = JobOrder::findOrFail($id);
+
+        if ($job->job_status !== 'In Progress') {
+            return back();
+        }
+
+        $job->update([
+            'job_status' => 'Completed',
+        ]);
+
+        JobOrderLog::create([
+            'joborder_id' => $job->id,
+            'user_id' => Auth::id(),
+            'action' => 'completed',
+            'meta' => ['message' => 'Task marked as done'],
+        ]);
+
+        return back();
+    }
+
+    public function update(Request $request, $id)
+    {
+        $job = JobOrder::findOrFail($id);
+
+        $job->update($request->only([
+            'job_type',
+            'job_datestart',
+            'job_time_start',
+            'job_time_end',
+            'direction',
+            'job_sitNumber',
+            'job_remarks',
+        ]));
+
+        flash('Job details updated successfully.')->success();
+
+        return back();
     }
 }
