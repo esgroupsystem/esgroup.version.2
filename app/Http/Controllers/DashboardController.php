@@ -20,4 +20,9 @@ class DashboardController extends Controller
     {
         return view('dashboard.crm');
     }
+
+    public function itindex()
+    {
+        return view('dashboard.dashboard_it');
+    }
 }

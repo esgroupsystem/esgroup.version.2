@@ -73,10 +73,9 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->is('dashboard/support-desk') ? 'active' : '' }}"
-                               href="#">
-                                Support Desk
-                                <span class="badge rounded-pill ms-2 badge-subtle-success">New</span>
+                            <a class="nav-link {{ request()->is('dashboard/it-department') ? 'active' : '' }}"
+                               href="{{ route('dashboard.itindex') }}">
+                                IT Department
                             </a>
                         </li>
 

@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use carbon\Carbon;
+use App\Events\JobOrderCreated;
 
 class TicketController extends Controller
 {
@@ -186,8 +187,7 @@ class TicketController extends Controller
                     ],
                     'user_id' => optional($user)->id,
                 ]);
-
-                // ✅ Send notification email (reusable)
+                event(new JobOrderCreated($job));
                 Notifier::notifyRoles(
                     ['IT Head', 'IT Officer'],
                     new JobOrderCreatedMail($job)

@@ -25,7 +25,7 @@
                         <div class="col-lg-8">
                             <h3 class="mb-2">Tickets Job Order</h3>
                             <p class="text-muted">
-                                Manage internal IT Job Order requests with sorting, search, filtering and pagination.
+                                Manage internal IT Job Order requests with sorting, search, and pagination.
                             </p>
                         </div>
                         <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
@@ -66,23 +66,12 @@
                     </ul>
                 </div>
 
-                {{-- SEARCH + FILTER --}}
+                {{-- SEARCH ONLY --}}
                 <div class="p-3">
                     <div class="row g-3 align-items-center">
-
                         <div class="col-md-4">
                             <input class="form-control form-control-sm search" placeholder="Search Ticket...">
                         </div>
-
-                        <div class="col-md-3">
-                            <select class="form-select form-select-sm" data-list-filter="status">
-                                <option value="">Filter Status</option>
-                                <option value="Pending">Pending</option>
-                                <option value="In Progress">In Progress</option>
-                                <option value="Completed">Completed</option>
-                            </select>
-                        </div>
-
                     </div>
                 </div>
 
@@ -149,35 +138,15 @@
             }
 
             const searchInput = document.querySelector(".search");
-            const filterSelect = document.querySelector('[data-list-filter="status"]');
 
             searchInput.addEventListener("keyup", () => {
                 getActiveTable().search(searchInput.value);
             });
 
-            filterSelect.addEventListener("change", () => {
-                applyFilter();
-            });
-
-            function applyFilter() {
-                const selected = filterSelect.value.toLowerCase();
-                const t = getActiveTable();
-
-                t.filter(item => {
-                    if (!selected) return true;
-
-                    const row = item.elm;
-                    const statusCell = row.querySelector(".status");
-                    const statusText = statusCell ? statusCell.innerText.trim().toLowerCase() : "";
-
-                    return statusText.includes(selected);
-                });
-            }
             document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
                 tab.addEventListener("shown.bs.tab", () => {
                     const table = getActiveTable();
                     table.search(searchInput.value);
-                    applyFilter();
                 });
             });
 

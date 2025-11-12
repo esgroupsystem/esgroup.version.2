@@ -19,6 +19,9 @@ class EventServiceProvider extends ServiceProvider
         \Illuminate\Auth\Events\Lockout::class => [
             \App\Listeners\LogLockout::class,
         ],
+        \App\Events\JobOrderCreated::class => [
+            \App\Listeners\SendJobOrderNotification::class,
+        ],
     ];
 
     public function boot(): void

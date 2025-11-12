@@ -42,6 +42,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/analytics', 'analyticsindex')->name('analytics');
             Route::get('/crm', 'crmindex')->name('crm');
+            Route::get('/it-department', 'itindex')->name('itindex');
         });
 
     /*

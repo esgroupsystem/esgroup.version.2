@@ -1,6 +1,6 @@
 <div id="{{ $id }}"
     data-list='{
-        "valueNames":["ticket_id","requester","job_type","status","date"],
+        "valueNames":["bus_info","requester","job_type","status","date"],
         "page":10,
         "pagination":true
     }'>
@@ -9,7 +9,7 @@
         <table class="table table-hover table-striped fs-10 mb-0">
             <thead class="bg-200 text-900">
                 <tr>
-                    <th class="sort" data-sort="ticket_id">Ticket ID</th>
+                    <th class="sort" data-sort="bus_info">Bus Info</th>
                     <th class="sort" data-sort="requester">Requester</th>
                     <th class="sort" data-sort="job_type">Job Issue</th>
                     <th class="sort" data-sort="status">Status</th>
@@ -22,12 +22,25 @@
 
                 @forelse ($list as $job)
                     <tr>
-                        <td class="ticket_id">JOB-{{ str_pad($job->id, 5, '0', STR_PAD_LEFT) }}</td>
+                        {{-- 🚌 Bus Info --}}
+                        <td class="bus_info">
+                            @php
+                                $busName = $job->bus->name ?? 'Unknown Bus';
+                                $busNumber = $job->bus->body_number ?? null;
+                            @endphp
 
+                            {{ $busName }} @if ($busNumber)
+                                - {{ $busNumber }}
+                            @endif
+                        </td>
+
+                        {{-- 👤 Requester --}}
                         <td class="requester">{{ $job->job_creator ?? 'Unknown' }}</td>
 
+                        {{-- 🧰 Job Type --}}
                         <td class="job_type">{{ $job->job_type ?? 'N/A' }}</td>
 
+                        {{-- 🏷️ Status --}}
                         <td class="status">
                             @if ($job->job_status == 'Pending')
                                 <span class="badge bg-warning text-dark">Pending</span>
@@ -40,10 +53,12 @@
                             @endif
                         </td>
 
+                        {{-- 📅 Date --}}
                         <td class="date">
                             {{ \Carbon\Carbon::parse($job->job_date_filled)->format('Y-m-d') }}
                         </td>
 
+                        {{-- 🔍 Actions --}}
                         <td class="text-center">
                             <a href="{{ route('tickets.joborder.view', $job->id) }}"
                                 class="btn btn-sm btn-info text-white">
