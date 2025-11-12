@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HR_Department\DepartmentController;
+use App\Http\Controllers\HR_Department\EmployeeController;
 use App\Http\Controllers\IT_Department\TicketController;
 use Illuminate\Support\Facades\Route;
 
@@ -47,10 +49,10 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | IT Department Routes (Only HR/Admin)
+    | IT Department Routes (Only Developer/IT Officer/Safety Officer/IT Head/ Head Inspector)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,Admin,IT Officer'])
+    Route::middleware(['role:Developer,Admin,IT Officer,IT Head,Safety Officer,Head Inspector'])
         ->prefix('tickets')
         ->name('tickets.')
         ->controller(TicketController::class)
@@ -66,9 +68,37 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/joborder/{id}/add-note', 'addNote')->name('joborder.addnote');
             Route::post('/tickets/joborder/{id}/addfile', 'addFiles')->name('joborder.addfile');
             Route::put('/joborder/{id}/update', 'update')->name('joborder.update');
-            
 
             // CCTV Management for Safety Officer
             Route::get('/cctv', 'cctvindex')->name('cctv.index');
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | HR Department Routes (Only HR/Admin)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware(['role:Developer,Admin,HR Officer,HR Head'])
+        ->prefix('employees')
+        ->name('employees.')
+        ->controller(EmployeeController::class)
+        ->group(function () {
+            Route::get('/', 'index')->name('staff.index');
+            Route::post('/store', 'store')->name('staff.store');
+            Route::delete('/{employee}', 'destroy')->name('staff.destroy');
+
+        });
+
+    Route::middleware(['role:Developer,Admin,HR Officer,HR Head'])
+        ->prefix('employees')
+        ->name('employees.')
+        ->controller(DepartmentController::class)
+        ->group(function () {
+            Route::get('/departments','index')->name('departments.index');
+            Route::post('/departments', 'store')->name('departments.store');
+            Route::post('/departments/position', 'storePosition')->name('departments.position.store');
+            Route::delete('/departments/{department}', 'destroy')->name('departments.destroy');
+            Route::delete('/positions/{position}', 'destroyPosition')->name('positions.destroy');
         });
 });

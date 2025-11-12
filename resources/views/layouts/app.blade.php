@@ -71,9 +71,9 @@
                 @yield('content')
             </div>
         </div>
-
     </main>
 
+    {{-- Scripts --}}
     <script src="{{ asset('vendors/popper/popper.min.js') }}"></script>
     <script src="{{ asset('vendors/bootstrap/bootstrap.min.js') }}"></script>
     <script src="{{ asset('vendors/anchorjs/anchor.min.js') }}"></script>
@@ -101,16 +101,6 @@
     </script>
 
     <script src="{{ asset('assets/js/theme.js') }}"></script>
-
-    <script>
-        const __originalDropzoneInit = window.dropzoneInit;
-        window.dropzoneInit = function() {
-            if (window.__dropzone_initialized) return;
-            window.__dropzone_initialized = true;
-            __originalDropzoneInit();
-        };
-    </script>
-
     <script src="{{ asset('assets/js/theme-control.js') }}"></script>
     <script src="{{ asset('assets/js/theme-dashboard-fixed.js') }}"></script>
 
@@ -122,12 +112,7 @@
         };
     </script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.my-scrollbar').forEach(el => new SimpleBar(el));
-        });
-    </script>
-
+    {{-- Flash messages as toast --}}
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const flashMessages = document.querySelectorAll('.alert');
@@ -136,16 +121,16 @@
                 const toast = document.createElement('div');
                 toast.className = "toast show mb-2";
                 toast.style = `
-                min-width:320px;background:#f1f3f5;color:#333;
-                border-radius:8px;padding:12px 16px;
-                box-shadow:0 4px 12px rgba(0,0,0,0.1);
-                border-left:5px solid #0d6efd;
-            `;
+                    min-width:320px;background:#f1f3f5;color:#333;
+                    border-radius:8px;padding:12px 16px;
+                    box-shadow:0 4px 12px rgba(0,0,0,0.1);
+                    border-left:5px solid #0d6efd;
+                `;
                 toast.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="fw-semibold">${text}</div>
-                    <button type="button" class="btn-close ms-3" data-bs-dismiss="toast"></button>
-                </div>`;
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="fw-semibold">${text}</div>
+                        <button type="button" class="btn-close ms-3" data-bs-dismiss="toast"></button>
+                    </div>`;
                 document.querySelector(".flash-toast-container").appendChild(toast);
                 setTimeout(() => toast.classList.remove("show"), 2000);
             });
@@ -153,13 +138,12 @@
         });
     </script>
 
+    {{-- Choices.js initialization --}}
     <script>
         window.choicesInit = function() {};
-
         (function() {
             if (!window.Choices) return;
             const Original = window.Choices;
-
             class Patched extends Original {
                 constructor(element, options = {}) {
                     if (element && element.choices) return element.choices;
@@ -170,11 +154,9 @@
                     return instance;
                 }
             }
-
             Object.setPrototypeOf(Patched, Original);
             window.Choices = Patched;
         })();
-
         document.addEventListener("DOMContentLoaded", function() {
             document.querySelectorAll(".js-choice").forEach(select => {
                 if (select.dataset.choicesInit === "1" || select.choices) return;
@@ -188,8 +170,31 @@
         });
     </script>
 
-    @stack('scripts')
+    {{-- SweetAlert2 confirmation --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            document.querySelectorAll("form.confirm-delete").forEach(form => {
+                form.addEventListener("submit", function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: 'This action cannot be undone.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, delete it!',
+                        background: '#fff',
+                    }).then((result) => {
+                        if (result.isConfirmed) form.submit();
+                    });
+                });
+            });
+        });
+    </script>
 
+    @stack('scripts')
 </body>
 
 </html>
