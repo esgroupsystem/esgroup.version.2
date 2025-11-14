@@ -55,9 +55,9 @@
     @stack('styles')
 </head>
 
-<body>
+<body class="nav-vertical" data-layout="vertical">
 
-    <main class="main" id="top">
+    <main class="main" id="top" data-navbar="vertical">
         @include('layouts.sidebar')
 
         <div class="content">
@@ -191,6 +191,23 @@
                     });
                 });
             });
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const toggle = document.querySelector('.navbar-vertical-toggle');
+            const root = document.documentElement;
+
+            if (toggle) {
+                toggle.addEventListener('click', () => {
+                    root.classList.toggle('navbar-vertical-collapsed');
+                    localStorage.setItem(
+                        'isNavbarVerticalCollapsed',
+                        root.classList.contains('navbar-vertical-collapsed')
+                    );
+                });
+            }
         });
     </script>
 

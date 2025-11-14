@@ -18,9 +18,12 @@ class JobOrderCreatedNotification extends Notification
 
     public function toDatabase($notifiable)
     {
+        $bus = $this->jobOrder->bus ?? $this->jobOrder->bus_detail ?? null;
+
         return [
             'title' => 'New Job Order Created',
-            'message' => "Job Order #{$this->jobOrder->id} ({$this->jobOrder->job_type}) has been created for bus {$this->jobOrder->bus_detail->body_number}.",
+            'message' => "Job Order #{$this->jobOrder->id} ({$this->jobOrder->job_type}) has been created for bus " .
+                ($bus?->body_number ?? 'Unknown Bus') . ".",
         ];
     }
 }

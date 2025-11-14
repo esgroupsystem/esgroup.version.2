@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\IT_Department;
 
+use App\Events\JobOrderCreated;
 use App\Helpers\Notifier;
 use App\Http\Controllers\Controller;
 use App\Mail\JobOrderCreatedMail;
@@ -10,14 +11,13 @@ use App\Models\JobOrder;
 use App\Models\JobOrderFile;
 use App\Models\JobOrderLog;
 use App\Models\JobOrderNote;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use carbon\Carbon;
-use App\Events\JobOrderCreated;
 
 class TicketController extends Controller
 {
@@ -187,7 +187,8 @@ class TicketController extends Controller
                     ],
                     'user_id' => optional($user)->id,
                 ]);
-                event(new JobOrderCreated($job));
+
+                event(new JobOrderCreated($job->load('bus')));
                 Notifier::notifyRoles(
                     ['IT Head', 'IT Officer'],
                     new JobOrderCreatedMail($job)
@@ -200,7 +201,6 @@ class TicketController extends Controller
 
         } catch (ValidationException $e) {
 
-            // Log validation errors
             Log::warning('Job Order Validation Failed', [
                 'route' => request()->route()->getName(),
                 'errors' => $e->validator->errors()->toArray(),
@@ -215,7 +215,6 @@ class TicketController extends Controller
 
         } catch (\Exception $e) {
 
-            // Log unexpected exception
             Log::error('Job Order Creation Error', [
                 'route' => request()->route()->getName(),
                 'message' => $e->getMessage(),
@@ -262,10 +261,9 @@ class TicketController extends Controller
         $job = JobOrder::findOrFail($id);
 
         $request->validate([
-            'files.*' => ['required', 'file', 'max:5120'],
+            'files.*' => ['required', 'file', 'max:1024000'],
         ]);
 
-        // Save uploaded files
         if ($request->hasFile('files')) {
             foreach ($request->file('files') as $upload) {
 
@@ -278,7 +276,6 @@ class TicketController extends Controller
                 ]);
             }
 
-            // Log activity
             JobOrderLog::create([
                 'joborder_id' => $job->id,
                 'user_id' => Auth::id(),
@@ -303,7 +300,6 @@ class TicketController extends Controller
     {
         $job = JobOrder::findOrFail($id);
 
-        // Prevent duplicate accepting
         if ($job->job_status !== 'Pending') {
             return back();
         }
@@ -349,6 +345,46 @@ class TicketController extends Controller
     {
         $job = JobOrder::findOrFail($id);
 
+        // Normalize date
+        if ($request->job_datestart) {
+            if (preg_match('/\d{4}-\d{2}-\d{2}/', $request->job_datestart)) {
+                $request->merge([
+                    'job_datestart' => Carbon::parse($request->job_datestart)->format('Y-m-d'),
+                ]);
+            } else {
+                $request->merge([
+                    'job_datestart' => Carbon::createFromFormat('d/m/y', $request->job_datestart)->format('Y-m-d'),
+                ]);
+            }
+        }
+
+        // Normalize time fields
+        if ($request->job_time_start) {
+            $request->merge([
+                'job_time_start' => Carbon::parse($request->job_time_start)->format('H:i'),
+            ]);
+        }
+
+        if ($request->job_time_end) {
+            $request->merge([
+                'job_time_end' => Carbon::parse($request->job_time_end)->format('H:i'),
+            ]);
+        }
+
+        // ⭐ INCLUDE NEW FIELDS HERE:
+        $original = $job->only([
+            'job_type',
+            'job_datestart',
+            'job_time_start',
+            'job_time_end',
+            'direction',
+            'job_sitNumber',
+            'job_remarks',
+            'driver_name',
+            'conductor_name',
+        ]);
+
+        // Update database
         $job->update($request->only([
             'job_type',
             'job_datestart',
@@ -357,7 +393,32 @@ class TicketController extends Controller
             'direction',
             'job_sitNumber',
             'job_remarks',
+            'driver_name',
+            'conductor_name',
         ]));
+
+        // Detect changes for logs
+        $changes = [];
+        foreach ($original as $field => $oldValue) {
+            $newValue = $job->$field;
+
+            if ($oldValue != $newValue) {
+                $changes[$field] = [
+                    'old' => $oldValue ?? 'None',
+                    'new' => $newValue ?? 'None',
+                ];
+            }
+        }
+
+        // Create log if changed
+        if (! empty($changes)) {
+            JobOrderLog::create([
+                'joborder_id' => $job->id,
+                'user_id' => Auth::id(),
+                'action' => 'updated details',
+                'meta' => $changes,
+            ]);
+        }
 
         flash('Job details updated successfully.')->success();
 

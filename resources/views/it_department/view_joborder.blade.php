@@ -216,8 +216,25 @@
                                     <div class="col">
                                         <span class="viewMode">{{ $job->job_datestart }}</span>
 
+                                        @php
+                                            function safeDate($date)
+                                            {
+                                                try {
+                                                    return \Carbon\Carbon::parse($date)->format('Y-m-d');
+                                                } catch (\Exception $e1) {
+                                                    try {
+                                                        return \Carbon\Carbon::createFromFormat('d/m/y', $date)->format(
+                                                            'Y-m-d',
+                                                        );
+                                                    } catch (\Exception $e2) {
+                                                        return ''; // fallback
+                                                    }
+                                                }
+                                            }
+                                        @endphp
+
                                         <input type="date" name="job_datestart" class="form-control editMode d-none"
-                                            value="{{ \Carbon\Carbon::parse($job->job_datestart)->format('Y-m-d') }}">
+                                            value="{{ safeDate($job->job_datestart) }}">
                                     </div>
                                 </div>
 
@@ -343,9 +360,6 @@
             </div>
 
             {{-- ============================= --}}
-            {{-- FILES --}}
-            {{-- ============================= --}}
-            {{-- ============================= --}}
             {{-- FILES SECTION (Always Visible) --}}
             {{-- ============================= --}}
             <div class="card mb-3">
@@ -384,8 +398,7 @@
             {{-- ✅ Add File Modal (always available) --}}
             <div class="modal fade" id="addFileModal" tabindex="-1">
                 <div class="modal-dialog">
-                    <form action="{{ route('tickets.joborder.addfile', $job->id) }}" method="POST"
-                        enctype="multipart/form-data">
+                    <form id="uploadForm" enctype="multipart/form-data">
                         @csrf
 
                         <div class="modal-content">
@@ -396,11 +409,21 @@
 
                             <div class="modal-body">
                                 <label class="fw-bold">Attach Files</label>
-                                <input type="file" name="files[]" class="form-control mb-3" multiple required>
+                                <input type="file" name="files[]" id="fileInput" class="form-control mb-3" multiple
+                                    required>
+
+                                {{-- Progress Bar --}}
+                                <div class="progress d-none" id="uploadProgressWrapper">
+                                    <div id="uploadProgress"
+                                        class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+                                        style="width: 0%">0%</div>
+                                </div>
+
+                                <div class="mt-2 text-center text-muted" id="uploadStatus"></div>
                             </div>
 
                             <div class="modal-footer">
-                                <button class="btn btn-primary btn-sm">Upload</button>
+                                <button type="button" id="uploadBtn" class="btn btn-primary btn-sm">Upload</button>
                             </div>
                         </div>
                     </form>
@@ -463,15 +486,32 @@
                                             <small class="text-muted log-meta">
                                                 @if (is_array($meta) && count($meta))
                                                     @foreach ($meta as $key => $value)
-                                                        <strong>{{ ucfirst(str_replace('_', ' ', $key)) }}:</strong>
-                                                        {{ $value }}@if (!$loop->last)
-                                                            ,
+                                                        {{-- If simple string --}}
+                                                        @if (is_string($value))
+                                                            <strong>{{ ucfirst(str_replace('_', ' ', $key)) }}:</strong>
+                                                            {{ $value }}
+
+                                                            {{-- If array from update logs --}}
+                                                        @elseif (is_array($value) && isset($value['old'], $value['new']))
+                                                            <strong>{{ ucfirst(str_replace('_', ' ', $key)) }}:</strong>
+                                                            <span class="text-danger">[Old: {{ $value['old'] }}]</span> →
+                                                            <span class="text-success">[New: {{ $value['new'] }}]</span>
+
+                                                            {{-- Unknown data format --}}
+                                                        @else
+                                                            <strong>{{ ucfirst(str_replace('_', ' ', $key)) }}:</strong>
+                                                            {{ json_encode($value) }}
+                                                        @endif
+
+                                                        @if (!$loop->last)
+                                                            <br>
                                                         @endif
                                                     @endforeach
                                                 @else
                                                     <i>No details</i>
                                                 @endif
                                             </small>
+
 
                                         </div>
                                     </div>
@@ -485,150 +525,199 @@
 
                                 </div>
 
-                                @empty
-                                    <p class="text-center py-3 text-muted">No logs available.</p>
-                                @endforelse
-
-                            </div>
-
-                            {{-- PAGINATION --}}
-                            <div class="d-flex justify-content-center my-3">
-                                <button class="btn btn-sm btn-falcon-default me-1" data-list-pagination="prev">
-                                    <span class="fas fa-chevron-left"></span>
-                                </button>
-
-                                <ul class="pagination mb-0"></ul>
-
-                                <button class="btn btn-sm btn-falcon-default ms-1" data-list-pagination="next">
-                                    <span class="fas fa-chevron-right"></span>
-                                </button>
-                            </div>
+                            @empty
+                                <p class="text-center py-3 text-muted">No logs available.</p>
+                            @endforelse
 
                         </div>
+
+                        {{-- PAGINATION --}}
+                        <div class="d-flex justify-content-center my-3">
+                            <button class="btn btn-sm btn-falcon-default me-1" data-list-pagination="prev">
+                                <span class="fas fa-chevron-left"></span>
+                            </button>
+
+                            <ul class="pagination mb-0"></ul>
+
+                            <button class="btn btn-sm btn-falcon-default ms-1" data-list-pagination="next">
+                                <span class="fas fa-chevron-right"></span>
+                            </button>
+                        </div>
+
                     </div>
+                </div>
 
-                    {{-- ============================= --}}
-                    {{-- ADD NOTE MODAL --}}
-                    {{-- ============================= --}}
-                    <div class="modal fade" id="addNoteModal" tabindex="-1">
-                        <div class="modal-dialog">
-                            <form method="POST" action="{{ route('tickets.joborder.addnote', $job->id) }}">
-                                @csrf
-                                <div class="modal-content">
+                {{-- ============================= --}}
+                {{-- ADD NOTE MODAL --}}
+                {{-- ============================= --}}
+                <div class="modal fade" id="addNoteModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <form method="POST" action="{{ route('tickets.joborder.addnote', $job->id) }}">
+                            @csrf
+                            <div class="modal-content">
 
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Add Note</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Add Note</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+
+                                <div class="modal-body">
+
+                                    <label class="fw-bold">Select Reason</label>
+                                    <div class="mb-2">
+                                        <label><input type="radio" name="reason" value="Defective DVR" required>
+                                            Defective DVR</label><br>
+                                        <label><input type="radio" name="reason" value="Camera not working"> Camera
+                                            not working</label><br>
+                                        <label><input type="radio" name="reason" value="Weak signal / interference">
+                                            Weak signal / interference</label><br>
+                                        <label><input type="radio" name="reason" value="Other"> Other</label>
                                     </div>
 
-                                    <div class="modal-body">
-
-                                        <label class="fw-bold">Select Reason</label>
-                                        <div class="mb-2">
-                                            <label><input type="radio" name="reason" value="Defective DVR" required>
-                                                Defective DVR</label><br>
-                                            <label><input type="radio" name="reason" value="Camera not working"> Camera
-                                                not working</label><br>
-                                            <label><input type="radio" name="reason" value="Weak signal / interference">
-                                                Weak signal / interference</label><br>
-                                            <label><input type="radio" name="reason" value="Other"> Other</label>
-                                        </div>
-
-                                        <label class="fw-bold mt-2">Details (optional)</label>
-                                        <textarea name="details" class="form-control" rows="3" placeholder="Additional details..."></textarea>
-
-                                    </div>
-
-                                    <div class="modal-footer">
-                                        <button class="btn btn-primary btn-sm">Add Note</button>
-                                    </div>
+                                    <label class="fw-bold mt-2">Details (optional)</label>
+                                    <textarea name="details" class="form-control" rows="3" placeholder="Additional details..."></textarea>
 
                                 </div>
-                            </form>
-                        </div>
+
+                                <div class="modal-footer">
+                                    <button class="btn btn-primary btn-sm">Add Note</button>
+                                </div>
+
+                            </div>
+                        </form>
                     </div>
-
                 </div>
+
             </div>
-        @endsection
-        @push('scripts')
-            <script>
-                document.addEventListener("DOMContentLoaded", function() {
+        </div>
+    @endsection
+    @push('scripts')
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
 
-                    const editBtn = document.getElementById("editBtn");
-                    const saveBtn = document.getElementById("saveBtn");
-                    const cancelBtn = document.getElementById("cancelBtn");
+                const editBtn = document.getElementById("editBtn");
+                const saveBtn = document.getElementById("saveBtn");
+                const cancelBtn = document.getElementById("cancelBtn");
 
-                    const viewFields = document.querySelectorAll(".viewMode");
-                    const editFields = document.querySelectorAll(".editMode");
+                const viewFields = document.querySelectorAll(".viewMode");
+                const editFields = document.querySelectorAll(".editMode");
 
-                    // Store original valid values
-                    editFields.forEach(input => {
-                        input.dataset.original = input.value;
-                    });
-
-                    // Detect changes
-                    editFields.forEach(input => {
-                        input.addEventListener("input", function() {
-                            saveBtn.disabled = false;
-                        });
-                    });
-
-                    // Enable edit mode
-                    editBtn.addEventListener("click", function() {
-                        editBtn.classList.add("d-none");
-                        saveBtn.classList.remove("d-none");
-                        cancelBtn.classList.remove("d-none");
-
-                        viewFields.forEach(v => v.classList.add("d-none"));
-                        editFields.forEach(e => e.classList.remove("d-none"));
-                    });
-
-                    // Cancel edit properly
-                    cancelBtn.addEventListener("click", function() {
-
-                        editBtn.classList.remove("d-none");
-                        saveBtn.classList.add("d-none");
-                        cancelBtn.classList.add("d-none");
-                        saveBtn.disabled = true;
-
-                        // Restore each input's original valid value
-                        editFields.forEach(e => {
-                            e.classList.add("d-none");
-                            e.value = e.dataset.original;
-                        });
-
-                        viewFields.forEach(v => v.classList.remove("d-none"));
-                    });
-
+                // Store original valid values
+                editFields.forEach(input => {
+                    input.dataset.original = input.value;
                 });
-            </script>
 
-            <style>
-                @keyframes heartbeat {
-                    0% {
-                        transform: scale(1);
-                    }
+                // Detect changes
+                editFields.forEach(input => {
+                    input.addEventListener("input", function() {
+                        saveBtn.disabled = false;
+                    });
+                });
 
-                    25% {
-                        transform: scale(1.07);
-                    }
+                // Enable edit mode
+                editBtn.addEventListener("click", function() {
+                    editBtn.classList.add("d-none");
+                    saveBtn.classList.remove("d-none");
+                    cancelBtn.classList.remove("d-none");
 
-                    40% {
-                        transform: scale(0.97);
-                    }
+                    viewFields.forEach(v => v.classList.add("d-none"));
+                    editFields.forEach(e => e.classList.remove("d-none"));
+                });
 
-                    60% {
-                        transform: scale(1.05);
-                    }
+                // Cancel edit properly
+                cancelBtn.addEventListener("click", function() {
 
-                    100% {
-                        transform: scale(1);
-                    }
+                    editBtn.classList.remove("d-none");
+                    saveBtn.classList.add("d-none");
+                    cancelBtn.classList.add("d-none");
+                    saveBtn.disabled = true;
+
+                    // Restore each input's original valid value
+                    editFields.forEach(e => {
+                        e.classList.add("d-none");
+                        e.value = e.dataset.original;
+                    });
+
+                    viewFields.forEach(v => v.classList.remove("d-none"));
+                });
+
+            });
+        </script>
+
+        <style>
+            @keyframes heartbeat {
+                0% {
+                    transform: scale(1);
                 }
 
-                .btn-heartbeat {
-                    animation: heartbeat 1.4s infinite;
+                25% {
+                    transform: scale(1.07);
                 }
-            </style>
-        @endpush
+
+                40% {
+                    transform: scale(0.97);
+                }
+
+                60% {
+                    transform: scale(1.05);
+                }
+
+                100% {
+                    transform: scale(1);
+                }
+            }
+
+            .btn-heartbeat {
+                animation: heartbeat 1.4s infinite;
+            }
+        </style>
+
+        <script>
+            document.getElementById("uploadBtn").addEventListener("click", function() {
+
+                const form = document.getElementById("uploadForm");
+                const formData = new FormData(form);
+
+                const progressBar = document.getElementById("uploadProgress");
+                const progressWrapper = document.getElementById("uploadProgressWrapper");
+                const statusText = document.getElementById("uploadStatus");
+
+                progressWrapper.classList.remove("d-none");
+                statusText.innerHTML = "Uploading...";
+
+                let xhr = new XMLHttpRequest();
+
+                xhr.open("POST", "{{ route('tickets.joborder.addfile', $job->id) }}", true);
+
+                xhr.upload.addEventListener("progress", function(e) {
+                    if (e.lengthComputable) {
+                        let percent = Math.round((e.loaded / e.total) * 100);
+                        progressBar.style.width = percent + "%";
+                        progressBar.innerHTML = percent + "%";
+                    }
+                });
+
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        progressBar.classList.remove("bg-danger");
+                        progressBar.classList.add("bg-success");
+                        statusText.innerHTML = "<span class='text-success'>Upload completed!</span>";
+
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        progressBar.classList.add("bg-danger");
+                        statusText.innerHTML = "<span class='text-danger'>Upload failed!</span>";
+                    }
+                };
+
+                xhr.onerror = function() {
+                    progressBar.classList.add("bg-danger");
+                    statusText.innerHTML = "<span class='text-danger'>Upload failed (network error)</span>";
+                };
+
+                xhr.send(formData);
+            });
+        </script>
+    @endpush
