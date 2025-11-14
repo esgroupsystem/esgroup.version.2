@@ -2,18 +2,43 @@
 
 namespace App\Http\Controllers\HR_Department;
 
+use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Position;
 use Illuminate\Http\Request;
-use App\Http\Controllers\Controller;
 
 class DepartmentController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | Index Routes
+    |--------------------------------------------------------------------------
+    */
     public function index()
     {
-        $departments = Department::with('positions')->latest()->get();
-        return view('hr_department.departments.index', compact('departments'));
+        try {
+            $departments = Department::with('positions')->latest()->get();
+
+            return view('hr_department.departments.index', compact('departments'));
+
+        } catch (\Exception $e) {
+
+            // Log error for debugging
+            \Log::error('Department Index Error: '.$e->getMessage());
+
+            // Flash error message to UI
+            flash('Something went wrong while loading departments.')->error();
+
+            // Redirect back safely
+            return redirect()->back();
+        }
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Saving/Create Routes
+    |--------------------------------------------------------------------------
+    */
 
     public function store(Request $request)
     {
@@ -22,6 +47,7 @@ class DepartmentController extends Controller
         ]);
 
         Department::create(['name' => $request->name]);
+
         return back()->with('success', 'Department added successfully!');
     }
 
@@ -33,18 +59,27 @@ class DepartmentController extends Controller
         ]);
 
         Position::create($request->only('department_id', 'title'));
+
         return back()->with('success', 'Position added successfully!');
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Deleting Routes
+    |--------------------------------------------------------------------------
+    */
 
     public function destroy(Department $department)
     {
         $department->delete();
+
         return back()->with('success', 'Department deleted successfully!');
     }
 
     public function destroyPosition(Position $position)
     {
         $position->delete();
+
         return back()->with('success', 'Position deleted successfully!');
     }
 }

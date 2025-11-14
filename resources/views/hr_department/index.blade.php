@@ -77,15 +77,23 @@
                                             <td class="position">{{ $employee->position?->title ?? '-' }}</td>
                                             <td class="company">{{ $employee->company ?? '-' }}</td>
                                             <td class="text-center">
+                                                <a href="{{ route('employees.staff.show', $employee->id) }}"
+                                                    class="btn btn-sm btn-info me-1">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+
                                                 <form action="{{ route('employees.staff.destroy', $employee->id) }}"
                                                     method="POST" class="d-inline confirm-delete">
+
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button type="submit" class="btn btn-sm btn-danger">
+
+                                                    <button class="btn btn-sm btn-danger">
                                                         <i class="fas fa-trash-alt"></i>
                                                     </button>
                                                 </form>
                                             </td>
+
                                         </tr>
                                     @empty
                                         <tr>

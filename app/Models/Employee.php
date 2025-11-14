@@ -17,6 +17,12 @@ class Employee extends Model
         'email',
         'phone_number',
         'company',
+        'status',
+        'date_hired',
+    ];
+
+    protected $casts = [
+        'date_hired' => 'date',
     ];
 
     public function department()
@@ -27,5 +33,20 @@ class Employee extends Model
     public function position()
     {
         return $this->belongsTo(Position::class);
+    }
+
+    public function asset()
+    {
+        return $this->hasOne(EmployeeAsset::class);
+    }
+
+    public function histories()
+    {
+        return $this->hasMany(EmployeeHistory::class);
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(EmployeeAttachment::class);
     }
 }

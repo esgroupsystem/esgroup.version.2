@@ -14,7 +14,7 @@ class SuperAdminSeeder extends Seeder
             ['email' => 'developer@esgroup.com.ph'],
             [
                 'username'        => 'developer',
-                'full_name'       => 'Developer Admin',
+                'full_name'       => 'System',
                 'password'        => Hash::make('M@st3rk3ys123!'),
                 'role'            => 'Developer',
                 'status'          => 'online',

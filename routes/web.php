@@ -13,9 +13,7 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Landing page (login/register modal)
 Route::get('/', [AuthController::class, 'showLogin'])->name('landing');
-// ✅ Login page route (REQUIRED by Laravel)
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 
 // Authentication Routes
@@ -88,6 +86,19 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/store', 'store')->name('staff.store');
             Route::delete('/{employee}', 'destroy')->name('staff.destroy');
 
+            // Employee Profile
+            Route::get('/employee/{employee}', 'show')->name('staff.show');
+            Route::put('/employee/{employee}', 'update')->name('update');
+            Route::post('/employee/{employee}/201', 'updateAssets')->name('assets.update');
+
+            Route::post('/{employee}/history', 'storeHistory')->name('staff.history.store');
+            Route::delete('/{employee}/history/{history}', 'destroyHistory')->name('staff.history.destroy');
+
+            Route::post('/{employee}/attachments', 'storeAttachment')->name('staff.attachments.store');
+            Route::delete('/{employee}/attachments/{attachment}', 'destroyAttachment')->name('staff.attachments.destroy');
+
+            Route::get('/{employee}/print', 'print201')->name('staff.print');
+
         });
 
     Route::middleware(['role:Developer,Admin,HR Officer,HR Head'])
@@ -95,7 +106,7 @@ Route::middleware(['auth'])->group(function () {
         ->name('employees.')
         ->controller(DepartmentController::class)
         ->group(function () {
-            Route::get('/departments','index')->name('departments.index');
+            Route::get('/departments', 'index')->name('departments.index');
             Route::post('/departments', 'store')->name('departments.store');
             Route::post('/departments/position', 'storePosition')->name('departments.position.store');
             Route::delete('/departments/{department}', 'destroy')->name('departments.destroy');
