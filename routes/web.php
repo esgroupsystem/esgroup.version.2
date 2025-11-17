@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HR_Department\DepartmentController;
+use App\Http\Controllers\HR_Department\DriverLeaveController;
 use App\Http\Controllers\HR_Department\EmployeeController;
 use App\Http\Controllers\IT_Department\TicketController;
 use Illuminate\Support\Facades\Route;
@@ -68,7 +69,6 @@ Route::middleware(['auth'])->group(function () {
             Route::put('/joborder/{id}/update', 'update')->name('joborder.update');
             Route::get('/export/{type}', 'export')->name('export');
 
-
             // CCTV Management for Safety Officer
             Route::get('/cctv', 'cctvindex')->name('cctv.index');
         });
@@ -114,4 +114,19 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/departments/{department}', 'destroy')->name('departments.destroy');
             Route::delete('/positions/{position}', 'destroyPosition')->name('positions.destroy');
         });
+
+    Route::middleware(['role:Developer,Admin,HR Officer,HR Head'])
+        ->prefix('driver-leave')
+        ->name('driver-leave.')
+        ->controller(DriverLeaveController::class)
+        ->group(function () {
+
+            Route::get('driver', 'index')->name('driver.index');
+            Route::get('driver/create', 'create')->name('driver.create');
+            Route::post('driver/store', 'store')->name('driver.store');
+            Route::get('driver/{leave}/edit', 'edit')->name('driver.edit');
+            Route::put('driver/{leave}', 'update')->name('driver.update');
+            Route::post('{leave}/action', 'action')->name('driver.action');
+        });
+
 });

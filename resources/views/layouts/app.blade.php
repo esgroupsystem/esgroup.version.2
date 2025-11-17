@@ -211,6 +211,13 @@
         });
     </script>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const tooltipEls = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+            tooltipEls.forEach(el => new window.bootstrap.Tooltip(el));
+        });
+    </script>
+
     @stack('scripts')
 </body>
 

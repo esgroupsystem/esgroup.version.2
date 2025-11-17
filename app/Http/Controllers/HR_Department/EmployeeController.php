@@ -8,7 +8,9 @@ use App\Models\Employee;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class EmployeeController extends Controller
 {
@@ -22,12 +24,11 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee)
     {
-        // load relations
+        
         $employee->load(['asset', 'histories' => function ($q) {
             $q->orderBy('start_date', 'desc');
         }, 'attachments', 'position', 'department', 'department.positions']);
 
-        // Load all departments for the Edit Profile modal
         $departments = Department::with('positions')->get();
 
         return view('hr_department.employee_profile', compact('employee', 'departments'));
@@ -42,7 +43,7 @@ class EmployeeController extends Controller
                 'position_id' => 'nullable|exists:positions,id',
                 'email' => 'nullable|email|max:255',
                 'phone_number' => 'nullable|string|max:20',
-                'company' => 'required|in:MIRASOL,BALINTAWAK',
+                'company' => 'required|in:Jell Transport,ES Transport,Earthstar Transport, Kellen Transport',
             ]);
 
             $lastId = Employee::latest()->value('id') ?? 0;
@@ -110,30 +111,47 @@ class EmployeeController extends Controller
 
             $asset = $employee->asset ?? $employee->asset()->create([]);
 
-            // profile picture
             if ($request->hasFile('profile_picture')) {
                 $file = $request->file('profile_picture');
-                $path = $file->store('employees/profile', 'public');
-                // delete old if exists
+
+                $original = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                $ext = $file->getClientOriginalExtension();
+                $rand = rand(1000, 9999);
+
+                $safeName = str_replace(' ', '_', $employee->full_name.'_'.$original.'_profile-'.$rand.'.'.$ext);
+
+                $path = $file->storeAs('employees/profile', $safeName, 'public');
+
                 if ($asset->profile_picture) {
                     Storage::disk('public')->delete($asset->profile_picture);
                 }
                 $asset->profile_picture = $path;
             }
 
-            // documents (birth, resume, contract)
             foreach (['birth_certificate', 'resume', 'contract'] as $field) {
                 if ($request->hasFile($field)) {
                     $file = $request->file($field);
-                    $path = $file->store("employees/{$field}", 'public');
+
+                    $original = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                    $ext = $file->getClientOriginalExtension();
+                    $rand = rand(1000, 9999);
+
+                    $safeName = str_replace(
+                        ' ',
+                        '_',
+                        $employee->full_name.'_'.$original.'_'.$field.'-'.$rand.'.'.$ext
+                    );
+
+                    $path = $file->storeAs("employees/{$field}", $safeName, 'public');
+
                     if ($asset->{$field}) {
                         Storage::disk('public')->delete($asset->{$field});
                     }
+
                     $asset->{$field} = $path;
                 }
             }
 
-            // simple numbers
             $asset->sss_number = $request->input('sss_number');
             $asset->tin_number = $request->input('tin_number');
             $asset->philhealth_number = $request->input('philhealth_number');
@@ -154,7 +172,6 @@ class EmployeeController extends Controller
         }
     }
 
-    // store an employment history item
     public function storeHistory(Request $request, Employee $employee)
     {
         $request->validate([
@@ -177,19 +194,28 @@ class EmployeeController extends Controller
         }
     }
 
-    // upload a general attachment (stored in employee_attachments)
+
     public function storeAttachment(Request $request, Employee $employee)
     {
         $request->validate([
-            'attachment' => 'required|file|max:10240', // allow up to 10MB
+            'attachment' => 'required|file|max:10240',
         ]);
 
         try {
             $file = $request->file('attachment');
-            $path = $file->store('employees/attachments', 'public');
+
+            // CLEAN filename format
+            $cleanName = str_replace(' ', '_', strtolower($employee->full_name));
+            $original = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $cleanOriginal = str_replace([' ', '.', '-'], '_', strtolower($original));
+
+            $newName = $cleanName.'_'.$cleanOriginal.'_'.uniqid().'.'.
+                $file->getClientOriginalExtension();
+
+            $path = $file->storeAs('employees/attachments', $newName, 'public');
 
             $employee->attachments()->create([
-                'file_name' => $file->getClientOriginalName(),
+                'file_name' => $newName,
                 'file_path' => $path,
                 'mime_type' => $file->getMimeType(),
                 'size' => $file->getSize(),
@@ -199,7 +225,7 @@ class EmployeeController extends Controller
 
             return back();
         } catch (\Throwable $e) {
-            \Log::error('storeAttachment error: '.$e->getMessage());
+            Log::error('storeAttachment error: '.$e->getMessage());
             flash('Unable to upload attachment.')->error();
 
             return back();

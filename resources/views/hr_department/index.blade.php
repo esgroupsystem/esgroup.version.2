@@ -165,8 +165,10 @@
                         <label class="form-label">Company</label>
                         <select name="company" class="form-select" required>
                             <option value="">-- Select Company --</option>
-                            <option value="MIRASOL">MIRASOL</option>
-                            <option value="BALINTAWAK">BALINTAWAK</option>
+                            <option value="Jell Transport">Jell Transport</option>
+                            <option value="ES Transport">ES Transport</option>
+                            <option value="Kellen Transport">Kellen Transport</option>
+                            <option value="Earthstar Transport">Earthstar Transport</option>
                         </select>
                     </div>
                 </div>

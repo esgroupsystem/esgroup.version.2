@@ -1,10 +1,8 @@
 <nav class="navbar navbar-light navbar-vertical navbar-expand-xl px-4 px-lg-7">
     <div class="d-flex align-items-center">
         <div class="toggle-icon-wrapper">
-            <button class="btn navbar-toggler-humburger-icon navbar-vertical-toggle"
-                    data-bs-toggle="tooltip"
-                    data-bs-placement="left"
-                    title="Toggle Navigation">
+            <button class="btn navbar-toggler-humburger-icon navbar-vertical-toggle" data-bs-toggle="tooltip"
+                data-bs-placement="left" title="Toggle Navigation">
                 <span class="navbar-toggle-icon">
                     <span class="toggle-line"></span>
                 </span>
@@ -26,10 +24,9 @@
                 {{-- DASHBOARD --}}
                 <li class="nav-item">
                     <a class="nav-link dropdown-indicator d-flex justify-content-between align-items-center"
-                       href="#dashboardMenu"
-                       data-bs-toggle="collapse"
-                       aria-expanded="{{ request()->is('dashboard*') ? 'true' : 'false' }}"
-                       aria-controls="dashboardMenu">
+                        href="#dashboardMenu" data-bs-toggle="collapse"
+                        aria-expanded="{{ request()->is('dashboard*') ? 'true' : 'false' }}"
+                        aria-controls="dashboardMenu">
 
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
@@ -39,33 +36,32 @@
                         </div>
                     </a>
 
-                    <ul class="nav collapse {{ request()->is('dashboard*') ? 'show' : '' }}"
-                        id="dashboardMenu">
+                    <ul class="nav collapse {{ request()->is('dashboard*') ? 'show' : '' }}" id="dashboardMenu">
 
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}"
-                               href="{{ route('dashboard.index') }}">
+                                href="{{ route('dashboard.index') }}">
                                 Default
                             </a>
                         </li>
 
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/analytics') ? 'active' : '' }}"
-                               href="{{ route('dashboard.analytics') }}">
+                                href="{{ route('dashboard.analytics') }}">
                                 Analytics
                             </a>
                         </li>
 
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/crm') ? 'active' : '' }}"
-                               href="{{ route('dashboard.crm') }}">
+                                href="{{ route('dashboard.crm') }}">
                                 CRM
                             </a>
                         </li>
 
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/it-department') ? 'active' : '' }}"
-                               href="{{ route('dashboard.itindex') }}">
+                                href="{{ route('dashboard.itindex') }}">
                                 IT Department
                             </a>
                         </li>
@@ -90,7 +86,7 @@
                 {{-- TICKETS JOB ORDER --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('tickets/job-order') ? 'active' : '' }}"
-                       href="{{ route('tickets.joborder.index') }}">
+                        href="{{ route('tickets.joborder.index') }}">
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
                                 <span class="fas fa-ticket-alt"></span>
@@ -103,7 +99,7 @@
                 {{-- CCTV CONCERN --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
-                       href="{{ route('tickets.cctv.index') }}">
+                        href="{{ route('tickets.cctv.index') }}">
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
                                 <span class="fas fa-video"></span>
@@ -125,31 +121,99 @@
                     </div>
                 </li>
 
-                {{-- EMPLOYEES LIST --}}
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->is('employees') ? 'active' : '' }}"
-                       href="{{ route('employees.staff.index') }}">
+                    <a class="nav-link dropdown-indicator {{ request()->is('employees*') ? 'active' : '' }}"
+                        href="#employeesMenu" role="button" data-bs-toggle="collapse"
+                        aria-expanded="{{ request()->is('employees*') ? 'true' : 'false' }}">
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
                                 <span class="fas fa-users"></span>
                             </span>
-                            <span class="nav-link-text ps-1">Employee List</span>
+                            <span class="nav-link-text ps-1">Employees</span>
                         </div>
                     </a>
+                    <ul class="nav collapse {{ request()->is('employees*') ? 'show' : '' }}" id="employeesMenu">
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('employees') ? 'active' : '' }}"
+                                href="{{ route('employees.staff.index') }}">
+                                <span class="nav-link-text">Employee List</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('employees/departments') || request()->is('employees/positions') ? 'active' : '' }}"
+                                href="{{ route('employees.departments.index') }}">
+                                <span class="nav-link-text">Department & Position</span>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
-
-                {{-- DEPARTMENTS & POSITIONS --}}
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->is('employees/departments') ? 'active' : '' }}"
-                       href="{{ route('employees.departments.index') }}">
+
+                    {{-- Attendance Parent --}}
+                    <a class="nav-link dropdown-indicator {{ request()->is('attendance*') || request()->is('leave*') ? 'active' : '' }}"
+                        href="#attendanceMenu" role="button" data-bs-toggle="collapse"
+                        aria-expanded="{{ request()->is('attendance*') || request()->is('leave*') ? 'true' : 'false' }}">
+
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
-                                <span class="fas fa-users-cog"></span>
+                                <span class="fas fa-calendar-check"></span>
                             </span>
-                            <span class="nav-link-text ps-1">Departments & Positions</span>
+                            <span class="nav-link-text ps-1">Attendance</span>
                         </div>
                     </a>
+
+                    <ul class="nav collapse {{ request()->is('attendance*') || request()->is('leave*') ? 'show' : '' }}"
+                        id="attendanceMenu">
+
+                        {{-- LEAVES (Second Level) --}}
+                        <li class="nav-item">
+                            <a class="nav-link dropdown-indicator {{ request()->is('leave*') ? 'active' : '' }}"
+                                href="#leaveMenu" role="button" data-bs-toggle="collapse"
+                                aria-expanded="{{ request()->is('leave*') ? 'true' : 'false' }}">
+                                <span class="nav-link-text">Leaves</span>
+                            </a>
+
+                            {{-- THIRD LEVEL --}}
+                            <ul class="nav collapse {{ request()->is('leave*') ? 'show' : '' }}" id="leaveMenu">
+
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('leave/admin') ? 'active' : '' }}"
+                                        href="#">
+                                        <span class="nav-link-text">Admin (Leave)</span>
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('leave/driver') ? 'active' : '' }}"
+                                        href="{{ route('driver-leave.driver.index') }}">
+                                        <span class="nav-link-text">Driver (Leave)</span>
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('leave/conductor') ? 'active' : '' }}"
+                                        href="#">
+                                        <span class="nav-link-text">Conductor (Leave)</span>
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('leave/conductor') ? 'active' : '' }}"
+                                        href="#">
+                                        <span class="nav-link-text">Leave Setting</span>
+                                    </a>
+                                </li>
+
+                            </ul>
+                        </li>
+
+                    </ul>
+
                 </li>
+
+
+
+
 
             </ul>
         </div>
