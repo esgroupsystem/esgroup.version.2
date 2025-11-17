@@ -19,17 +19,27 @@ class User extends Authenticatable
         'status',
         'account_status',
         'last_online',
-        'last_out'
+        'last_out',
     ];
 
     protected $hidden = [
         'password',
-        'remember_token'
+        'remember_token',
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'last_online'       => 'datetime',
-        'last_out'          => 'datetime',
+        'last_online' => 'datetime',
+        'last_out' => 'datetime',
     ];
+
+    public function jobOrdersAssigned()
+    {
+        return $this->hasMany(JobOrder::class, 'job_assign_person');
+    }
+
+    public function jobOrdersCreated()
+    {
+        return $this->hasMany(JobOrder::class, 'created_by');
+    }
 }

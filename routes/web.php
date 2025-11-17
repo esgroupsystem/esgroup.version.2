@@ -66,6 +66,8 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/joborder/{id}/add-note', 'addNote')->name('joborder.addnote');
             Route::post('/tickets/joborder/{id}/addfile', 'addFiles')->name('joborder.addfile');
             Route::put('/joborder/{id}/update', 'update')->name('joborder.update');
+            Route::get('/export/{type}', 'export')->name('export');
+
 
             // CCTV Management for Safety Officer
             Route::get('/cctv', 'cctvindex')->name('cctv.index');

@@ -11,6 +11,7 @@ use App\Models\JobOrder;
 use App\Models\JobOrderFile;
 use App\Models\JobOrderLog;
 use App\Models\JobOrderNote;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +19,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use App\Exports\JobOrdersExport;
+use Maatwebsite\Excel\Facades\Excel;
+use PDF;
 
 class TicketController extends Controller
 {
@@ -43,7 +47,50 @@ class TicketController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return view('it_department.ticket_job_order', compact('pending', 'progress', 'completed'));
+        $stats = [
+            'new' => JobOrder::whereDate('created_at', today())->count(),
+            'pending' => JobOrder::where('job_status', 'Pending')->count(),
+            'progress' => JobOrder::where('job_status', 'In Progress')->count(),
+            'completed' => JobOrder::where('job_status', 'Completed')->count(),
+        ];
+
+        $categoryList = [
+            'ACCIDENT',
+            'COLLECTING FARE',
+            'CUTTING FARE',
+            'RE- ISSUEING TICKET',
+            'TAMPERING TICKET',
+            'UNREGISTERED TICKET',
+            'DELAYING ISSUANCE OF TICKET',
+            'ROLLING TICKETS',
+            'REMOVING HEADSTAB OF TICKET',
+            'USING STUB TICKET',
+            'WRONG CLOSING / OPEN',
+            'OTHERS',
+        ];
+
+        $categoryCounts = JobOrder::select('job_type')
+            ->selectRaw('COUNT(*) as total')
+            ->groupBy('job_type')
+            ->pluck('total', 'job_type');
+
+        $categories = [];
+
+        foreach ($categoryList as $cat) {
+            $categories[] = [
+                'name' => $cat,
+                'total' => $categoryCounts[$cat] ?? 0,
+            ];
+        }
+
+        $agents = User::whereIn('role', ['IT Head', 'IT Officer', 'IT Technician'])
+            ->withCount(['jobOrdersAssigned'])
+            ->get();
+
+        return view('it_department.ticket_job_order', compact(
+            'pending', 'progress', 'completed', 'stats',
+            'categories', 'agents'
+        ));
     }
 
     public function cctvindex()
@@ -288,6 +335,24 @@ class TicketController extends Controller
         flash('Files uploaded successfully.')->info();
 
         return back();
+    }
+
+    public function export($type)
+    {
+        $data = JobOrder::with('bus')->get();
+
+        if ($type === 'excel') {
+            return Excel::download(new JobOrdersExport, 'job_orders.xlsx');
+        }
+
+        if ($type === 'pdf') {
+            $pdf = PDF::loadView('it_department.export.pdf', compact('data'))
+                    ->setPaper('a4', 'landscape');
+
+            return $pdf->download('job_orders.pdf');
+        }
+
+        return back()->with('error', 'Invalid export type selected.');
     }
 
     /*
