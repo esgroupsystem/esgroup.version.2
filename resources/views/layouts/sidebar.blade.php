@@ -176,12 +176,12 @@
                             {{-- THIRD LEVEL --}}
                             <ul class="nav collapse {{ request()->is('leave*') ? 'show' : '' }}" id="leaveMenu">
 
-                                <li class="nav-item">
+                                {{-- <li class="nav-item">
                                     <a class="nav-link {{ request()->is('leave/admin') ? 'active' : '' }}"
                                         href="#">
                                         <span class="nav-link-text">Admin (Leave)</span>
                                     </a>
-                                </li>
+                                </li> --}}
 
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('leave/driver') ? 'active' : '' }}"
@@ -192,17 +192,17 @@
 
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('leave/conductor') ? 'active' : '' }}"
-                                        href="#">
+                                        href="{{ route('conductor-leave.conductor.index') }}">
                                         <span class="nav-link-text">Conductor (Leave)</span>
                                     </a>
                                 </li>
 
-                                <li class="nav-item">
+                                {{-- <li class="nav-item">
                                     <a class="nav-link {{ request()->is('leave/conductor') ? 'active' : '' }}"
                                         href="#">
                                         <span class="nav-link-text">Leave Setting</span>
                                     </a>
-                                </li>
+                                </li> --}}
 
                             </ul>
                         </li>

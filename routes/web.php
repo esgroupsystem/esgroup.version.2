@@ -6,6 +6,7 @@ use App\Http\Controllers\HR_Department\DepartmentController;
 use App\Http\Controllers\HR_Department\DriverLeaveController;
 use App\Http\Controllers\HR_Department\EmployeeController;
 use App\Http\Controllers\IT_Department\TicketController;
+use App\Http\Controllers\HR_Department\ConductorLeaveController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -127,6 +128,21 @@ Route::middleware(['auth'])->group(function () {
             Route::get('driver/{leave}/edit', 'edit')->name('driver.edit');
             Route::put('driver/{leave}', 'update')->name('driver.update');
             Route::post('{leave}/action', 'action')->name('driver.action');
+        });
+
+    Route::middleware(['role:Developer,Admin,HR Officer,HR Head'])
+        ->prefix('conductor-leave')
+        ->name('conductor-leave.')
+        ->controller(ConductorLeaveController::class)
+        ->group(function () {
+            Route::get('conductor', 'index')->name('conductor.index');
+            Route::get('conductor/create', 'create')->name('conductor.create');
+            Route::post('conductor/store', 'store')->name('conductor.store');
+            Route::get('/conductor-leave/{id}/edit', 'edit')->name('conductor.edit');
+            Route::put('/conductor-leave/{leave}', 'update')->name('conductor.update');
+
+            // action (modal submit)
+            Route::post('/{leave}/action', 'action')->name('conductor.action');
         });
 
 });
