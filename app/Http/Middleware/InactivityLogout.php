@@ -15,6 +15,17 @@ class InactivityLogout
             $now  = now()->timestamp;
 
             if ($last && ($now - $last) > ($minutes * 60)) {
+
+                // 🔥 Save auto-logout record
+                $user = Auth::user();
+                $user->update([
+                    'last_out' => now(),
+                    'status'   => 'offline',
+                ]);
+
+                // Clear lockscreen status
+                session()->forget('unlocked');
+
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
@@ -23,9 +34,10 @@ class InactivityLogout
                     ->with('error', 'You were logged out due to inactivity.');
             }
 
+            // Update timestamp each request
             session(['last_activity_time' => $now]);
         }
+
         return $next($request);
     }
 }
-

@@ -49,4 +49,9 @@ class Employee extends Model
     {
         return $this->hasMany(EmployeeAttachment::class);
     }
+
+    public function driverLeaves()
+    {
+        return $this->hasMany(DriverLeave::class, 'employee_id');
+    }
 }

@@ -2,41 +2,49 @@
 
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HR_Department\ConductorLeaveController;
 use App\Http\Controllers\HR_Department\DepartmentController;
 use App\Http\Controllers\HR_Department\DriverLeaveController;
 use App\Http\Controllers\HR_Department\EmployeeController;
+use App\Http\Controllers\HR_Department\HRDashboardController;
 use App\Http\Controllers\IT_Department\TicketController;
-use App\Http\Controllers\HR_Department\ConductorLeaveController;
+use App\Http\Controllers\UserManagementController;
+use App\Http\Middleware\ForceLockscreen;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Public Routes
+| Landing Route
 |--------------------------------------------------------------------------
 */
+Route::get('/', function () {
+    if (! Auth::check()) {
+        return redirect()->route('login');
+    }
 
-Route::get('/', [AuthController::class, 'showLogin'])->name('landing');
-Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-
-// Authentication Routes
-Route::controller(AuthController::class)->group(function () {
-    Route::post('/login', 'login')->middleware('throttle:5,1')->name('login.post');
-    Route::post('/register', 'register')->name('register.post');
-    Route::post('/logout', 'logout')->name('logout');
-});
+    return redirect()->route('lockscreen.show');
+})->name('landing');
 
 /*
 |--------------------------------------------------------------------------
-| Protected Routes (Require Authentication)
+| Public Authentication Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])->group(function () {
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login.post');
+Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::get('/lockscreen', [AuthController::class, 'showLockscreen'])->name('lockscreen.show');
+Route::post('/unlock', [AuthController::class, 'unlock'])->name('lockscreen.unlock');
 
-    /*
-    |--------------------------------------------------------------------------
-    | Dashboard (All Authenticated Users)
-    |--------------------------------------------------------------------------
-    */
+/*
+|--------------------------------------------------------------------------
+| Protected Routes (Require Auth)
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', ForceLockscreen::class])->group(function () {
+
     Route::prefix('dashboard')
         ->name('dashboard.')
         ->controller(DashboardController::class)
@@ -47,21 +55,14 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/it-department', 'itindex')->name('itindex');
         });
 
-    /*
-    |--------------------------------------------------------------------------
-    | IT Department Routes (Only Developer/IT Officer/Safety Officer/IT Head/ Head Inspector)
-    |--------------------------------------------------------------------------
-    */
-    Route::middleware(['role:Developer,Admin,IT Officer,IT Head,Safety Officer,Head Inspector'])
+    Route::middleware(['role:Developer,IT Officer,IT Head,Safety Officer,Head Inspector'])
         ->prefix('tickets')
         ->name('tickets.')
         ->controller(TicketController::class)
         ->group(function () {
-
             Route::get('/job-order', 'index')->name('joborder.index');
             Route::get('/create-job-order', 'createjobordersIndex')->name('createjoborder.index');
             Route::post('/store-job-order', 'storeJoborders')->name('storejoborder.post');
-
             Route::get('/job-order/view/{id}', 'view')->name('joborder.view');
             Route::post('/joborder/{id}/accept', 'acceptTask')->name('joborder.accept');
             Route::post('/joborder/{id}/done', 'markAsDone')->name('joborder.done');
@@ -69,18 +70,20 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/tickets/joborder/{id}/addfile', 'addFiles')->name('joborder.addfile');
             Route::put('/joborder/{id}/update', 'update')->name('joborder.update');
             Route::get('/export/{type}', 'export')->name('export');
-
-            // CCTV Management for Safety Officer
             Route::get('/cctv', 'cctvindex')->name('cctv.index');
         });
 
-    /*
-    |--------------------------------------------------------------------------
-    | HR Department Routes (Only HR/Admin)
-    |--------------------------------------------------------------------------
-    */
+    Route::middleware(['role:Developer,HR Officer,HR Head'])
+        ->prefix('hr')
+        ->name('hr.')
+        ->controller(HRDashboardController::class)
+        ->group(function () {
+            Route::get('dashboard', 'index')->name('dashboard');
+            Route::get('dashboard/chart/employees-by-dept', 'employeesByDeptChart')->name('dashboard.chart.employees_by_dept');
+            Route::get('dashboard/chart/leaves-by-type', 'leavesByTypeChart')->name('dashboard.chart.leaves_by_type');
+        });
 
-    Route::middleware(['role:Developer,Admin,HR Officer,HR Head'])
+    Route::middleware(['role:Developer,HR Officer,HR Head'])
         ->prefix('employees')
         ->name('employees.')
         ->controller(EmployeeController::class)
@@ -88,23 +91,17 @@ Route::middleware(['auth'])->group(function () {
             Route::get('/', 'index')->name('staff.index');
             Route::post('/store', 'store')->name('staff.store');
             Route::delete('/{employee}', 'destroy')->name('staff.destroy');
-
-            // Employee Profile
             Route::get('/employee/{employee}', 'show')->name('staff.show');
             Route::put('/employee/{employee}', 'update')->name('update');
             Route::post('/employee/{employee}/201', 'updateAssets')->name('assets.update');
-
             Route::post('/{employee}/history', 'storeHistory')->name('staff.history.store');
             Route::delete('/{employee}/history/{history}', 'destroyHistory')->name('staff.history.destroy');
-
             Route::post('/{employee}/attachments', 'storeAttachment')->name('staff.attachments.store');
             Route::delete('/{employee}/attachments/{attachment}', 'destroyAttachment')->name('staff.attachments.destroy');
-
             Route::get('/{employee}/print', 'print201')->name('staff.print');
-
         });
 
-    Route::middleware(['role:Developer,Admin,HR Officer,HR Head'])
+    Route::middleware(['role:Developer,HR Officer,HR Head'])
         ->prefix('employees')
         ->name('employees.')
         ->controller(DepartmentController::class)
@@ -116,12 +113,11 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/positions/{position}', 'destroyPosition')->name('positions.destroy');
         });
 
-    Route::middleware(['role:Developer,Admin,HR Officer,HR Head'])
+    Route::middleware(['role:Developer,HR Officer,HR Head'])
         ->prefix('driver-leave')
         ->name('driver-leave.')
         ->controller(DriverLeaveController::class)
         ->group(function () {
-
             Route::get('driver', 'index')->name('driver.index');
             Route::get('driver/create', 'create')->name('driver.create');
             Route::post('driver/store', 'store')->name('driver.store');
@@ -130,7 +126,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('{leave}/action', 'action')->name('driver.action');
         });
 
-    Route::middleware(['role:Developer,Admin,HR Officer,HR Head'])
+    Route::middleware(['role:Developer,HR Officer,HR Head'])
         ->prefix('conductor-leave')
         ->name('conductor-leave.')
         ->controller(ConductorLeaveController::class)
@@ -140,9 +136,21 @@ Route::middleware(['auth'])->group(function () {
             Route::post('conductor/store', 'store')->name('conductor.store');
             Route::get('/conductor-leave/{id}/edit', 'edit')->name('conductor.edit');
             Route::put('/conductor-leave/{leave}', 'update')->name('conductor.update');
-
-            // action (modal submit)
             Route::post('/{leave}/action', 'action')->name('conductor.action');
+        });
+
+    Route::middleware(['role:Developer,HR Head'])
+        ->prefix('authentication')
+        ->name('authentication.')
+        ->controller(UserManagementController::class)
+        ->group(function () {
+            Route::get('/users', 'index')->name('users.index');
+            Route::get('/users/create', 'create')->name('users.create');
+            Route::post('/users/store', 'store')->name('users.store');
+            Route::get('/users/edit/{id}', 'edit')->name('users.edit');
+            Route::post('/users/update/{id}', 'update')->name('users.update');
+            Route::post('/users/reset-password/{id}', 'resetPassword')->name('users.reset.password');
+            Route::get('/users/status/{id}', 'status')->name('users.status');
         });
 
 });
