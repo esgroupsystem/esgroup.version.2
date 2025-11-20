@@ -89,7 +89,7 @@
                 {{-- CCTV CONCERN --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
-                        href="{{ route('tickets.cctv.index') }}">
+                        href="#">
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
                                 <span class="fas fa-video"></span>
