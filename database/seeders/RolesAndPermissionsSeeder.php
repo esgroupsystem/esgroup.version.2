@@ -2,14 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Models\Permission;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
-use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 
-class SuperAdminSeeder extends Seeder
+class RolesAndPermissionsSeeder extends Seeder
 {
     public function run()
     {
-
+        
     }
 }

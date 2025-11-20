@@ -13,6 +13,14 @@
             }
         </script>
         <div class="content">
+
+            @if (auth()->user()->must_change_password)
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        new bootstrap.Modal(document.getElementById('forceChangePasswordModal')).show();
+                    });
+                </script>
+            @endif
             <div class="row g-3 mb-4">
                 <div class="col-12">
                     <div class="card border-0 shadow-sm position-relative overflow-hidden">
@@ -102,4 +110,42 @@
 
         </div>
     </div>
+    <div class="modal fade" id="forceChangePasswordModal" tabindex="-1">
+        <div class="modal-dialog modal-md modal-dialog-centered">
+            <div class="modal-content">
+
+                <form action="{{ route('auth.change.password.update') }}" method="POST">
+                    @csrf
+
+                    <div class="modal-header">
+                        <h5 class="modal-title">Change Your Password</h5>
+                    </div>
+
+                    <div class="modal-body">
+                        <p class="text-muted fs-9">
+                            Please change your password to continue using the system.
+                        </p>
+
+                        <div class="mb-3">
+                            <label class="form-label">New Password</label>
+                            <input type="password" name="password" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Confirm Password</label>
+                            <input type="password" name="password_confirmation" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-primary w-100" type="submit">
+                            Update Password
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
 @endsection

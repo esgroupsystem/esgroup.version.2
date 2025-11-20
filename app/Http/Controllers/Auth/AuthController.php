@@ -189,4 +189,27 @@ class AuthController extends Controller
             return redirect()->back();
         }
     }
+
+    public function changePasswordForm()
+    {
+        return view('auth.change-password');
+    }
+
+    public function changePasswordUpdate(Request $request)
+    {
+        $request->validate([
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+        ]);
+
+        $user = auth()->user();
+
+        $user->update([
+            'password' => Hash::make($request->password),
+            'must_change_password' => false,
+        ]);
+
+        flash('Password updated successfully!')->success();
+
+        return redirect()->route('dashboard.index');
+    }
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -14,12 +15,9 @@ class UserManagementController extends Controller
             ->orderBy('id', 'DESC')
             ->get();
 
-        return view('users.index', compact('users'));
-    }
+        $roles = Role::orderBy('name')->get();
 
-    public function create()
-    {
-        return view('users.create');
+        return view('users.index', compact('users', 'roles'));
     }
 
     public function store(Request $request)
@@ -34,24 +32,18 @@ class UserManagementController extends Controller
         $autoPassword = $this->generatePassword($request->full_name);
 
         User::create([
-            'full_name'   => $request->full_name,
-            'username'    => $request->username,
-            'email'       => $request->email,
-            'role'        => $request->role,
-            'password'    => Hash::make($autoPassword),
+            'full_name' => $request->full_name,
+            'username' => $request->username,
+            'email' => $request->email,
+            'role' => $request->role,
+            'password' => Hash::make($autoPassword),
             'account_status' => 'active',
+            'must_change_password' => true,
         ]);
 
-        flash("User created successfully!")->success();
+        flash('User created successfully!')->success();
 
         return redirect()->route('authentication.users.index');
-    }
-
-    public function edit($id)
-    {
-        $user = User::findOrFail($id);
-
-        return view('users.edit', compact('user'));
     }
 
     public function update(Request $request, $id)
@@ -60,16 +52,16 @@ class UserManagementController extends Controller
 
         $request->validate([
             'full_name' => 'required|string',
-            'username'  => 'required|string|unique:users,username,' . $user->id,
-            'email'     => 'required|email|unique:users,email,' . $user->id,
-            'role'      => 'required|string',
+            'username' => 'required|string|unique:users,username,'.$user->id,
+            'email' => 'required|email|unique:users,email,'.$user->id,
+            'role' => 'required|string',
         ]);
 
         $user->update([
-            'full_name'      => $request->full_name,
-            'username'       => $request->username,
-            'email'          => $request->email,
-            'role'           => $request->role,
+            'full_name' => $request->full_name,
+            'username' => $request->username,
+            'email' => $request->email,
+            'role' => $request->role,
             'account_status' => $request->account_status,
         ]);
 
@@ -86,9 +78,10 @@ class UserManagementController extends Controller
 
         $user->update([
             'password' => Hash::make($autoPassword),
+            'must_change_password' => true,
         ]);
 
-        flash("Password reset successfully!")->success();
+        flash('Password reset successfully!')->success();
 
         return redirect()->back();
     }
@@ -120,6 +113,6 @@ class UserManagementController extends Controller
             }
         }
 
-        return $initials . '123456';
+        return $initials.'123456';
     }
 }

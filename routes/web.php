@@ -8,6 +8,7 @@ use App\Http\Controllers\HR_Department\DriverLeaveController;
 use App\Http\Controllers\HR_Department\EmployeeController;
 use App\Http\Controllers\HR_Department\HRDashboardController;
 use App\Http\Controllers\IT_Department\TicketController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Middleware\ForceLockscreen;
 use Illuminate\Support\Facades\Auth;
@@ -53,6 +54,16 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/analytics', 'analyticsindex')->name('analytics');
             Route::get('/crm', 'crmindex')->name('crm');
             Route::get('/it-department', 'itindex')->name('itindex');
+
+        });
+
+    Route::prefix('auth')
+        ->name('auth.')
+        ->controller(AuthController::class)
+        ->group(function () {
+            Route::get('/change-password', 'changePasswordForm')->name('change.password.form');
+            Route::post('/change-password', 'changePasswordUpdate')->name('change.password.update');
+
         });
 
     Route::middleware(['role:Developer,IT Officer,IT Head,Safety Officer,Head Inspector'])
@@ -73,7 +84,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/cctv', 'cctvindex')->name('cctv.index');
         });
 
-    Route::middleware(['role:Developer,HR Officer,HR Head'])
+    Route::middleware(['role:Developer,IT Head,HR Officer,HR Head'])
         ->prefix('hr')
         ->name('hr.')
         ->controller(HRDashboardController::class)
@@ -83,7 +94,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('dashboard/chart/leaves-by-type', 'leavesByTypeChart')->name('dashboard.chart.leaves_by_type');
         });
 
-    Route::middleware(['role:Developer,HR Officer,HR Head'])
+    Route::middleware(['role:Developer,IT Head,HR Officer,HR Head'])
         ->prefix('employees')
         ->name('employees.')
         ->controller(EmployeeController::class)
@@ -101,7 +112,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/{employee}/print', 'print201')->name('staff.print');
         });
 
-    Route::middleware(['role:Developer,HR Officer,HR Head'])
+    Route::middleware(['role:Developer,IT Head,HR Officer,HR Head'])
         ->prefix('employees')
         ->name('employees.')
         ->controller(DepartmentController::class)
@@ -113,7 +124,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::delete('/positions/{position}', 'destroyPosition')->name('positions.destroy');
         });
 
-    Route::middleware(['role:Developer,HR Officer,HR Head'])
+    Route::middleware(['role:Developer,IT Head,HR Officer,HR Head'])
         ->prefix('driver-leave')
         ->name('driver-leave.')
         ->controller(DriverLeaveController::class)
@@ -126,7 +137,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('{leave}/action', 'action')->name('driver.action');
         });
 
-    Route::middleware(['role:Developer,HR Officer,HR Head'])
+    Route::middleware(['role:Developer,IT Head,HR Officer,HR Head'])
         ->prefix('conductor-leave')
         ->name('conductor-leave.')
         ->controller(ConductorLeaveController::class)
@@ -139,7 +150,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/{leave}/action', 'action')->name('conductor.action');
         });
 
-    Route::middleware(['role:Developer,HR Head'])
+    Route::middleware(['role:Developer,IT Head'])
         ->prefix('authentication')
         ->name('authentication.')
         ->controller(UserManagementController::class)
@@ -151,6 +162,18 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/users/update/{id}', 'update')->name('users.update');
             Route::post('/users/reset-password/{id}', 'resetPassword')->name('users.reset.password');
             Route::get('/users/status/{id}', 'status')->name('users.status');
+        });
+
+    Route::middleware(['role:Developer,IT Head'])
+        ->prefix('roles')
+        ->name('roles.')
+        ->controller(RoleController::class)
+        ->group(function () {
+            Route::get('/roles', 'index')->name('index');
+            Route::post('/roles/store', 'store')->name('store');
+            Route::get('/roles/edit/{id}', 'edit')->name('edit');
+            Route::post('/roles/update/{id}', 'update')->name('update');
+            Route::get('/roles/status/{id}', 'destroy')->name('destroy');
         });
 
 });

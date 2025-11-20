@@ -20,7 +20,6 @@
         <div class="navbar-vertical-content scrollbar">
             <ul class="navbar-nav flex-column mb-3" id="navbarVerticalNav">
 
-
                 {{-- DASHBOARD --}}
                 <li class="nav-item">
                     <a class="nav-link dropdown-indicator d-flex justify-content-between align-items-center"
@@ -53,13 +52,6 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->is('dashboard/crm') ? 'active' : '' }}"
-                                href="{{ route('dashboard.crm') }}">
-                                CRM
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/it-department') ? 'active' : '' }}"
                                 href="{{ route('dashboard.itindex') }}">
                                 IT Department
@@ -68,7 +60,6 @@
 
                     </ul>
                 </li>
-
 
                 {{-- LABEL --}}
                 <li class="nav-item">
@@ -81,7 +72,6 @@
                         </div>
                     </div>
                 </li>
-
 
                 {{-- TICKETS JOB ORDER --}}
                 <li class="nav-item">
@@ -177,13 +167,6 @@
                             {{-- THIRD LEVEL --}}
                             <ul class="nav collapse {{ request()->is('leave*') ? 'show' : '' }}" id="leaveMenu">
 
-                                {{-- <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('leave/admin') ? 'active' : '' }}"
-                                        href="#">
-                                        <span class="nav-link-text">Admin (Leave)</span>
-                                    </a>
-                                </li> --}}
-
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('leave/driver') ? 'active' : '' }}"
                                         href="{{ route('driver-leave.driver.index') }}">
@@ -197,13 +180,6 @@
                                         <span class="nav-link-text">Conductor (Leave)</span>
                                     </a>
                                 </li>
-
-                                {{-- <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('leave/conductor') ? 'active' : '' }}"
-                                        href="#">
-                                        <span class="nav-link-text">Leave Setting</span>
-                                    </a>
-                                </li> --}}
 
                             </ul>
                         </li>
@@ -232,6 +208,17 @@
                                 <span class="fas fa-user-shield"></span>
                             </span>
                             <span class="nav-link-text ps-1">Users</span>
+                        </div>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('authentication/roles*') ? 'active' : '' }}"
+                        href="{{ route('roles.index') }}">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-user-shield"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Roles</span>
                         </div>
                     </a>
                 </li>
