@@ -80,11 +80,22 @@ class AuthController extends Controller
 
                 $user = Auth::user();
 
+                // 🔍 Check if account is ACTIVE
+                if (! in_array(strtolower($user->account_status), ['active'])) {
+
+                    Auth::logout(); // Force logout
+                    Session::flush();
+
+                    flash('Your account is deactivated, please contact administrator.')->error();
+
+                    return back()->withInput();
+                }
+
                 // Save login activity
                 $user->update([
                     'status' => 'online',
                     'last_online' => now(),
-                    'account_status' => 'active',
+                    'account_status' => 'active', // keep active on login
                 ]);
 
                 // Unlock dashboard
