@@ -1,30 +1,6 @@
     @extends('layouts.app')
     @section('title', $employee->full_name . ' | Employee 201')
 
-    @push('styles')
-        <style>
-            /* small utility tweaks for the header/profile */
-            .profile-header-card {
-                position: relative;
-            }
-
-            .profile-left img {
-                width: 120px;
-                height: 120px;
-                object-fit: cover;
-                border-radius: 50%;
-            }
-
-            .avatar-file-label {
-                font-size: 0.9rem;
-            }
-
-            .small-muted {
-                color: #6c757d;
-            }
-        </style>
-    @endpush
-
     @section('content')
         <div class="container" data-layout="container">
 
@@ -40,7 +16,7 @@
                             @php
                                 $profilePath = $employee->asset?->profile_picture
                                     ? asset('storage/' . $employee->asset->profile_picture)
-                                    : asset('assets/img/team/2.jpg');
+                                    : asset('assets/img/no-image-default.png');
                             @endphp
                             <img class="rounded-circle" src="{{ $profilePath }}" alt="Profile">
                         </div>
@@ -241,8 +217,6 @@
                         <div class="card-body">
                             @forelse($employee->attachments as $att)
                                 <div class="d-flex mb-3 attachment-row">
-
-                                    {{-- LEFT SIDE --}}
                                     <div class="flex-grow-1 me-2 text-truncate">
                                         <i class="fas fa-file mono-icon me-2"></i>
 
@@ -255,8 +229,6 @@
                                             {{ strtoupper($att->mime_type) }} • {{ round($att->size / 1024, 1) }} KB
                                         </div>
                                     </div>
-
-                                    {{-- RIGHT SIDE --}}
                                     <div class="flex-shrink-0">
                                         <form
                                             action="{{ route('employees.staff.attachments.destroy', [$employee->id, $att->id]) }}"
@@ -274,8 +246,6 @@
                             @endforelse
                         </div>
                     </div>
-
-                    {{-- Right column meta --}}
                     <div class="card mb-3 shadow-sm">
                         <div class="card-body">
                             <div class="small-muted mb-2">Contact</div>
@@ -284,13 +254,12 @@
                                 {{ $employee->phone_number ?? '—' }}</div>
 
                             <div class="mt-3 small-muted">Company</div>
-                            <div>{{ $employee->company ?? '—' }}</div>
+                            <div><i class="fas fa-building mono-icon me-2"></i>{{ $employee->company ?? '—' }}</div>
+                            <div><i class="fas fa-warehouse mono-icon me-2"></i>{{ $employee->garage ?? '—' }}</div>
+
                         </div>
                     </div>
                 </div>
-
-
-
             </div>
         </div>
 
@@ -478,14 +447,16 @@
                                 <select name="status" class="form-control">
                                     <option value="Active" {{ $employee->status === 'Active' ? 'selected' : '' }}>Active
                                     </option>
-                                    <option value="Inactive" {{ $employee->status === 'Inactive' ? 'selected' : '' }}>
-                                        Inactive
-                                    </option>
-                                    <option value="Resigned" {{ $employee->status === 'Resigned' ? 'selected' : '' }}>
-                                        Resigned
-                                    </option>
+                                    <option value="Suspended" {{ $employee->status === 'Suspended' ? 'selected' : '' }}>
+                                        Suspended</option>
                                     <option value="Terminated" {{ $employee->status === 'Terminated' ? 'selected' : '' }}>
                                         Terminated</option>
+                                    <option value="Retrench" {{ $employee->status === 'Retrench' ? 'selected' : '' }}>
+                                        Retrench</option>
+                                    <option value="Retired" {{ $employee->status === 'Retired' ? 'selected' : '' }}>
+                                        Retired</option>
+                                    <option value="Resigned" {{ $employee->status === 'Resigned' ? 'selected' : '' }}>
+                                        Resigned</option>
                                 </select>
                             </div>
 
@@ -497,19 +468,29 @@
 
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Company</label>
-                                <select name="company" class="form-control">
-                                    <option value="MIRASOL" {{ $employee->company === 'MIRASOL' ? 'selected' : '' }}>
-                                        MIRASOL
+                                <select name="company" class="form-control" required>
+                                    <option value="">-- Select Company --</option>
+                                    <option value="Jell Transport"
+                                        {{ $employee->company === 'Jell Transport' ? 'selected' : '' }}>
+                                        Jell Transport
                                     </option>
-                                    <option value="BALINTAWAK"
-                                        {{ $employee->company === 'BALINTAWAK' ? 'selected' : '' }}>
-                                        BALINTAWAK</option>
+                                    <option value="ES Transport"
+                                        {{ $employee->company === 'ES Transport' ? 'selected' : '' }}>
+                                        ES Transport
+                                    </option>
+                                    <option value="Kellen Transport"
+                                        {{ $employee->company === 'Kellen Transport' ? 'selected' : '' }}>
+                                        Kellen Transport
+                                    </option>
+                                    <option value="Earthstar Transport"
+                                        {{ $employee->company === 'Earthstar Transport' ? 'selected' : '' }}>
+                                        Earthstar Transport
+                                    </option>
                                 </select>
                             </div>
-
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Department</label>
-                                <select name="department_id" id="departmentSelect" class="form-control">
+                                <select name="department_id" id="editDepartmentSelect" class="form-control">
 
                                     {{-- Always show the employee's current department first --}}
                                     @if ($employee->department)
@@ -532,7 +513,7 @@
 
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Position</label>
-                                <select name="position_id" id="positionSelect" class="form-control">
+                                <select name="position_id" id="editPositionSelect" class="form-control">
 
                                     {{-- If employee has a position, show it as the first option --}}
                                     @if ($employee->position)
@@ -556,6 +537,17 @@
                             </div>
 
                             <div class="col-md-6">
+                                <label class="form-label fw-bold">Garage</label>
+                                <select name="garage" class="form-control" required>
+                                    <option value="Mirasol" {{ $employee->garage === 'Mirasol' ? 'selected' : '' }}>
+                                        Mirasol</option>
+                                    <option value="Balintawak" {{ $employee->garage === 'Balintawak' ? 'selected' : '' }}>
+                                        Balintawak</option>
+                                </select>
+                            </div>
+
+
+                            <div class="col-md-6">
                                 <label class="form-label fw-bold">Email</label>
                                 <input type="email" name="email" class="form-control"
                                     value="{{ $employee->email }}">
@@ -563,7 +555,8 @@
 
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Phone Number</label>
-                                <input type="text" name="phone_number" class="form-control"
+                                <input type="text" name="phone_number" class="form-control" inputmode="numeric"
+                                    pattern="[0-9]*" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11)"
                                     value="{{ $employee->phone_number }}">
                             </div>
                         </div>
@@ -590,35 +583,31 @@
                     target.textContent = file ? file.name : '';
                 });
             });
+            // --- Dynamic Position Loading for EDIT PROFILE MODAL ---
+            document.getElementById('editDepartmentSelect')?.addEventListener('change', function() {
+                const deptId = this.value;
+                const posSelect = document.getElementById('editPositionSelect');
+                const url = "{{ url('/employees/departments') }}/" + deptId + "/positions";
 
-            // dynamic positions loader (OPTIONAL)
-            // If you want positions to update when department changes, uncomment and set the URL.
-            // The controller should return JSON positions for a department.
+                posSelect.innerHTML = '<option value="">Loading...</option>';
 
-            // document.getElementById('departmentSelect')?.addEventListener('change', function() {
-            //     const deptId = this.value;
-            //     const posSelect = document.getElementById('positionSelect');
-            //     posSelect.innerHTML = '<option value="">Loading...</option>';
-            //     if (!deptId) {
-            //         posSelect.innerHTML = '<option value="">-- Select position --</option>';
-            //         return;
-            //     }
-            //     fetch('/departments/' + deptId + '/positions') // implement this route to return JSON
-            //         .then(r => r.json())
-            //         .then(data => {
-            //             posSelect.innerHTML = '<option value="">-- Select position --</option>';
-            //             data.forEach(p => {
-            //                 const opt = document.createElement('option');
-            //                 opt.value = p.id;
-            //                 opt.textContent = p.title;
-            //                 posSelect.appendChild(opt);
-            //             });
-            //         })
-            //         .catch(() => {
-            //             posSelect.innerHTML = '<option value="">-- Select position --</option>';
-            //         });
-            // });
+                if (!deptId) {
+                    posSelect.innerHTML = '<option value="">-- Select position --</option>';
+                    return;
+                }
 
+                fetch(url)
+                    .then(res => res.json())
+                    .then(list => {
+                        posSelect.innerHTML = '<option value="">-- Select position --</option>';
+                        list.forEach(pos => {
+                            posSelect.innerHTML += `<option value="${pos.id}">${pos.title}</option>`;
+                        });
+                    })
+                    .catch(() => {
+                        posSelect.innerHTML = '<option value="">-- Select position --</option>';
+                    });
+            });
 
             // confirmation for delete actions
             document.querySelectorAll('.confirm-delete').forEach(function(form) {
@@ -627,4 +616,28 @@
                 });
             });
         </script>
+    @endpush
+
+    @push('styles')
+        <style>
+            /* small utility tweaks for the header/profile */
+            .profile-header-card {
+                position: relative;
+            }
+
+            .profile-left img {
+                width: 120px;
+                height: 120px;
+                object-fit: cover;
+                border-radius: 50%;
+            }
+
+            .avatar-file-label {
+                font-size: 0.9rem;
+            }
+
+            .small-muted {
+                color: #6c757d;
+            }
+        </style>
     @endpush

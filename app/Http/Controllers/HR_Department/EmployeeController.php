@@ -14,36 +14,68 @@ use Illuminate\Validation\ValidationException;
 
 class EmployeeController extends Controller
 {
-    public function index()
+    /* ==========================================================
+        LISTING / SEARCH
+    ========================================================== */
+    public function index(Request $request)
     {
-        $employees = Employee::with(['department', 'position', 'asset'])->latest()->paginate(10);
+        $query = Employee::with(['department', 'position'])
+            ->orderBy('employee_id', 'asc');
+
+        // AJAX SEARCH
+        if ($request->ajax()) {
+            if ($request->search) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('full_name', 'like', "%{$request->search}%")
+                        ->orWhere('employee_id', 'like', "%{$request->search}%");
+                });
+            }
+
+            $employees = $query->paginate(10);
+
+            return view('hr_department.employees.table', compact('employees'))->render();
+        }
+
+        $employees = $query->paginate(10);
         $departments = Department::with('positions')->get();
 
         return view('hr_department.index', compact('employees', 'departments'));
     }
 
+    /* ==========================================================
+        SHOW PROFILE
+    ========================================================== */
     public function show(Employee $employee)
     {
-        
-        $employee->load(['asset', 'histories' => function ($q) {
-            $q->orderBy('start_date', 'desc');
-        }, 'attachments', 'position', 'department', 'department.positions']);
+        $employee->load([
+            'asset',
+            'histories' => fn ($q) => $q->orderBy('start_date', 'desc'),
+            'attachments',
+            'position',
+            'department',
+            'department.positions',
+        ]);
 
         $departments = Department::with('positions')->get();
 
         return view('hr_department.employee_profile', compact('employee', 'departments'));
     }
 
+    /* ==========================================================
+        CREATE EMPLOYEE
+    ========================================================== */
     public function store(Request $request)
     {
         try {
+
             $request->validate([
                 'full_name' => 'required|string|max:255',
                 'department_id' => 'nullable|exists:departments,id',
                 'position_id' => 'nullable|exists:positions,id',
                 'email' => 'nullable|email|max:255',
-                'phone_number' => 'nullable|string|max:20',
-                'company' => 'required|in:Jell Transport,ES Transport,Earthstar Transport, Kellen Transport',
+                'phone_number' => 'nullable|digits:11|regex:/^[0-9]*$/',
+                'company' => 'required|in:Jell Transport,ES Transport,Earthstar Transport,Kellen Transport',
+                'garage' => 'required|in:Mirasol,Balintawak',
             ]);
 
             $lastId = Employee::latest()->value('id') ?? 0;
@@ -57,13 +89,21 @@ class EmployeeController extends Controller
                 'email' => $request->email,
                 'phone_number' => $request->phone_number,
                 'company' => $request->company,
+                'garage' => $request->garage,
             ]);
 
             flash('Employee added successfully!')->success();
 
             return back();
+
         } catch (ValidationException $e) {
-            flash('Validation failed. Please check the input fields.')->warning();
+
+            // SHOW EXACT ERRORS IN FLASH
+            foreach ($e->errors() as $field => $messages) {
+                foreach ($messages as $msg) {
+                    flash($msg)->warning();
+                }
+            }
 
             Log::warning('Employee validation failed', [
                 'errors' => $e->errors(),
@@ -72,10 +112,9 @@ class EmployeeController extends Controller
 
             return back()->withErrors($e->validator)->withInput();
         } catch (\Exception $e) {
+
             Log::error('Error adding employee', [
                 'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
             ]);
 
             flash('Something went wrong while adding the employee.')->error();
@@ -84,26 +123,45 @@ class EmployeeController extends Controller
         }
     }
 
+    /* ==========================================================
+        UPDATE EMPLOYEE PROFILE
+    ========================================================== */
     public function update(Request $request, Employee $employee)
     {
-        $validated = $request->validate([
-            'full_name' => 'required|string|max:255',
-            'status' => 'nullable|string',
-            'date_hired' => 'nullable|date',
-            'company' => 'required|in:MIRASOL,BALINTAWAK',
-            'department_id' => 'nullable|exists:departments,id',
-            'position_id' => 'nullable|exists:positions,id',
-            'email' => 'nullable|email|max:255',
-            'phone_number' => 'nullable|string|max:20',
-        ]);
+        try {
+            $validated = $request->validate([
+                'full_name' => 'required|string|max:255',
+                'status' => 'required|string|in:Active,Inactive,Suspended,Terminated,Retrench,Retired,Resigned',
+                'date_hired' => 'nullable|date',
+                'company' => 'required|in:Jell Transport,ES Transport,Kellen Transport,Earthstar Transport',
+                'department_id' => 'nullable|exists:departments,id',
+                'position_id' => 'nullable|exists:positions,id',
+                'email' => 'nullable|email|max:255',
+                'phone_number' => 'nullable|digits:11|regex:/^[0-9]*$/',
+                'garage' => 'required|in:Mirasol,Balintawak',
+            ]);
 
-        $employee->update($validated);
+            $employee->update($validated);
 
-        flash('Employee profile updated successfully!')->success();
+            flash('Employee profile updated successfully!')->success();
 
-        return back();
+            return back();
+
+        } catch (ValidationException $e) {
+
+            foreach ($e->errors() as $msgList) {
+                foreach ($msgList as $msg) {
+                    flash($msg)->warning();
+                }
+            }
+
+            return back()->withErrors($e->validator)->withInput();
+        }
     }
 
+    /* ==========================================================
+        UPDATE 201 FILES
+    ========================================================== */
     public function updateAssets(Request $request, Employee $employee)
     {
         try {
@@ -111,37 +169,27 @@ class EmployeeController extends Controller
 
             $asset = $employee->asset ?? $employee->asset()->create([]);
 
+            // PROFILE PICTURE
             if ($request->hasFile('profile_picture')) {
                 $file = $request->file('profile_picture');
 
-                $original = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                $ext = $file->getClientOriginalExtension();
-                $rand = rand(1000, 9999);
-
-                $safeName = str_replace(' ', '_', $employee->full_name.'_'.$original.'_profile-'.$rand.'.'.$ext);
-
+                $safeName = str_replace(' ', '_', $employee->full_name.'_profile_'.rand(1000, 9999).'.'.$file->extension());
                 $path = $file->storeAs('employees/profile', $safeName, 'public');
 
                 if ($asset->profile_picture) {
                     Storage::disk('public')->delete($asset->profile_picture);
                 }
+
                 $asset->profile_picture = $path;
             }
 
+            // OTHER FILES
             foreach (['birth_certificate', 'resume', 'contract'] as $field) {
+
                 if ($request->hasFile($field)) {
                     $file = $request->file($field);
 
-                    $original = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                    $ext = $file->getClientOriginalExtension();
-                    $rand = rand(1000, 9999);
-
-                    $safeName = str_replace(
-                        ' ',
-                        '_',
-                        $employee->full_name.'_'.$original.'_'.$field.'-'.$rand.'.'.$ext
-                    );
-
+                    $safeName = str_replace(' ', '_', $employee->full_name."_{$field}_".rand(1000, 9999).'.'.$file->extension());
                     $path = $file->storeAs("employees/{$field}", $safeName, 'public');
 
                     if ($asset->{$field}) {
@@ -152,65 +200,74 @@ class EmployeeController extends Controller
                 }
             }
 
-            $asset->sss_number = $request->input('sss_number');
-            $asset->tin_number = $request->input('tin_number');
-            $asset->philhealth_number = $request->input('philhealth_number');
-            $asset->pagibig_number = $request->input('pagibig_number');
-
-            $asset->save();
+            $asset->fill([
+                'sss_number' => $request->sss_number,
+                'tin_number' => $request->tin_number,
+                'philhealth_number' => $request->philhealth_number,
+                'pagibig_number' => $request->pagibig_number,
+            ])->save();
 
             DB::commit();
-            flash('201 file updated successfully.')->success();
+
+            flash('201 file updated successfully!')->success();
 
             return back();
+
         } catch (\Throwable $e) {
             DB::rollBack();
-            \Log::error('Employee updateAssets error: '.$e->getMessage());
-            flash('Something went wrong while updating.')->error();
+            Log::error("updateAssets error: {$e->getMessage()}");
+            flash('Something went wrong updating the 201 file.')->error();
 
             return back();
         }
     }
 
+    /* ==========================================================
+        ADD HISTORY
+    ========================================================== */
     public function storeHistory(Request $request, Employee $employee)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'start_date' => 'nullable|date',
-            'end_date' => 'nullable|date',
-        ]);
-
         try {
-            $employee->histories()->create($request->only(['title', 'description', 'start_date', 'end_date']));
-            flash('History added.')->success();
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date',
+            ]);
+
+            $employee->histories()->create($request->all());
+
+            flash('History added!')->success();
 
             return back();
-        } catch (\Throwable $e) {
-            \Log::error('storeHistory error: '.$e->getMessage());
-            flash('Unable to add history.')->error();
 
-            return back();
+        } catch (ValidationException $e) {
+            foreach ($e->errors() as $msgList) {
+                foreach ($msgList as $msg) {
+                    flash($msg)->warning();
+                }
+            }
+
+            return back()->withErrors($e->validator)->withInput();
         }
     }
 
-
+    /* ==========================================================
+        ADD ATTACHMENT
+    ========================================================== */
     public function storeAttachment(Request $request, Employee $employee)
     {
-        $request->validate([
-            'attachment' => 'required|file|max:10240',
-        ]);
-
         try {
+            $request->validate([
+                'attachment' => 'required|file|max:10240',
+            ]);
+
             $file = $request->file('attachment');
 
-            // CLEAN filename format
-            $cleanName = str_replace(' ', '_', strtolower($employee->full_name));
-            $original = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $cleanOriginal = str_replace([' ', '.', '-'], '_', strtolower($original));
+            $cleanName = strtolower(str_replace(' ', '_', $employee->full_name));
+            $original = strtolower(str_replace([' ', '.', '-'], '_', $file->getClientOriginalName()));
 
-            $newName = $cleanName.'_'.$cleanOriginal.'_'.uniqid().'.'.
-                $file->getClientOriginalExtension();
+            $newName = "{$cleanName}_{$original}_".uniqid().'.'.$file->getClientOriginalExtension();
 
             $path = $file->storeAs('employees/attachments', $newName, 'public');
 
@@ -221,18 +278,80 @@ class EmployeeController extends Controller
                 'size' => $file->getSize(),
             ]);
 
-            flash('Attachment uploaded.')->success();
+            flash('Attachment uploaded!')->success();
 
             return back();
+
+        } catch (ValidationException $e) {
+            foreach ($e->errors() as $errorList) {
+                foreach ($errorList as $msg) {
+                    flash($msg)->warning();
+                }
+            }
+
+            return back()->withInput();
+        }
+    }
+
+    /* ==========================================================
+        DELETE ATTACHMENT
+    ========================================================== */
+    public function destroyAttachment(Employee $employee, $attachmentId)
+    {
+        try {
+            $att = $employee->attachments()->findOrFail($attachmentId);
+            Storage::disk('public')->delete($att->file_path);
+            $att->delete();
+
+            flash('Attachment removed!')->success();
+
+            return back();
+
         } catch (\Throwable $e) {
-            Log::error('storeAttachment error: '.$e->getMessage());
-            flash('Unable to upload attachment.')->error();
+            flash('Unable to remove attachment.')->error();
 
             return back();
         }
     }
 
-    // print 201 as PDF
+    /* ==========================================================
+        DELETE HISTORY
+    ========================================================== */
+    public function destroyHistory(Employee $employee, $historyId)
+    {
+        try {
+            $employee->histories()->findOrFail($historyId)->delete();
+            flash('History removed!')->success();
+
+            return back();
+
+        } catch (\Throwable $e) {
+            flash('Unable to remove history.')->error();
+
+            return back();
+        }
+    }
+
+    /* ==========================================================
+        DELETE EMPLOYEE
+    ========================================================== */
+    public function destroy(Employee $employee)
+    {
+        try {
+            $employee->delete();
+            flash('Employee deleted!')->success();
+
+            return back();
+        } catch (\Throwable $e) {
+            flash('Unable to delete employee.')->error();
+
+            return back();
+        }
+    }
+
+    /* ==========================================================
+        PDF
+    ========================================================== */
     public function print201($id)
     {
         $employee = Employee::with(['asset', 'histories', 'attachments', 'position', 'department'])
@@ -242,54 +361,5 @@ class EmployeeController extends Controller
             ->setPaper('A4', 'portrait');
 
         return $pdf->stream($employee->employee_id.'_201.pdf');
-    }
-
-    // optionally: delete attachment
-    public function destroyAttachment(Employee $employee, $attachmentId)
-    {
-        try {
-            $att = $employee->attachments()->findOrFail($attachmentId);
-            Storage::disk('public')->delete($att->file_path);
-            $att->delete();
-            flash('Attachment removed.')->success();
-
-            return back();
-        } catch (\Throwable $e) {
-            \Log::error('destroyAttachment error: '.$e->getMessage());
-            flash('Unable to remove attachment.')->error();
-
-            return back();
-        }
-    }
-
-    // optionally: delete history
-    public function destroyHistory(Employee $employee, $historyId)
-    {
-        try {
-            $employee->histories()->findOrFail($historyId)->delete();
-            flash('History removed.')->success();
-
-            return back();
-        } catch (\Throwable $e) {
-            \Log::error('destroyHistory error: '.$e->getMessage());
-            flash('Unable to remove history.')->error();
-
-            return back();
-        }
-    }
-
-    public function destroy(Employee $employee)
-    {
-        try {
-            $employee->delete();
-            flash('Employee deleted.')->success();
-
-            return back();
-        } catch (\Throwable $e) {
-            \Log::error('Employee delete error: '.$e->getMessage());
-            flash('Unable to delete employee.')->error();
-
-            return back();
-        }
     }
 }

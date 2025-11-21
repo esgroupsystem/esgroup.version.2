@@ -34,6 +34,17 @@ class DepartmentController extends Controller
         }
     }
 
+    public function positions($id)
+    {
+        $department = Department::with('positions')->find($id);
+
+        if (! $department) {
+            return response()->json([]);
+        }
+
+        return response()->json($department->positions);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Saving/Create Routes
