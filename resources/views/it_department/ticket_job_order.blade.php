@@ -17,7 +17,6 @@
             {{-- ===================== STAT CARDS ===================== --}}
             <div class="row g-3 mb-4">
 
-                {{-- New Tickets --}}
                 <div class="col-md-3">
                     <div class="card shadow-sm p-3">
                         <div class="d-flex justify-content-between">
@@ -29,7 +28,6 @@
                     </div>
                 </div>
 
-                {{-- Pending --}}
                 <div class="col-md-3">
                     <div class="card shadow-sm p-3">
                         <div class="d-flex justify-content-between">
@@ -41,7 +39,6 @@
                     </div>
                 </div>
 
-                {{-- In Progress --}}
                 <div class="col-md-3">
                     <div class="card shadow-sm p-3">
                         <div class="d-flex justify-content-between">
@@ -53,7 +50,6 @@
                     </div>
                 </div>
 
-                {{-- Completed --}}
                 <div class="col-md-3">
                     <div class="card shadow-sm p-3">
                         <div class="d-flex justify-content-between">
@@ -67,13 +63,12 @@
 
             </div>
 
-            {{-- =================== CONTENT ROW (LEFT + RIGHT SIDEBAR) =================== --}}
+            {{-- MAIN CONTENT --}}
             <div class="row gy-4">
 
-                {{-- LEFT SIDE: TABLE AREA --}}
+                {{-- LEFT SIDE --}}
                 <div class="col-lg-9">
 
-                    {{-- TOP CARD --}}
                     <div class="card mb-4">
                         <div class="bg-holder d-none d-lg-block bg-card"
                             style="background-image:url(/assets/img/icons/spot-illustrations/corner-4.png);"></div>
@@ -82,10 +77,10 @@
                             <div class="row">
                                 <div class="col-lg-8">
                                     <h3 class="mb-2">Tickets Job Order</h3>
-                                    <p class="text-muted">
-                                        Manage internal IT Job Order requests with sorting, search, and pagination.
+                                    <p class="text-muted">Manage internal IT Job Order requests with search + pagination.
                                     </p>
                                 </div>
+
                                 <div class="col-lg-4 text-lg-end mt-3 mt-lg-0 d-flex flex-column align-items-end gap-2">
                                     <a href="{{ route('tickets.createjoborder.index') }}" class="btn btn-primary w-auto">
                                         <i class="fas fa-plus me-1"></i> Create Ticket
@@ -110,101 +105,63 @@
                                             </li>
                                         </ul>
                                     </div>
-
                                 </div>
 
                             </div>
                         </div>
                     </div>
 
-                    {{-- TABLE CARD WITH TABS --}}
+                    {{-- TABLE WITH TABS --}}
                     <div class="card mb-4">
                         <div class="card-header pb-0">
-
-                            {{-- TABS --}}
-                            <ul class="nav nav-tabs" id="ticketTabs" role="tablist">
-
-                                {{-- Pending --}}
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link active d-flex align-items-center gap-2" id="pending-tab"
-                                        data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
-
-                                        Pending
-                                        <span class="badge rounded-pill bg-secondary">
-                                            {{ $stats['pending'] }}
-                                        </span>
+                            <ul class="nav nav-tabs" role="tablist">
+                                <li class="nav-item">
+                                    <button class="nav-link active" data-bs-target="#pendingTable" data-tab="pending"
+                                        data-bs-toggle="tab">
+                                        Pending <span class="badge bg-secondary">{{ $stats['pending'] }}</span>
                                     </button>
                                 </li>
-
-                                {{-- In Progress --}}
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link d-flex align-items-center gap-2" id="progress-tab"
-                                        data-bs-toggle="tab" data-bs-target="#progress" type="button" role="tab">
-
-                                        In Progress
-                                        <span class="badge rounded-pill bg-info text-dark">
-                                            {{ $stats['progress'] }}
-                                        </span>
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-target="#progressTable" data-tab="progress"
+                                        data-bs-toggle="tab">
+                                        In Progress <span class="badge bg-info text-dark">{{ $stats['progress'] }}</span>
                                     </button>
                                 </li>
-
-                                {{-- Completed --}}
-                                <li class="nav-item" role="presentation">
-                                    <button class="nav-link d-flex align-items-center gap-2" id="completed-tab"
-                                        data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab">
-
-                                        Completed
-                                        <span class="badge rounded-pill bg-success">
-                                            {{ $stats['completed'] }}
-                                        </span>
+                                <li class="nav-item">
+                                    <button class="nav-link" data-bs-target="#completedTable" data-tab="completed"
+                                        data-bs-toggle="tab">
+                                        Completed <span class="badge bg-success">{{ $stats['completed'] }}</span>
                                     </button>
                                 </li>
-
                             </ul>
-
                         </div>
 
-                        {{-- SEARCH BAR --}}
+                        {{-- SEARCH --}}
                         <div class="p-3">
                             <input class="form-control form-control-sm search" placeholder="Search Ticket...">
                         </div>
 
-                        {{-- TABLE CONTENT --}}
-                        <div class="card-body p-0">
-                            <div class="tab-content">
+                        {{-- TABLES --}}
+                        <div class="card-body p-0 tab-content">
 
-                                {{-- Pending --}}
-                                <div class="tab-pane fade show active" id="pending" role="tabpanel">
-                                    @include('tickets.partials.tab-table', [
-                                        'id' => 'pendingTable',
-                                        'list' => $pending,
-                                    ])
-                                </div>
-
-                                {{-- Progress --}}
-                                <div class="tab-pane fade" id="progress" role="tabpanel">
-                                    @include('tickets.partials.tab-table', [
-                                        'id' => 'progressTable',
-                                        'list' => $progress,
-                                    ])
-                                </div>
-
-                                {{-- Completed --}}
-                                <div class="tab-pane fade" id="completed" role="tabpanel">
-                                    @include('tickets.partials.tab-table', [
-                                        'id' => 'completedTable',
-                                        'list' => $completed,
-                                    ])
-                                </div>
-
+                            <div id="pendingTable" class="tab-pane fade show active">
+                                @include('tickets.partials.table', ['list' => $pending])
                             </div>
+
+                            <div id="progressTable" class="tab-pane fade">
+                                @include('tickets.partials.table', ['list' => $progress])
+                            </div>
+
+                            <div id="completedTable" class="tab-pane fade">
+                                @include('tickets.partials.table', ['list' => $completed])
+                            </div>
+
                         </div>
 
                     </div>
 
                 </div>
 
-                {{-- RIGHT SIDE: SIDEBAR --}}
                 <div class="col-lg-3">
 
                     {{-- TICKET CATEGORIES --}}
@@ -214,7 +171,6 @@
                         </div>
                         <div class="card-body p-2">
                             <ul class="list-group list-group-flush">
-
                                 @foreach ($categories as $cat)
                                     <li class="list-group-item d-flex justify-content-between align-items-center py-2">
                                         <span class="text-muted" style="font-size: 13px; font-weight: 500;">
@@ -226,7 +182,6 @@
                                         </span>
                                     </li>
                                 @endforeach
-
                             </ul>
                         </div>
                     </div>
@@ -238,63 +193,88 @@
                         </div>
                         <div class="card-body p-2">
                             <ul class="list-group list-group-flush">
-
                                 @foreach ($agents as $agent)
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         {{ $agent->full_name }}
                                         <span class="badge bg-dark">{{ $agent->job_orders_assigned_count }}</span>
                                     </li>
                                 @endforeach
-
                             </ul>
                         </div>
                     </div>
 
                 </div>
 
+
             </div>
         </div>
     </div>
 @endsection
 
-
 @push('scripts')
     <script>
         document.addEventListener("DOMContentLoaded", () => {
 
-            const tables = {
-                pending: new List("pendingTable", {
-                    valueNames: ["ticket_id", "requester", "job_type", "status", "date"],
-                    page: 10,
-                    pagination: true
-                }),
-                progress: new List("progressTable", {
-                    valueNames: ["ticket_id", "requester", "job_type", "status", "date"],
-                    page: 10,
-                    pagination: true
-                }),
-                completed: new List("completedTable", {
-                    valueNames: ["ticket_id", "requester", "job_type", "status", "date"],
-                    page: 10,
-                    pagination: true
-                }),
-            };
+            let timer = null;
 
-            function getActiveTable() {
-                return tables[document.querySelector(".tab-pane.active").id];
-            }
+            const search = document.querySelector(".search");
 
-            const searchInput = document.querySelector(".search");
-            searchInput.addEventListener("keyup", () => {
-                getActiveTable().search(searchInput.value);
-            });
+            search.addEventListener("keyup", function() {
+                let value = this.value;
+                let activePane = document.querySelector(".tab-pane.active");
+                let tab = activePane.id.replace("Table", "");
 
-            document.querySelectorAll('[data-bs-toggle="tab"]').forEach(tab => {
-                tab.addEventListener("shown.bs.tab", () => {
-                    getActiveTable().search(searchInput.value);
-                });
+                clearTimeout(timer);
+
+                timer = setTimeout(() => {
+                    fetch(`?search=${value}&tab=${tab}`, {
+                            headers: {
+                                "X-Requested-With": "XMLHttpRequest"
+                            }
+                        })
+                        .then(res => res.text())
+                        .then(html => {
+                            activePane.innerHTML = html;
+                        });
+                }, 300);
             });
 
         });
     </script>
+@endpush
+@push('styles')
+    <style>
+        .pagination {
+            font-size: 14px !important;
+        }
+
+        .pagination .page-link {
+            padding: 4px 10px !important;
+            font-size: 14px !important;
+            border-radius: 4px !important;
+            color: #4a4a4a !important;
+            border: 1px solid #d0d5dd !important;
+            background: #f8f9fa !important;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+            color: #fff !important;
+            font-weight: 600 !important;
+        }
+
+        .pagination .page-link:hover {
+            background: #e2e6ea !important;
+            border-color: #c4c9cf !important;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            opacity: .5 !important;
+        }
+
+        .pagination .page-item {
+            margin: 0 2px !important;
+        }
+    </style>
 @endpush

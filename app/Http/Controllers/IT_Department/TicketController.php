@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\IT_Department;
 
 use App\Events\JobOrderCreated;
+use App\Exports\JobOrdersExport;
 use App\Helpers\Notifier;
 use App\Http\Controllers\Controller;
 use App\Mail\JobOrderCreatedMail;
@@ -19,7 +20,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use App\Exports\JobOrdersExport;
 use Maatwebsite\Excel\Facades\Excel;
 use PDF;
 
@@ -30,22 +30,38 @@ class TicketController extends Controller
     | Index Routes
     |--------------------------------------------------------------------------
     */
-    public function index()
+    public function index(Request $request)
     {
-        $pending = JobOrder::with('bus')
-            ->where('job_status', 'Pending')
-            ->orderBy('id', 'desc')
-            ->get();
+        $tab = $request->tab ?? 'pending';
 
-        $progress = JobOrder::with('bus')
-            ->where('job_status', 'In Progress')
-            ->orderBy('id', 'desc')
-            ->get();
+        $query = JobOrder::with('bus')->orderBy('id', 'desc');
 
-        $completed = JobOrder::with('bus')
-            ->where('job_status', 'Completed')
-            ->orderBy('id', 'desc')
-            ->get();
+        if ($request->ajax()) {
+
+            if ($request->search) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('job_creator', 'like', "%{$request->search}%")
+                        ->orWhere('job_type', 'like', "%{$request->search}%")
+                        ->orWhere('job_status', 'like', "%{$request->search}%");
+                });
+            }
+
+            if ($tab == 'pending') {
+                $query->where('job_status', 'Pending');
+            } elseif ($tab == 'progress') {
+                $query->where('job_status', 'In Progress');
+            } elseif ($tab == 'completed') {
+                $query->where('job_status', 'Completed');
+            }
+
+            $list = $query->paginate(10);
+
+            return view('tickets.partials.table', compact('list'))->render();
+        }
+
+        $pending = JobOrder::with('bus')->where('job_status', 'Pending')->paginate(10);
+        $progress = JobOrder::with('bus')->where('job_status', 'In Progress')->paginate(10);
+        $completed = JobOrder::with('bus')->where('job_status', 'Completed')->paginate(10);
 
         $stats = [
             'new' => JobOrder::whereDate('created_at', today())->count(),
@@ -55,18 +71,10 @@ class TicketController extends Controller
         ];
 
         $categoryList = [
-            'ACCIDENT',
-            'COLLECTING FARE',
-            'CUTTING FARE',
-            'RE- ISSUEING TICKET',
-            'TAMPERING TICKET',
-            'UNREGISTERED TICKET',
-            'DELAYING ISSUANCE OF TICKET',
-            'ROLLING TICKETS',
-            'REMOVING HEADSTAB OF TICKET',
-            'USING STUB TICKET',
-            'WRONG CLOSING / OPEN',
-            'OTHERS',
+            'ACCIDENT', 'COLLECTING FARE', 'CUTTING FARE', 'RE- ISSUEING TICKET',
+            'TAMPERING TICKET', 'UNREGISTERED TICKET', 'DELAYING ISSUANCE OF TICKET',
+            'ROLLING TICKETS', 'REMOVING HEADSTAB OF TICKET', 'USING STUB TICKET',
+            'WRONG CLOSING / OPEN', 'OTHERS',
         ];
 
         $categoryCounts = JobOrder::select('job_type')
@@ -75,7 +83,6 @@ class TicketController extends Controller
             ->pluck('total', 'job_type');
 
         $categories = [];
-
         foreach ($categoryList as $cat) {
             $categories[] = [
                 'name' => $cat,
@@ -88,8 +95,7 @@ class TicketController extends Controller
             ->get();
 
         return view('it_department.ticket_job_order', compact(
-            'pending', 'progress', 'completed', 'stats',
-            'categories', 'agents'
+            'pending', 'progress', 'completed', 'stats', 'categories', 'agents'
         ));
     }
 
@@ -347,7 +353,7 @@ class TicketController extends Controller
 
         if ($type === 'pdf') {
             $pdf = PDF::loadView('it_department.export.pdf', compact('data'))
-                    ->setPaper('a4', 'landscape');
+                ->setPaper('a4', 'landscape');
 
             return $pdf->download('job_orders.pdf');
         }
