@@ -362,4 +362,11 @@ class EmployeeController extends Controller
 
         return $pdf->stream($employee->employee_id.'_201.pdf');
     }
+
+    public function getPositions($id)
+    {
+        $positions = \App\Models\Position::where('department_id', $id)->get();
+
+        return response()->json($positions);
+    }
 }
