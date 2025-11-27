@@ -111,7 +111,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/{employee}/attachments', 'storeAttachment')->name('staff.attachments.store');
             Route::delete('/{employee}/attachments/{attachment}', 'destroyAttachment')->name('staff.attachments.destroy');
             Route::get('/{employee}/print', 'print201')->name('staff.print');
-            Route::get('/employees/departments/{id}/positions', 'getPositions');
+            Route::get('/departments/{id}/positions', 'getPositions')->name('positions');;
 
         });
 
