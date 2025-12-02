@@ -13,6 +13,7 @@ use App\Models\JobOrderFile;
 use App\Models\JobOrderLog;
 use App\Models\JobOrderNote;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +22,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
-use PDF;
 
 class TicketController extends Controller
 {

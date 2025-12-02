@@ -31,12 +31,12 @@ class EmployeeController extends Controller
                 });
             }
 
-            $employees = $query->paginate(10);
+            $employees = $query->paginate(20);
 
             return view('hr_department.employees.table', compact('employees'))->render();
         }
 
-        $employees = $query->paginate(10);
+        $employees = $query->paginate(20);
         $departments = Department::with('positions')->get();
 
         return view('hr_department.index', compact('employees', 'departments'));

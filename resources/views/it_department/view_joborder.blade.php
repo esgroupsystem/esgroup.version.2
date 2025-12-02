@@ -97,7 +97,9 @@
                         <span class="fas fa-user text-success me-2"></span>
                         <div class="flex-1">
                             <p class="mb-0">Job Order was created</p>
-                            <p class="fs-10 mb-0 text-600">{{ $job->created_at->format('Y-m-d H:i:s') }}</p>
+                            <p class="fs-10 mb-0 text-600">
+                                {{ optional($job->created_at)->format('Y-m-d H:i:s') ?? 'N/A' }}
+                            </p>
                         </div>
                     </div>
                 </div>

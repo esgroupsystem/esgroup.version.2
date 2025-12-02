@@ -40,7 +40,7 @@
             <div class="card mb-4">
 
                 <div class="card-header pb-0">
-                    <h6 class="mb-0">Employee List</h6>
+                    <h5 class="mb-0">Employee List</h5>
                 </div>
 
                 {{-- SEARCH BAR --}}

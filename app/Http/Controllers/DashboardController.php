@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\JobOrder;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -25,54 +23,63 @@ class DashboardController extends Controller
 
     public function itindex()
     {
-        // Count Job Orders
+        // Base counts
+        $today = JobOrder::whereDate('created_at', today())->count();
         $pending = JobOrder::where('job_status', 'Pending')->count();
-        $inProcess = JobOrder::where('job_status', 'In Progress')->count();
-        $due = JobOrder::whereIn('job_status', ['Pending', 'In Progress'])
-            ->whereDate('job_date_filled', '<', Carbon::now()->subDays(2))
-            ->count();
-        $unassigned = JobOrder::whereNull('job_assign_person')->count();
+        $inProgress = JobOrder::where('job_status', 'In Progress')->count();
+        $completed = JobOrder::where('job_status', 'Completed')->count();
 
-        // Percent values (static or computed)
-        $percentPending = '+5%';
-        $percentInProcess = '+3%';
-        $percentDue = '-2%';
-        $percentUnassigned = '+1%';
+        $base = 10;
 
-        // Get past 7 days for chart
-        $days = collect(range(6, 0))
-            ->map(fn ($i) => Carbon::now()->subDays($i)->format('M d'))
-            ->values();
+        $todayPercent = ($today / $base) * 100;
+        $pendingPercent = ($pending / $base) * 100;
+        $inProgressPercent = ($inProgress / $base) * 100;
+        $completedPercent = ($completed / $base) * 100;
 
-        // Chart data initialization
-        $chartData = [
-            'Pending' => [],
-            'In Process' => [],
-            'Due' => [],
-            'Unassigned' => [],
-        ];
+        // REAL WEEKLY DATA
+        $weeks = collect(range(0, 5))->map(function ($i) {
+            return now()->subWeeks($i);
+        })->reverse();
 
-        // Fill chart data
-        foreach ($days as $day) {
-            $date = Carbon::createFromFormat('M d', $day)->year(Carbon::now()->year);
+        // Today tickets per week (created_at)
+        $todayWeekly = $weeks->map(function ($week) {
+            return JobOrder::whereBetween('created_at', [
+                $week->copy()->startOfWeek(),
+                $week->copy()->endOfWeek(),
+            ])->count();
+        });
 
-            $chartData['Pending'][] = JobOrder::where('job_status', 'Pending')
-                ->whereDate('job_date_filled', $date)->count();
+        // Pending weekly
+        $pendingWeekly = $weeks->map(function ($week) {
+            return JobOrder::where('job_status', 'Pending')
+                ->whereBetween('created_at', [
+                    $week->copy()->startOfWeek(),
+                    $week->copy()->endOfWeek(),
+                ])->count();
+        });
 
-            $chartData['In Process'][] = JobOrder::where('job_status', 'In Progress')
-                ->whereDate('job_date_filled', $date)->count();
+        // In progress weekly
+        $inProgressWeekly = $weeks->map(function ($week) {
+            return JobOrder::where('job_status', 'In Progress')
+                ->whereBetween('created_at', [
+                    $week->copy()->startOfWeek(),
+                    $week->copy()->endOfWeek(),
+                ])->count();
+        });
 
-            $chartData['Due'][] = JobOrder::whereIn('job_status', ['Pending', 'In Progress'])
-                ->whereDate('job_date_filled', '<', $date->copy()->subDays(2))->count();
-
-            $chartData['Unassigned'][] = JobOrder::whereNull('job_assign_person')
-                ->whereDate('job_date_filled', $date)->count();
-        }
+        // Completed weekly
+        $completedWeekly = $weeks->map(function ($week) {
+            return JobOrder::where('job_status', 'Completed')
+                ->whereBetween('created_at', [
+                    $week->copy()->startOfWeek(),
+                    $week->copy()->endOfWeek(),
+                ])->count();
+        });
 
         return view('dashboard.dashboard_it', compact(
-            'pending', 'inProcess', 'due', 'unassigned',
-            'percentPending', 'percentInProcess', 'percentDue', 'percentUnassigned',
-            'days', 'chartData'
+            'today', 'pending', 'inProgress', 'completed',
+            'todayPercent', 'pendingPercent', 'inProgressPercent', 'completedPercent',
+            'todayWeekly', 'pendingWeekly', 'inProgressWeekly', 'completedWeekly'
         ));
     }
 }

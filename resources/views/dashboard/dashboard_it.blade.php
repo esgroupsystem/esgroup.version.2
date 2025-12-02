@@ -1,6 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Dashboard | Falcon')
-
+@section('title', 'Project Management Dashboard')
 @section('content')
     <div class="container" data-layout="container">
         <script>
@@ -11,7 +10,6 @@
                 container.classList.add('container-fluid');
             }
         </script>
-
         <div class="content">
             <div class="row g-3 mb-3">
                 <div class="col-xxl-6">
@@ -21,249 +19,993 @@
                                 <div class="bg-holder bg-card d-none d-sm-block"
                                     style="background-image:url(../assets/img/illustrations/ticket-bg.png);">
                                 </div>
+                                <!--/.bg-holder-->
 
-                                <div class="d-flex align-items-center z-1 p-0">
-                                    <img src="../assets/img/illustrations/ticket-welcome.png" alt=""
-                                        width="96" />
+                                <div class="d-flex align-items-center z-1 p-0"><img
+                                        src="../assets/img/illustrations/ticket-welcome.png" alt="" width="96" />
                                     <div class="ms-n3">
                                         <h6 class="mb-1 text-primary">Welcome to</h6>
-                                        <h4 class="mb-0 text-primary fw-bold">IT Department
-                                            <span class="text-info fw-medium">Dashboard</span>
-                                        </h4>
+                                        <h4 class="mb-0 text-primary fw-bold">IT<span class="text-info fw-medium">
+                                                Department Job's</span></h4>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- START TABLE -->
+                        <div class="col-12">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="row g-0">
+
+                                        {{-- TODAY TICKETS --}}
+                                        <x-chart-mini wrapperClass="border-200 border-bottom border-end-md pb-x1 pe-md-x1"
+                                            icon="assets/img/tickets/hold-tickets.png" label="Today Tickets"
+                                            value="{{ $today }}" percent="{{ $todayPercent }}" trendColor="text-primary"
+                                            color="#2c7be5" areaStart="rgba(44,123,229,.35)" areaEnd="rgba(44,123,229,0)"
+                                            :series="$todayWeekly" />
+
+                                        {{-- PENDING --}}
+                                        <x-chart-mini wrapperClass="ps-md-x1 pb-x1 pt-x1 pt-md-0 border-bottom border-200"
+                                            icon="assets/img/tickets/open-tickets.png" label="Pending Tickets"
+                                            value="{{ $pending }}" percent="{{ $pendingPercent }}" trendColor="text-success"
+                                            color="#00d27a" areaStart="rgba(0,210,122,.35)" areaEnd="rgba(0,210,122,0)"
+                                            :series="$pendingWeekly" />
+
+                                        {{-- IN PROGRESS --}}
+                                        <x-chart-mini
+                                            wrapperClass="border-200 border-bottom border-bottom-md-0 border-end-md pt-x1 pe-md-x1 pb-x1 pb-md-0"
+                                            icon="assets/img/tickets/due-tickets.png" label="In Progress"
+                                            value="{{ $inProgress }}" percent="{{ $inProgressPercent }}"
+                                            trendColor="text-info" color="#27bcfd" areaStart="rgba(39,188,253,.35)"
+                                            areaEnd="rgba(39,188,253,0)" :series="$inProgressWeekly" />
+
+                                        {{-- COMPLETED --}}
+                                        <x-chart-mini wrapperClass="ps-md-x1 pt-x1" icon="assets/img/tickets/unassigned.png"
+                                            label="Completed" value="{{ $completed }}" percent="{{ $completedPercent }}"
+                                            trendColor="text-warning" color="#f5803e" areaStart="rgba(245,128,62,.35)"
+                                            areaEnd="rgba(245,128,62,0)" :series="$completedWeekly" />
+
+                                        <!-- END 4 BLOCKS -->
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {{-- 🔹 Job Orders Summary Card --}}
-                        <div class="row g-1">
-                            <div class="col-12">
-                                <div class="card h-100">
-                                    <div
-                                        class="card-header d-md-flex justify-content-between border-bottom border-200 py-3 py-md-2">
-                                        <h6 class="mb-2 mb-md-0 py-md-2">Job Orders Summary</h6>
-                                        <div class="row g-md-0">
-                                            <div class="col-auto d-md-flex">
-                                                <div class="d-flex align-items-center me-md-3 form-check mb-0">
-                                                    <input
-                                                        class="form-check-input dot mt-0 shadow-none remove-checked-icon rounded-circle cursor-pointer"
-                                                        type="checkbox" id="pendingTickets" checked />
-                                                    <label
-                                                        class="form-check-label lh-base mb-0 fs-11 text-500 fw-semi-bold font-base cursor-pointer"
-                                                        for="pendingTickets">Pending</label>
-                                                </div>
-                                                <div
-                                                    class="d-flex align-items-center me-md-3 form-check mb-0 mt-n1 mt-md-0">
-                                                    <input
-                                                        class="form-check-input dot mt-0 shadow-none remove-checked-icon rounded-circle open-tickets cursor-pointer"
-                                                        type="checkbox" id="inProcessTickets" checked />
-                                                    <label
-                                                        class="form-check-label lh-base mb-0 fs-11 text-500 fw-semi-bold font-base cursor-pointer"
-                                                        for="inProcessTickets">In Process</label>
-                                                </div>
-                                            </div>
+                        <!-- END TABLE -->
+                    </div>
+                </div>
 
-                                            <div class="col-auto d-md-flex">
-                                                <div class="d-flex align-items-center me-md-3 form-check mb-0">
-                                                    <input
-                                                        class="form-check-input dot mt-0 shadow-none remove-checked-icon rounded-circle due-tickets cursor-pointer"
-                                                        type="checkbox" id="dueTickets" checked />
-                                                    <label
-                                                        class="form-check-label lh-base mb-0 fs-11 text-500 fw-semi-bold font-base cursor-pointer"
-                                                        for="dueTickets">Due (2+ days old)</label>
-                                                </div>
-                                                <div class="d-flex align-items-center form-check mb-0 mt-n1 mt-md-0">
-                                                    <input
-                                                        class="form-check-input dot mt-0 shadow-none remove-checked-icon rounded-circle unassigned-tickets cursor-pointer"
-                                                        type="checkbox" id="unassignedTickets" checked />
-                                                    <label
-                                                        class="form-check-label lh-base mb-0 fs-11 text-500 fw-semi-bold font-base cursor-pointer"
-                                                        for="unassignedTickets">Unassigned</label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {{-- 🔹 Job Order Count Stats --}}
-                                    <div class="card-body scrollbar overflow-y-hidden">
-                                        <div class="d-flex">
-                                            {{-- ✅ Pending --}}
-                                            <div class="d-flex align-items-center">
-                                                <div>
-                                                    <h6 class="fs-9 d-flex align-items-center text-700 mb-1">
-                                                        {{ $pending }}
-                                                        <small class="badge text-success bg-transparent px-0">
-                                                            <span class="fas fa-caret-up fs-11 ms-2 me-1"></span>
-                                                            <span>{{ $percentPending }}</span>
-                                                        </small>
-                                                    </h6>
-                                                    <h6 class="text-600 mb-0 fs-11 text-nowrap">Pending Job Orders</h6>
-                                                </div>
-                                                <div class="bg-200 mx-3" style="height: 24px; width: 1px"></div>
-                                            </div>
-
-                                            {{-- ✅ In Process --}}
-                                            <div class="d-flex align-items-center">
-                                                <div>
-                                                    <h6 class="fs-9 d-flex align-items-center text-700 mb-1">
-                                                        {{ $inProcess }}
-                                                        <small class="badge px-0 text-primary">
-                                                            <span class="fas fa-caret-up fs-11 ms-2 me-1"></span>
-                                                            <span>{{ $percentInProcess }}</span>
-                                                        </small>
-                                                    </h6>
-                                                    <h6 class="fs-11 text-600 mb-0 text-nowrap">In Process Job Orders</h6>
-                                                </div>
-                                                <div class="bg-200 mx-3" style="height: 24px; width: 1px"></div>
-                                            </div>
-
-                                            {{-- ✅ Due --}}
-                                            <div class="d-flex align-items-center">
-                                                <div>
-                                                    <h6 class="fs-9 d-flex align-items-center text-700 mb-1">
-                                                        {{ $due }}
-                                                        <small class="badge px-0 text-warning">
-                                                            <span class="fas fa-caret-down fs-11 ms-2 me-1"></span>
-                                                            <span>{{ $percentDue }}</span>
-                                                        </small>
-                                                    </h6>
-                                                    <h6 class="fs-11 text-600 mb-0 text-nowrap">Due (2+ Days Old)</h6>
-                                                </div>
-                                                <div class="bg-200 mx-3" style="height: 24px; width: 1px"></div>
-                                            </div>
-
-                                            {{-- ✅ Unassigned --}}
-                                            <div>
-                                                <h6 class="fs-9 d-flex align-items-center text-700 mb-1">
-                                                    {{ $unassigned }}
-                                                    <small class="badge px-0 text-danger">
-                                                        <span class="fas fa-caret-up fs-11 ms-2 me-1"></span>
-                                                        <span>{{ $percentUnassigned }}</span>
-                                                    </small>
-                                                </h6>
-                                                <h6 class="fs-11 text-600 mb-0 text-nowrap">Unassigned Job Orders</h6>
-                                            </div>
-                                        </div>
-
-                                        {{-- 🔹 Chart Container --}}
-                                        <div class="echart-number-of-tickets" style="height: 300px;"
-                                            data-echart-responsive="true"></div>
-                                    </div>
-
-                                    <div class="card-footer bg-body-tertiary py-2">
-                                        <div class="row g-2 flex-between-center">
-                                            <div class="col-auto">
-                                                <select class="form-select form-select-sm">
-                                                    <option>January</option>
-                                                    <option>February</option>
-                                                    <option selected="selected">March</option>
-                                                    <option>April</option>
-                                                    <option>May</option>
-                                                    <option>June</option>
-                                                    <option>July</option>
-                                                    <option>August</option>
-                                                    <option>September</option>
-                                                    <option>October</option>
-                                                    <option>November</option>
-                                                    <option>December</option>
-                                                </select>
-                                            </div>
-                                            <div class="col-auto">
-                                                <a class="btn btn-link btn-sm px-0" href="#!">
-                                                    View all reports
-                                                    <span class="fas fa-chevron-right ms-1 fs-11"></span>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
+                <div class="col-xxl-6">
+                    <div class="card h-100">
+                        <div class="card-header d-flex flex-between-center border-bottom border-200 py-2">
+                            <h6 class="mb-0 text-truncate me-3"> Unresolved Tickets by Priority</h6>
+                            <div class="dropdown font-sans-serif btn-reveal-trigger">
+                                <button class="btn btn-link text-600 btn-sm dropdown-toggle dropdown-caret-none btn-reveal"
+                                    type="button" id="dropdown-unresolved-tickets" data-bs-toggle="dropdown"
+                                    data-boundary="viewport" aria-haspopup="true" aria-expanded="false"><span
+                                        class="fas fa-ellipsis-h fs-11"></span></button>
+                                <div class="dropdown-menu dropdown-menu-end border py-2"
+                                    aria-labelledby="dropdown-unresolved-tickets"><a class="dropdown-item"
+                                        href="#!">View</a><a class="dropdown-item" href="#!">Export</a>
+                                    <div class="dropdown-divider"></div><a class="dropdown-item text-danger"
+                                        href="#!">Remove</a>
                                 </div>
                             </div>
                         </div>
-
+                        <div class="card-body py-0">
+                            <div class="row">
+                                <div class="col-md-auto border-end-md border-200 pt-3 pt-md-0 d-md-flex align-items-center">
+                                    <div class="row flex-md-column px-3">
+                                        <div
+                                            class="col-auto border-end border-end-md-0 border-bottom-md pb-md-3 mb-md-3 ps-0 ps-md-3 pe-x1 pe-md-3 me-1 me-md-0">
+                                            <div class="d-flex align-items-center mb-n1">
+                                                <label class="fs-9 mb-n1 text-700 cursor-pointer" for="urgent">14</label>
+                                                <input
+                                                    class="form-check-input small-dot mt-0 shadow-none remove-checked-icon rounded-circle cursor-pointer"
+                                                    type="checkbox" data-unresolved-tickets="Urgent" value="" id="urgent"
+                                                    checked="checked" />
+                                            </div>
+                                            <label class="fs-11 mb-0 text-700 cursor-pointer" for="urgent">Urgent</label>
+                                        </div>
+                                        <div
+                                            class="col-auto border-end border-end-md-0 border-bottom-md pb-md-3 mb-md-3 pe-x1 pe-md-3 me-1 me-md-0">
+                                            <div class="d-flex align-items-center mb-n1">
+                                                <label class="fs-9 mb-n1 text-700 cursor-pointer" for="high">16</label>
+                                                <input
+                                                    class="form-check-input small-dot mt-0 shadow-none remove-checked-icon rounded-circle cursor-pointer form-check-input-info"
+                                                    type="checkbox" data-unresolved-tickets="High" value="" id="high"
+                                                    checked="checked" />
+                                            </div>
+                                            <label class="fs-11 mb-0 text-700 cursor-pointer" for="high">High</label>
+                                        </div>
+                                        <div
+                                            class="col-auto border-end border-end-md-0 border-bottom-md pb-md-3 mb-md-3 pe-x1 pe-md-3 me-1 me-md-0">
+                                            <div class="d-flex align-items-center mb-n1">
+                                                <label class="fs-9 mb-n1 text-700 cursor-pointer" for="medium">53</label>
+                                                <input
+                                                    class="form-check-input small-dot mt-0 shadow-none remove-checked-icon rounded-circle cursor-pointer bg-priority-medium"
+                                                    type="checkbox" data-unresolved-tickets="Medium" value="" id="medium"
+                                                    checked="checked" />
+                                            </div>
+                                            <label class="fs-11 mb-0 text-700 cursor-pointer" for="medium">Medium</label>
+                                        </div>
+                                        <div class="col-auto pe-0">
+                                            <div class="d-flex align-items-center mb-n1">
+                                                <label class="fs-9 mb-n1 text-700 cursor-pointer" for="low">25</label>
+                                                <input
+                                                    class="form-check-input small-dot mt-0 shadow-none remove-checked-icon rounded-circle cursor-pointer bg-priority-low"
+                                                    type="checkbox" data-unresolved-tickets="Low" value="" id="low"
+                                                    checked="checked" />
+                                            </div>
+                                            <label class="fs-11 mb-0 text-700 cursor-pointer" for="low">Low</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-auto echart-unresolved-tickets-container">
+                                    <div class="echart-unresolved-tickets mb-2" data-echart-responsive="true"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer text-center border-top border-200 p-0"><a
+                                class="btn btn-link btn-sm px-0 fw-medium py-2" href="#!">View all<span
+                                    class="fas fa-chevron-right ms-1 fs-11"></span></a></div>
                     </div>
                 </div>
             </div>
-
-            <footer class="footer">
-                <div class="row g-0 justify-content-between fs-10 mt-4 mb-3">
-                    <div class="col-12 col-sm-auto text-center">
-                        <p class="mb-0 text-600">Thank you for creating with Falcon <span
-                                class="d-none d-sm-inline-block">|</span><br class="d-sm-none" /> 2024 &copy; <a
-                                href="https://themewagon.com">Themewagon</a></p>
-                    </div>
-                    <div class="col-12 col-sm-auto text-center">
-                        <p class="mb-0 text-600">v3.23.0</p>
+            <div class="row g-3">
+                <div class="col-xxl-8">
+                    <div class="card h-100">
+                        <div class="card-header d-md-flex justify-content-between border-bottom border-200 py-3 py-md-2">
+                            <h6 class="mb-2 mb-md-0 py-md-2">Number of Tickets</h6>
+                            <div class="row g-md-0">
+                                <div class="col-auto d-md-flex">
+                                    <div class="d-flex align-items-center me-md-3 form-check mb-0">
+                                        <input
+                                            class="form-check-input dot mt-0 shadow-none remove-checked-icon rounded-circle cursor-pointer"
+                                            type="checkbox" data-number-of-tickets="On Hold Tickets" value=""
+                                            id="onHoldTickets" checked="checked" />
+                                        <label
+                                            class="form-check-label lh-base mb-0 fs-11 text-500 fw-semi-bold font-base cursor-pointer"
+                                            for="onHoldTickets">On Hold Tickets</label>
+                                    </div>
+                                    <div class="d-flex align-items-center me-md-3 form-check mb-0 mt-n1 mt-md-0">
+                                        <input
+                                            class="form-check-input dot mt-0 shadow-none remove-checked-icon rounded-circle open-tickets cursor-pointer"
+                                            type="checkbox" data-number-of-tickets="Open Tickets" value="" id="openTickets"
+                                            checked="checked" />
+                                        <label
+                                            class="form-check-label lh-base mb-0 fs-11 text-500 fw-semi-bold font-base cursor-pointer"
+                                            for="openTickets">Open Tickets</label>
+                                    </div>
+                                </div>
+                                <div class="col-auto d-md-flex">
+                                    <div class="d-flex align-items-center me-md-3 form-check mb-0">
+                                        <input
+                                            class="form-check-input dot mt-0 shadow-none remove-checked-icon rounded-circle due-tickets cursor-pointer"
+                                            type="checkbox" data-number-of-tickets="Due Tickets" value="" id="dueTickets"
+                                            checked="checked" />
+                                        <label
+                                            class="form-check-label lh-base mb-0 fs-11 text-500 fw-semi-bold font-base cursor-pointer"
+                                            for="dueTickets">Due Tickets</label>
+                                    </div>
+                                    <div class="d-flex align-items-center form-check mb-0 mt-n1 mt-md-0">
+                                        <input
+                                            class="form-check-input dot mt-0 shadow-none remove-checked-icon rounded-circle unassigned-tickets cursor-pointer"
+                                            type="checkbox" data-number-of-tickets="Unassigned Tickets" value=""
+                                            id="unassignedTickets" checked="checked" />
+                                        <label
+                                            class="form-check-label lh-base mb-0 fs-11 text-500 fw-semi-bold font-base cursor-pointer"
+                                            for="unassignedTickets">Unassigned Tickets</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body scrollbar overflow-y-hidden">
+                            <div class="d-flex">
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <h6 class="fs-9 d-flex align-items-center text-700 mb-1">125<small
+                                                class="badge text-success bg-transparent px-0"><span
+                                                    class="fas fa-caret-up fs-11 ms-2 me-1"></span><span>5.3%</span></small>
+                                        </h6>
+                                        <h6 class="text-600 mb-0 fs-11 text-nowrap">Total On Hold Tickets</h6>
+                                    </div>
+                                    <div class="bg-200 mx-3" style="height: 24px; width: 1px"></div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <h6 class="fs-9 d-flex align-items-center text-700 mb-1">100<small
+                                                class="badge px-0 text-primary"><span
+                                                    class="fas fa-caret-up fs-11 ms-2 me-1"></span><span>3.20%</span></small>
+                                        </h6>
+                                        <h6 class="fs-11 text-600 mb-0 text-nowrap">Total Open Tickets</h6>
+                                    </div>
+                                    <div class="bg-200 mx-3" style="height: 24px; width: 1px"></div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div>
+                                        <h6 class="fs-9 d-flex align-items-center text-700 mb-1">53<small
+                                                class="badge px-0 text-warning"><span
+                                                    class="fas fa-caret-down fs-11 ms-2 me-1"></span><span>2.3%</span></small>
+                                        </h6>
+                                        <h6 class="fs-11 text-600 mb-0 text-nowrap">Total Due Tickets</h6>
+                                    </div>
+                                    <div class="bg-200 mx-3" style="height: 24px; width: 1px"></div>
+                                </div>
+                                <div>
+                                    <h6 class="fs-9 d-flex align-items-center text-700 mb-1">136<small
+                                            class="badge px-0 text-danger"><span
+                                                class="fas fa-caret-up fs-11 ms-2 me-1"></span><span>3.12%</span></small>
+                                    </h6>
+                                    <h6 class="fs-11 text-600 mb-0 text-nowrap">Total Unassigned Tickets</h6>
+                                </div>
+                            </div>
+                            <div class="echart-number-of-tickets" data-echart-responsive="true"></div>
+                        </div>
+                        <div class="card-footer bg-body-tertiary py-2">
+                            <div class="row g-2 flex-between-center">
+                                <div class="col-auto">
+                                    <select class="form-select form-select-sm">
+                                        <option>January</option>
+                                        <option>February</option>
+                                        <option selected="selected">March</option>
+                                        <option>April</option>
+                                        <option>May</option>
+                                        <option>June</option>
+                                        <option>July</option>
+                                        <option>August</option>
+                                        <option>September</option>
+                                        <option>October</option>
+                                        <option>Novenber</option>
+                                        <option>December</option>
+                                    </select>
+                                </div>
+                                <div class="col-auto"><a class="btn btn-link btn-sm px-0" href="#!">View all
+                                        reports<span class="fas fa-chevron-right ms-1 fs-11"></span></a></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </footer>
+                <div class="col-xxl-4 col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header d-flex flex-between-center border-bottom border-200 py-2">
+                            <h6 class="mb-0">Customer Satisfaction</h6>
+                            <div class="dropdown font-sans-serif btn-reveal-trigger">
+                                <button class="btn btn-link text-600 btn-sm dropdown-toggle dropdown-caret-none btn-reveal"
+                                    type="button" id="dropdown-customer-satisfaction" data-bs-toggle="dropdown"
+                                    data-boundary="viewport" aria-haspopup="true" aria-expanded="false"><span
+                                        class="fas fa-ellipsis-h fs-11"></span></button>
+                                <div class="dropdown-menu dropdown-menu-end border py-2"
+                                    aria-labelledby="dropdown-customer-satisfaction"><a class="dropdown-item"
+                                        href="#!">View</a><a class="dropdown-item" href="#!">Export</a>
+                                    <div class="dropdown-divider"></div><a class="dropdown-item text-danger"
+                                        href="#!">Remove</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body p-3 d-flex aligm-items-center">
+                            <div class="echart-customer-setisfaction w-100" data-echart-responsive="true"></div>
+                        </div>
+                        <div class="card-footer border-top border-200 py-0">
+                            <div class="row">
+                                <div class="col-6 border-end border-200 py-3 d-flex justify-content-center">
+                                    <div>
+                                        <h6 class="text-600 mb-1 fs-11">Positive</h6>
+                                        <h6 class="fs-9 mb-0 d-flex align-items-center">150<small
+                                                class="badge px-0 text-success bg-transparent d-flex align-items-start"><span
+                                                    class="fas fa-caret-up ms-2 me-1 fs-11"></span><span
+                                                    class="fs-10">23.3%</span></small></h6>
+                                    </div>
+                                </div>
+                                <div class="col-6 py-3 d-flex justify-content-center">
+                                    <div>
+                                        <h6 class="text-600 mb-1 fs-11">Negative</h6>
+                                        <h6 class="fs-9 mb-0 d-flex align-items-center">20<small
+                                                class="badge px-0 text-danger d-flex align-items-start"><span
+                                                    class="fas fa-caret-down ms-2 me-1 fs-11"></span><span
+                                                    class="fs-10">5.23%</span></small></h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xxl-12">
+                    <div class="card" id="ticketsTable">
+                        <div class="card-header border-bottom border-200 px-0">
+                            <div class="d-lg-flex justify-content-between">
+                                <div class="row flex-between-center gy-2 px-x1">
+                                    <div class="col-auto pe-0">
+                                        <h6 class="mb-0">Unsolved Tickets</h6>
+                                    </div>
+                                    <div class="col-auto">
+                                        <form>
+                                            <div class="input-group input-search-width">
+                                                <input class="form-control form-control-sm shadow-none" type="search"
+                                                    placeholder="Search  by name" aria-label="search" />
+                                                <button
+                                                    class="btn btn-sm btn-outline-secondary border-300 hover-border-secondary"><span
+                                                        class="fa fa-search fs-10"></span></button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
+                                <div class="border-bottom border-200 my-3"></div>
+                                <div class="d-flex align-items-center justify-content-between justify-content-lg-end px-x1">
+                                    <button class="btn btn-sm btn-falcon-default" type="button"><span class="fas fa-filter"
+                                            data-fa-transform="shrink-4 down-1"></span><span
+                                            class="ms-1 d-none d-sm-inline-block">Filter</span></button>
+                                    <div class="bg-300 mx-3 d-none d-lg-block" style="width:1px; height:29px"></div>
+                                    <div class="d-none" id="table-ticket-actions">
+                                        <div class="d-flex">
+                                            <select class="form-select form-select-sm" aria-label="Bulk actions">
+                                                <option selected="">Bulk actions</option>
+                                                <option value="Refund">Refund</option>
+                                                <option value="Delete">Delete</option>
+                                                <option value="Archive">Archive</option>
+                                            </select>
+                                            <button class="btn btn-falcon-default btn-sm ms-2" type="button">Apply</button>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center" id="table-ticket-replace-element">
+                                        <div class="dropdown">
+                                            <button
+                                                class="btn btn-sm btn-falcon-default dropdown-toggle dropdown-caret-none"
+                                                type="button" id="dashboard-layout" data-bs-toggle="dropdown"
+                                                data-boundary="window" aria-haspopup="true" aria-expanded="false"
+                                                data-bs-reference="parent"><span
+                                                    class="d-none d-sm-inline-block d-xl-none d-xxl-inline-block me-1 table-layout">Table
+                                                    View</span><span class="fas fa-chevron-down"
+                                                    data-fa-transform="shrink-3 down-1"></span></button>
+                                            <div class="dropdown-menu dropdown-toggle-item dropdown-menu-end border py-2"
+                                                aria-labelledby="dashboard-layout" role="tablist"><a
+                                                    class="dropdown-item active" id="tableView" data-bs-toggle="tab"
+                                                    href="#table-view" role="tab" aria-controls="table-view">Table
+                                                    View</a><a class="dropdown-item" id="cardView" data-bs-toggle="tab"
+                                                    href="#card-view" role="tab" aria-controls="card-view">Card
+                                                    View</a></div>
+                                        </div>
+                                        <button class="btn btn-falcon-default btn-sm mx-2" type="button"><span
+                                                class="fas fa-plus" data-fa-transform="shrink-3"></span><span
+                                                class="d-none d-sm-inline-block d-xl-none d-xxl-inline-block ms-1">New</span></button>
+                                        <button class="btn btn-falcon-default btn-sm" type="button"><span
+                                                class="fas fa-external-link-alt" data-fa-transform="shrink-3"></span><span
+                                                class="d-none d-sm-inline-block d-xl-none d-xxl-inline-block ms-1">Export</span></button>
+                                        <div class="dropdown font-sans-serif ms-2">
+                                            <button
+                                                class="btn btn-falcon-default text-600 btn-sm dropdown-toggle dropdown-caret-none"
+                                                type="button" id="preview-dropdown" data-bs-toggle="dropdown"
+                                                data-boundary="viewport" aria-haspopup="true" aria-expanded="false"><span
+                                                    class="fas fa-ellipsis-h fs-11"></span></button>
+                                            <div class="dropdown-menu dropdown-menu-end border py-2"
+                                                aria-labelledby="preview-dropdown"><a class="dropdown-item"
+                                                    href="#!">View</a><a class="dropdown-item" href="#!">Export</a>
+                                                <div class="dropdown-divider"></div><a class="dropdown-item text-danger"
+                                                    href="#!">Remove</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-content" id="ticketViewContent">
+                            <div class="fade tab-pane active show" id="table-view" role="tabpanel"
+                                aria-labelledby="tableView"
+                                data-list='{"valueNames":["client","subject","status","priority","agent"],"page":6,"pagination":true}'>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive scrollbar">
+                                        <table class="table table-sm mb-0 fs-10 table-view-tickets">
+                                            <thead class="bg-body-tertiary">
+                                                <tr>
+                                                    <th class="py-2 fs-9 pe-2" style="width: 28px;">
+                                                        <div class="form-check d-flex align-items-center">
+                                                            <input class="form-check-input"
+                                                                id="checkbox-bulk-table-tickets-select" type="checkbox"
+                                                                data-bulk-select='{"body":"table-ticket-body","actions":"table-ticket-actions","replacedElement":"table-ticket-replace-element"}' />
+                                                        </div>
+                                                    </th>
+                                                    <th class="text-800 sort align-middle ps-2" data-sort="client">Client
+                                                    </th>
+                                                    <th class="text-800 sort align-middle" data-sort="subject"
+                                                        style="min-width:15.625rem">Subject</th>
+                                                    <th class="text-800 sort align-middle" data-sort="status">Status</th>
+                                                    <th class="text-800 sort align-middle" data-sort="priority">Priority
+                                                    </th>
+                                                    <th class="text-800 sort align-middle text-end" data-sort="agent">
+                                                        Agent</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="list" id="table-ticket-body">
+                                                <tr>
+                                                    <td class="align-middle fs-9 py-3">
+                                                        <div class="form-check mb-0">
+                                                            <input class="form-check-input" type="checkbox"
+                                                                id="table-view-tickets-0"
+                                                                data-bulk-select-row="data-bulk-select-row" />
+                                                        </div>
+                                                    </td>
+                                                    <td class="align-middle client white-space-nowrap pe-3 pe-xxl-4 ps-2">
+                                                        <div class="d-flex align-items-center gap-2 position-relative">
+                                                            <div class="avatar avatar-xl">
+                                                                <div class="avatar-name rounded-circle"><span>EW</span>
+                                                                </div>
+                                                            </div>
+                                                            <h6 class="mb-0"><a class="stretched-link text-900"
+                                                                    href="../app/support-desk/contact-details.html">Emma
+                                                                    Watson</a></h6>
+                                                        </div>
+                                                    </td>
+                                                    <td class="align-middle subject py-2 pe-4"><a class="fw-semi-bold"
+                                                            href="../app/support-desk/tickets-preview.html">Synapse Design
+                                                            #1125</a></td>
+                                                    <td class="align-middle status fs-9 pe-4"><small
+                                                            class="badge rounded badge-subtle-success false">Recent</small>
+                                                    </td>
+                                                    <td class="align-middle priority pe-4">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <div style="--falcon-circle-progress-bar:100">
+                                                                <svg class="circle-progress-svg" width="26" height="26"
+                                                                    viewBox="0 0 120 120">
+                                                                    <circle class="progress-bar-rail" cx="60" cy="60" r="54"
+                                                                        fill="none" stroke-linecap="round"
+                                                                        stroke-width="12"></circle>
+                                                                    <circle class="progress-bar-top" cx="60" cy="60" r="54"
+                                                                        fill="none" stroke-linecap="round" stroke="#e63757"
+                                                                        stroke-width="12"></circle>
+                                                                </svg>
+                                                            </div>
+                                                            <h6 class="mb-0 text-700">Urgent</h6>
+                                                        </div>
+                                                    </td>
+                                                    <td class="align-middle agent">
+                                                        <select class="form-select form-select-sm w-auto ms-auto"
+                                                            aria-label="agents actions">
+                                                            <option>Select Agent</option>
+                                                            <option selected="selected">Anindya</option>
+                                                            <option>Nowrin</option>
+                                                            <option>Khalid</option>
+                                                        </select>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <div class="text-center d-none" id="tickets-table-fallback">
+                                            <p class="fw-bold fs-8 mt-3">No ticket found</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="row align-items-center">
+                                        <div class="pagination d-none"></div>
+                                        <div class="col"><span class="d-none d-sm-inline-block me-2 fs-10"
+                                                data-list-info="data-list-info"></span></div>
+                                        <div class="col-auto d-flex">
+                                            <button class="btn btn-sm btn-primary" type="button"
+                                                data-list-pagination="prev"><span>Previous</span></button>
+                                            <button class="btn btn-sm btn-primary px-4 ms-2" type="button"
+                                                data-list-pagination="next"><span>Next</span></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="fade tab-pane" id="card-view" role="tabpanel" aria-labelledby="cardView"
+                                data-list='{"valueNames":["client","subject","status","priority","agent"],"page":4,"pagination":true}'>
+                                <div class="card-body p-0">
+                                    <div class="form-check d-none">
+                                        <input class="form-check-input" id="checkbox-bulk-card-tickets-select"
+                                            type="checkbox"
+                                            data-bulk-select='{"body":"card-ticket-body","actions":"table-ticket-actions","replacedElement":"table-ticket-replace-element"}' />
+                                    </div>
+                                    <div class="list bg-body-tertiary p-x1 d-flex flex-column gap-3" id="card-ticket-body">
+                                        <div
+                                            class="bg-white dark__bg-1100 d-md-flex d-xl-inline-block d-xxl-flex align-items-center p-x1 rounded-3 shadow-sm card-view-height">
+                                            <div class="d-flex align-items-start align-items-sm-center">
+                                                <div class="form-check me-2 me-xxl-3 mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="card-view-tickets-0"
+                                                        data-bulk-select-row="data-bulk-select-row" />
+                                                </div><a class="d-none d-sm-block"
+                                                    href="../app/support-desk/contact-details.html">
+                                                    <div class="avatar avatar-xl avatar-3xl">
+                                                        <div class="avatar-name rounded-circle"><span>EW</span></div>
+                                                    </div>
+                                                </a>
+                                                <div class="ms-1 ms-sm-3">
+                                                    <p class="fw-semi-bold mb-3 mb-sm-2"><a
+                                                            href="../app/support-desk/tickets-preview.html">Synapse Design
+                                                            #1125</a></p>
+                                                    <div class="row align-items-center gx-0 gy-2">
+                                                        <div class="col-auto me-2">
+                                                            <h6 class="client mb-0"><a
+                                                                    class="text-800 d-flex align-items-center gap-1"
+                                                                    href="../app/support-desk/contact-details.html"><span
+                                                                        class="fas fa-user"
+                                                                        data-fa-transform="shrink-3 up-1"></span><span>Emma
+                                                                        Watson</span></a></h6>
+                                                        </div>
+                                                        <div class="col-auto lh-1 me-3"><small
+                                                                class="badge rounded badge-subtle-success false">Recent</small>
+                                                        </div>
+                                                        <div class="col-auto">
+                                                            <h6 class="mb-0 text-500">2d ago</h6>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="border-bottom mt-4 mb-x1"></div>
+                                            <div class="d-flex justify-content-between ms-auto">
+                                                <div class="d-flex align-items-center gap-2 ms-md-4 ms-xl-0"
+                                                    style="width:7.5rem;">
+                                                    <div style="--falcon-circle-progress-bar:100">
+                                                        <svg class="circle-progress-svg" width="26" height="26"
+                                                            viewBox="0 0 120 120">
+                                                            <circle class="progress-bar-rail" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke-width="12">
+                                                            </circle>
+                                                            <circle class="progress-bar-top" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke="#e63757"
+                                                                stroke-width="12"></circle>
+                                                        </svg>
+                                                    </div>
+                                                    <h6 class="mb-0 text-700">Urgent</h6>
+                                                </div>
+                                                <select class="form-select form-select-sm" aria-label="agents actions"
+                                                    style="width:9.375rem;">
+                                                    <option>Select Agent</option>
+                                                    <option selected="selected">Anindya</option>
+                                                    <option>Nowrin</option>
+                                                    <option>Khalid</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="bg-white dark__bg-1100 d-md-flex d-xl-inline-block d-xxl-flex align-items-center p-x1 rounded-3 shadow-sm card-view-height">
+                                            <div class="d-flex align-items-start align-items-sm-center">
+                                                <div class="form-check me-2 me-xxl-3 mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="card-view-tickets-1"
+                                                        data-bulk-select-row="data-bulk-select-row" />
+                                                </div><a class="d-none d-sm-block"
+                                                    href="../app/support-desk/contact-details.html">
+                                                    <div class="avatar avatar-xl avatar-3xl">
+                                                        <div class="avatar-name rounded-circle"><span>L</span></div>
+                                                    </div>
+                                                </a>
+                                                <div class="ms-1 ms-sm-3">
+                                                    <p class="fw-semi-bold mb-3 mb-sm-2"><a
+                                                            href="../app/support-desk/tickets-preview.html">Change of
+                                                            refund my last buy | Order #125631</a></p>
+                                                    <div class="row align-items-center gx-0 gy-2">
+                                                        <div class="col-auto me-2">
+                                                            <h6 class="client mb-0"><a
+                                                                    class="text-800 d-flex align-items-center gap-1"
+                                                                    href="../app/support-desk/contact-details.html"><span
+                                                                        class="fas fa-user"
+                                                                        data-fa-transform="shrink-3 up-1"></span><span>Luke</span></a>
+                                                            </h6>
+                                                        </div>
+                                                        <div class="col-auto lh-1 me-3"><small
+                                                                class="badge rounded badge-subtle-danger false">Overdue</small>
+                                                        </div>
+                                                        <div class="col-auto">
+                                                            <h6 class="mb-0 text-500">2d ago</h6>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="border-bottom mt-4 mb-x1"></div>
+                                            <div class="d-flex justify-content-between ms-auto">
+                                                <div class="d-flex align-items-center gap-2 ms-md-4 ms-xl-0"
+                                                    style="width:7.5rem;">
+                                                    <div style="--falcon-circle-progress-bar:75">
+                                                        <svg class="circle-progress-svg" width="26" height="26"
+                                                            viewBox="0 0 120 120">
+                                                            <circle class="progress-bar-rail" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke-width="12">
+                                                            </circle>
+                                                            <circle class="progress-bar-top" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke="#F68F57"
+                                                                stroke-width="12"></circle>
+                                                        </svg>
+                                                    </div>
+                                                    <h6 class="mb-0 text-700">High</h6>
+                                                </div>
+                                                <select class="form-select form-select-sm" aria-label="agents actions"
+                                                    style="width:9.375rem;">
+                                                    <option>Select Agent</option>
+                                                    <option selected="selected">Anindya</option>
+                                                    <option>Nowrin</option>
+                                                    <option>Khalid</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="bg-white dark__bg-1100 d-md-flex d-xl-inline-block d-xxl-flex align-items-center p-x1 rounded-3 shadow-sm card-view-height">
+                                            <div class="d-flex align-items-start align-items-sm-center">
+                                                <div class="form-check me-2 me-xxl-3 mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="card-view-tickets-2"
+                                                        data-bulk-select-row="data-bulk-select-row" />
+                                                </div><a class="d-none d-sm-block"
+                                                    href="../app/support-desk/contact-details.html">
+                                                    <div class="avatar avatar-xl avatar-3xl">
+                                                        <img class="rounded-circle" src="../assets/img/team/1-thumb.png"
+                                                            alt="" />
+
+                                                    </div>
+                                                </a>
+                                                <div class="ms-1 ms-sm-3">
+                                                    <p class="fw-semi-bold mb-3 mb-sm-2"><a
+                                                            href="../app/support-desk/tickets-preview.html">I need your
+                                                            help #2256</a></p>
+                                                    <div class="row align-items-center gx-0 gy-2">
+                                                        <div class="col-auto me-2">
+                                                            <h6 class="client mb-0"><a
+                                                                    class="text-800 d-flex align-items-center gap-1"
+                                                                    href="../app/support-desk/contact-details.html"><span
+                                                                        class="fas fa-user"
+                                                                        data-fa-transform="shrink-3 up-1"></span><span>Finley</span></a>
+                                                            </h6>
+                                                        </div>
+                                                        <div class="col-auto lh-1 me-3"><small
+                                                                class="badge rounded badge-subtle-warning false">Remaining</small>
+                                                        </div>
+                                                        <div class="col-auto">
+                                                            <h6 class="mb-0 text-500">2d ago</h6>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="border-bottom mt-4 mb-x1"></div>
+                                            <div class="d-flex justify-content-between ms-auto">
+                                                <div class="d-flex align-items-center gap-2 ms-md-4 ms-xl-0"
+                                                    style="width:7.5rem;">
+                                                    <div style="--falcon-circle-progress-bar:50">
+                                                        <svg class="circle-progress-svg" width="26" height="26"
+                                                            viewBox="0 0 120 120">
+                                                            <circle class="progress-bar-rail" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke-width="12">
+                                                            </circle>
+                                                            <circle class="progress-bar-top" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke="#2A7BE4"
+                                                                stroke-width="12"></circle>
+                                                        </svg>
+                                                    </div>
+                                                    <h6 class="mb-0 text-700">Medium</h6>
+                                                </div>
+                                                <select class="form-select form-select-sm" aria-label="agents actions"
+                                                    style="width:9.375rem;">
+                                                    <option>Select Agent</option>
+                                                    <option>Anindya</option>
+                                                    <option selected="selected">Nowrin</option>
+                                                    <option>Khalid</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="bg-white dark__bg-1100 d-md-flex d-xl-inline-block d-xxl-flex align-items-center p-x1 rounded-3 shadow-sm card-view-height">
+                                            <div class="d-flex align-items-start align-items-sm-center">
+                                                <div class="form-check me-2 me-xxl-3 mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="card-view-tickets-3"
+                                                        data-bulk-select-row="data-bulk-select-row" />
+                                                </div><a class="d-none d-sm-block"
+                                                    href="../app/support-desk/contact-details.html">
+                                                    <div class="avatar avatar-xl avatar-3xl">
+                                                        <div class="avatar-name rounded-circle"><span>PG</span></div>
+                                                    </div>
+                                                </a>
+                                                <div class="ms-1 ms-sm-3">
+                                                    <p class="fw-semi-bold mb-3 mb-sm-2"><a
+                                                            href="../app/support-desk/tickets-preview.html">I need your
+                                                            help #2256</a></p>
+                                                    <div class="row align-items-center gx-0 gy-2">
+                                                        <div class="col-auto me-2">
+                                                            <h6 class="client mb-0"><a
+                                                                    class="text-800 d-flex align-items-center gap-1"
+                                                                    href="../app/support-desk/contact-details.html"><span
+                                                                        class="fas fa-user"
+                                                                        data-fa-transform="shrink-3 up-1"></span><span>Peter
+                                                                        Gill</span></a></h6>
+                                                        </div>
+                                                        <div class="col-auto lh-1 me-3"><small
+                                                                class="badge rounded badge-subtle-info false">Responded</small>
+                                                        </div>
+                                                        <div class="col-auto">
+                                                            <h6 class="mb-0 text-500">2d ago</h6>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="border-bottom mt-4 mb-x1"></div>
+                                            <div class="d-flex justify-content-between ms-auto">
+                                                <div class="d-flex align-items-center gap-2 ms-md-4 ms-xl-0"
+                                                    style="width:7.5rem;">
+                                                    <div style="--falcon-circle-progress-bar:25">
+                                                        <svg class="circle-progress-svg" width="26" height="26"
+                                                            viewBox="0 0 120 120">
+                                                            <circle class="progress-bar-rail" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke-width="12">
+                                                            </circle>
+                                                            <circle class="progress-bar-top" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke="#00D27B"
+                                                                stroke-width="12"></circle>
+                                                        </svg>
+                                                    </div>
+                                                    <h6 class="mb-0 text-700">Low</h6>
+                                                </div>
+                                                <select class="form-select form-select-sm" aria-label="agents actions"
+                                                    style="width:9.375rem;">
+                                                    <option>Select Agent</option>
+                                                    <option>Anindya</option>
+                                                    <option selected="selected">Nowrin</option>
+                                                    <option>Khalid</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="bg-white dark__bg-1100 d-md-flex d-xl-inline-block d-xxl-flex align-items-center p-x1 rounded-3 shadow-sm card-view-height">
+                                            <div class="d-flex align-items-start align-items-sm-center">
+                                                <div class="form-check me-2 me-xxl-3 mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="card-view-tickets-4"
+                                                        data-bulk-select-row="data-bulk-select-row" />
+                                                </div><a class="d-none d-sm-block"
+                                                    href="../app/support-desk/contact-details.html">
+                                                    <div class="avatar avatar-xl avatar-3xl">
+                                                        <img class="rounded-circle" src="../assets/img/team/25-thumb.png"
+                                                            alt="" />
+
+                                                    </div>
+                                                </a>
+                                                <div class="ms-1 ms-sm-3">
+                                                    <p class="fw-semi-bold mb-3 mb-sm-2"><a
+                                                            href="../app/support-desk/tickets-preview.html">Contact Froms
+                                                            #3264</a></p>
+                                                    <div class="row align-items-center gx-0 gy-2">
+                                                        <div class="col-auto me-2">
+                                                            <h6 class="client mb-0"><a
+                                                                    class="text-800 d-flex align-items-center gap-1"
+                                                                    href="../app/support-desk/contact-details.html"><span
+                                                                        class="fas fa-user"
+                                                                        data-fa-transform="shrink-3 up-1"></span><span>Freya</span></a>
+                                                            </h6>
+                                                        </div>
+                                                        <div class="col-auto lh-1 me-3"><small
+                                                                class="badge rounded badge-subtle-secondary dark__bg-1000">Closed</small>
+                                                        </div>
+                                                        <div class="col-auto">
+                                                            <h6 class="mb-0 text-500">2d ago</h6>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="border-bottom mt-4 mb-x1"></div>
+                                            <div class="d-flex justify-content-between ms-auto">
+                                                <div class="d-flex align-items-center gap-2 ms-md-4 ms-xl-0"
+                                                    style="width:7.5rem;">
+                                                    <div style="--falcon-circle-progress-bar:50">
+                                                        <svg class="circle-progress-svg" width="26" height="26"
+                                                            viewBox="0 0 120 120">
+                                                            <circle class="progress-bar-rail" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke-width="12">
+                                                            </circle>
+                                                            <circle class="progress-bar-top" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke="#2A7BE4"
+                                                                stroke-width="12"></circle>
+                                                        </svg>
+                                                    </div>
+                                                    <h6 class="mb-0 text-700">Medium</h6>
+                                                </div>
+                                                <select class="form-select form-select-sm" aria-label="agents actions"
+                                                    style="width:9.375rem;">
+                                                    <option>Select Agent</option>
+                                                    <option>Anindya</option>
+                                                    <option>Nowrin</option>
+                                                    <option selected="selected">Khalid</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="bg-white dark__bg-1100 d-md-flex d-xl-inline-block d-xxl-flex align-items-center p-x1 rounded-3 shadow-sm card-view-height">
+                                            <div class="d-flex align-items-start align-items-sm-center">
+                                                <div class="form-check me-2 me-xxl-3 mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="card-view-tickets-5"
+                                                        data-bulk-select-row="data-bulk-select-row" />
+                                                </div><a class="d-none d-sm-block"
+                                                    href="../app/support-desk/contact-details.html">
+                                                    <div class="avatar avatar-xl avatar-3xl">
+                                                        <div class="avatar-name rounded-circle"><span>M</span></div>
+                                                    </div>
+                                                </a>
+                                                <div class="ms-1 ms-sm-3">
+                                                    <p class="fw-semi-bold mb-3 mb-sm-2"><a
+                                                            href="../app/support-desk/tickets-preview.html">I need your
+                                                            help #2256</a></p>
+                                                    <div class="row align-items-center gx-0 gy-2">
+                                                        <div class="col-auto me-2">
+                                                            <h6 class="client mb-0"><a
+                                                                    class="text-800 d-flex align-items-center gap-1"
+                                                                    href="../app/support-desk/contact-details.html"><span
+                                                                        class="fas fa-user"
+                                                                        data-fa-transform="shrink-3 up-1"></span><span>Morrison</span></a>
+                                                            </h6>
+                                                        </div>
+                                                        <div class="col-auto lh-1 me-3"><small
+                                                                class="badge rounded badge-subtle-info false">Responded</small>
+                                                        </div>
+                                                        <div class="col-auto">
+                                                            <h6 class="mb-0 text-500">2d ago</h6>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="border-bottom mt-4 mb-x1"></div>
+                                            <div class="d-flex justify-content-between ms-auto">
+                                                <div class="d-flex align-items-center gap-2 ms-md-4 ms-xl-0"
+                                                    style="width:7.5rem;">
+                                                    <div style="--falcon-circle-progress-bar:50">
+                                                        <svg class="circle-progress-svg" width="26" height="26"
+                                                            viewBox="0 0 120 120">
+                                                            <circle class="progress-bar-rail" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke-width="12">
+                                                            </circle>
+                                                            <circle class="progress-bar-top" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke="#2A7BE4"
+                                                                stroke-width="12"></circle>
+                                                        </svg>
+                                                    </div>
+                                                    <h6 class="mb-0 text-700">Medium</h6>
+                                                </div>
+                                                <select class="form-select form-select-sm" aria-label="agents actions"
+                                                    style="width:9.375rem;">
+                                                    <option>Select Agent</option>
+                                                    <option>Anindya</option>
+                                                    <option>Nowrin</option>
+                                                    <option selected="selected">Khalid</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="bg-white dark__bg-1100 d-md-flex d-xl-inline-block d-xxl-flex align-items-center p-x1 rounded-3 shadow-sm card-view-height">
+                                            <div class="d-flex align-items-start align-items-sm-center">
+                                                <div class="form-check me-2 me-xxl-3 mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="card-view-tickets-6"
+                                                        data-bulk-select-row="data-bulk-select-row" />
+                                                </div><a class="d-none d-sm-block"
+                                                    href="../app/support-desk/contact-details.html">
+                                                    <div class="avatar avatar-xl avatar-3xl">
+                                                        <div class="avatar-name rounded-circle"><span>MB</span></div>
+                                                    </div>
+                                                </a>
+                                                <div class="ms-1 ms-sm-3">
+                                                    <p class="fw-semi-bold mb-3 mb-sm-2"><a
+                                                            href="../app/support-desk/tickets-preview.html">I need your
+                                                            help #2256</a></p>
+                                                    <div class="row align-items-center gx-0 gy-2">
+                                                        <div class="col-auto me-2">
+                                                            <h6 class="client mb-0"><a
+                                                                    class="text-800 d-flex align-items-center gap-1"
+                                                                    href="../app/support-desk/contact-details.html"><span
+                                                                        class="fas fa-user"
+                                                                        data-fa-transform="shrink-3 up-1"></span><span>Morrison
+                                                                        Banneker</span></a></h6>
+                                                        </div>
+                                                        <div class="col-auto lh-1 me-3"><small
+                                                                class="badge rounded badge-subtle-secondary dark__bg-1000">Closed</small>
+                                                        </div>
+                                                        <div class="col-auto">
+                                                            <h6 class="mb-0 text-500">2d ago</h6>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="border-bottom mt-4 mb-x1"></div>
+                                            <div class="d-flex justify-content-between ms-auto">
+                                                <div class="d-flex align-items-center gap-2 ms-md-4 ms-xl-0"
+                                                    style="width:7.5rem;">
+                                                    <div style="--falcon-circle-progress-bar:50">
+                                                        <svg class="circle-progress-svg" width="26" height="26"
+                                                            viewBox="0 0 120 120">
+                                                            <circle class="progress-bar-rail" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke-width="12">
+                                                            </circle>
+                                                            <circle class="progress-bar-top" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke="#2A7BE4"
+                                                                stroke-width="12"></circle>
+                                                        </svg>
+                                                    </div>
+                                                    <h6 class="mb-0 text-700">Medium</h6>
+                                                </div>
+                                                <select class="form-select form-select-sm" aria-label="agents actions"
+                                                    style="width:9.375rem;">
+                                                    <option>Select Agent</option>
+                                                    <option>Anindya</option>
+                                                    <option>Nowrin</option>
+                                                    <option selected="selected">Khalid</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="bg-white dark__bg-1100 d-md-flex d-xl-inline-block d-xxl-flex align-items-center p-x1 rounded-3 shadow-sm card-view-height">
+                                            <div class="d-flex align-items-start align-items-sm-center">
+                                                <div class="form-check me-2 me-xxl-3 mb-0">
+                                                    <input class="form-check-input" type="checkbox" id="card-view-tickets-7"
+                                                        data-bulk-select-row="data-bulk-select-row" />
+                                                </div><a class="d-none d-sm-block"
+                                                    href="../app/support-desk/contact-details.html">
+                                                    <div class="avatar avatar-xl avatar-3xl">
+                                                        <img class="rounded-circle" src="../assets/img/team/14-thumb.png"
+                                                            alt="" />
+
+                                                    </div>
+                                                </a>
+                                                <div class="ms-1 ms-sm-3">
+                                                    <p class="fw-semi-bold mb-3 mb-sm-2"><a
+                                                            href="../app/support-desk/tickets-preview.html">Regarding
+                                                            Falcon Theme #3262</a></p>
+                                                    <div class="row align-items-center gx-0 gy-2">
+                                                        <div class="col-auto me-2">
+                                                            <h6 class="client mb-0"><a
+                                                                    class="text-800 d-flex align-items-center gap-1"
+                                                                    href="../app/support-desk/contact-details.html"><span
+                                                                        class="fas fa-user"
+                                                                        data-fa-transform="shrink-3 up-1"></span><span>Aar
+                                                                        Kay</span></a></h6>
+                                                        </div>
+                                                        <div class="col-auto lh-1 me-3"><small
+                                                                class="badge rounded badge-subtle-success false">Recent</small>
+                                                        </div>
+                                                        <div class="col-auto">
+                                                            <h6 class="mb-0 text-500">2d ago</h6>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="border-bottom mt-4 mb-x1"></div>
+                                            <div class="d-flex justify-content-between ms-auto">
+                                                <div class="d-flex align-items-center gap-2 ms-md-4 ms-xl-0"
+                                                    style="width:7.5rem;">
+                                                    <div style="--falcon-circle-progress-bar:75">
+                                                        <svg class="circle-progress-svg" width="26" height="26"
+                                                            viewBox="0 0 120 120">
+                                                            <circle class="progress-bar-rail" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke-width="12">
+                                                            </circle>
+                                                            <circle class="progress-bar-top" cx="60" cy="60" r="54"
+                                                                fill="none" stroke-linecap="round" stroke="#F68F57"
+                                                                stroke-width="12"></circle>
+                                                        </svg>
+                                                    </div>
+                                                    <h6 class="mb-0 text-700">High</h6>
+                                                </div>
+                                                <select class="form-select form-select-sm" aria-label="agents actions"
+                                                    style="width:9.375rem;">
+                                                    <option>Select Agent</option>
+                                                    <option>Anindya</option>
+                                                    <option>Nowrin</option>
+                                                    <option>Khalid</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center d-none" id="tickets-card-fallback">
+                                        <p class="fw-bold fs-8 mt-3">No ticket found</p>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="row align-items-center">
+                                        <div class="pagination d-none"></div>
+                                        <div class="col"><span class="d-none d-sm-inline-block me-2 fs-10"
+                                                data-list-info="data-list-info"></span></div>
+                                        <div class="col-auto d-flex">
+                                            <button class="btn btn-sm btn-primary" type="button"
+                                                data-list-pagination="prev"><span>Previous</span></button>
+                                            <button class="btn btn-sm btn-primary px-4 ms-2" type="button"
+                                                data-list-pagination="next"><span>Next</span></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 @endsection
-
-@push('scripts')
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const chartEl = document.querySelector('.echart-number-of-tickets');
-            if (!chartEl) return;
-
-            const chart = echarts.init(chartEl);
-
-            const option = {
-                tooltip: {
-                    trigger: 'axis'
-                },
-                legend: {
-                    data: ['Pending', 'In Process', 'Due (2+ days old)', 'Unassigned'],
-                    top: 10,
-                },
-                grid: {
-                    left: '3%',
-                    right: '4%',
-                    bottom: '3%',
-                    containLabel: true
-                },
-                xAxis: {
-                    type: 'category',
-                    data: @json($days),
-                    axisLabel: {
-                        color: '#888'
-                    }
-                },
-                yAxis: {
-                    type: 'value',
-                    axisLabel: {
-                        color: '#888'
-                    }
-                },
-                series: [{
-                        name: 'Pending',
-                        type: 'bar',
-                        data: @json($chartData['Pending']),
-                        color: '#2c7be5'
-                    },
-                    {
-                        name: 'In Process',
-                        type: 'bar',
-                        data: @json($chartData['In Process']),
-                        color: '#5bc0de'
-                    },
-                    {
-                        name: 'Due (2+ days old)',
-                        type: 'bar',
-                        data: @json($chartData['Due']),
-                        color: '#f0ad4e'
-                    },
-                    {
-                        name: 'Unassigned',
-                        type: 'bar',
-                        data: @json($chartData['Unassigned']),
-                        color: '#d9534f'
-                    }
-                ]
-            };
-
-            chart.setOption(option);
-            window.addEventListener('resize', () => chart.resize());
-        });
-    </script>
-@endpush

@@ -51,7 +51,8 @@
                 @if ($end < $paginator->lastPage() - 1)
                     <li class="page-item disabled"><span class="page-link">…</span></li>
                 @endif
-                <li class="page-item"><a class="page-link" href="{{ $paginator->url($paginator->lastPage()) }}">{{ $paginator->lastPage() }}</a></li>
+                <li class="page-item"><a class="page-link"
+                        href="{{ $paginator->url($paginator->lastPage()) }}">{{ $paginator->lastPage() }}</a></li>
             @endif
 
 
@@ -68,4 +69,3 @@
 
     </div>
 @endif
-    

@@ -19,14 +19,11 @@ class HRDashboardController extends Controller
     public function index(Request $request)
     {
         $today = Carbon::now()->startOfDay();
-
-        // Basic filters (optional, used later if needed)
         $deptFilter = $request->get('filter_department');
         $posFilter = $request->get('filter_position');
         $statusFilter = $request->get('filter_status');
         $companyFilter = $request->get('filter_company');
 
-        // Employees query (apply basic filters)
         $employeeQuery = Employee::with(['department','position'])->orderBy('full_name');
 
         if ($deptFilter) {
@@ -42,28 +39,23 @@ class HRDashboardController extends Controller
             $employeeQuery->where('company', $companyFilter);
         }
 
-        // Paginate employees for the list (10 per page)
-        $employees = $employeeQuery->paginate(10)->withQueryString();
+        $employees = $employeeQuery->paginate(20)->withQueryString();
 
-        // Totals + KPIs
         $totalEmployees = Employee::count();
         $activeEmployees = Employee::where('status', 'Active')->count();
         $activePct = $totalEmployees > 0 ? round(($activeEmployees / $totalEmployees) * 100, 1) : 0;
 
-        // On leave today (DriverLeave storage assumed)
         $onLeaveEmployees = DriverLeave::whereDate('start_date', '<=', $today)
             ->whereDate('end_date', '>=', $today)
             ->whereNotIn('status', ['cancelled'])
             ->distinct('employee_id')
             ->count('employee_id');
 
-        // For action count (example: offences or similar; adjust to your business logic)
         $firstOffenses = DriverLeave::where('offense_level', 1)->count();
         $secondOffenses = DriverLeave::where('offense_level', 2)->count();
         $terminationCount = DriverLeave::where('offense_level', '>=', 3)->count();
         $forActionCount = $firstOffenses + $secondOffenses + $terminationCount;
 
-        // Leave summary quick counts
         $leaveSummary = [
             'active' => DriverLeave::where('status', 'approved')->whereDate('start_date', '<=', $today)->whereDate('end_date', '>=', $today)->count(),
             'not_started' => DriverLeave::whereDate('start_date', '>', $today)->count(),
@@ -73,7 +65,6 @@ class HRDashboardController extends Controller
             'completed' => DriverLeave::where('status', 'completed')->count(),
         ];
 
-        // Recent timeline (mix of recent leaves and employee updates)
         $timeline = [];
         $recentLeaves = DriverLeave::with('employee')->orderBy('updated_at', 'desc')->limit(6)->get();
         foreach ($recentLeaves as $rl) {
