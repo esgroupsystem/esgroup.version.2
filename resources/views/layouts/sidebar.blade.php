@@ -88,8 +88,7 @@
 
                 {{-- CCTV CONCERN --}}
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
-                        href="#">
+                    <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}" href="#">
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
                                 <span class="fas fa-video"></span>
@@ -180,12 +179,59 @@
                                         <span class="nav-link-text">Conductor (Leave)</span>
                                     </a>
                                 </li>
-
                             </ul>
                         </li>
-
                     </ul>
+                </li>
+                {{-- LABEL --}}
+                <li class="nav-item">
+                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                        <div class="col-auto navbar-vertical-label">
+                            Maintenance
+                        </div>
+                        <div class="col ps-0">
+                            <hr class="mb-0 navbar-vertical-divider">
+                        </div>
+                    </div>
+                </li>
 
+                {{-- Request Orders --}}
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('request*') ? 'active' : '' }}"
+                        href="{{ route('request.index') }}">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-inbox"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Request Items</span>
+                        </div>
+                    </a>
+                </li>
+
+                {{-- Category --}}
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('category*') ? 'active' : '' }}"
+                        href="{{ route('category.index') }}">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="far fa-list-alt"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Categories</span>
+                        </div>
+                    </a>
+                </li>
+
+                {{-- Product --}}
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('items*') ? 'active' : '' }}"
+                        href="{{ route('items.index') }}">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-toolbox"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Products</span>
+                        </div>
+                    </a>
                 </li>
 
                 {{-- LABEL --}}
@@ -216,7 +262,7 @@
                         href="{{ route('roles.index') }}">
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
-                                <span class="fas fa-user-shield"></span>
+                                <span class="fas fa-user-secret"></span>
                             </span>
                             <span class="nav-link-text ps-1">Roles</span>
                         </div>

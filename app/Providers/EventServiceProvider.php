@@ -22,6 +22,9 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\JobOrderCreated::class => [
             \App\Listeners\SendJobOrderNotification::class,
         ],
+        \App\Events\POCreated::class => [
+            \App\Listeners\SendPOCreatedNotification::class,
+        ],
     ];
 
     public function boot(): void

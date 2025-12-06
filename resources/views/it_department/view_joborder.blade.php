@@ -130,7 +130,7 @@
                                 </small>
                             </div>
                         @endforeach
-                    </div>
+                    </div> 
                 </div>
             @endif
 

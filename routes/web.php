@@ -8,10 +8,12 @@ use App\Http\Controllers\HR_Department\DriverLeaveController;
 use App\Http\Controllers\HR_Department\EmployeeController;
 use App\Http\Controllers\HR_Department\HRDashboardController;
 use App\Http\Controllers\IT_Department\TicketController;
+use App\Http\Controllers\Maintenance\CategoryController;
+use App\Http\Controllers\Maintenance\ItemsController;
+use App\Http\Controllers\Maintenance\RequestController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Middleware\ForceLockscreen;
-use App\Models\Department;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -111,7 +113,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/{employee}/attachments', 'storeAttachment')->name('staff.attachments.store');
             Route::delete('/{employee}/attachments/{attachment}', 'destroyAttachment')->name('staff.attachments.destroy');
             Route::get('/{employee}/print', 'print201')->name('staff.print');
-            Route::get('/departments/{id}/positions', 'getPositions')->name('positions');;
+            Route::get('/departments/{id}/positions', 'getPositions')->name('positions');
 
         });
 
@@ -178,6 +180,43 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/roles/edit/{id}', 'edit')->name('edit');
             Route::post('/roles/update/{id}', 'update')->name('update');
             Route::get('/roles/status/{id}', 'destroy')->name('destroy');
+        });
+
+    Route::middleware(['role:Developer,IT Head'])
+        ->prefix('request')
+        ->name('request.')
+        ->controller(RequestController::class)
+        ->group(function () {
+            Route::get('/index', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/store', 'store')->name('store');
+            Route::get('/edit/{id}', 'edit')->name('edit');
+            Route::put('/update/{id}', 'update')->name('update');
+            Route::get('/status/{id}', 'destroy')->name('destroy');
+        });
+
+    Route::middleware(['role:Developer,IT Head'])
+        ->prefix('category')
+        ->name('category.')
+        ->controller(CategoryController::class)
+        ->group(function () {
+            Route::get('/index', 'index')->name('index');
+            Route::post('/store', 'store')->name('store');
+            Route::get('/edit/{id}', 'edit')->name('edit');
+            Route::post('/update/{id}', 'update')->name('update');
+            Route::get('/status/{id}', 'destroy')->name('destroy');
+        });
+
+    Route::middleware(['role:Developer,IT Head'])
+        ->prefix('items')
+        ->name('items.')
+        ->controller(ItemsController::class)
+        ->group(function () {
+            Route::get('/index', 'index')->name('index');
+            Route::post('/store', 'store')->name('store');
+            Route::get('/edit/{id}', 'edit')->name('edit');
+            Route::post('/update/{id}', 'update')->name('update');
+            Route::get('/status/{id}', 'destroy')->name('destroy');
         });
 
 });
