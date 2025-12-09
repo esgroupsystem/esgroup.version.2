@@ -13,9 +13,7 @@
         </script>
 
         <div class="content">
-            <div class="card mb-3" id="ordersTable"
-                data-list='{"valueNames":["order","date","ship","status"],"page":10,"pagination":true}'>
-
+            <div class="card mb-3" id="ordersCard">
                 <div class="card-header">
                     <div class="row flex-between-center">
                         <div class="col-auto">
@@ -39,104 +37,14 @@
                     </div>
                 </div>
 
-                <div class="card-body p-0">
-                    <div class="table-responsive scrollbar">
-                        <table class="table table-sm align-middle fs-10 mb-0">
-                            <thead class="bg-200">
-                                <tr>
-                                    <th class="text-900 align-middle">Order</th>
-                                    <th class="text-900 align-middle text-center">Date</th>
-                                    <th class="text-900 align-middle text-center">Ship To</th>
-                                    <th class="text-900 align-middle text-center">Status</th>
-                                    <th style="width:40px;"></th>
-                                </tr>
-                            </thead>
-
-                            <tbody class="list" id="table-orders-body">
-                                @foreach ($orders as $order)
-                                    <tr class="btn-reveal-trigger">
-
-                                        <td class="order py-3 align-middle white-space-nowrap">
-                                            <a href="#" data-bs-toggle="modal"
-                                                data-bs-target="#poModal{{ $order->id }}">
-                                                <strong>{{ $order->po_number }}</strong>
-                                            </a>
-                                            by <strong>{{ $order->requester->full_name }}</strong><br>
-                                            <a>{{ $order->requester->email }}</a>
-                                        </td>
-
-                                        <td class="date py-3 align-middle text-center">
-                                            {{ $order->created_at->format('d/m/Y') }}
-                                        </td>
-
-                                        <td class="ship py-3 align-middle text-center">
-                                            {{ $order->garage }}<br>
-                                            <span class="text-500">Purchase Order</span>
-                                        </td>
-
-                                        <td class="status py-3 align-middle text-center">
-                                            @if ($order->status == 'Approved')
-                                                <span class="badge badge rounded-pill badge-subtle-success">
-                                                    Approved <span class="fas fa-check ms-1"></span>
-                                                </span>
-                                            @else
-                                                <span class="badge badge rounded-pill badge-subtle-warning">
-                                                    Pending <span class="fas fa-stream ms-1"></span>
-                                                </span>
-                                            @endif
-                                        </td>
-
-                                        <td class="py-3 align-middle text-end">
-                                            <div class="dropdown">
-                                                <button class="btn btn-link btn-sm text-600 dropdown-toggle btn-reveal"
-                                                    type="button" id="dropdown-{{ $order->id }}"
-                                                    data-bs-toggle="dropdown">
-                                                    <span class="fas fa-ellipsis-h fs-10"></span>
-                                                </button>
-
-                                                <div class="dropdown-menu dropdown-menu-end py-0">
-                                                    <div class="py-2">
-                                                        <form action="{{ route('request.update', $order->id) }}"
-                                                            method="POST">
-                                                            @csrf
-                                                            @method('PUT')
-
-                                                            <button type="submit" name="status" value="Approved"
-                                                                class="dropdown-item">Approved</button>
-
-                                                            <button type="submit" name="status" value="Pending"
-                                                                class="dropdown-item">Pending</button>
-
-                                                            <div class="dropdown-divider"></div>
-
-                                                            <a class="dropdown-item text-danger" href="#">Delete</a>
-                                                        </form>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="p-3">
+                    <input id="liveSearch" class="form-control form-control-sm" placeholder="Search order..."
+                        value="{{ request('search') }}">
                 </div>
 
-                <div class="card-footer">
-                    <div class="d-flex justify-content-center">
-                        <button class="btn btn-sm btn-falcon-default me-1" data-list-pagination="prev">
-                            <span class="fas fa-chevron-left"></span>
-                        </button>
-
-                        <ul class="pagination mb-0"></ul>
-
-                        <button class="btn btn-sm btn-falcon-default ms-1" data-list-pagination="next">
-                            <span class="fas fa-chevron-right"></span>
-                        </button>
-                    </div>
+                <div id="ordersTable">
+                    @include('maintenance.request.table')
                 </div>
-
             </div>
         </div>
     </div>
@@ -216,3 +124,55 @@
     @endforeach
 
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            // ---------------------------
+            // AJAX SEARCH
+            // ---------------------------
+            let timer = null;
+            const searchBox = document.getElementById("liveSearch");
+
+            searchBox.addEventListener("keyup", function() {
+                let value = this.value;
+
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    fetch(`?search=${value}`, {
+                            headers: {
+                                "X-Requested-With": "XMLHttpRequest"
+                            }
+                        })
+                        .then(res => res.text())
+                        .then(html => {
+                            document.getElementById("ordersTable").innerHTML = html;
+                        });
+                }, 300);
+            });
+
+            // ---------------------------
+            // AJAX PAGINATION 
+            // (Clicking pagination links)
+            // ---------------------------
+            document.addEventListener("click", function(e) {
+                if (e.target.closest(".pagination a")) {
+                    e.preventDefault();
+                    let url = e.target.getAttribute("href");
+
+                    fetch(url, {
+                            headers: {
+                                "X-Requested-With": "XMLHttpRequest"
+                            }
+                        })
+                        .then(res => res.text())
+                        .then(html => {
+                            document.getElementById("ordersTable").innerHTML = html;
+                        });
+                }
+            });
+
+        });
+    </script>
+@endpush

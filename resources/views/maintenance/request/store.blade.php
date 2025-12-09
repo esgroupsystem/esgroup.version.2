@@ -48,7 +48,7 @@
                                 <p class="mb-1 fs-10"><strong>Name:</strong> {{ auth()->user()->full_name }}</p>
                                 <p class="mb-1 fs-10"><strong>Email:</strong> {{ auth()->user()->email }}</p>
 
-                                <label class="form-label fs-9 mt-2">Garage Location</label>
+                                <label class="form-label fs-9 mt-2">Delivery Location</label>
                                 <select class="form-select form-select-sm" name="garage" required>
                                     <option value="">Select</option>
                                     <option value="Mirasol">Mirasol</option>
@@ -133,6 +133,14 @@
 
 @push('scripts')
     <script>
+        function getSelectedProducts() {
+            let selected = [];
+            document.querySelectorAll(".product_select").forEach(sel => {
+                if (sel.value) selected.push(parseInt(sel.value));
+            });
+            return selected;
+        }
+
         let products = @json($products);
 
         // ADD ROW
@@ -176,20 +184,84 @@
             }
         });
 
-        // DYNAMIC PRODUCT SELECTION
+        // DYNAMIC PRODUCT SELECTION + REMOVE ALREADY SELECTED PRODUCTS
         document.addEventListener("change", function(e) {
             if (e.target.classList.contains("category_select")) {
+
                 let category_id = e.target.value;
-                let productSelect = e.target.closest("tr").querySelector(".product_select");
+                let row = e.target.closest("tr");
+                let productSelect = row.querySelector(".product_select");
+
+                let selectedProducts = getSelectedProducts();
 
                 let filtered = products.filter(p => p.category_id == category_id);
 
                 productSelect.innerHTML = `<option value="">Select Product</option>`;
 
                 filtered.forEach(p => {
-                    productSelect.innerHTML += `<option value="${p.id}">${p.product_name}</option>`;
+
+                    // Skip already selected products (avoid duplicates)
+                    if (selectedProducts.includes(p.id)) return;
+
+                    let label = p.product_name;
+                    let extra = [];
+
+                    if (p.unit) extra.push(p.unit);
+                    if (p.details) extra.push(p.details);
+
+                    if (extra.length > 0) {
+                        label += " (" + extra.join(" / ") + ")";
+                    }
+
+                    productSelect.innerHTML += `<option value="${p.id}">${label}</option>`;
                 });
             }
+
+            // When a product is selected, refresh all dropdowns to remove duplicates
+            if (e.target.classList.contains("product_select")) {
+                refreshAllProductDropdowns();
+            }
         });
+
+        function refreshAllProductDropdowns() {
+            let selectedProducts = getSelectedProducts();
+
+            document.querySelectorAll("#poItems tr").forEach(row => {
+
+                let categorySelect = row.querySelector(".category_select");
+                let productSelect = row.querySelector(".product_select");
+
+                if (!categorySelect.value) return;
+
+                let filtered = products.filter(
+                    p => p.category_id == categorySelect.value
+                );
+
+                let current = productSelect.value;
+
+                productSelect.innerHTML = `<option value="">Select Product</option>`;
+
+                filtered.forEach(p => {
+
+                    // Skip already selected items except itself
+                    if (selectedProducts.includes(p.id) && p.id != current) return;
+
+                    let label = p.product_name;
+                    let extra = [];
+
+                    if (p.unit) extra.push(p.unit);
+                    if (p.details) extra.push(p.details);
+
+                    if (extra.length > 0) {
+                        label += " (" + extra.join(" / ") + ")";
+                    }
+
+                    productSelect.innerHTML += `<option value="${p.id}" ${current == p.id ? 'selected' : ''}>
+                ${label}
+            </option>`;
+                });
+            });
+        }
+        
     </script>
 @endpush

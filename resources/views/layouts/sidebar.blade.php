@@ -61,7 +61,7 @@
                     </ul>
                 </li>
 
-                {{-- LABEL --}}
+                {{-- LABEL IT Department --}}
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">
@@ -98,7 +98,7 @@
                     </a>
                 </li>
 
-                {{-- LABEL --}}
+                {{-- LABEL HR Department --}}
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">
@@ -183,7 +183,7 @@
                         </li>
                     </ul>
                 </li>
-                {{-- LABEL --}}
+                {{-- LABEL Maintenance --}}
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">
@@ -234,7 +234,31 @@
                     </a>
                 </li>
 
-                {{-- LABEL --}}
+                {{-- LABEL Purchaser --}}
+                <li class="nav-item">
+                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                        <div class="col-auto navbar-vertical-label">
+                            Accounting
+                        </div>
+                        <div class="col ps-0">
+                            <hr class="mb-0 navbar-vertical-divider">
+                        </div>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('purchase*') ? 'active' : '' }}"
+                        href="{{ route('purchase.index') }}">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-dolly"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Purchase Order</span>
+                        </div>
+                    </a>
+                </li>
+
+                {{-- LABEL Authentication --}}
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">

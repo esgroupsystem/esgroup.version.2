@@ -14,9 +14,28 @@ use Illuminate\Support\Facades\Auth;
 
 class RequestController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $orders = PurchaseOrder::with(['items.product', 'requester'])->latest()->get();
+        $query = PurchaseOrder::with(['items.product', 'requester'])->orderBy('id', 'desc');
+
+        // AJAX SEARCH
+        if ($request->ajax()) {
+            if ($request->search) {
+                $query->whereHas('requester', function ($q) use ($request) {
+                    $q->where('full_name', 'like', "%{$request->search}%")
+                        ->orWhere('email', 'like', "%{$request->search}%");
+                })
+                    ->orWhere('po_number', 'like', "%{$request->search}%")
+                    ->orWhere('garage', 'like', "%{$request->search}%");
+            }
+
+            $orders = $query->paginate(10);
+
+            return view('maintenance.request.table', compact('orders'))->render();
+        }
+
+        // FULL LOAD (non-AJAX)
+        $orders = $query->paginate(10);
 
         return view('maintenance.request.index', compact('orders'));
     }
@@ -55,7 +74,7 @@ class RequestController extends Controller
         }
 
         Notifier::notifyRoles(
-            ['Maintenance Staff','Maintenance Engineer'],
+            ['Maintenance Staff', 'Maintenance Engineer'],
             new POCreatedMail($po)
         );
 
