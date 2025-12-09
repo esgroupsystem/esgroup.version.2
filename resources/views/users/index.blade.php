@@ -108,8 +108,7 @@
                                             <td class="text-end">
                                                 <div class="dropdown font-sans-serif position-static">
                                                     <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal"
-                                                        type="button" data-bs-toggle="dropdown" data-boundary="window"
-                                                        aria-haspopup="true" aria-expanded="false">
+                                                        type="button" data-bs-toggle="dropdown">
                                                         <span class="fas fa-ellipsis-h fs-10"></span>
                                                     </button>
 
@@ -119,13 +118,13 @@
                                                             {{-- EDIT --}}
                                                             <button class="dropdown-item"
                                                                 onclick="openEditUser({
-                                                                    id: '{{ $u->id }}',
-                                                                    full_name: '{{ $u->full_name }}',
-                                                                    username: '{{ $u->username }}',
-                                                                    email: '{{ $u->email }}',
-                                                                    role: '{{ $u->role }}',
-                                                                    status: '{{ $u->account_status }}'
-                                                                })">
+                                                                id: '{{ $u->id }}',
+                                                                full_name: '{{ $u->full_name }}',
+                                                                username: '{{ $u->username }}',
+                                                                email: '{{ $u->email }}',
+                                                                role: '{{ $u->role }}',
+                                                                status: '{{ $u->account_status }}'
+                                                            })">
                                                                 <i class="fas fa-edit me-2"></i> Edit
                                                             </button>
 
@@ -136,7 +135,7 @@
                                                                 <i class="fas fa-key me-2"></i> Reset Password
                                                             </button>
 
-                                                            {{-- TOGGLE ACTIVE --}}
+                                                            {{-- ACTIVATE / DEACTIVATE (Instant Action) --}}
                                                             <a class="dropdown-item"
                                                                 href="{{ route('authentication.users.status', $u->id) }}">
                                                                 <i class="fas fa-toggle-on me-2"></i>
@@ -145,6 +144,7 @@
 
                                                         </div>
                                                     </div>
+
                                                 </div>
                                             </td>
                                         </tr>
@@ -235,6 +235,33 @@
         </div>
     </div>
 
+    {{-- RESET PASSWORD MODAL --}}
+    <div class="modal fade" id="resetModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <form method="POST" id="resetForm">
+                    @csrf
+
+                    <div class="modal-header bg-light">
+                        <h5 class="modal-title">Reset Password</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <p id="resetText" class="fs-9"></p>
+                    </div>
+
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger btn-sm">Reset Now</button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -272,10 +299,23 @@
             document.getElementById("email").value = user.email;
             document.getElementById("role").value = user.role;
 
-            // ✅ FIXED LINE
             document.getElementById("account_status").value = user.status;
 
             new bootstrap.Modal(document.getElementById("userModal")).show();
         }
+
+        document.addEventListener("click", function(e) {
+            if (e.target.closest(".reset-btn")) {
+
+                let id = e.target.closest(".reset-btn").dataset.id;
+                let name = e.target.closest(".reset-btn").dataset.name;
+
+                document.getElementById("resetText").innerHTML =
+                    "Are you sure you want to reset the password for <strong>" + name + "</strong>?";
+
+                document.getElementById("resetForm").action =
+                    "/authentication/users/reset-password/" + id;
+            }
+        });
     </script>
 @endpush
