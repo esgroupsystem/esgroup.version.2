@@ -14,19 +14,16 @@
 
         <div class="content">
 
-            {{-- 🧩 TOP CARD --}}
+            {{-- TOP CARD --}}
             <div class="card mb-4">
                 <div class="bg-holder d-none d-lg-block bg-card"
-                    style="background-image:url(/assets/img/icons/spot-illustrations/corner-4.png);">
-                </div>
+                    style="background-image:url(/assets/img/icons/spot-illustrations/corner-4.png);"></div>
 
                 <div class="card-body position-relative">
                     <div class="row">
                         <div class="col-lg-8">
                             <h3 class="mb-2">Items Management</h3>
-                            <p class="text-muted">
-                                Manage all items and assign them under categories.
-                            </p>
+                            <p class="text-muted">Manage all items and assign them under categories.</p>
                         </div>
 
                         <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
@@ -34,12 +31,16 @@
                                 onclick="openCreateItem()">
                                 <i class="fas fa-plus me-1"></i> Add Item
                             </button>
+
+                            <button class="btn btn-info ms-2" data-bs-toggle="modal" data-bs-target="#stockModal">
+                                <i class="fas fa-boxes me-1"></i> View Stock
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- 🧭 TABLE CARD --}}
+            {{-- ITEMS TABLE --}}
             <div class="card mb-4">
                 <div class="card-header pb-0">
                     <h6 class="mb-0">Items List</h6>
@@ -55,107 +56,8 @@
                 </div>
 
                 <div class="card-body p-0">
-                    <div id="itemTable"
-                        data-list='{"valueNames":["item_name","item_category"],"page":10,"pagination":true}'>
-                        <div class="table-responsive scrollbar">
-                            <table class="table table-hover table-striped fs-10 mb-0">
-                                <thead class="bg-200 text-900">
-                                    <tr>
-                                        <th class="sort" data-sort="item_name">Item Name</th>
-                                        <th class="sort" data-sort="item_category">Category</th>
-                                        <th class="text-center">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="list">
-                                    <tr class="d-none">
-                                        <td class="item_name"></td>
-                                        <td class="item_category"></td>
-                                        <td></td>
-                                    </tr>
-
-                                    @forelse ($products as $item)
-                                        <tr class="align-middle">
-
-                                            {{-- ITEM DESIGN (2 LINES) --}}
-                                            <td class="item_name">
-                                                <div class="fw-semibold text-110">
-                                                    {{ $item->product_name }}
-                                                    @if ($item->unit)
-                                                        ({{ $item->unit }})
-                                                    @endif
-                                                </div>
-
-                                                <div class="text-500
-                                                 fs-12">
-                                                    {{ $item->details ? $item->details : 'N/A' }}
-                                                </div>
-                                            </td>
-
-                                            {{-- CATEGORY --}}
-                                            <td class="item_category">
-                                                <div class="fw-semibold text-110">{{ $item->category->name }}</div>
-                                                @if ($item->part_number)
-                                                    <div class="text-600 fs-9">#{{ $item->part_number }}</div>
-                                                @endif
-                                            </td>
-
-                                            {{-- ACTIONS --}}
-                                            <td class="text-center">
-                                                <div class="dropdown font-sans-serif position-static">
-                                                    <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal"
-                                                        type="button" data-bs-toggle="dropdown">
-                                                        <span class="fas fa-ellipsis-h fs-10"></span>
-                                                    </button>
-
-                                                    <div class="dropdown-menu dropdown-menu-end border py-0 shadow-sm">
-                                                        <div class="py-2">
-                                                            <button class="dropdown-item"
-                                                                onclick="openEditItem({{ $item->id }},
-                                                                    '{{ $item->category_id }}',
-                                                                    '{{ $item->product_name }}',
-                                                                    '{{ $item->unit }}',
-                                                                    '{{ $item->part_number }}',
-                                                                    `{{ $item->details }}`)">
-                                                                <i class="fas fa-edit me-2"></i> Edit
-                                                            </button>
-
-                                                            <form action="{{ route('items.destroy', $item->id) }}"
-                                                                method="POST" class="d-inline confirm-delete">
-                                                                @csrf @method('DELETE')
-                                                                <button class="dropdown-item text-danger">
-                                                                    <i class="fas fa-trash me-2"></i> Delete
-                                                                </button>
-                                                            </form>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td class="item_name">No items found</td>
-                                            <td class="item_category">—</td>
-                                            <td class="text-end">—</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {{-- PAGINATION --}}
-                        <div class="d-flex justify-content-center my-3">
-                            <button class="btn btn-sm btn-falcon-default me-1" data-list-pagination="prev">
-                                <span class="fas fa-chevron-left"></span>
-                            </button>
-
-                            <ul class="pagination mb-0"></ul>
-
-                            <button class="btn btn-sm btn-falcon-default ms-1" data-list-pagination="next">
-                                <span class="fas fa-chevron-right"></span>
-                            </button>
-                        </div>
-
+                    <div id="itemTable">
+                        @include('maintenance.items.items_table', ['items' => $items])
                     </div>
                 </div>
             </div>
@@ -163,27 +65,25 @@
         </div>
     </div>
 
-    {{-- 🧾 ITEM MODAL --}}
-    <div class="modal fade" id="itemModal" tabindex="-1">
-        <div class="modal-dialog modal-md modal-dialog-centered">
-            <div class="modal-content">
+    {{-- ITEM CREATE / EDIT MODAL --}}
+    <div class="modal fade" id="itemModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-sm">
 
-                <form id="itemForm" method="POST" action="{{ route('items.store') }}">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title text-900 fs-8" id="itemModalTitle">Add Item</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form id="itemForm" method="POST">
                     @csrf
-
-                    <div class="modal-header bg-light">
-                        <h5 class="modal-title" id="itemModalTitle">Add Item</h5>
-                        <button class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
 
                     <div class="modal-body">
 
-                        <input type="hidden" id="itemId" name="id">
-
                         <div class="mb-3">
-                            <label class="form-label">Category<span class="text-danger">*</span></label>
-                            <select name="category_id" id="itemCategory" class="form-select" required>
-                                <option value="">Select Category</option>
+                            <label class="form-label">Category</label>
+                            <select class="form-select" name="category_id" id="itemCategory" required>
+                                <option value="" disabled selected>Select Category</option>
                                 @foreach ($categories as $c)
                                     <option value="{{ $c->id }}">{{ $c->name }}</option>
                                 @endforeach
@@ -191,30 +91,36 @@
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Product Name<span class="text-danger">*</span></label>
-                            <input type="text" id="itemName" name="product_name" class="form-control" required>
+                            <label class="form-label">Item Name</label>
+                            <input type="text" class="form-control" name="product_name" id="itemName" required>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Unit<span class="text-danger">*</span></label>
-                            <input type="text" id="itemUnit" name="unit" class="form-control">
-                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Unit</label>
+                                <input type="text" class="form-control" name="unit" id="itemUnit">
+                            </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Part #</label>
-                            <input type="text" id="itemPartNumber" name="part_number" class="form-control">
-                        </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Part Number</label>
+                                <input type="text" class="form-control" name="part_number" id="itemPartNumber">
+                            </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Details</label>
-                            <textarea id="itemDetails" name="details" class="form-control" rows="3"></textarea>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Details</label>
+                                <textarea class="form-control" name="details" id="itemDetails" rows="3"></textarea>
+                            </div>
                         </div>
 
                     </div>
 
                     <div class="modal-footer bg-light">
-                        <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
-                        <button class="btn btn-primary btn-sm" type="submit">Save</button>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-save me-1"></i> Save
+                        </button>
+                        <button type="button" class="btn btn-falcon-default btn-sm" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i> Cancel
+                        </button>
                     </div>
 
                 </form>
@@ -222,47 +128,84 @@
             </div>
         </div>
     </div>
+
+
+    {{-- STOCK MODAL --}}
+    <div class="modal fade" id="stockModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-sm">
+
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title text-900 fs-8">
+                        <span class="fas fa-boxes text-primary me-2"></span> Inventory Dashboard
+                    </h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body bg-100">
+                    <div id="stockTableContainer">
+                        @include('maintenance.items.stock_table', ['products' => $stock])
+
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light">
+                    <button class="btn btn-falcon-default btn-sm" data-bs-dismiss="modal">
+                        <span class="fas fa-times me-1"></span> Close
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
 @endsection
+
 
 @push('scripts')
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const listjs = new List("itemTable", {
-                valueNames: ["item_name", "item_category"],
-                page: 10,
-                pagination: true
-            });
+        /* ------------------------------
+               AJAX PAGINATION INSIDE MODAL
+            ------------------------------ */
+        document.addEventListener("DOMContentLoaded", function() {
 
-            document.querySelector(".search").addEventListener("keyup", e => {
-                listjs.search(e.target.value);
-            });
+            function loadStockTable(url) {
+                fetch(url, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        document.getElementById("stockTableContainer").innerHTML = html;
+                        bindPaginationLinks();
+                    });
+            }
+
+            function bindPaginationLinks() {
+                document.querySelectorAll("#stockTableContainer .pagination a")
+                    .forEach(link => {
+                        link.addEventListener("click", function(e) {
+                            e.preventDefault(); // prevent modal from closing
+                            loadStockTable(this.href);
+                        });
+                    });
+            }
+
+            bindPaginationLinks();
         });
 
+        /* ------------------------------
+           ITEM MODAL HELPERS
+        ------------------------------ */
         function openCreateItem() {
             document.getElementById("itemModalTitle").innerText = "Add Item";
             document.getElementById("itemForm").action = "{{ route('items.store') }}";
-
-            document.getElementById("itemCategory").value = "";
-            document.getElementById("itemName").value = "";
-            document.getElementById("itemUnit").value = "";
-            document.getElementById("itemPartNumber").value = "";
-            document.getElementById("itemDetails").value = "";
-
-            let method = document.querySelector('#itemForm input[name="_method"]');
-            if (method) method.remove();
         }
 
         function openEditItem(id, category_id, name, unit, part_number, details) {
             document.getElementById("itemModalTitle").innerText = "Edit Item";
             document.getElementById("itemForm").action = "/maintenance/items/" + id;
-
-            if (!document.querySelector('#itemForm input[name="_method"]')) {
-                let m = document.createElement("input");
-                m.type = "hidden";
-                m.name = "_method";
-                m.value = "PUT";
-                document.getElementById("itemForm").appendChild(m);
-            }
 
             document.getElementById("itemCategory").value = category_id;
             document.getElementById("itemName").value = name;
@@ -272,15 +215,42 @@
 
             new bootstrap.Modal(document.getElementById('itemModal')).show();
         }
-
-        document.addEventListener("DOMContentLoaded", function() {
-            const itemNameInput = document.getElementById("itemName");
-
-            itemNameInput.addEventListener("input", function() {
-                let words = this.value.split(" ");
-                words = words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
-                this.value = words.join(" ");
-            });
-        });
     </script>
+@endpush
+
+@push('styles')
+    <style>
+        .pagination {
+            font-size: 14px !important;
+        }
+
+        .pagination .page-link {
+            padding: 4px 10px !important;
+            font-size: 14px !important;
+            border-radius: 4px !important;
+            color: #4a4a4a !important;
+            border: 1px solid #d0d5dd !important;
+            background: #f8f9fa !important;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+            color: #fff !important;
+            font-weight: 600 !important;
+        }
+
+        .pagination .page-link:hover {
+            background: #e2e6ea !important;
+            border-color: #c4c9cf !important;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            opacity: .5 !important;
+        }
+
+        .pagination .page-item {
+            margin: 0 2px !important;
+        }
+    </style>
 @endpush

@@ -232,6 +232,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/edit/{id}', 'edit')->name('edit');
             Route::post('/update/{id}', 'update')->name('update');
             Route::get('/status/{id}', 'destroy')->name('destroy');
+
         });
     });
 
