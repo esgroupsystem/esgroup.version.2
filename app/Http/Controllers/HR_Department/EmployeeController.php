@@ -78,19 +78,23 @@ class EmployeeController extends Controller
                 'garage' => 'required|in:Mirasol,Balintawak',
             ]);
 
-            $lastId = Employee::latest()->value('id') ?? 0;
-            $employee_id = 'EMP-'.str_pad($lastId + 1, 4, '0', STR_PAD_LEFT);
+            DB::transaction(function () use ($request) {
 
-            Employee::create([
-                'employee_id' => $employee_id,
-                'full_name' => $request->full_name,
-                'department_id' => $request->department_id,
-                'position_id' => $request->position_id,
-                'email' => $request->email,
-                'phone_number' => $request->phone_number,
-                'company' => $request->company,
-                'garage' => $request->garage,
-            ]);
+                $lastId = Employee::lockForUpdate()->max('id') ?? 0;
+
+                $employee_id = 'EMP-'.str_pad($lastId + 1, 4, '0', STR_PAD_LEFT);
+
+                Employee::create([
+                    'employee_id' => $employee_id,
+                    'full_name' => $request->full_name,
+                    'department_id' => $request->department_id,
+                    'position_id' => $request->position_id,
+                    'email' => $request->email,
+                    'phone_number' => $request->phone_number,
+                    'company' => $request->company,
+                    'garage' => $request->garage,
+                ]);
+            });
 
             flash('Employee added successfully!')->success();
 
