@@ -11,7 +11,8 @@ class Product extends Model
         'product_name',
         'unit',
         'part_number',
-        'details'
+        'details',
+        'stock_qty',
     ];
 
     public function category()

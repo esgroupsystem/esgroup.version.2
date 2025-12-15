@@ -38,72 +38,54 @@ class AccountingController extends Controller
 
     public function update(Request $request, $order)
     {
-        $order = PurchaseOrder::with('items')->findOrFail($order);
+        // Always resolve PO model
+        if ($order instanceof PurchaseOrder) {
+            $order->load('items');
+        } else {
+            $order = PurchaseOrder::with('items')->findOrFail($order);
+        }
 
         try {
             DB::beginTransaction();
 
-            // Ensure items exist
+            // Validate items structure
             if (! $request->has('items') || ! is_array($request->items)) {
-                throw new \Exception('No items were submitted.');
+                throw new \Exception('No valid items were submitted for update.');
             }
 
             foreach ($request->items as $itemId => $data) {
 
                 $item = $order->items()->find($itemId);
-                if (! $item) {
-                    Log::warning('Item not found in PO update', [
-                        'order_id' => $order->id,
-                        'missing_item_id' => $itemId,
-                    ]);
 
-                    continue;
+                if (! $item) {
+                    continue; // Skip missing items silently
                 }
 
                 // REMOVE ITEM
-                if (isset($data['remove']) && $data['remove'] == 1) {
+                if (! empty($data['remove']) && $data['remove'] == 1) {
                     $item->update([
                         'purchased_qty' => 0,
                         'store_name' => $data['store_name'] ?? null,
                         'removed' => true,
                     ]);
 
-                    Log::info('Item removed by accounting.', [
-                        'order_id' => $order->id,
-                        'item_id' => $item->id,
-                        'store_name' => $data['store_name'] ?? null,
-                    ]);
-
                     continue;
                 }
 
-                // VALID PURCHASED QTY
-                $purchased = max(0, min($item->qty, (int) ($data['purchased_qty'] ?? 0)));
+                // Validate qty
+                $purchasedQty = (int) ($data['purchased_qty'] ?? 0);
+                $purchased = max(0, min($item->qty, $purchasedQty));
 
                 $item->update([
                     'purchased_qty' => $purchased,
                     'store_name' => $data['store_name'] ?? null,
                     'removed' => false,
                 ]);
-
-                Log::info('Accounting updated item purchase details.', [
-                    'order_id' => $order->id,
-                    'item_id' => $item->id,
-                    'purchased_qty' => $purchased,
-                    'store_name' => $data['store_name'] ?? null,
-                ]);
             }
 
-            // UPDATE PO STATUS
-            $oldStatus = $order->status;
+            // Update PO status
             $order->status = $request->status;
             $order->save();
-
-            Log::info('PO status updated by accounting.', [
-                'order_id' => $order->id,
-                'old_status' => $oldStatus,
-                'new_status' => $request->status,
-            ]);
 
             DB::commit();
 
@@ -113,11 +95,10 @@ class AccountingController extends Controller
 
             DB::rollBack();
 
-            // STORE ERROR INTO LARAVEL LOGS
-            Log::error('Accounting PO update failed', [
-                'order_id' => $order->id,
+            // ONLY LOG ERROR HERE
+            Log::error('PO update failed.', [
+                'order_id' => $order->id ?? 'N/A',
                 'error_message' => $e->getMessage(),
-                'request_data' => $request->all(),
             ]);
 
             return back()->with('error', 'Update failed: '.$e->getMessage());

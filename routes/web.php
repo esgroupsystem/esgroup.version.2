@@ -11,6 +11,7 @@ use App\Http\Controllers\HR_Department\HRDashboardController;
 use App\Http\Controllers\IT_Department\TicketController;
 use App\Http\Controllers\Maintenance\CategoryController;
 use App\Http\Controllers\Maintenance\ItemsController;
+use App\Http\Controllers\Maintenance\PurchaseReceiveController;
 use App\Http\Controllers\Maintenance\RequestController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserManagementController;
@@ -234,6 +235,12 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/status/{id}', 'destroy')->name('destroy');
 
         });
+
+        Route::prefix('received')->name('received.')->controller(PurchaseReceiveController::class)->group(function () {
+            Route::get('po/receiving','index')->name('index');
+            Route::get('po/receiving/{id}', 'details')->name('details');
+            Route::post('po/item/{id}/receive', 'receive')->name('received');
+        });
     });
 
     /*
@@ -249,4 +256,5 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/index', 'index')->name('index');
             Route::post('/update/{order}', 'update')->name('update');
         });
+
 });

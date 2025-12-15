@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Position;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class DepartmentController extends Controller
 {
@@ -22,14 +23,8 @@ class DepartmentController extends Controller
             return view('hr_department.departments.index', compact('departments'));
 
         } catch (\Exception $e) {
-
-            // Log error for debugging
-            \Log::error('Department Index Error: '.$e->getMessage());
-
-            // Flash error message to UI
+            Log::error('Department Index Error: '.$e->getMessage());
             flash('Something went wrong while loading departments.')->error();
-
-            // Redirect back safely
             return redirect()->back();
         }
     }

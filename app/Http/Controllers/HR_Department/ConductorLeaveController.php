@@ -193,7 +193,6 @@ class ConductorLeaveController extends Controller
             'reason' => $request->reason,
         ]);
 
-        // ⭐ UPDATE EMPLOYEE STATUS TO "On Leave"
         $employee = Employee::find($request->employee_id);
         if ($employee) {
             $employee->status = 'On Leave';

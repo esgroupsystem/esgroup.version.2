@@ -208,6 +208,19 @@
                     </a>
                 </li>
 
+                {{-- Received --}}
+                <li class="nav-item">
+                    <a class="nav-link {{ request()->is('received*') ? 'active' : '' }}"
+                        href="{{ route('received.index') }}">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-toolbox"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Receiving Area</span>
+                        </div>
+                    </a>
+                </li>
+
                 {{-- Category --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('category*') ? 'active' : '' }}"

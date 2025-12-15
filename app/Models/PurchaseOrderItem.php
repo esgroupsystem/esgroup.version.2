@@ -11,6 +11,7 @@ class PurchaseOrderItem extends Model
         'product_id',
         'qty',
         'purchased_qty',
+        'received_qty',
         'store_name',
         'removed',
     ];
@@ -23,5 +24,10 @@ class PurchaseOrderItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function receives()
+    {
+        return $this->hasMany(PurchaseReceive::class, 'purchase_order_item_id');
     }
 }

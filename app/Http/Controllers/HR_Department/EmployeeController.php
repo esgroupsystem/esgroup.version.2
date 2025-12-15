@@ -5,6 +5,7 @@ namespace App\Http\Controllers\HR_Department;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Employee;
+use App\Models\Position;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -369,7 +370,7 @@ class EmployeeController extends Controller
 
     public function getPositions($id)
     {
-        $positions = \App\Models\Position::where('department_id', $id)->get();
+        $positions = Position::where('department_id', $id)->get();
 
         return response()->json($positions);
     }
