@@ -208,7 +208,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Maintenance (Request, Category, Items)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Head,Operation Manager'])->group(function () {
+    Route::middleware(['role:Developer,IT Head,Operation Manager,Maintenance Engineer'])->group(function () {
 
         Route::prefix('request')->name('request.')->controller(RequestController::class)->group(function () {
             Route::get('/index', 'index')->name('index');
@@ -250,7 +250,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     */
     Route::model('order', App\Models\PurchaseOrder::class);
 
-    Route::middleware(['role:Developer,IT Head,Operation Manager'])
+    Route::middleware(['role:Developer,IT Head,Operation Manager,Maintenance Engineer'])
         ->prefix('purchase')->name('purchase.')
         ->controller(AccountingController::class)->group(function () {
             Route::get('/index', 'index')->name('index');
