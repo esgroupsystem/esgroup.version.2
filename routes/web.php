@@ -98,6 +98,9 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/export/{type}', 'export')->name('export');
             Route::get('/cctv', 'cctvindex')->name('cctv.index');
             Route::get('joborder/{id}/print', 'print')->name('joborder.print');
+
+            Route::post('/joborder/{id}/approve', 'approve')->name('approve');
+            Route::post('/joborder/{id}/disapprove', 'disapprove')->name('disapprove');
         });
 
     /*
@@ -238,7 +241,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         });
 
         Route::prefix('received')->name('received.')->controller(PurchaseReceiveController::class)->group(function () {
-            Route::get('po/receiving','index')->name('index');
+            Route::get('po/receiving', 'index')->name('index');
             Route::get('po/receiving/{id}', 'details')->name('details');
             Route::post('po/item/{id}/receive', 'receive')->name('received');
         });

@@ -19,7 +19,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -47,7 +46,10 @@ class TicketController extends Controller
             }
 
             if ($tab == 'pending') {
-                $query->where('job_status', 'Pending');
+                $query->where(function ($q) {
+                    $q->where('job_status', 'Pending')
+                        ->orWhere('job_status', 'Approval');
+                });
             } elseif ($tab == 'progress') {
                 $query->where('job_status', 'In Progress');
             } elseif ($tab == 'completed') {
@@ -60,7 +62,7 @@ class TicketController extends Controller
         }
 
         $pending = JobOrder::with('bus')
-            ->where('job_status', 'Pending')
+            ->whereIn('job_status', ['Pending', 'Approval'])
             ->orderBy('job_date_filled', 'desc')
             ->paginate(10);
 
@@ -76,7 +78,7 @@ class TicketController extends Controller
 
         $stats = [
             'new' => JobOrder::whereDate('created_at', today())->count(),
-            'pending' => JobOrder::where('job_status', 'Pending')->count(),
+            'pending' => JobOrder::whereIn('job_status', ['Pending', 'Approval'])->count(),
             'progress' => JobOrder::where('job_status', 'In Progress')->count(),
             'completed' => JobOrder::where('job_status', 'Completed')->count(),
         ];
@@ -108,6 +110,64 @@ class TicketController extends Controller
         return view('it_department.ticket_job_order', compact(
             'pending', 'progress', 'completed', 'stats', 'categories', 'agents'
         ));
+    }
+
+    public function approve($id)
+    {
+        $job = JobOrder::findOrFail($id);
+
+        // 🔐 ROLE CHECK
+        abort_unless(in_array(Auth::user()->role, ['IT Head', 'Developer']), 403);
+
+        // 🔐 EXTRA SAFETY (STATUS CHECK)
+        if ($job->job_status !== 'Approval' || $job->approval_status !== 'Approval') {
+            return back();
+        }
+
+        $job->update([
+            'approval_status' => 'Approved',
+            'job_status' => 'Pending',
+            'approved_by' => Auth::id(),
+            'approved_at' => now(),
+        ]);
+
+        JobOrderLog::create([
+            'joborder_id' => $job->id,
+            'user_id' => Auth::id(),
+            'action' => 'approved',
+            'meta' => ['message' => 'Approved by IT Head'],
+        ]);
+
+        return back()->with('success', 'Job approved');
+    }
+
+    public function disapprove($id)
+    {
+        $job = JobOrder::findOrFail($id);
+
+        // 🔐 ROLE CHECK
+        abort_unless(in_array(Auth::user()->role, ['IT Head', 'Developer']), 403);
+
+        // 🔐 ONLY DISAPPROVE IF STILL FOR APPROVAL
+        if ($job->job_status !== 'Approval' || $job->approval_status !== 'Approval') {
+            return back();
+        }
+
+        $job->update([
+            'approval_status' => 'Disapproved',
+            'job_status' => 'Disapproved',
+            'approved_by' => Auth::id(),
+            'approved_at' => now(),
+        ]);
+
+        JobOrderLog::create([
+            'joborder_id' => $job->id,
+            'user_id' => Auth::id(),
+            'action' => 'disapproved',
+            'meta' => ['message' => 'Disapproved by IT Head'],
+        ]);
+
+        return back()->with('error', 'Job disapproved');
     }
 
     public function cctvindex()
@@ -182,7 +242,7 @@ class TicketController extends Controller
                 'job_time_end' => ['required', 'string', 'max:255'],
                 'job_sitNumber' => ['nullable', 'string', 'max:20'],
                 'job_remarks' => ['nullable', 'string'],
-                'job_status' => ['required', Rule::in(['Pending', 'Assigned', 'In Progress', 'Completed'])],
+                'job_status' => ['nullable'],
                 'job_assign_person' => ['nullable', 'string', 'max:255'],
                 'direction' => ['nullable', 'string', 'max:255'],
                 'driver_name' => ['nullable', 'string', 'max:255'],
@@ -211,6 +271,7 @@ class TicketController extends Controller
                 $job = JobOrder::create([
                     'bus_detail_id' => $bus->id,
                     'created_by' => optional($user)->id,
+
                     'job_name' => $validated['job_name'] ?? 'Job Order',
                     'job_type' => $validated['job_type'],
                     'job_datestart' => $validated['job_datestart'],
@@ -218,8 +279,12 @@ class TicketController extends Controller
                     'job_time_end' => $validated['job_time_end'],
                     'job_sitNumber' => $validated['job_sitNumber'] ?? null,
                     'job_remarks' => $validated['job_remarks'] ?? null,
-                    'job_status' => $validated['job_status'],
-                    'job_assign_person' => $validated['job_assign_person'] ?? null,
+
+                    // 🔐 FORCE APPROVAL FLOW
+                    'approval_status' => 'Approval',
+                    'job_status' => 'Approval',
+
+                    'job_assign_person' => null,
                     'job_date_filled' => now(),
                     'job_creator' => optional($user)->full_name,
                     'driver_name' => $validated['driver_name'] ?? null,
@@ -514,4 +579,3 @@ class TicketController extends Controller
         return view('it_department.print.joborder', compact('job'));
     }
 }
-    

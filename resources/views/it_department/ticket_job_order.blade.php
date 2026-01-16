@@ -77,8 +77,7 @@
                             <div class="row">
                                 <div class="col-lg-8">
                                     <h3 class="mb-2">Tickets Job Order</h3>
-                                    <p class="text-muted">Manage internal IT Job Order requests with search + pagination.
-                                    </p>
+                                    <p class="text-muted">Manage internal IT Job Order requests.</p>
                                 </div>
 
                                 <div class="col-lg-4 text-lg-end mt-3 mt-lg-0 d-flex flex-column align-items-end gap-2">
@@ -143,6 +142,10 @@
 
                         {{-- TABLES --}}
                         <div class="card-body p-0 tab-content">
+
+                            @php
+                                $isApprover = in_array(auth()->user()->role, ['IT Head', 'Developer']);
+                            @endphp
 
                             <div id="pendingTable" class="tab-pane fade show active">
                                 @include('tickets.partials.table', ['list' => $pending])
