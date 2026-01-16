@@ -121,11 +121,11 @@
             </tr>
             <tr>
                 <td class="label">Seat Number:</td>
-                <td>{{ $job->job_sitNumber }}</td>
+                <td>{{ $job->job_sitNumber ?? 'N/A' }}</td>
             </tr>
             <tr>
                 <td class="label">Direction:</td>
-                <td>{{ $job->direction ?? '—' }}</td>
+                <td>{{ $job->direction ?? 'N/A' }}</td>
             </tr>
         </table>
     </div>
