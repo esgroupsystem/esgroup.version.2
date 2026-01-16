@@ -120,6 +120,10 @@
                 <td>{{ $job->job_time_start }} - {{ $job->job_time_end }}</td>
             </tr>
             <tr>
+                <td class="label">Seat Number:</td>
+                <td>{{ $job->job_sitNumber }}</td>
+            </tr>
+            <tr>
                 <td class="label">Direction:</td>
                 <td>{{ $job->direction ?? '—' }}</td>
             </tr>
