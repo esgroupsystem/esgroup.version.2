@@ -506,4 +506,12 @@ class TicketController extends Controller
 
         return back();
     }
+
+    public function print($id)
+    {
+        $job = JobOrder::with('bus')->findOrFail($id);
+
+        return view('it_department.print.joborder', compact('job'));
+    }
 }
+    

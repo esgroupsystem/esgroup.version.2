@@ -97,6 +97,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
             Route::get('/export/{type}', 'export')->name('export');
             Route::get('/cctv', 'cctvindex')->name('cctv.index');
+            Route::get('joborder/{id}/print', 'print')->name('joborder.print');
         });
 
     /*

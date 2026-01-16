@@ -46,10 +46,10 @@
 
                             <div class="dropdown-menu">
                                 <a class="dropdown-item" href="{{ route('tickets.joborder.index') }}">Back</a>
-                                <a class="dropdown-item" href="#">Edit</a>
-                                <a class="dropdown-item" href="#">Report</a>
+                                <a class="dropdown-item" href="{{ route('tickets.joborder.print', $job->id) }}" target="_blank" class="btn btn-outline-dark btn-sm">Print</a>
+                                {{-- <a class="dropdown-item" href="#">Report</a>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-danger" href="#">Delete</a>
+                                <a class="dropdown-item text-danger" href="#">Delete</a> --}}
                             </div>
                         </div>
 
