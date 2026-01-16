@@ -34,7 +34,7 @@ class TicketController extends Controller
     {
         $tab = $request->tab ?? 'pending';
 
-        $query = JobOrder::with('bus')->orderBy('id', 'desc');
+        $query = JobOrder::with('bus')->orderBy('job_date_filled', 'desc');
 
         if ($request->ajax()) {
 
@@ -59,9 +59,20 @@ class TicketController extends Controller
             return view('tickets.partials.table', compact('list'))->render();
         }
 
-        $pending = JobOrder::with('bus')->where('job_status', 'Pending')->paginate(10);
-        $progress = JobOrder::with('bus')->where('job_status', 'In Progress')->paginate(10);
-        $completed = JobOrder::with('bus')->where('job_status', 'Completed')->paginate(10);
+        $pending = JobOrder::with('bus')
+            ->where('job_status', 'Pending')
+            ->orderBy('job_date_filled', 'desc')
+            ->paginate(10);
+
+        $progress = JobOrder::with('bus')
+            ->where('job_status', 'In Progress')
+            ->orderBy('job_date_filled', 'desc')
+            ->paginate(10);
+
+        $completed = JobOrder::with('bus')
+            ->where('job_status', 'Completed')
+            ->orderBy('job_date_filled', 'desc')
+            ->paginate(10);
 
         $stats = [
             'new' => JobOrder::whereDate('created_at', today())->count(),
