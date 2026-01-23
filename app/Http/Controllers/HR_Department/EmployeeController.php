@@ -79,7 +79,7 @@ class EmployeeController extends Controller
                 'email' => 'nullable|email|max:255',
                 'phone_number' => 'nullable|digits:11|regex:/^[0-9]*$/',
                 'company' => 'required|in:Jell Transport,ES Transport,Earthstar Transport,Kellen Transport',
-                'garage' => 'required|in:Mirasol,Balintawak',
+                'garage' => 'required|in:Mirasol,Balintawak,Gonzales',
             ]);
 
             DB::transaction(function () use ($request) {
@@ -139,14 +139,14 @@ class EmployeeController extends Controller
         try {
             $validated = $request->validate([
                 'full_name' => 'required|string|max:255',
-                'status' => 'required|string|in:Active,Inactive,Suspended,Terminated,Retrench,Retired,Resigned',
+                'status' => 'required|string|in:Active,Inactive,Suspended,Terminated,Terminated(due to AWOL),End of Contract,Retrench,Retired,Resigned',
                 'date_hired' => 'nullable|date',
                 'company' => 'required|in:Jell Transport,ES Transport,Kellen Transport,Earthstar Transport',
                 'department_id' => 'nullable|exists:departments,id',
                 'position_id' => 'nullable|exists:positions,id',
                 'email' => 'nullable|email|max:255',
                 'phone_number' => 'nullable|digits:11|regex:/^[0-9]*$/',
-                'garage' => 'required|in:Mirasol,Balintawak',
+                'garage' => 'required|in:Mirasol,Balintawak,Gonzales',
             ]);
 
             $employee->update($validated);

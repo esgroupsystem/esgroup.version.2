@@ -452,8 +452,14 @@
                                         Suspended</option>
                                     <option value="Terminated" {{ $employee->status === 'Terminated' ? 'selected' : '' }}>
                                         Terminated</option>
+                                    <option value="Terminated(due to AWOL)"
+                                        {{ $employee->status === 'Terminated(due to AWOL)' ? 'selected' : '' }}>
+                                        Terminated (due to AWOL)</option>
                                     <option value="Retrench" {{ $employee->status === 'Retrench' ? 'selected' : '' }}>
                                         Retrench</option>
+                                    <option value="End of Contract"
+                                        {{ $employee->status === 'End of Contract' ? 'selected' : '' }}>
+                                        End of Contract</option>
                                     <option value="Retired" {{ $employee->status === 'Retired' ? 'selected' : '' }}>
                                         Retired</option>
                                     <option value="Resigned" {{ $employee->status === 'Resigned' ? 'selected' : '' }}>
@@ -492,8 +498,6 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Department</label>
                                 <select name="department_id" id="editDepartmentSelect" class="form-control">
-
-                                    {{-- Always show the employee's current department first --}}
                                     @if ($employee->department)
                                         <option value="{{ $employee->department->id }}" selected>
                                             {{ $employee->department->name }} (Current)
@@ -502,7 +506,6 @@
                                         <option value="">-- Select department --</option>
                                     @endif
 
-                                    {{-- List ALL departments except the currently selected one --}}
                                     @foreach ($departments as $dept)
                                         @if ($dept->id != $employee->department_id)
                                             <option value="{{ $dept->id }}">{{ $dept->name }}</option>
@@ -515,8 +518,6 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Position</label>
                                 <select name="position_id" id="editPositionSelect" class="form-control">
-
-                                    {{-- If employee has a position, show it as the first option --}}
                                     @if ($employee->position)
                                         <option value="{{ $employee->position->id }}" selected>
                                             {{ $employee->position->title }}
@@ -526,9 +527,7 @@
                                         <option value="">-- Select position --</option>
                                     @endif
 
-                                    {{-- Load positions of the employee’s department --}}
                                     @foreach ($employee->department?->positions ?? [] as $pos)
-                                        {{-- Avoid duplicate of the selected position --}}
                                         @if ($employee->position_id != $pos->id)
                                             <option value="{{ $pos->id }}">{{ $pos->title }}</option>
                                         @endif
@@ -544,6 +543,8 @@
                                         Mirasol</option>
                                     <option value="Balintawak" {{ $employee->garage === 'Balintawak' ? 'selected' : '' }}>
                                         Balintawak</option>
+                                    <option value="Gonzales" {{ $employee->garage === 'Gonzales' ? 'selected' : '' }}>
+                                        Gonzales</option>
                                 </select>
                             </div>
 
