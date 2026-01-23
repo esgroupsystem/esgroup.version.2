@@ -41,7 +41,7 @@
                             </div>
 
                             <div class="mt-3">
-                                <a href="{{ url()->previous() }}" class="btn btn-secondary btn-sm">
+                                <a href="{{ route('employees.staff.index') }}" class="btn btn-secondary btn-sm">
                                     <i class="fas fa-arrow-left me-1"></i> Back
                                 </a>
 
@@ -435,7 +435,7 @@
                     </div>
 
                     <div class="modal-body">
-                        <div class="row g-3">
+                        <div class="row g-3">f
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Full Name</label>
                                 <input type="text" name="full_name" class="form-control"

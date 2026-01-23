@@ -19,12 +19,15 @@ class HRDashboardController extends Controller
     public function index(Request $request)
     {
         $today = Carbon::now()->startOfDay();
+
         $deptFilter = $request->get('filter_department');
         $posFilter = $request->get('filter_position');
         $statusFilter = $request->get('filter_status');
         $companyFilter = $request->get('filter_company');
 
-        $employeeQuery = Employee::with(['department','position'])->orderBy('full_name');
+        // Employees (with filters)
+        $employeeQuery = Employee::with(['department', 'position'])
+            ->orderBy('full_name');
 
         if ($deptFilter) {
             $employeeQuery->where('department_id', $deptFilter);
@@ -41,6 +44,7 @@ class HRDashboardController extends Controller
 
         $employees = $employeeQuery->paginate(20)->withQueryString();
 
+        // KPI
         $totalEmployees = Employee::count();
         $activeEmployees = Employee::where('status', 'Active')->count();
         $activePct = $totalEmployees > 0 ? round(($activeEmployees / $totalEmployees) * 100, 1) : 0;
@@ -51,43 +55,72 @@ class HRDashboardController extends Controller
             ->distinct('employee_id')
             ->count('employee_id');
 
+        // NOTE: Your offences counts are currently based on DriverLeave.
+        // If you have a separate Offence model/table later, replace this logic.
         $firstOffenses = DriverLeave::where('offense_level', 1)->count();
         $secondOffenses = DriverLeave::where('offense_level', 2)->count();
         $terminationCount = DriverLeave::where('offense_level', '>=', 3)->count();
         $forActionCount = $firstOffenses + $secondOffenses + $terminationCount;
 
+        // Leave Summary
         $leaveSummary = [
-            'active' => DriverLeave::where('status', 'approved')->whereDate('start_date', '<=', $today)->whereDate('end_date', '>=', $today)->count(),
+            'active' => DriverLeave::where('status', 'approved')
+                ->whereDate('start_date', '<=', $today)
+                ->whereDate('end_date', '>=', $today)
+                ->count(),
+
             'not_started' => DriverLeave::whereDate('start_date', '>', $today)->count(),
-            'ongoing' => DriverLeave::whereDate('start_date', '<=', $today)->whereDate('end_date', '>=', $today)->count(),
+
+            'ongoing' => DriverLeave::whereDate('start_date', '<=', $today)
+                ->whereDate('end_date', '>=', $today)
+                ->count(),
+
             'expired_today' => DriverLeave::whereDate('end_date', $today)->count(),
+
             'cancelled' => DriverLeave::where('status', 'cancelled')->count(),
+
             'completed' => DriverLeave::where('status', 'completed')->count(),
         ];
 
+        // Timeline (SAFE: handles null updated_at)
         $timeline = [];
-        $recentLeaves = DriverLeave::with('employee')->orderBy('updated_at', 'desc')->limit(6)->get();
+
+        $recentLeaves = DriverLeave::with('employee')
+            ->orderByDesc('updated_at')
+            ->orderByDesc('created_at')
+            ->limit(6)
+            ->get();
+
         foreach ($recentLeaves as $rl) {
+            $date = $rl->updated_at ?? $rl->created_at;
+
             $timeline[] = [
-                'time' => $rl->updated_at->diffForHumans(),
+                'time' => $date ? $date->diffForHumans() : '—',
                 'actor' => $rl->employee?->full_name ?? '—',
                 'action' => 'Updated Leave (' . ($rl->leave_type ?? 'Leave') . ')',
             ];
         }
 
-        $recentEmployees = Employee::orderBy('updated_at', 'desc')->limit(4)->get();
+        $recentEmployees = Employee::orderByDesc('updated_at')
+            ->orderByDesc('created_at')
+            ->limit(4)
+            ->get();
+
         foreach ($recentEmployees as $re) {
+            $date = $re->updated_at ?? $re->created_at;
+
             $timeline[] = [
-                'time' => $re->updated_at->diffForHumans(),
-                'actor' => $re->full_name,
+                'time' => $date ? $date->diffForHumans() : '—',
+                'actor' => $re->full_name ?? '—',
                 'action' => 'Updated Profile',
             ];
         }
 
-        // Offences (example placeholder; adapt to your offences table if separate)
+        // Offences (still using DriverLeave as placeholder)
         $offences = DriverLeave::with('employee')
             ->whereNotNull('offense_level')
-            ->orderBy('updated_at', 'desc')
+            ->orderByDesc('updated_at')
+            ->orderByDesc('created_at')
             ->limit(8)
             ->get()
             ->map(function ($o) {
@@ -96,7 +129,7 @@ class HRDashboardController extends Controller
                 return $o;
             });
 
-        // Departments / positions for filters (if needed)
+        // Filters data
         $departments = Department::orderBy('name')->get();
         $positions = Position::orderBy('title')->get();
 
