@@ -2,7 +2,6 @@
     <table class="table table-hover table-striped fs-10 mb-0 w-100">
         <thead class="bg-200 text-900">
             <tr>
-                <th>Employee ID</th>
                 <th>Full Name</th>
                 <th>Department</th>
                 <th>Position</th>
@@ -16,7 +15,6 @@
         <tbody>
             @forelse ($employees as $employee)
                 <tr>
-                    <td>{{ $employee->employee_id }}</td>
                     <td>{{ $employee->full_name }}</td>
                     <td>{{ $employee->department?->name ?? '-' }}</td>
                     <td>{{ $employee->position?->title ?? '-' }}</td>
