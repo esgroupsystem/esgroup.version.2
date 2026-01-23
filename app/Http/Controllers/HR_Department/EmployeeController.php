@@ -20,10 +20,12 @@ class EmployeeController extends Controller
     ========================================================== */
     public function index(Request $request)
     {
+        // Save full URL including ?page= & search
+        session(['employees_back_url' => url()->full()]);
+
         $query = Employee::with(['department', 'position'])
             ->orderBy('employee_id', 'asc');
 
-        // AJAX SEARCH
         if ($request->ajax()) {
             if ($request->search) {
                 $query->where(function ($q) use ($request) {
@@ -99,7 +101,7 @@ class EmployeeController extends Controller
 
             flash('Employee added successfully!')->success();
 
-            return back();
+            return redirect()->route('employees.staff.show', $employee->id);
 
         } catch (ValidationException $e) {
 
@@ -150,7 +152,7 @@ class EmployeeController extends Controller
 
             flash('Employee profile updated successfully!')->success();
 
-            return back();
+            return redirect()->route('employees.staff.show', $employee->id);
 
         } catch (ValidationException $e) {
 
@@ -216,14 +218,14 @@ class EmployeeController extends Controller
 
             flash('201 file updated successfully!')->success();
 
-            return back();
+            return redirect()->route('employees.staff.show', $employee->id);
 
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error("updateAssets error: {$e->getMessage()}");
             flash('Something went wrong updating the 201 file.')->error();
 
-            return back();
+            return redirect()->route('employees.staff.show', $employee->id);
         }
     }
 
@@ -244,7 +246,8 @@ class EmployeeController extends Controller
 
             flash('History added!')->success();
 
-            return back();
+            return redirect()->route('employees.staff.show', $employee->id);
+
 
         } catch (ValidationException $e) {
             foreach ($e->errors() as $msgList) {
@@ -285,7 +288,8 @@ class EmployeeController extends Controller
 
             flash('Attachment uploaded!')->success();
 
-            return back();
+            return redirect()->route('employees.staff.show', $employee->id);
+
 
         } catch (ValidationException $e) {
             foreach ($e->errors() as $errorList) {
@@ -310,12 +314,14 @@ class EmployeeController extends Controller
 
             flash('Attachment removed!')->success();
 
-            return back();
+            return redirect()->route('employees.staff.show', $employee->id);
+
 
         } catch (\Throwable $e) {
             flash('Unable to remove attachment.')->error();
 
-            return back();
+            return redirect()->route('employees.staff.show', $employee->id);
+
         }
     }
 
@@ -328,12 +334,13 @@ class EmployeeController extends Controller
             $employee->histories()->findOrFail($historyId)->delete();
             flash('History removed!')->success();
 
-            return back();
+            return redirect()->route('employees.staff.show', $employee->id);
 
         } catch (\Throwable $e) {
             flash('Unable to remove history.')->error();
 
-            return back();
+            return redirect()->route('employees.staff.show', $employee->id);
+
         }
     }
 
@@ -346,11 +353,13 @@ class EmployeeController extends Controller
             $employee->delete();
             flash('Employee deleted!')->success();
 
-            return back();
+            return redirect()->route('employees.staff.show', $employee->id);
+
         } catch (\Throwable $e) {
             flash('Unable to delete employee.')->error();
 
-            return back();
+            return redirect()->route('employees.staff.show', $employee->id);
+
         }
     }
 

@@ -41,7 +41,8 @@
                             </div>
 
                             <div class="mt-3">
-                                <a href="{{ route('employees.staff.index') }}" class="btn btn-secondary btn-sm">
+                                <a href="{{ session('employees_back_url', route('employees.staff.index')) }}"
+                                    class="btn btn-secondary btn-sm">
                                     <i class="fas fa-arrow-left me-1"></i> Back
                                 </a>
 
