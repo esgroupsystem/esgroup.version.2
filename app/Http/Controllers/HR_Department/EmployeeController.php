@@ -20,26 +20,27 @@ class EmployeeController extends Controller
     ========================================================== */
     public function index(Request $request)
     {
-        // Save full URL including ?page= & search
-        session(['employees_back_url' => url()->full()]);
+
+        if (! $request->ajax()) {
+            session(['employees_back_url' => url()->full()]);
+        }
 
         $query = Employee::with(['department', 'position'])
-            ->orderBy('employee_id', 'asc');
+            ->orderBy('full_name', 'asc');
+
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('full_name', 'like', "%{$request->search}%")
+                    ->orWhere('employee_id', 'like', "%{$request->search}%");
+            });
+        }
+
+        $employees = $query->paginate(20)->withQueryString();
 
         if ($request->ajax()) {
-            if ($request->search) {
-                $query->where(function ($q) use ($request) {
-                    $q->where('full_name', 'like', "%{$request->search}%")
-                        ->orWhere('employee_id', 'like', "%{$request->search}%");
-                });
-            }
-
-            $employees = $query->paginate(20);
-
             return view('hr_department.employees.table', compact('employees'))->render();
         }
 
-        $employees = $query->paginate(20);
         $departments = Department::with('positions')->get();
 
         return view('hr_department.index', compact('employees', 'departments'));
@@ -248,7 +249,6 @@ class EmployeeController extends Controller
 
             return redirect()->route('employees.staff.show', $employee->id);
 
-
         } catch (ValidationException $e) {
             foreach ($e->errors() as $msgList) {
                 foreach ($msgList as $msg) {
@@ -290,7 +290,6 @@ class EmployeeController extends Controller
 
             return redirect()->route('employees.staff.show', $employee->id);
 
-
         } catch (ValidationException $e) {
             foreach ($e->errors() as $errorList) {
                 foreach ($errorList as $msg) {
@@ -315,7 +314,6 @@ class EmployeeController extends Controller
             flash('Attachment removed!')->success();
 
             return redirect()->route('employees.staff.show', $employee->id);
-
 
         } catch (\Throwable $e) {
             flash('Unable to remove attachment.')->error();
