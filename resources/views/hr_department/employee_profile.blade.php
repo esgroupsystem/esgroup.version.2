@@ -436,7 +436,7 @@
                     </div>
 
                     <div class="modal-body">
-                        <div class="row g-3">f
+                        <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Full Name</label>
                                 <input type="text" name="full_name" class="form-control"
