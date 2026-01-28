@@ -8,6 +8,7 @@ use App\Http\Controllers\HR_Department\DepartmentController;
 use App\Http\Controllers\HR_Department\DriverLeaveController;
 use App\Http\Controllers\HR_Department\EmployeeController;
 use App\Http\Controllers\HR_Department\HRDashboardController;
+use App\Http\Controllers\IT_Department\CctvController;
 use App\Http\Controllers\IT_Department\TicketController;
 use App\Http\Controllers\Maintenance\CategoryController;
 use App\Http\Controllers\Maintenance\ItemsController;
@@ -101,6 +102,29 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
             Route::post('/joborder/{id}/approve', 'approve')->name('approve');
             Route::post('/joborder/{id}/disapprove', 'disapprove')->name('disapprove');
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | CCTV (Job Orders)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['role:Developer,IT Officer,IT Head,Safety Officer,Head Inspector,Operation Manager'])
+        ->prefix('concern')->name('concern.')
+        ->controller(CctvController::class)->group(function () {
+
+            Route::get('/cctv', 'index')->name('cctv.index');
+            Route::post('/cctv', 'store')->name('cctv.store');
+            Route::get('/cctv/view/{id}', 'view')->name('cctv.view');
+            Route::put('/cctv/{id}', 'update')->name('cctv.update');
+            Route::delete('/cctv/{id}', 'destroy')->name('cctv.destroy');
+
+            Route::post('/cctv/{id}', 'acceptTask')->name('cctv.accept');
+            Route::post('/cctv/{id}', 'markAsDone')->name('cctv.done');
+            Route::post('/cctv/{id}/note', 'addNote')->name('cctv.addnote');
+            Route::post('/cctv/{id}/files', 'addFiles')->name('cctv.addfile');
+
+            Route::get('/export/{type}', 'export')->name('export');
         });
 
     /*
