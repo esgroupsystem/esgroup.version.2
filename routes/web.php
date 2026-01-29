@@ -161,6 +161,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::delete('/{employee}/history/{history}', 'destroyHistory')->name('staff.history.destroy');
                 Route::post('/{employee}/attachments', 'storeAttachment')->name('staff.attachments.store');
                 Route::delete('/{employee}/attachments/{attachment}', 'destroyAttachment')->name('staff.attachments.destroy');
+                Route::put('/employees/{employee}/status-details', 'updateStatusDetails')->name('status-details.update');
 
                 Route::get('/{employee}/print', 'print201')->name('staff.print');
                 Route::get('/departments/{id}/positions', 'getPositions')->name('positions');

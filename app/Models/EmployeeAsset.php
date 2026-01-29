@@ -16,8 +16,18 @@ class EmployeeAsset extends Model
         'birth_certificate',
         'resume',
         'contract',
-        'date_hired',
-        'status',
+    ];
+
+    protected $casts = [
+        'sss_updated_at' => 'datetime',
+        'tin_updated_at' => 'datetime',
+        'philhealth_updated_at' => 'datetime',
+        'pagibig_updated_at' => 'datetime',
+
+        'profile_picture_updated_at' => 'datetime',
+        'birth_certificate_updated_at' => 'datetime',
+        'resume_updated_at' => 'datetime',
+        'contract_updated_at' => 'datetime',
     ];
 
     public function employee()

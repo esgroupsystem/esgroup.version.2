@@ -20,10 +20,25 @@ class Employee extends Model
         'status',
         'date_hired',
         'garage',
+        'date_of_birth',
+        'address_1',
+        'address_2',
+        'emergency_name',
+        'emergency_contact',
+        'date_resigned',
+        'last_duty',
+        'clearance_date',
+        'last_pay_status',
+        'last_pay_date',
     ];
 
     protected $casts = [
         'date_hired' => 'date',
+        'date_of_birth' => 'date',
+        'date_resigned' => 'date',
+        'last_duty' => 'date',
+        'clearance_date' => 'date',
+        'last_pay_date' => 'date',
     ];
 
     public function department()
@@ -54,5 +69,10 @@ class Employee extends Model
     public function driverLeaves()
     {
         return $this->hasMany(DriverLeave::class, 'employee_id');
+    }
+
+    public function logs()
+    {
+        return $this->hasMany(\App\Models\EmployeeLog::class)->latest();
     }
 }
