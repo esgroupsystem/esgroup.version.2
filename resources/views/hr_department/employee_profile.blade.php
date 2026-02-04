@@ -278,10 +278,11 @@
 
                     {{-- Employment history --}}
                     <div class="card mb-3 shadow-sm">
-                        <div class="card-header bg-body-tertiary d-flex justify-content-between">
-                            <h6 class="mb-0 fw-bold"><i class="fas fa-stream mono-icon me-2"></i> Employment History
-                                Timeline
+                        <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0 fw-bold">
+                                <i class="fas fa-stream me-2"></i> Employment History Timeline
                             </h6>
+
                             <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal"
                                 data-bs-target="#addHistoryModal">
                                 <i class="fas fa-plus me-1"></i> Add
@@ -289,31 +290,81 @@
                         </div>
 
                         <div class="card-body">
-                            <div class="timeline">
+                            <div class="eh-timeline">
                                 @forelse($employee->histories as $h)
-                                    <div class="timeline-item d-flex align-items-start">
-                                        <span class="timeline-dot"></span>
-                                        <div>
-                                            <div class="d-flex justify-content-between">
-                                                <div>
-                                                    <strong>{{ $h->title }}</strong>
-                                                    <div class="small-muted">{{ \Str::limit($h->description, 180) }}</div>
+                                    @php
+                                        $start = $h->start_date ? \Carbon\Carbon::parse($h->start_date) : null;
+                                        $end = $h->end_date ? \Carbon\Carbon::parse($h->end_date) : null;
+                                        $isPresent = !$h->end_date;
+
+                                        $rangeText =
+                                            ($start ? $start->format('M d, Y') : '—') .
+                                            ' • ' .
+                                            ($end ? $end->format('M d, Y') : 'Present');
+
+                                        $durationText = null;
+                                        if ($start) {
+                                            $durationText = $end
+                                                ? $start->diffForHumans($end, true)
+                                                : $start->diffForHumans(now(), true);
+                                        }
+                                    @endphp
+
+                                    <div class="eh-item">
+                                        <div class="eh-left">
+                                            <span class="eh-dot {{ $isPresent ? 'is-present' : '' }}"></span>
+                                            <span class="eh-line"></span>
+                                        </div>
+
+                                        <div class="eh-content w-100">
+                                            <div class="eh-top">
+                                                <div class="eh-title">
+                                                    <div class="fw-semibold">{{ $h->title }}</div>
+
+                                                    <div class="eh-meta">
+                                                        <span class="eh-range">{{ $rangeText }}</span>
+
+                                                        @if ($durationText)
+                                                            <span class="eh-pill">
+                                                                <i class="far fa-clock me-1"></i>{{ $durationText }}
+                                                            </span>
+                                                        @endif
+
+                                                        @if ($isPresent)
+                                                            <span class="eh-pill eh-pill-success">
+                                                                <i class="fas fa-check-circle me-1"></i>Current
+                                                            </span>
+                                                        @endif
+                                                    </div>
                                                 </div>
-                                                <div class="small-muted text-end">
-                                                    <div>{{ optional($h->start_date)->format('M Y') ?? '—' }} -
-                                                        {{ optional($h->end_date)->format('M Y') ?? 'Present' }}</div>
+
+                                                <div class="eh-actions text-end">
                                                     <form
                                                         action="{{ route('employees.staff.history.destroy', [$employee->id, $h->id]) }}"
-                                                        method="POST" class="d-inline confirm-delete ms-2">
-                                                        @csrf @method('DELETE')
-                                                        <button class="btn btn-sm btn-link text-danger">Remove</button>
+                                                        method="POST" class="d-inline confirm-delete">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit"
+                                                            class="btn btn-sm btn-link text-danger p-0">
+                                                            Remove
+                                                        </button>
                                                     </form>
                                                 </div>
                                             </div>
+
+                                            @if (!empty($h->description))
+                                                <div class="eh-desc">
+                                                    {{ $h->description }}
+                                                </div>
+                                            @else
+                                                <div class="eh-desc text-muted">
+                                                    No additional details provided.
+                                                </div>
+                                            @endif
                                         </div>
                                     </div>
                                 @empty
-                                    <p class="text-muted">No history records.</p>
+                                    <div class="text-muted">No history records.</div>
                                 @endforelse
                             </div>
                         </div>
@@ -454,8 +505,6 @@
                             @endif
                         </div>
                     </div>
-
-
                 </div>
                 {{-- END OF LEFT SIDE --}}
 
@@ -545,33 +594,54 @@
                 <form action="{{ route('employees.staff.history.store', $employee->id) }}" method="POST"
                     class="modal-content">
                     @csrf
+
                     <div class="modal-header">
-                        <h5 class="modal-title">Add History</h5>
+                        <h5 class="modal-title">Add Employment History</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
+
                     <div class="modal-body">
-                        <div class="mb-2">
-                            <label class="form-label">Title</label>
-                            <input name="title" class="form-control" required>
+                        <!-- TITLE -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Type of Movement</label>
+                            <select name="title" class="form-select" required>
+                                <option value="">-- Select Type --</option>
+                                <option value="Lateral Transfer">Lateral Transfer</option>
+                                <option value="Change Position">Change Position</option>
+                                <option value="Promotion">Promotion</option>
+                                <option value="Assignment">Assignment</option>
+                                <option value="Training">Training</option>
+                                <option value="Disciplinary Action">Disciplinary Action</option>
+                            </select>
                         </div>
-                        <div class="mb-2">
-                            <label class="form-label">Description</label>
-                            <textarea name="description" class="form-control" rows="3"></textarea>
+
+                        <!-- DESCRIPTION -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Description</label>
+                            <textarea name="description" class="form-control" rows="3"
+                                placeholder="Describe what happened (e.g., transferred from PITX to Balintawak)..."></textarea>
                         </div>
+
+                        <!-- DATES -->
                         <div class="row g-2">
                             <div class="col">
-                                <label class="form-label">Start Date</label>
+                                <label class="form-label fw-semibold">Start Date</label>
                                 <input type="date" name="start_date" class="form-control">
                             </div>
+
                             <div class="col">
-                                <label class="form-label">End Date</label>
+                                <label class="form-label fw-semibold">End Date</label>
                                 <input type="date" name="end_date" class="form-control">
+                                <small class="text-muted">Leave blank if current</small>
                             </div>
                         </div>
                     </div>
+
                     <div class="modal-footer">
                         <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                        <button class="btn btn-primary">Add</button>
+                        <button class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i> Save History
+                        </button>
                     </div>
                 </form>
             </div>
@@ -666,14 +736,13 @@
             </div>
         </div>
 
-
         {{-- EDIT 201 Modal (with previews) --}}
         <div class="modal fade" id="edit201Modal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
                 <form action="{{ route('employees.assets.update', $employee->id) }}" method="POST"
                     class="modal-content" enctype="multipart/form-data">
                     @csrf
-                    {{-- Note: your controller's updateAssets expects POST and handles storage --}}
+
                     <div class="modal-header">
                         <h5 class="modal-title">Edit 201 File</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -681,28 +750,53 @@
 
                     <div class="modal-body">
                         <div class="row g-3">
-                            <div class="col-md-4">
+
+                            {{-- SSS --}}
+                            <div class="col-md-6">
                                 <label class="fw-bold">SSS Number</label>
                                 <input type="text" name="sss_number" class="form-control"
-                                    value="{{ $employee->asset?->sss_number ?? '' }}">
+                                    value="{{ old('sss_number', $employee->asset?->sss_number) }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="fw-bold">SSS Date Updated</label>
+                                <input type="date" name="sss_updated_at" class="form-control"
+                                    value="{{ old('sss_updated_at', optional($employee->asset?->sss_updated_at)->format('Y-m-d')) }}">
                             </div>
 
-                            <div class="col-md-4">
+                            {{-- TIN --}}
+                            <div class="col-md-6">
                                 <label class="fw-bold">TIN Number</label>
                                 <input type="text" name="tin_number" class="form-control"
-                                    value="{{ $employee->asset?->tin_number ?? '' }}">
+                                    value="{{ old('tin_number', $employee->asset?->tin_number) }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="fw-bold">TIN Date Updated</label>
+                                <input type="date" name="tin_updated_at" class="form-control"
+                                    value="{{ old('tin_updated_at', optional($employee->asset?->tin_updated_at)->format('Y-m-d')) }}">
                             </div>
 
-                            <div class="col-md-4">
+                            {{-- PhilHealth --}}
+                            <div class="col-md-6">
                                 <label class="fw-bold">PhilHealth</label>
                                 <input type="text" name="philhealth_number" class="form-control"
-                                    value="{{ $employee->asset?->philhealth_number ?? '' }}">
+                                    value="{{ old('philhealth_number', $employee->asset?->philhealth_number) }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="fw-bold">PhilHealth Date Updated</label>
+                                <input type="date" name="philhealth_updated_at" class="form-control"
+                                    value="{{ old('philhealth_updated_at', optional($employee->asset?->philhealth_updated_at)->format('Y-m-d')) }}">
                             </div>
 
-                            <div class="col-md-4">
+                            {{-- Pag-IBIG --}}
+                            <div class="col-md-6">
                                 <label class="fw-bold">Pag-IBIG</label>
                                 <input type="text" name="pagibig_number" class="form-control"
-                                    value="{{ $employee->asset?->pagibig_number ?? '' }}">
+                                    value="{{ old('pagibig_number', $employee->asset?->pagibig_number) }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="fw-bold">Pag-IBIG Date Updated</label>
+                                <input type="date" name="pagibig_updated_at" class="form-control"
+                                    value="{{ old('pagibig_updated_at', optional($employee->asset?->pagibig_updated_at)->format('Y-m-d')) }}">
                             </div>
 
                             {{-- files with preview/view --}}
@@ -736,7 +830,8 @@
                                         data-target="#resumeFilename">
                                 </div>
                                 <div id="resumeFilename" class="avatar-file-label mt-1 text-muted">
-                                    {{ $employee->asset?->resume ? basename($employee->asset->resume) : '' }}</div>
+                                    {{ $employee->asset?->resume ? basename($employee->asset->resume) : '' }}
+                                </div>
                             </div>
 
                             <div class="col-md-4">
@@ -752,8 +847,10 @@
                                         data-target="#contractFilename">
                                 </div>
                                 <div id="contractFilename" class="avatar-file-label mt-1 text-muted">
-                                    {{ $employee->asset?->contract ? basename($employee->asset->contract) : '' }}</div>
+                                    {{ $employee->asset?->contract ? basename($employee->asset->contract) : '' }}
+                                </div>
                             </div>
+
                         </div>
                     </div>
 
@@ -764,6 +861,7 @@
                 </form>
             </div>
         </div>
+
 
         {{-- EDIT PROFILE Modal --}}
         <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
@@ -992,28 +1090,4 @@
                 });
             });
         </script>
-    @endpush
-
-    @push('styles')
-        <style>
-            /* small utility tweaks for the header/profile */
-            .profile-header-card {
-                position: relative;
-            }
-
-            .profile-left img {
-                width: 120px;
-                height: 120px;
-                object-fit: cover;
-                border-radius: 50%;
-            }
-
-            .avatar-file-label {
-                font-size: 0.9rem;
-            }
-
-            .small-muted {
-                color: #6c757d;
-            }
-        </style>
     @endpush

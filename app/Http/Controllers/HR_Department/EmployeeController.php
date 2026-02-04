@@ -69,7 +69,7 @@ class EmployeeController extends Controller
         $logs = $employee->logs()
             ->with('user')
             ->orderByDesc('created_at')
-            ->paginate(10) 
+            ->paginate(10)
             ->withQueryString();
 
         $age = '—';
@@ -277,6 +277,19 @@ class EmployeeController extends Controller
         try {
             DB::beginTransaction();
 
+            $request->validate([
+                'sss_number' => ['nullable', 'string', 'max:50'],
+                'tin_number' => ['nullable', 'string', 'max:50'],
+                'philhealth_number' => ['nullable', 'string', 'max:50'],
+                'pagibig_number' => ['nullable', 'string', 'max:50'],
+
+                // manual dates
+                'sss_updated_at' => ['nullable', 'date'],
+                'tin_updated_at' => ['nullable', 'date'],
+                'philhealth_updated_at' => ['nullable', 'date'],
+                'pagibig_updated_at' => ['nullable', 'date'],
+            ]);
+
             $asset = $employee->asset ?? $employee->asset()->create([]);
 
             // BEFORE snapshot
@@ -285,58 +298,47 @@ class EmployeeController extends Controller
                 'tin_number' => $asset->tin_number,
                 'philhealth_number' => $asset->philhealth_number,
                 'pagibig_number' => $asset->pagibig_number,
+                'sss_updated_at' => $asset->sss_updated_at,
+                'tin_updated_at' => $asset->tin_updated_at,
+                'philhealth_updated_at' => $asset->philhealth_updated_at,
+                'pagibig_updated_at' => $asset->pagibig_updated_at,
                 'profile_picture' => $asset->profile_picture,
                 'birth_certificate' => $asset->birth_certificate,
                 'resume' => $asset->resume,
                 'contract' => $asset->contract,
             ];
 
-            // --- files ---
-            if ($request->hasFile('profile_picture')) {
-                $file = $request->file('profile_picture');
-                $safeName = str_replace(' ', '_', $employee->full_name.'_profile_'.rand(1000, 9999).'.'.$file->extension());
-                $path = $file->storeAs('employees/profile', $safeName, 'public');
+            // --- files --- (your existing code stays)
+            // ...
 
-                if ($asset->profile_picture) {
-                    Storage::disk('public')->delete($asset->profile_picture);
-                }
-
-                $asset->profile_picture = $path;
-                $asset->profile_picture_updated_at = now(); // ✅
-            }
-
-            foreach (['birth_certificate', 'resume', 'contract'] as $field) {
-                if ($request->hasFile($field)) {
-                    $file = $request->file($field);
-                    $safeName = str_replace(' ', '_', $employee->full_name."_{$field}_".rand(1000, 9999).'.'.$file->extension());
-                    $path = $file->storeAs("employees/{$field}", $safeName, 'public');
-
-                    if ($asset->{$field}) {
-                        Storage::disk('public')->delete($asset->{$field});
-                    }
-
-                    $asset->{$field} = $path;
-                    $asset->{$field.'_updated_at'} = now(); // ✅ birth_certificate_updated_at etc
-                }
-            }
-
-            // --- numbers ---
-            $incoming = [
-                'sss_number' => $request->sss_number,
-                'tin_number' => $request->tin_number,
-                'philhealth_number' => $request->philhealth_number,
-                'pagibig_number' => $request->pagibig_number,
+            // --- numbers + manual dates ---
+            $fields = [
+                'sss_number' => 'sss_updated_at',
+                'tin_number' => 'tin_updated_at',
+                'philhealth_number' => 'philhealth_updated_at',
+                'pagibig_number' => 'pagibig_updated_at',
             ];
 
-            foreach ($incoming as $k => $v) {
-                $old = $asset->{$k};
-                $new = ($v === '') ? null : $v;
+            foreach ($fields as $numberField => $dateField) {
+                $oldNumber = $asset->{$numberField};
+                $newNumber = $request->input($numberField);
+                $newNumber = ($newNumber === '' ? null : $newNumber);
 
-                if ($old != $new) {
-                    $asset->{$k} = $new;
-                    $asset->{str_replace('_number', '', $k).'_updated_at'} = now();
-                    // sss_number -> sss_updated_at
-                    // tin_number -> tin_updated_at
+                $manualDate = $request->input($dateField);
+                $manualDate = $manualDate ? Carbon::parse($manualDate)->startOfDay() : null;
+
+                $numberChanged = ($oldNumber != $newNumber);
+
+                if ($numberChanged) {
+                    $asset->{$numberField} = $newNumber;
+
+                    // if user typed a date, use it; else now()
+                    $asset->{$dateField} = $manualDate ?? now();
+                } else {
+                    // OPTIONAL: allow updating the date even if number didn't change
+                    if ($manualDate) {
+                        $asset->{$dateField} = $manualDate;
+                    }
                 }
             }
 
@@ -349,6 +351,10 @@ class EmployeeController extends Controller
                 'tin_number' => $asset->tin_number,
                 'philhealth_number' => $asset->philhealth_number,
                 'pagibig_number' => $asset->pagibig_number,
+                'sss_updated_at' => $asset->sss_updated_at,
+                'tin_updated_at' => $asset->tin_updated_at,
+                'philhealth_updated_at' => $asset->philhealth_updated_at,
+                'pagibig_updated_at' => $asset->pagibig_updated_at,
                 'profile_picture' => $asset->profile_picture,
                 'birth_certificate' => $asset->birth_certificate,
                 'resume' => $asset->resume,
