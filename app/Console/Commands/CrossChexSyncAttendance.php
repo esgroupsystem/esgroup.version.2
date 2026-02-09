@@ -10,18 +10,28 @@ use Illuminate\Support\Facades\DB;
 
 class CrossChexSyncAttendance extends Command
 {
-    protected $signature = 'crosschex:sync {--debug=0}';
+    // ✅ Add --from and --to for manual sync
+    protected $signature = 'crosschex:sync {--from=} {--to=} {--debug=0}';
 
     protected $description = 'Sync attendance logs from CrossChex Cloud to mirasol_biometrics_logs';
 
     public function handle(CrossChexService $api): int
     {
-        $from = (string) DB::table('settings')->where('key', 'crosschex_last_sync')->value('value');
-        if (! $from) {
-            $from = now()->subDay()->toDateTimeString();
-        }
+        $fromOpt = (string) $this->option('from');
+        $toOpt   = (string) $this->option('to');
+        $isManualRange = $fromOpt !== '' && $toOpt !== '';
 
-        $to = now()->toDateTimeString();
+        // ✅ If manual range provided, use it; otherwise use last_sync → now
+        if ($isManualRange) {
+            $from = Carbon::parse($fromOpt)->toDateTimeString();
+            $to   = Carbon::parse($toOpt)->toDateTimeString();
+        } else {
+            $from = (string) DB::table('settings')->where('key', 'crosschex_last_sync')->value('value');
+            if (! $from) {
+                $from = now()->subDay()->toDateTimeString();
+            }
+            $to = now()->toDateTimeString();
+        }
 
         $page = 1;
         $perPage = 1000;
@@ -32,12 +42,11 @@ class CrossChexSyncAttendance extends Command
 
             if (data_get($json, 'header.name') === 'Exception') {
                 $type = (string) data_get($json, 'payload.type');
-                $msg = (string) data_get($json, 'payload.message');
+                $msg  = (string) data_get($json, 'payload.message');
 
                 if ($type === 'FREQUENT_REQUEST') {
                     $this->warn("CrossChex rate limit: {$msg}. Sleeping 31 seconds then retry page {$page}...");
                     sleep(31);
-
                     continue;
                 }
 
@@ -65,16 +74,14 @@ class CrossChexSyncAttendance extends Command
 
             foreach ($list as $r) {
                 $crossId = data_get($r, 'uuid') ?? data_get($r, 'id');
-                if (! $crossId) {
-                    continue;
-                }
+                if (! $crossId) continue;
 
                 $employeeNo = data_get($r, 'employee.workno')
                     ?? data_get($r, 'workno')
                     ?? data_get($r, 'employee_no');
 
                 $employeeName = data_get($r, 'employee_name')
-                    ?? trim((data_get($r, 'employee.first_name') ?? '').' '.(data_get($r, 'employee.last_name') ?? ''));
+                    ?? trim((data_get($r, 'employee.first_name') ?? '') . ' ' . (data_get($r, 'employee.last_name') ?? ''));
 
                 $checkTimeRaw = data_get($r, 'checktime')
                     ?? data_get($r, 'check_time')
@@ -85,12 +92,11 @@ class CrossChexSyncAttendance extends Command
                     ?? data_get($r, 'sn');
 
                 $deviceName = data_get($r, 'device.name') ?? null;
-                $state = data_get($r, 'state') ?? data_get($r, 'type') ?? null;
+                $state      = data_get($r, 'state') ?? data_get($r, 'type') ?? null;
 
-                if (! $employeeNo || ! $checkTimeRaw) {
-                    continue;
-                }
+                if (! $employeeNo || ! $checkTimeRaw) continue;
 
+                // ✅ Treat API time as UTC then convert to Manila
                 $checkTime = Carbon::parse($checkTimeRaw, 'UTC')
                     ->setTimezone('Asia/Manila')
                     ->format('Y-m-d H:i:s');
@@ -98,35 +104,37 @@ class CrossChexSyncAttendance extends Command
                 MirasolBiometricsLog::updateOrCreate(
                     ['crosschex_id' => (string) $crossId],
                     [
-                        'employee_id' => null,
-                        'employee_no' => (string) $employeeNo,
+                        'employee_id'   => null,
+                        'employee_no'   => (string) $employeeNo,
                         'employee_name' => $employeeName ?: null,
-                        'device_sn' => $deviceSn ? (string) $deviceSn : null,
-                        'device_name' => $deviceName,
-                        'state' => $state,
-                        'check_time' => $checkTime,
-                        'raw' => $r,
+                        'device_sn'     => $deviceSn ? (string) $deviceSn : null,
+                        'device_name'   => $deviceName,
+                        'state'         => $state,
+                        'check_time'    => $checkTime,
+                        'raw'           => $r,
                     ]
                 );
 
                 $saved++;
             }
 
-            $pageCount = (int) data_get($json, 'payload.pageCount', 1);
+            $pageCount   = (int) data_get($json, 'payload.pageCount', 1);
             $currentPage = (int) data_get($json, 'payload.page', $page);
 
-            if ($currentPage >= $pageCount) {
-                break;
-            }
+            if ($currentPage >= $pageCount) break;
             $page++;
         }
 
-        DB::table('settings')->updateOrInsert(
-            ['key' => 'crosschex_last_sync'],
-            ['value' => $to, 'updated_at' => now(), 'created_at' => now()]
-        );
+        // ✅ Only advance last_sync for automatic runs (not manual range)
+        if (! $isManualRange) {
+            DB::table('settings')->updateOrInsert(
+                ['key' => 'crosschex_last_sync'],
+                ['value' => $to, 'updated_at' => now(), 'created_at' => now()]
+            );
+        }
 
-        $this->info("Done! Synced from {$from} to {$to}. Saved/Updated: {$saved}");
+        $mode = $isManualRange ? 'MANUAL' : 'AUTO';
+        $this->info("[{$mode}] Done! Synced from {$from} to {$to}. Saved/Updated: {$saved}");
 
         return 0;
     }
