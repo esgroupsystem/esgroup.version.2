@@ -39,6 +39,7 @@
 
                             $colors = [
                                 'Active' => 'success',
+                                'Active(Re-Entry)' => 'success',
                                 'Suspended' => 'warning',
                                 'Inactive' => 'secondary',
                                 'Terminated' => 'danger',

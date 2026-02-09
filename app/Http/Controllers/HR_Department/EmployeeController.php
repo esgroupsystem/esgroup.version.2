@@ -183,7 +183,7 @@ class EmployeeController extends Controller
         try {
             $validated = $request->validate([
                 'full_name' => 'required|string|max:255',
-                'status' => 'required|string|in:Active,Inactive,Suspended,Terminated,Terminated(due to AWOL),End of Contract,Retrench,Retired,Resigned',
+                'status' => 'required|string|in:Active,Active(Re-Entry),Inactive,Suspended,Terminated,Terminated(due to AWOL),End of Contract,Retrench,Retired,Resigned',
                 'date_hired' => 'nullable|date',
                 'company' => 'required|in:Jell Transport,ES Transport,Kellen Transport,Earthstar Transport',
                 'department_id' => 'nullable|exists:departments,id',
