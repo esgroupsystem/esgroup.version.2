@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'crosschex' => [
+        'url' => env('CROSSCHEX_URL', 'https://api.us.crosschexcloud.com/'),
+        'key' => env('CROSSCHEX_API_KEY'),
+        'secret' => env('CROSSCHEX_API_SECRET'),
+    ],
+
 ];

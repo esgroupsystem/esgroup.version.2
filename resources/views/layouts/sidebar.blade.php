@@ -88,7 +88,8 @@
 
                 {{-- CCTV CONCERN --}}
                 <li class="nav-item">
-                    <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}" href="{{ route('concern.cctv.index') }}">
+                    <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
+                        href="{{ route('concern.cctv.index') }}">
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
                                 <span class="fas fa-video"></span>
@@ -121,21 +122,53 @@
                             <span class="nav-link-text ps-1">Employees</span>
                         </div>
                     </a>
+
                     <ul class="nav collapse {{ request()->is('employees*') ? 'show' : '' }}" id="employeesMenu">
+
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('employees') ? 'active' : '' }}"
                                 href="{{ route('employees.staff.index') }}">
                                 <span class="nav-link-text">Employee List</span>
                             </a>
                         </li>
+
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->is('employees/departments') || request()->is('employees/positions') ? 'active' : '' }}"
+                            <a class="nav-link dropdown-indicator
+                                {{ request()->is('claims*') ? 'active' : '' }}"
+                                href="#claimsMenu" role="button" data-bs-toggle="collapse"
+                                aria-expanded="{{ request()->is('claims*') ? 'true' : 'false' }}">
+                                <span class="nav-link-text">Claims</span>
+                            </a>
+
+                            <ul class="nav collapse {{ request()->is('claims*') ? 'show' : '' }}" id="claimsMenu">
+
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('claims*') ? 'active' : '' }}"
+                                        href="{{ route('claims.index') }}">
+                                        <span class="nav-link-text">SSS / Maternity / Paternity</span>
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
+                                    <a class="nav-link disabled text-muted" href="#">
+                                        <span class="nav-link-text">Cash Advance (Coming Soon)</span>
+                                    </a>
+                                </li>
+
+                            </ul>
+                        </li>
+
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('employees/departments*') || request()->is('employees/positions*') ? 'active' : '' }}"
                                 href="{{ route('employees.departments.index') }}">
-                                <span class="nav-link-text">Department & Position</span>
+                                <span class="nav-link-text">Department &amp; Position</span>
                             </a>
                         </li>
+
                     </ul>
                 </li>
+
 
                 <li class="nav-item">
 
@@ -181,8 +214,26 @@
                                 </li>
                             </ul>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link dropdown-indicator {{ request()->is('mirasol-logs*') ? 'active' : '' }}"
+                                href="#mirasolMenu" role="button" data-bs-toggle="collapse"
+                                aria-expanded="{{ request()->is('mirasol-logs*') ? 'true' : 'false' }}">
+                                <span class="nav-link-text">Mirasol Biometrics</span>
+                            </a>
+
+                            <ul class="nav collapse {{ request()->is('mirasol-logs*') ? 'show' : '' }}"
+                                id="mirasolMenu">
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('mirasol-logs') ? 'active' : '' }}"
+                                        href="{{ route('mirasol-logs.index') }}">
+                                        <span class="nav-link-text">Logs</span>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
                     </ul>
                 </li>
+
                 {{-- LABEL Maintenance --}}
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">

@@ -2,12 +2,14 @@
 
 use App\Http\Controllers\Accounting\AccountingController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HR_Department\ConductorLeaveController;
 use App\Http\Controllers\HR_Department\DepartmentController;
 use App\Http\Controllers\HR_Department\DriverLeaveController;
 use App\Http\Controllers\HR_Department\EmployeeController;
 use App\Http\Controllers\HR_Department\HRDashboardController;
+use App\Http\Controllers\HR_Department\MirasolBiometricsLogController;
 use App\Http\Controllers\IT_Department\CctvController;
 use App\Http\Controllers\IT_Department\TicketController;
 use App\Http\Controllers\Maintenance\CategoryController;
@@ -201,6 +203,40 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/conductor-leave/{id}/edit', 'edit')->name('conductor.edit');
             Route::put('/conductor-leave/{leave}', 'update')->name('conductor.update');
             Route::post('/{leave}/action', 'action')->name('conductor.action');
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Claims Management
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
+        ->prefix('claims')->name('claims.')
+        ->controller(ClaimController::class)
+        ->group(function () {
+
+            Route::get('/', 'index')->name('index');
+            Route::post('/store', 'store')->name('store');
+            Route::put('/{claim}', 'update')->name('update');
+            Route::delete('/{claim}', 'destroy')->name('destroy');
+        });
+    /*
+    |--------------------------------------------------------------------------
+    | Mirasol Biometrics Management
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['role:Developer'])
+        ->prefix('mirasol-logs')->name('mirasol-logs.')
+        ->controller(MirasolBiometricsLogController::class)->group(function () {
+
+            Route::get('/', 'index')->name('index');
+
+            // ✅ NEW: modal progress sync
+            Route::post('/sync-start', 'startSync')->name('sync-start');
+            Route::get('/sync-status', 'syncStatus')->name('sync-status');
+
+            // (optional) keep old sync route if you still want normal submit
+            // Route::post('/sync', 'sync')->name('sync');
         });
 
     /*

@@ -75,4 +75,9 @@ class Employee extends Model
     {
         return $this->hasMany(\App\Models\EmployeeLog::class)->latest();
     }
+
+    public function claims()
+    {
+        return $this->hasMany(\App\Models\Claim::class);
+    }
 }

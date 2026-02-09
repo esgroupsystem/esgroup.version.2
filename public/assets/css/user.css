@@ -1,0 +1,107 @@
+.jo-card {
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.jo-card .card-header {
+    padding: 1rem 1.25rem;
+}
+
+.jo-card .card-footer {
+    padding: 0.9rem 1.25rem;
+}
+
+.jo-table-wrap {
+    max-height: 560px;
+}
+
+.jo-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+.jo-table tbody tr:hover {
+    background: rgba(0, 0, 0, 0.025);
+}
+
+.soft-divider {
+    border-top: 1px dashed rgba(0, 0, 0, 0.08);
+    margin: 0.75rem 0;
+}
+
+.empty-state .icon {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.04);
+    margin: 0 auto 0.75rem;
+}
+
+.monitor-card {
+    border-radius: 14px;
+}
+
+.monitor-tile {
+    border-radius: 12px;
+}
+
+.form-hint {
+    font-size: 0.78rem;
+    color: #6c757d;
+}
+
+/* pagination (your style) */
+.pagination {
+    font-size: 14px !important;
+}
+
+.pagination .page-link {
+    padding: 4px 10px !important;
+    font-size: 14px !important;
+    border-radius: 4px !important;
+    color: #4a4a4a !important;
+    border: 1px solid #d0d5dd !important;
+    background: #f8f9fa !important;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+    color: #fff !important;
+    font-weight: 600 !important;
+}
+
+.pagination .page-link:hover {
+    background: #e2e6ea !important;
+    border-color: #c4c9cf !important;
+}
+
+.pagination .page-item.disabled .page-link {
+    opacity: 0.5 !important;
+}
+
+.pagination .page-item {
+    margin: 0 2px !important;
+}
+
+/* compact date fields (this page only) */
+.date-field {
+    height: 32px !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.875rem !important;
+    line-height: 1.25 !important;
+}
+
+.date-field::-webkit-calendar-picker-indicator {
+    padding: 0 !important;
+    margin: 0 !important;
+    cursor: pointer;
+}
+
+.date-field::-webkit-datetime-edit {
+    padding: 0 !important;
+}
