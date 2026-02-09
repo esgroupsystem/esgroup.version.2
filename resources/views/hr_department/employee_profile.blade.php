@@ -893,7 +893,7 @@
                                 <select name="status" class="form-control">
                                     <option value="Active" {{ $employee->status === 'Active' ? 'selected' : '' }}>Active
                                     </option>
-                                    <option value="Active(Re-Entry)" {{ $employee->status === 'Active(Re-Entry)' ? 'selected' : '' }}>"Active(Re-Entry)
+                                    <option value="Active(Re-Entry)" {{ $employee->status === 'Active(Re-Entry)' ? 'selected' : '' }}>Active(Re-Entry)
                                     </option>
                                     <option value="Suspended" {{ $employee->status === 'Suspended' ? 'selected' : '' }}>
                                         Suspended</option>
