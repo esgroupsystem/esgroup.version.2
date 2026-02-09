@@ -16,10 +16,11 @@ return new class extends Migration
 
             $table->foreignId('employee_id')->constrained()->cascadeOnDelete();
 
-            $table->string('claim_type'); // SSS, MATERNITY, PATERNITY
-            $table->string('status')->default('Draft');
+            // Limit length to prevent index size issues
+            $table->string('claim_type', 50); // SSS, MATERNITY, PATERNITY
+            $table->string('status', 20)->default('Draft');
 
-            $table->string('reference_no')->nullable();
+            $table->string('reference_no', 100)->nullable();
 
             $table->date('date_of_notification')->nullable();
             $table->date('date_filed')->nullable();
@@ -35,6 +36,7 @@ return new class extends Migration
 
             $table->timestamps();
 
+            // Index is now safe
             $table->index(['employee_id', 'claim_type', 'status']);
         });
     }
