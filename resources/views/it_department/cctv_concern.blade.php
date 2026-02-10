@@ -394,7 +394,8 @@
                                                                             @foreach (['Open', 'In Progress', 'Fixed', 'Closed'] as $st)
                                                                                 <option value="{{ $st }}"
                                                                                     @selected($jo->status === $st)>
-                                                                                    {{ $st }}</option>
+                                                                                    {{ $st }}
+                                                                                </option>
                                                                             @endforeach
                                                                         </select>
                                                                     </div>
@@ -410,7 +411,8 @@
                                                                             @foreach (['Camera', 'Monitor', 'DVR', 'Wiring', 'Power', 'Other'] as $it)
                                                                                 <option value="{{ $it }}"
                                                                                     @selected($jo->issue_type === $it)>
-                                                                                    {{ $it }}</option>
+                                                                                    {{ $it }}
+                                                                                </option>
                                                                             @endforeach
                                                                         </select>
                                                                     </div>
@@ -479,15 +481,17 @@
                             </div>
                         </div>
 
+                        {{-- ✅ UPDATED PAGINATION (SAME AS TICKETS STYLE) --}}
                         <div class="card-footer bg-body-tertiary border-top border-200">
                             <div
-                                class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center">
+                                class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center px-3">
                                 <small class="text-muted">
                                     Showing {{ $jobOrders->firstItem() ?? 0 }} to {{ $jobOrders->lastItem() ?? 0 }} of
                                     {{ $jobOrders->total() }}
                                 </small>
+
                                 <div class="ms-md-auto">
-                                    {{ $jobOrders->links() }}
+                                    {{ $jobOrders->links('pagination.custom') }}
                                 </div>
                             </div>
                         </div>
@@ -753,8 +757,10 @@
             border-top: 1px dashed rgba(0, 0, 0, .08);
         }
 
+        /* Pagination (same as tickets) */
         .pagination {
             font-size: 14px !important;
+            margin: 0 !important;
         }
 
         .pagination .page-link {
