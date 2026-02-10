@@ -105,3 +105,16 @@
 .date-field::-webkit-datetime-edit {
     padding: 0 !important;
 }
+
+.date-compact {
+    max-width: 140px;
+    width: 140px;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+}
+@media (max-width: 576px) {
+    .date-compact {
+        max-width: 100%;
+        width: 100%;
+    }
+}

@@ -15,20 +15,6 @@
         </script>
 
         <div class="content">
-            @if (session('success'))
-                <div class="alert alert-success mb-3">{{ session('success') }}</div>
-            @endif
-
-            @if ($errors->any())
-                <div class="alert alert-danger mb-3">
-                    <ul class="mb-0">
-                        @foreach ($errors->all() as $e)
-                            <li>{{ $e }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
             @php
                 $stats = $all ?? collect();
                 $countByDevice = $stats->groupBy('device_sn')->map->count()->sortDesc();
@@ -119,19 +105,28 @@
                             <small class="text-muted">Shows per-day: First Time In and Last Time Out (only after
                                 Search)</small>
                         </div>
-
                         <form method="GET" action="{{ route('mirasol-logs.index') }}" class="d-flex gap-2 flex-wrap">
-                            <input class="form-control form-control-sm" style="width:260px;" name="q" type="search"
-                                value="{{ request('q') }}" placeholder="Search name / employee no / device...">
 
-                            <input class="form-control form-control-sm date-field" type="date" name="date_from"
+                            <select name="employee_no" class="form-select form-select-sm" style="width:260px;">
+                                <option value="">-- Select Employee (Logs) --</option>
+                                @foreach ($people as $p)
+                                    <option value="{{ $p->employee_no }}" @selected(request('employee_no') == $p->employee_no)>
+                                        {{ $p->employee_name }} ({{ $p->employee_no }})
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <input type="date" name="date_from"
+                                class="form-control form-control-sm date-field date-compact"
                                 value="{{ request('date_from') }}">
 
-                            <input class="form-control form-control-sm date-field" type="date" name="date_to"
+                            <input type="date" name="date_to"
+                                class="form-control form-control-sm date-field date-compact"
                                 value="{{ request('date_to') }}">
 
                             <button class="btn btn-outline-secondary btn-sm" type="submit">Search</button>
                         </form>
+
                     </div>
                 </div>
 
@@ -163,7 +158,7 @@
                                             <td class="ps-3 text-muted">{{ ($rows->firstItem() ?? 0) + $i }}</td>
                                             <td class="fw-semi-bold">{{ $r->employee_name ?? '—' }}</td>
                                             <td class="text-muted">
-                                                {{ $r->log_date ? \Carbon\Carbon::parse($r->log_date)->format('M d, Y') : '—' }}
+                                                {{ $r->log_date ? \Carbon\Carbon::parse($r->log_date)->format('D, M d, Y') : '—' }}
                                             </td>
                                             <td>{{ $r->time_in ? \Carbon\Carbon::parse($r->time_in)->format('h:i A') : '—' }}
                                             </td>
