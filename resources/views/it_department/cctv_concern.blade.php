@@ -12,92 +12,6 @@
             }
         </script>
 
-        <style>
-            /* Small UI polish only */
-            .jo-card {
-                border-radius: 14px;
-                overflow: hidden;
-            }
-
-            .jo-card .card-header {
-                padding: 1rem 1.25rem;
-            }
-
-            .jo-card .card-footer {
-                padding: .9rem 1.25rem;
-            }
-
-            .jo-table-wrap {
-                max-height: 560px;
-            }
-
-            .jo-table thead th {
-                position: sticky;
-                top: 0;
-                z-index: 2;
-            }
-
-            .jo-table tbody tr:hover {
-                background: rgba(0, 0, 0, .025);
-            }
-
-            .jo-actions .btn {
-                padding: .32rem .55rem;
-            }
-
-            .soft-divider {
-                border-top: 1px dashed rgba(0, 0, 0, .08);
-                margin: .75rem 0;
-            }
-
-            .empty-state {
-                padding: 2.5rem 1rem;
-            }
-
-            .empty-state .icon {
-                width: 56px;
-                height: 56px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border-radius: 999px;
-                background: rgba(0, 0, 0, .04);
-                margin: 0 auto .75rem;
-            }
-
-            .filter-card {
-                border-radius: 14px;
-            }
-
-            .modal .modal-content {
-                border-radius: 14px;
-            }
-
-            .form-hint {
-                font-size: .78rem;
-                color: #6c757d;
-            }
-
-            /* Monitoring */
-            .monitor-card {
-                border-radius: 14px;
-            }
-
-            .monitor-tile {
-                border-radius: 12px;
-            }
-
-            .mini-row {
-                display: flex;
-                justify-content: space-between;
-                padding: .25rem 0;
-            }
-
-            .mini-row+.mini-row {
-                border-top: 1px dashed rgba(0, 0, 0, .08);
-            }
-        </style>
-
         <div class="content">
 
             @if (session('success'))
@@ -739,7 +653,7 @@
         </div>
     </div>
 
-    @section('scripts')
+    @push('scripts')
         <script>
             $(document).ready(function() {
                 $('.bus-select').select2({
@@ -750,5 +664,126 @@
                 });
             });
         </script>
-    @endsection
+    @endpush
 @endsection
+
+@push('styles')
+    <style>
+        /* Small UI polish only */
+        .jo-card {
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .jo-card .card-header {
+            padding: 1rem 1.25rem;
+        }
+
+        .jo-card .card-footer {
+            padding: .9rem 1.25rem;
+        }
+
+        .jo-table-wrap {
+            max-height: 560px;
+        }
+
+        .jo-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .jo-table tbody tr:hover {
+            background: rgba(0, 0, 0, .025);
+        }
+
+        .jo-actions .btn {
+            padding: .32rem .55rem;
+        }
+
+        .soft-divider {
+            border-top: 1px dashed rgba(0, 0, 0, .08);
+            margin: .75rem 0;
+        }
+
+        .empty-state {
+            padding: 2.5rem 1rem;
+        }
+
+        .empty-state .icon {
+            width: 56px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            background: rgba(0, 0, 0, .04);
+            margin: 0 auto .75rem;
+        }
+
+        .filter-card {
+            border-radius: 14px;
+        }
+
+        .modal .modal-content {
+            border-radius: 14px;
+        }
+
+        .form-hint {
+            font-size: .78rem;
+            color: #6c757d;
+        }
+
+        /* Monitoring */
+        .monitor-card {
+            border-radius: 14px;
+        }
+
+        .monitor-tile {
+            border-radius: 12px;
+        }
+
+        .mini-row {
+            display: flex;
+            justify-content: space-between;
+            padding: .25rem 0;
+        }
+
+        .mini-row+.mini-row {
+            border-top: 1px dashed rgba(0, 0, 0, .08);
+        }
+
+        .pagination {
+            font-size: 14px !important;
+        }
+
+        .pagination .page-link {
+            padding: 4px 10px !important;
+            font-size: 14px !important;
+            border-radius: 4px !important;
+            color: #4a4a4a !important;
+            border: 1px solid #d0d5dd !important;
+            background: #f8f9fa !important;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+            color: #fff !important;
+            font-weight: 600 !important;
+        }
+
+        .pagination .page-link:hover {
+            background: #e2e6ea !important;
+            border-color: #c4c9cf !important;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            opacity: .5 !important;
+        }
+
+        .pagination .page-item {
+            margin: 0 2px !important;
+        }
+    </style>
+@endpush
