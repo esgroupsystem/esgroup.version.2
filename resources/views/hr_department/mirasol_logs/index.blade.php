@@ -158,7 +158,7 @@
                                             <td class="ps-3 text-muted">{{ ($rows->firstItem() ?? 0) + $i }}</td>
                                             <td class="fw-semi-bold">{{ $r->employee_name ?? '—' }}</td>
                                             <td class="text-muted">
-                                                {{ $r->log_date ? \Carbon\Carbon::parse($r->log_date)->format('D, M d, Y') : '—' }}
+                                                {{ $r->log_date ? \Carbon\Carbon::parse($r->log_date)->format('F d, Y (l)') : '—' }}
                                             </td>
                                             <td>{{ $r->time_in ? \Carbon\Carbon::parse($r->time_in)->format('h:i A') : '—' }}
                                             </td>
