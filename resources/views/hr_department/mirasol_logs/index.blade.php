@@ -130,58 +130,57 @@
                     </div>
                 </div>
 
-                <div class="card-body p-0">
-                    @if (!$isSearch)
-                        <div class="p-4 text-center">
-                            <div class="empty-state">
-                                <div class="icon mb-2"><span class="fas fa-search"></span></div>
-                                <div class="fw-bold">No Data Displayed</div>
-                                <div class="text-muted fs-11">Use Search to display summarized biometrics (Time In / Time
-                                    Out).</div>
-                            </div>
-                        </div>
-                    @else
-                        <div class="table-responsive scrollbar jo-table-wrap">
-                            <table class="table table-sm mb-0 fs-10 align-middle jo-table">
-                                <thead class="bg-body-tertiary border-bottom border-200">
-                                    <tr>
-                                        <th class="ps-3" style="width:70px;">ID</th>
-                                        <th>Full Name</th>
-                                        <th style="width:140px;">Date</th>
-                                        <th style="width:160px;">Time In (First)</th>
-                                        <th style="width:160px;">Time Out (Last)</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($rows as $i => $r)
-                                        <tr>
-                                            <td class="ps-3 text-muted">{{ ($rows->firstItem() ?? 0) + $i }}</td>
-                                            <td class="fw-semi-bold">{{ $r->employee_name ?? '—' }}</td>
-                                            <td class="text-muted">
-                                                {{ $r->log_date ? \Carbon\Carbon::parse($r->log_date)->format('F d, Y (l)') : '—' }}
-                                            </td>
-                                            <td>{{ $r->time_in ? \Carbon\Carbon::parse($r->time_in)->format('h:i A') : '—' }}
-                                            </td>
-                                            <td>{{ $r->time_out ? \Carbon\Carbon::parse($r->time_out)->format('h:i A') : '—' }}
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="5" class="text-center">
-                                                <div class="empty-state py-4">
-                                                    <div class="icon"><span class="fas fa-fingerprint"></span></div>
-                                                    <div class="fw-bold">No Records Found</div>
-                                                    <div class="text-muted fs-11">Try changing your search text/date range.
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    @endif
+                <div class="table-responsive scrollbar jo-table-wrap">
+                    <table class="table table-sm table-hover mb-0 fs-10 align-middle jo-table">
+                        <thead class="bg-body-tertiary border-bottom border-200">
+                            <tr>
+                                <th class="ps-3" style="width:60px;">ID</th>
+                                <th style="width:220px;">Full Name</th>
+                                <th style="width:180px;">Date</th>
+                                <th style="width:120px;">Time In</th>
+                                <th style="width:120px;">Time Out</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($rows as $i => $r)
+                                <tr>
+                                    <td class="ps-3 text-muted">
+                                        {{ ($rows->firstItem() ?? 0) + $i }}
+                                    </td>
+
+                                    <td class="fw-semi-bold">
+                                        {{ $r->employee_name ?? '—' }}
+                                    </td>
+
+                                    <td class="text-muted">
+                                        {{ $r->log_date ? \Carbon\Carbon::parse($r->log_date)->format('F d, Y (l)') : '—' }}
+                                    </td>
+
+                                    <td>
+                                        {{ $r->time_in ? \Carbon\Carbon::parse($r->time_in)->format('h:i A') : '—' }}
+                                    </td>
+
+                                    <td>
+                                        {{ $r->time_out ? \Carbon\Carbon::parse($r->time_out)->format('h:i A') : '—' }}
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        <div class="empty-state py-4">
+                                            <div class="icon"><span class="fas fa-fingerprint"></span></div>
+                                            <div class="fw-bold">No Records Found</div>
+                                            <div class="text-muted fs-11">
+                                                Try changing your search text/date range.
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
+
 
                 @if ($isSearch)
                     <div class="card-footer bg-body-tertiary border-top border-200">
