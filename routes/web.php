@@ -225,7 +225,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Mirasol Biometrics Management
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer'])
+    Route::middleware(['role:Developer,IT Officer'])
         ->prefix('mirasol-logs')->name('mirasol-logs.')
         ->controller(MirasolBiometricsLogController::class)->group(function () {
 
@@ -244,7 +244,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | User Management & Roles
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Head,Operation Manager'])->group(function () {
+    Route::middleware(['role:Developer,IT Head'])->group(function () {
 
         // Authentication (User Management)
         Route::prefix('authentication')->name('authentication.')
