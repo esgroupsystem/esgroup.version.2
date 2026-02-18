@@ -57,9 +57,13 @@
                     </div>
 
                     {{-- RIGHT SIDE: QR --}}
-                    <div class="text-end ms-4 qr-side">
-                        {!! QrCode::size(90)->style('round')->margin(0)->backgroundColor(255, 255, 255)->generate($employee->employee_id) !!}
-                        <div class="small-muted">ID: {{ $employee->employee_id }}</div>
+                    <div class="text-center ms-4 qr-side">
+                        <div class="qr-wrapper">
+                            {!! QrCode::size(90)->style('round')->margin(0)->backgroundColor(255, 255, 255)->generate($employee->employee_id_permanent) !!}
+                        </div>
+                        <div class="small-muted qr-id">
+                            ID: {{ $employee->employee_id_permanent }}
+                        </div>
                     </div>
 
                 </div>
@@ -876,6 +880,19 @@
 
                     <div class="modal-body">
                         <div class="row g-3">
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">
+                                    Permanent Employee ID
+                                    <small id="permanentIdHint" class="ms-2"></small>
+                                </label>
+
+                                <input type="text" name="employee_id_permanent" id="employee_id_permanent"
+                                    class="form-control" inputmode="numeric" pattern="[0-9]*"
+                                    oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                    value="{{ old('employee_id_permanent', $employee->employee_id_permanent ?? '') }}">
+                            </div>
+
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Full Name</label>
                                 <input type="text" name="full_name" class="form-control"
@@ -893,7 +910,8 @@
                                 <select name="status" class="form-control">
                                     <option value="Active" {{ $employee->status === 'Active' ? 'selected' : '' }}>Active
                                     </option>
-                                    <option value="Active(Re-Entry)" {{ $employee->status === 'Active(Re-Entry)' ? 'selected' : '' }}>Active(Re-Entry)
+                                    <option value="Active(Re-Entry)"
+                                        {{ $employee->status === 'Active(Re-Entry)' ? 'selected' : '' }}>Active(Re-Entry)
                                     </option>
                                     <option value="Suspended" {{ $employee->status === 'Suspended' ? 'selected' : '' }}>
                                         Suspended</option>
@@ -1091,5 +1109,65 @@
                     if (!confirm('Are you sure?')) e.preventDefault();
                 });
             });
+        </script>
+
+        <script>
+            (function() {
+                const input = document.getElementById('employee_id_permanent');
+                const hint = document.getElementById('permanentIdHint');
+
+                if (!input || !hint) return;
+
+                const url = @json(route('employees.staff.checkPermanentId'));
+                const ignoreId = @json($employee->id ?? null);
+
+                let t = null;
+
+                function setHint(text, type) {
+                    hint.textContent = text || '';
+                    hint.className = 'ms-2 small ' + (type === 'danger' ? 'text-danger' :
+                        type === 'success' ? 'text-success' :
+                        'text-muted');
+                }
+
+                async function check() {
+                    const value = (input.value || '').trim();
+
+                    if (!value) {
+                        setHint('', 'muted');
+                        return;
+                    }
+
+                    setHint('Checking...', 'muted');
+
+                    const params = new URLSearchParams({
+                        value
+                    });
+                    if (ignoreId) params.set('ignore_id', ignoreId);
+
+                    try {
+                        const res = await fetch(url + '?' + params.toString(), {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        const data = await res.json();
+
+                        if (data.exists) setHint(data.message || 'ID already exists.', 'danger');
+                        else setHint(data.message || 'ID is available.', 'success');
+
+                    } catch (e) {
+                        setHint('Unable to check right now.', 'danger');
+                    }
+                }
+
+                input.addEventListener('input', function() {
+                    clearTimeout(t);
+                    t = setTimeout(check, 350); // debounce
+                });
+
+                // check on load (useful when editing existing record)
+                check();
+            })();
         </script>
     @endpush

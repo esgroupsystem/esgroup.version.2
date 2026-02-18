@@ -155,6 +155,8 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::controller(EmployeeController::class)->group(function () {
                 Route::get('/', 'index')->name('staff.index');
                 Route::post('/store', 'store')->name('staff.store');
+                Route::get('/employee/check-permanent-id', 'checkPermanentId')->name('staff.checkPermanentId');
+                
                 Route::delete('/{employee}', 'destroy')->name('staff.destroy');
                 Route::get('/employee/{employee}', 'show')->name('staff.show');
                 Route::put('/employee/{employee}', 'update')->name('update');
@@ -164,6 +166,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::post('/{employee}/attachments', 'storeAttachment')->name('staff.attachments.store');
                 Route::delete('/{employee}/attachments/{attachment}', 'destroyAttachment')->name('staff.attachments.destroy');
                 Route::put('/employees/{employee}/status-details', 'updateStatusDetails')->name('status-details.update');
+            
 
                 Route::get('/{employee}/print', 'print201')->name('staff.print');
                 Route::get('/departments/{id}/positions', 'getPositions')->name('positions');

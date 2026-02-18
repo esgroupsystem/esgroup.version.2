@@ -112,6 +112,7 @@ class EmployeeController extends Controller
     {
         try {
             $validated = $request->validate([
+                'employee_id_permanent' => 'nullable|digits_between:1,10|unique:employees,employee_id_permanent',
                 'full_name' => 'required|string|max:255',
                 'department_id' => 'nullable|exists:departments,id',
                 'position_id' => 'nullable|exists:positions,id',
@@ -128,6 +129,7 @@ class EmployeeController extends Controller
 
                 return Employee::create([
                     'employee_id' => $employee_id,
+                    'employee_id_permanent' => $validated['employee_id_permanent'] ?? null,
                     'full_name' => $validated['full_name'],
                     'department_id' => $validated['department_id'] ?? null,
                     'position_id' => $validated['position_id'] ?? null,
@@ -182,6 +184,7 @@ class EmployeeController extends Controller
     {
         try {
             $validated = $request->validate([
+                'employee_id_permanent' => 'nullable|digits_between:1,10|unique:employees,employee_id_permanent,'.$employee->id,
                 'full_name' => 'required|string|max:255',
                 'status' => 'required|string|in:Active,Active(Re-Entry),Inactive,Suspended,Terminated,Terminated(due to AWOL),End of Contract,Retrench,Retired,Resigned',
                 'date_hired' => 'nullable|date',
@@ -606,5 +609,31 @@ class EmployeeController extends Controller
         } catch (\Throwable $e) {
             return $value; // fallback
         }
+    }
+
+    public function checkPermanentId(Request $request)
+    {
+        $value = trim((string) $request->query('value', ''));
+        $ignoreId = $request->query('ignore_id'); // for edit mode
+
+        if ($value === '') {
+            return response()->json([
+                'exists' => false,
+                'message' => '',
+            ]);
+        }
+
+        $q = Employee::query()->where('employee_id_permanent', $value);
+
+        if (! empty($ignoreId)) {
+            $q->where('id', '!=', $ignoreId);
+        }
+
+        $exists = $q->exists();
+
+        return response()->json([
+            'exists' => $exists,
+            'message' => $exists ? 'ID already exists in database.' : 'ID is available.',
+        ]);
     }
 }
