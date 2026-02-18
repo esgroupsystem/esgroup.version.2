@@ -57,16 +57,24 @@
                     </div>
 
                     {{-- RIGHT SIDE: QR --}}
-                    <div class="text-center ms-4 qr-side">
+                    <div class="qr-card ms-4">
                         @if (!empty($employee->employee_id_permanent))
-                            <div class="qr-wrapper">
-                                {!! QrCode::size(90)->style('round')->margin(0)->backgroundColor(255, 255, 255)->generate((string) $employee->employee_id_permanent) !!}
+                            <div class="qr-box">
+                                {!! QrCode::size(92)->style('round')->margin(0)->backgroundColor(255, 255, 255)->generate((string) $employee->employee_id_permanent) !!}
                             </div>
-                            <div class="small-muted qr-id">ID: {{ $employee->employee_id_permanent }}</div>
+
+                            <div class="qr-id-label">Permanent ID</div>
+                            <div class="qr-id-value">
+                                {{ $employee->employee_id_permanent }}
+                            </div>
                         @else
-                            <div class="small text-muted">No Permanent ID</div>
+                            <div class="qr-empty">
+                                <i class="fas fa-qrcode me-1"></i>
+                                No Permanent ID
+                            </div>
                         @endif
                     </div>
+
 
                 </div>
             </div>
