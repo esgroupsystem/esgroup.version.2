@@ -188,26 +188,7 @@
                             </ul>
                         </div>
                     </div>
-
-                    {{-- SUPPORT AGENTS --}}
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">IT Active Members</h6>
-                        </div>
-                        <div class="card-body p-2">
-                            <ul class="list-group list-group-flush">
-                                @foreach ($agents as $agent)
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        {{ $agent->full_name }}
-                                        <span class="badge bg-dark">{{ $agent->job_orders_assigned_count }}</span>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    </div>
-
                 </div>
-
 
             </div>
         </div>
