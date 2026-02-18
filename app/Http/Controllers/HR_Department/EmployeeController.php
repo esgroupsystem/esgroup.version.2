@@ -199,15 +199,11 @@ class EmployeeController extends Controller
                 'address_2' => 'nullable|string|max:255',
                 'emergency_name' => 'nullable|string|max:255',
                 'emergency_contact' => 'nullable|digits:11',
-
-                // cropper inputs (NOT employee columns)
                 'remove_profile_picture' => 'nullable|boolean',
                 'profile_picture_cropped' => 'nullable|string',
-                // optional if you still allow normal upload fallback
                 'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             ]);
 
-            // ✅ Only fields that really belong to employees table
             $employeeData = collect($validated)->only([
                 'employee_id_permanent',
                 'full_name',
@@ -226,10 +222,8 @@ class EmployeeController extends Controller
                 'emergency_contact',
             ])->toArray();
 
-            // BEFORE snapshot
             $before = $employee->only(array_keys($employeeData));
 
-            // normalize date fields
             if (array_key_exists('date_hired', $employeeData)) {
                 $employeeData['date_hired'] = $this->normalizeDate($employeeData['date_hired']);
             }
@@ -237,17 +231,13 @@ class EmployeeController extends Controller
                 $employeeData['date_of_birth'] = $this->normalizeDate($employeeData['date_of_birth']);
             }
 
-            // ✅ Update employees table only
             $employee->update($employeeData);
 
-            // AFTER snapshot
             $after = $employee->fresh()->only(array_keys($employeeData));
             $changed = $this->diffChanges($before, $after);
 
-            // ✅ Ensure asset exists for saving picture
             $asset = $employee->asset ?? $employee->asset()->create([]);
 
-            // ✅ Remove picture
             if ($request->boolean('remove_profile_picture')) {
                 if ($asset->profile_picture) {
                     Storage::disk('public')->delete($asset->profile_picture);
@@ -261,7 +251,6 @@ class EmployeeController extends Controller
                 ];
             }
 
-            // ✅ Save cropped base64 (CropperJS)
             if ($request->filled('profile_picture_cropped')) {
                 $dataUrl = (string) $request->input('profile_picture_cropped');
 
@@ -270,26 +259,18 @@ class EmployeeController extends Controller
                     $data = base64_decode($data);
 
                     if ($data !== false) {
-                        // delete old first
                         if ($asset->profile_picture) {
                             Storage::disk('public')->delete($asset->profile_picture);
                         }
 
-                        // create clean employee name
                         $cleanName = strtolower(str_replace(' ', '_', $employee->full_name));
-
-                        // use permanent id (fallback to employee id if empty)
                         $permanentId = $employee->employee_id_permanent ?? $employee->id;
-
-                        // final filename
                         $fileName = "employees/{$cleanName}_{$permanentId}.jpg";
 
-                        // delete old picture
                         if ($asset->profile_picture) {
                             Storage::disk('public')->delete($asset->profile_picture);
                         }
 
-                        // save file
                         Storage::disk('public')->put($fileName, $data);
 
                         $asset->profile_picture = $fileName;
@@ -306,7 +287,6 @@ class EmployeeController extends Controller
                 }
             }
 
-            // ✅ Optional fallback: normal file upload (if you keep name="profile_picture")
             if ($request->hasFile('profile_picture') && ! $request->filled('profile_picture_cropped')) {
                 $file = $request->file('profile_picture');
 

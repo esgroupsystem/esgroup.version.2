@@ -1421,7 +1421,7 @@
                 btnApply?.addEventListener('click', () => {
                     if (!cropper) return;
 
-                    document.activeElement?.blur(); // ✅ remove focus to avoid aria warning
+                    document.activeElement?.blur();
 
                     const canvas = cropper.getCroppedCanvas({
                         width: 600,
@@ -1446,7 +1446,7 @@
                         });
                     }
                 });
-                
+
             })();
         </script>
     @endpush
