@@ -9,15 +9,15 @@
 
                 <div class="d-flex align-items-center p-3 header-flex">
 
-                    {{-- LEFT SIDE: PROFILE PICTURE + NAME --}}
+                    {{-- LEFT SIDE --}}
                     <div class="d-flex align-items-center flex-grow-1 profile-left">
-
                         <div class="me-3">
                             @php
                                 $profilePath = $employee->asset?->profile_picture
                                     ? asset('storage/' . $employee->asset->profile_picture)
                                     : asset('assets/img/no-image-default.png');
                             @endphp
+
                             <img class="rounded-circle" src="{{ $profilePath }}" alt="Profile">
                         </div>
 
@@ -60,21 +60,16 @@
                     <div class="qr-card ms-4">
                         @if (!empty($employee->employee_id_permanent))
                             <div class="qr-box">
-                                {!! QrCode::size(92)->style('round')->margin(0)->backgroundColor(255, 255, 255)->generate((string) $employee->employee_id_permanent) !!}
+                                {!! QrCode::size(82)->style('round')->margin(0)->backgroundColor(255, 255, 255)->generate((string) $employee->employee_id_permanent) !!}
                             </div>
-
                             <div class="qr-id-label">Permanent ID</div>
-                            <div class="qr-id-value">
-                                {{ $employee->employee_id_permanent }}
-                            </div>
+                            <div class="qr-id-value">{{ $employee->employee_id_permanent }}</div>
                         @else
                             <div class="qr-empty">
-                                <i class="fas fa-qrcode me-1"></i>
-                                No Permanent ID
+                                <i class="fas fa-qrcode me-1"></i> No Permanent ID
                             </div>
                         @endif
                     </div>
-
 
                 </div>
             </div>
@@ -880,7 +875,8 @@
         {{-- EDIT PROFILE Modal --}}
         <div class="modal fade" id="editProfileModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
-                <form action="{{ route('employees.update', $employee->id) }}" method="POST" class="modal-content">
+                <form action="{{ route('employees.update', $employee->id) }}" method="POST" class="modal-content"
+                    enctype="multipart/form-data">
                     @csrf @method('PUT')
 
                     <div class="modal-header">
@@ -928,13 +924,13 @@
                                     <option value="Terminated" {{ $employee->status === 'Terminated' ? 'selected' : '' }}>
                                         Terminated</option>
                                     <option value="Terminated(due to AWOL)"
-                                        {{ $employee->status === 'Terminated(due to AWOL)' ? 'selected' : '' }}>
-                                        Terminated (due to AWOL)</option>
+                                        {{ $employee->status === 'Terminated(due to AWOL)' ? 'selected' : '' }}>Terminated
+                                        (due to AWOL)</option>
                                     <option value="Retrench" {{ $employee->status === 'Retrench' ? 'selected' : '' }}>
                                         Retrench</option>
                                     <option value="End of Contract"
-                                        {{ $employee->status === 'End of Contract' ? 'selected' : '' }}>
-                                        End of Contract</option>
+                                        {{ $employee->status === 'End of Contract' ? 'selected' : '' }}>End of Contract
+                                    </option>
                                     <option value="Retired" {{ $employee->status === 'Retired' ? 'selected' : '' }}>
                                         Retired</option>
                                     <option value="Resigned" {{ $employee->status === 'Resigned' ? 'selected' : '' }}>
@@ -953,23 +949,19 @@
                                 <select name="company" class="form-control" required>
                                     <option value="">-- Select Company --</option>
                                     <option value="Jell Transport"
-                                        {{ $employee->company === 'Jell Transport' ? 'selected' : '' }}>
-                                        Jell Transport
+                                        {{ $employee->company === 'Jell Transport' ? 'selected' : '' }}>Jell Transport
                                     </option>
                                     <option value="ES Transport"
-                                        {{ $employee->company === 'ES Transport' ? 'selected' : '' }}>
-                                        ES Transport
-                                    </option>
+                                        {{ $employee->company === 'ES Transport' ? 'selected' : '' }}>ES Transport</option>
                                     <option value="Kellen Transport"
-                                        {{ $employee->company === 'Kellen Transport' ? 'selected' : '' }}>
-                                        Kellen Transport
+                                        {{ $employee->company === 'Kellen Transport' ? 'selected' : '' }}>Kellen Transport
                                     </option>
                                     <option value="Earthstar Transport"
-                                        {{ $employee->company === 'Earthstar Transport' ? 'selected' : '' }}>
-                                        Earthstar Transport
-                                    </option>
+                                        {{ $employee->company === 'Earthstar Transport' ? 'selected' : '' }}>Earthstar
+                                        Transport</option>
                                 </select>
                             </div>
+
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Department</label>
                                 <select name="department_id" id="editDepartmentSelect" class="form-control">
@@ -989,14 +981,12 @@
                                 </select>
                             </div>
 
-
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Position</label>
                                 <select name="position_id" id="editPositionSelect" class="form-control">
                                     @if ($employee->position)
                                         <option value="{{ $employee->position->id }}" selected>
-                                            {{ $employee->position->title }}
-                                            (Current)
+                                            {{ $employee->position->title }} (Current)
                                         </option>
                                     @else
                                         <option value="">-- Select position --</option>
@@ -1007,7 +997,6 @@
                                             <option value="{{ $pos->id }}">{{ $pos->title }}</option>
                                         @endif
                                     @endforeach
-
                                 </select>
                             </div>
 
@@ -1017,13 +1006,11 @@
                                     <option value="Mirasol" {{ $employee->garage === 'Mirasol' ? 'selected' : '' }}>
                                         Mirasol</option>
                                     <option value="Balintawak"
-                                        {{ $employee->garage === 'Balintawak' ? 'selected' : '' }}>
-                                        Balintawak</option>
+                                        {{ $employee->garage === 'Balintawak' ? 'selected' : '' }}>Balintawak</option>
                                     <option value="Gonzales" {{ $employee->garage === 'Gonzales' ? 'selected' : '' }}>
                                         Gonzales</option>
                                 </select>
                             </div>
-
 
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Email</label>
@@ -1063,6 +1050,33 @@
                                     oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)">
                             </div>
 
+                            {{-- PROFILE PICTURE WITH CROPPER --}}
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Profile Picture</label>
+
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+                                    <img id="profilePreview" src="{{ $profilePath }}" alt="Preview"
+                                        class="profile-preview-circle">
+
+                                    <div class="d-flex flex-column gap-2">
+                                        <input type="file" id="profile_picture" class="form-control"
+                                            accept="image/*">
+
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="1"
+                                                id="remove_profile_picture" name="remove_profile_picture">
+                                            <label class="form-check-label" for="remove_profile_picture">
+                                                Remove profile picture
+                                            </label>
+                                        </div>
+
+                                        <small class="text-muted">Upload then crop (drag + zoom). JPG/PNG max 2MB.</small>
+                                    </div>
+                                </div>
+
+                                <input type="hidden" name="profile_picture_cropped" id="profile_picture_cropped">
+                            </div>
+
                         </div>
                     </div>
 
@@ -1071,6 +1085,41 @@
                         <button class="btn btn-primary">Save Changes</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        {{-- ============================= --}}
+        {{-- CROPPER MODAL --}}
+        {{-- ============================= --}}
+        <div class="modal fade" id="cropperModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Crop Profile Picture</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="cropper-wrap">
+                            <img id="cropperImage" src="" alt="Cropper">
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3 flex-wrap">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="zoomIn">Zoom
+                                +</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="zoomOut">Zoom
+                                -</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm"
+                                id="rotateLeft">Rotate</button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="resetCrop">Reset</button>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button class="btn btn-primary" type="button" id="applyCrop">Apply Crop</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -1178,6 +1227,226 @@
 
                 // check on load (useful when editing existing record)
                 check();
+            })();
+        </script>
+
+        <script>
+            // show filename next to file input in Edit 201 modal
+            document.querySelectorAll('.file-input').forEach(function(el) {
+                el.addEventListener('change', function() {
+                    const target = document.querySelector(this.dataset.target);
+                    if (!target) return;
+                    const file = this.files[0];
+                    target.textContent = file ? file.name : '';
+                });
+            });
+
+            // Dynamic Position Loading for EDIT PROFILE MODAL
+            document.getElementById('editDepartmentSelect')?.addEventListener('change', function() {
+                const deptId = this.value;
+                const posSelect = document.getElementById('editPositionSelect');
+                const url = "{{ url('/employees/departments') }}/" + deptId + "/positions";
+
+                posSelect.innerHTML = '<option value="">Loading...</option>';
+
+                if (!deptId) {
+                    posSelect.innerHTML = '<option value="">-- Select position --</option>';
+                    return;
+                }
+
+                fetch(url)
+                    .then(res => res.json())
+                    .then(list => {
+                        posSelect.innerHTML = '<option value="">-- Select position --</option>';
+                        list.forEach(pos => {
+                            posSelect.innerHTML += `<option value="${pos.id}">${pos.title}</option>`;
+                        });
+                    })
+                    .catch(() => {
+                        posSelect.innerHTML = '<option value="">-- Select position --</option>';
+                    });
+            });
+
+            // confirmation for delete actions
+            document.querySelectorAll('.confirm-delete').forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    if (!confirm('Are you sure?')) e.preventDefault();
+                });
+            });
+        </script>
+
+        {{-- Permanent ID live checker --}}
+        <script>
+            (function() {
+                const input = document.getElementById('employee_id_permanent');
+                const hint = document.getElementById('permanentIdHint');
+                if (!input || !hint) return;
+
+                const url = @json(route('employees.staff.checkPermanentId'));
+                const ignoreId = @json($employee->id ?? null);
+                let t = null;
+
+                function setHint(text, type) {
+                    hint.textContent = text || '';
+                    hint.className = 'ms-2 small ' + (type === 'danger' ? 'text-danger' :
+                        type === 'success' ? 'text-success' :
+                        'text-muted');
+                }
+
+                async function check() {
+                    const value = (input.value || '').trim();
+                    if (!value) {
+                        setHint('', 'muted');
+                        return;
+                    }
+
+                    setHint('Checking...', 'muted');
+
+                    const params = new URLSearchParams({
+                        value
+                    });
+                    if (ignoreId) params.set('ignore_id', ignoreId);
+
+                    try {
+                        const res = await fetch(url + '?' + params.toString(), {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        const data = await res.json();
+                        if (data.exists) setHint(data.message || 'ID already exists.', 'danger');
+                        else setHint(data.message || 'ID is available.', 'success');
+                    } catch (e) {
+                        setHint('Unable to check right now.', 'danger');
+                    }
+                }
+
+                input.addEventListener('input', function() {
+                    clearTimeout(t);
+                    t = setTimeout(check, 350);
+                });
+
+                check();
+            })();
+        </script>
+
+        {{-- CropperJS drag/zoom crop --}}
+        <script>
+            (function() {
+                const fileInput = document.getElementById('profile_picture');
+                const preview = document.getElementById('profilePreview');
+                const hidden = document.getElementById('profile_picture_cropped');
+                const removeCheck = document.getElementById('remove_profile_picture');
+
+                const cropperModalEl = document.getElementById('cropperModal');
+                const cropperImg = document.getElementById('cropperImage');
+
+                const btnApply = document.getElementById('applyCrop');
+                const zoomIn = document.getElementById('zoomIn');
+                const zoomOut = document.getElementById('zoomOut');
+                const rotateLeft = document.getElementById('rotateLeft');
+                const resetCrop = document.getElementById('resetCrop');
+
+                if (!fileInput || !preview || !hidden || !cropperModalEl || !cropperImg) return;
+
+                let cropper = null;
+                const cropModal = new bootstrap.Modal(cropperModalEl);
+
+                if (removeCheck) {
+                    removeCheck.addEventListener('change', () => {
+                        if (removeCheck.checked) {
+                            hidden.value = '';
+                        }
+                    });
+                }
+
+                const editModalEl = document.getElementById('editProfileModal');
+                const editModal = editModalEl ?
+                    (bootstrap.Modal.getInstance(editModalEl) || new bootstrap.Modal(editModalEl)) :
+                    null;
+
+                fileInput.addEventListener('change', () => {
+                    const file = fileInput.files?.[0];
+                    if (!file) return;
+
+                    if (removeCheck) removeCheck.checked = false;
+
+                    if (file.size > 2 * 1024 * 1024) {
+                        alert('Image too large. Max 2MB.');
+                        fileInput.value = '';
+                        return;
+                    }
+
+                    const url = URL.createObjectURL(file);
+                    cropperImg.src = url;
+
+                    // ✅ hide edit modal first, then open cropper
+                    if (editModalEl && editModal) {
+                        editModalEl.addEventListener('hidden.bs.modal', function handler() {
+                            editModalEl.removeEventListener('hidden.bs.modal', handler);
+                            cropModal.show();
+                        });
+                        editModal.hide();
+                    } else {
+                        cropModal.show();
+                    }
+                });
+
+
+                cropperModalEl.addEventListener('shown.bs.modal', () => {
+                    if (cropper) cropper.destroy();
+
+                    cropper = new Cropper(cropperImg, {
+                        aspectRatio: 1,
+                        viewMode: 1,
+                        dragMode: 'move',
+                        autoCropArea: 0.9,
+                        responsive: true,
+                        background: false,
+                        zoomOnWheel: true
+                    });
+                });
+
+                cropperModalEl.addEventListener('hidden.bs.modal', () => {
+                    try {
+                        URL.revokeObjectURL(cropperImg.src);
+                    } catch (e) {}
+                });
+
+                zoomIn?.addEventListener('click', () => cropper?.zoom(0.1));
+                zoomOut?.addEventListener('click', () => cropper?.zoom(-0.1));
+                rotateLeft?.addEventListener('click', () => cropper?.rotate(-90));
+                resetCrop?.addEventListener('click', () => cropper?.reset());
+
+                btnApply?.addEventListener('click', () => {
+                    if (!cropper) return;
+
+                    document.activeElement?.blur(); // ✅ remove focus to avoid aria warning
+
+                    const canvas = cropper.getCroppedCanvas({
+                        width: 600,
+                        height: 600,
+                        imageSmoothingEnabled: true,
+                        imageSmoothingQuality: 'high'
+                    });
+
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+                    preview.src = dataUrl;
+                    hidden.value = dataUrl;
+
+                    cropModal.hide();
+                    fileInput.value = '';
+
+                    // ✅ show back edit modal after cropper closes
+                    if (editModalEl && editModal) {
+                        cropperModalEl.addEventListener('hidden.bs.modal', function handler() {
+                            cropperModalEl.removeEventListener('hidden.bs.modal', handler);
+                            editModal.show();
+                        });
+                    }
+                });
+                
             })();
         </script>
     @endpush

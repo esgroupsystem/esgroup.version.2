@@ -199,24 +199,135 @@ class EmployeeController extends Controller
                 'address_2' => 'nullable|string|max:255',
                 'emergency_name' => 'nullable|string|max:255',
                 'emergency_contact' => 'nullable|digits:11',
+
+                // cropper inputs (NOT employee columns)
+                'remove_profile_picture' => 'nullable|boolean',
+                'profile_picture_cropped' => 'nullable|string',
+                // optional if you still allow normal upload fallback
+                'profile_picture' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             ]);
 
-            // BEFORE must be captured BEFORE update
-            $before = $employee->only(array_keys($validated));
+            // ✅ Only fields that really belong to employees table
+            $employeeData = collect($validated)->only([
+                'employee_id_permanent',
+                'full_name',
+                'status',
+                'date_hired',
+                'company',
+                'department_id',
+                'position_id',
+                'email',
+                'phone_number',
+                'garage',
+                'date_of_birth',
+                'address_1',
+                'address_2',
+                'emergency_name',
+                'emergency_contact',
+            ])->toArray();
 
-            // normalize date fields (optional but nice)
-            if (array_key_exists('date_hired', $validated)) {
-                $validated['date_hired'] = $this->normalizeDate($validated['date_hired']);
+            // BEFORE snapshot
+            $before = $employee->only(array_keys($employeeData));
+
+            // normalize date fields
+            if (array_key_exists('date_hired', $employeeData)) {
+                $employeeData['date_hired'] = $this->normalizeDate($employeeData['date_hired']);
             }
-            if (array_key_exists('date_of_birth', $validated)) {
-                $validated['date_of_birth'] = $this->normalizeDate($validated['date_of_birth']);
+            if (array_key_exists('date_of_birth', $employeeData)) {
+                $employeeData['date_of_birth'] = $this->normalizeDate($employeeData['date_of_birth']);
             }
 
-            $employee->update($validated);
+            // ✅ Update employees table only
+            $employee->update($employeeData);
 
-            $after = $employee->fresh()->only(array_keys($validated));
+            // AFTER snapshot
+            $after = $employee->fresh()->only(array_keys($employeeData));
             $changed = $this->diffChanges($before, $after);
 
+            // ✅ Ensure asset exists for saving picture
+            $asset = $employee->asset ?? $employee->asset()->create([]);
+
+            // ✅ Remove picture
+            if ($request->boolean('remove_profile_picture')) {
+                if ($asset->profile_picture) {
+                    Storage::disk('public')->delete($asset->profile_picture);
+                }
+                $asset->profile_picture = null;
+                $asset->save();
+
+                $changed['profile_picture'] = [
+                    'from' => 'existing',
+                    'to' => null,
+                ];
+            }
+
+            // ✅ Save cropped base64 (CropperJS)
+            if ($request->filled('profile_picture_cropped')) {
+                $dataUrl = (string) $request->input('profile_picture_cropped');
+
+                if (preg_match('/^data:image\/\w+;base64,/', $dataUrl)) {
+                    $data = substr($dataUrl, strpos($dataUrl, ',') + 1);
+                    $data = base64_decode($data);
+
+                    if ($data !== false) {
+                        // delete old first
+                        if ($asset->profile_picture) {
+                            Storage::disk('public')->delete($asset->profile_picture);
+                        }
+
+                        // create clean employee name
+                        $cleanName = strtolower(str_replace(' ', '_', $employee->full_name));
+
+                        // use permanent id (fallback to employee id if empty)
+                        $permanentId = $employee->employee_id_permanent ?? $employee->id;
+
+                        // final filename
+                        $fileName = "employees/{$cleanName}_{$permanentId}.jpg";
+
+                        // delete old picture
+                        if ($asset->profile_picture) {
+                            Storage::disk('public')->delete($asset->profile_picture);
+                        }
+
+                        // save file
+                        Storage::disk('public')->put($fileName, $data);
+
+                        $asset->profile_picture = $fileName;
+                        $asset->save();
+
+                        $asset->profile_picture = $fileName;
+                        $asset->save();
+
+                        $changed['profile_picture'] = [
+                            'from' => 'existing',
+                            'to' => $fileName,
+                        ];
+                    }
+                }
+            }
+
+            // ✅ Optional fallback: normal file upload (if you keep name="profile_picture")
+            if ($request->hasFile('profile_picture') && ! $request->filled('profile_picture_cropped')) {
+                $file = $request->file('profile_picture');
+
+                if ($asset->profile_picture) {
+                    Storage::disk('public')->delete($asset->profile_picture);
+                }
+
+                $fileName = 'employees/profile_'.$employee->id.'_'.time().'.'.$file->getClientOriginalExtension();
+                $path = $file->storeAs('employees', basename($fileName), 'public');
+
+                // store path with folder
+                $asset->profile_picture = 'employees/'.basename($fileName);
+                $asset->save();
+
+                $changed['profile_picture'] = [
+                    'from' => 'existing',
+                    'to' => $asset->profile_picture,
+                ];
+            }
+
+            // Log changes if any
             $this->logEmployee($employee, 'updated_profile', [
                 'changed' => $changed,
             ]);

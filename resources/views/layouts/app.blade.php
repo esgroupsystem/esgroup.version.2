@@ -26,6 +26,7 @@
         href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,500,600,700%7cPoppins:300,400,500,600,700,800,900&display=swap"
         rel="stylesheet">
 
+    <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
     <link href="{{ asset('vendors/simplebar/simplebar.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/swiper/swiper-bundle.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/leaflet/leaflet.css') }}" rel="stylesheet">
@@ -95,6 +96,7 @@
     <script src="{{ asset('vendors/typed.js/typed.umd.js') }}"></script>
     <script src="{{ asset('vendors/dropzone/dropzone-min.js') }}"></script>
     <script src="{{ asset('vendors/choices/choices.min.js') }}"></script>
+    <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
 
     <script>
         if (window.Dropzone) Dropzone.autoDiscover = false;
