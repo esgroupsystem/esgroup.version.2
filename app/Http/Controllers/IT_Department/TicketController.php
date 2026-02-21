@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -359,6 +360,40 @@ class TicketController extends Controller
                 ->with('debug', app()->environment('local') ? $e->getMessage() : null)
                 ->withInput();
         }
+    }
+
+    public function destroy($id)
+    {
+        abort_unless(in_array(Auth::user()->role, ['IT Head', 'Developer']), 403);
+
+        $job = JobOrder::with(['files'])->findOrFail($id);
+
+        if (in_array($job->job_status, ['In Progress', 'Completed'])) {
+            flash('You cannot delete a job order that is In Progress or Completed.')->error();
+
+            return back();
+        }
+
+        return DB::transaction(function () use ($job) {
+
+            foreach ($job->files as $f) {
+                if (! empty($f->file_path)) {
+                    Storage::disk('public')->delete($f->file_path);
+                }
+            }
+
+            Storage::disk('public')->deleteDirectory("joborders/{$job->id}");
+
+            JobOrderFile::where('job_id', $job->id)->delete();
+            JobOrderNote::where('joborder_id', $job->id)->delete();
+            JobOrderLog::where('joborder_id', $job->id)->delete();
+
+            $job->delete();
+
+            flash("Job Order #{$job->id} deleted successfully.")->success();
+
+            return back();
+        });
     }
 
     public function addNote(Request $request, $id)

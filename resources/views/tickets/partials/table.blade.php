@@ -52,7 +52,6 @@
                     </td>
 
                     {{-- ACTIONS --}}
-                    {{-- ACTIONS --}}
                     <td class="text-center align-middle actions-cell">
                         <div class="actions-wrap">
 
@@ -79,6 +78,22 @@
                                     @csrf
                                     <button type="submit" class="btn btn-danger btn-sm btn-approval">
                                         <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            @endif
+
+                            @php
+                                $canDelete = in_array(auth()->user()->role, ['Developer', 'IT Head']);
+                            @endphp
+
+                            @if ($canDelete)
+                                <form method="POST" action="{{ route('tickets.joborder.delete', $job->id) }}"
+                                    class="d-inline"
+                                    onsubmit="return confirm('Delete this Job Order? This cannot be undone.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-dark btn-sm btn-approval" title="Delete">
+                                        <i class="fas fa-trash"></i>
                                     </button>
                                 </form>
                             @endif

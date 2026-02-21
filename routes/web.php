@@ -91,6 +91,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
             Route::get('/job-order/view/{id}', 'view')->name('joborder.view');
             Route::put('/joborder/{id}/update', 'update')->name('joborder.update');
+            Route::delete('/joborder/{id}', 'destroy')->name('joborder.delete');
 
             Route::post('/joborder/{id}/accept', 'acceptTask')->name('joborder.accept');
             Route::post('/joborder/{id}/done', 'markAsDone')->name('joborder.done');
