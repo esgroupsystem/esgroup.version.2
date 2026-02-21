@@ -221,6 +221,41 @@
         });
     </script>
 
+    <script>
+        document.addEventListener("submit", function(e) {
+
+            const form = e.target;
+            if (!(form instanceof HTMLFormElement)) return;
+
+            // If already submitting, block it
+            if (form.dataset.submitting === "1") {
+                e.preventDefault();
+                return;
+            }
+
+            form.dataset.submitting = "1";
+
+            // Disable all submit buttons inside the form
+            const buttons = form.querySelectorAll(
+                'button[type="submit"], input[type="submit"]'
+            );
+
+            buttons.forEach(btn => {
+                btn.disabled = true;
+
+                // Optional: change text to show loading
+                if (btn.tagName === "BUTTON") {
+                    btn.dataset.originalText = btn.innerHTML;
+                    btn.innerHTML = `
+                <span class="spinner-border spinner-border-sm me-1"></span>
+                Processing...
+            `;
+                }
+            });
+
+        });
+    </script>
+
     @stack('scripts')
 </body>
 
