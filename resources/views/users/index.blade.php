@@ -44,128 +44,135 @@
                     <h6 class="mb-0">User List</h6>
                 </div>
 
-                {{-- SEARCH ONLY --}}
+                {{-- ✅ SERVER-SIDE SEARCH (Laravel) --}}
                 <div class="p-3">
-                    <div class="row g-3 align-items-center">
-                        <div class="col-md-4">
-                            <input class="form-control form-control-sm search" placeholder="Search user...">
+                    <form method="GET" action="{{ url()->current() }}">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-4">
+                                <input name="q" value="{{ request('q') }}" class="form-control form-control-sm"
+                                    placeholder="Search user...">
+                            </div>
+
+                            <div class="col-auto">
+                                <button class="btn btn-sm btn-falcon-default" type="submit">
+                                    <i class="fas fa-search me-1"></i> Search
+                                </button>
+
+                                @if (request()->filled('q'))
+                                    <a class="btn btn-sm btn-falcon-default ms-1" href="{{ url()->current() }}">
+                                        Clear
+                                    </a>
+                                @endif
+                            </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
 
                 <div class="card-body p-0">
-                    <div id="userTable"
-                        data-list='{"valueNames":["name","username","role","status"],"page":10,"pagination":true}'>
+                    <div class="table-responsive scrollbar">
+                        <table class="table table-hover table-striped fs-10 mb-0">
+                            <thead class="bg-200 text-900">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Last Online</th>
+                                    <th>Updated</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
 
-                        <div class="table-responsive scrollbar">
-                            <table class="table table-hover table-striped fs-10 mb-0">
-                                <thead class="bg-200 text-900">
+                            <tbody>
+                                @forelse ($users as $u)
                                     <tr>
-                                        <th class="sort" data-sort="name">Name</th>
-                                        <th class="sort" data-sort="username">Username</th>
-                                        <th class="sort" data-sort="role">Role</th>
-                                        <th class="sort" data-sort="status">Status</th>
-                                        <th>Last Online</th>
-                                        <th>Updated</th>
-                                        <th class="text-center">Actions</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody class="list">
-                                    @foreach ($users as $u)
-                                        <tr>
-                                            <td class="name">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="avatar avatar-sm rounded-circle bg-soft-primary text-primary me-2"
-                                                        style="width:38px; height:38px;">
-                                                        <span class="fs-8 fw-semi-bold">
-                                                            {{ strtoupper(substr($u->full_name, 0, 1)) }}
-                                                        </span>
-                                                    </div>
-                                                    <div>
-                                                        <div class="fw-semi-bold">{{ $u->full_name }}</div>
-                                                        <div class="text-500 fs-10">{{ $u->email }}</div>
-                                                    </div>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar avatar-sm rounded-circle bg-soft-primary text-primary me-2"
+                                                    style="width:38px; height:38px;">
+                                                    <span class="fs-8 fw-semi-bold">
+                                                        {{ strtoupper(substr($u->full_name, 0, 1)) }}
+                                                    </span>
                                                 </div>
-                                            </td>
+                                                <div>
+                                                    <div class="fw-semi-bold">{{ $u->full_name }}</div>
+                                                    <div class="text-500 fs-10">{{ $u->email }}</div>
+                                                </div>
+                                            </div>
+                                        </td>
 
-                                            <td class="username">{{ $u->username }}</td>
-                                            <td class="role text-capitalize">{{ $u->role }}</td>
+                                        <td>{{ $u->username }}</td>
+                                        <td class="text-capitalize">{{ $u->role }}</td>
 
-                                            <td class="status">
-                                                @if ($u->account_status == 'active')
-                                                    <span
-                                                        class="badge rounded-pill bg-soft-success text-success">Active</span>
-                                                @else
-                                                    <span
-                                                        class="badge rounded-pill bg-soft-danger text-danger">Deactivated</span>
-                                                @endif
-                                            </td>
+                                        <td>
+                                            @if ($u->account_status == 'active')
+                                                <span class="badge rounded-pill bg-soft-success text-success">Active</span>
+                                            @else
+                                                <span
+                                                    class="badge rounded-pill bg-soft-danger text-danger">Deactivated</span>
+                                            @endif
+                                        </td>
 
-                                            <td>{{ $u->last_online ? $u->last_online->format('M d, Y h:i A') : 'N/A' }}</td>
-                                            <td>{{ $u->updated_at->format('M d, Y h:i A') }}</td>
+                                        <td>{{ $u->last_online ? $u->last_online->format('M d, Y h:i A') : 'N/A' }}</td>
+                                        <td>{{ $u->updated_at->format('M d, Y h:i A') }}</td>
 
-                                            <td class="text-end">
-                                                <div class="dropdown font-sans-serif position-static">
-                                                    <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal"
-                                                        type="button" data-bs-toggle="dropdown">
-                                                        <span class="fas fa-ellipsis-h fs-10"></span>
-                                                    </button>
+                                        <td class="text-end">
+                                            <div class="dropdown font-sans-serif position-static">
+                                                <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal"
+                                                    type="button" data-bs-toggle="dropdown">
+                                                    <span class="fas fa-ellipsis-h fs-10"></span>
+                                                </button>
 
-                                                    <div class="dropdown-menu dropdown-menu-end border py-0 shadow-sm">
-                                                        <div class="py-2">
+                                                <div class="dropdown-menu dropdown-menu-end border py-0 shadow-sm">
+                                                    <div class="py-2">
 
-                                                            {{-- EDIT --}}
-                                                            <button class="dropdown-item"
-                                                                onclick="openEditUser({
+                                                        {{-- EDIT --}}
+                                                        <button class="dropdown-item"
+                                                            onclick="openEditUser({
                                                                 id: '{{ $u->id }}',
-                                                                full_name: '{{ $u->full_name }}',
-                                                                username: '{{ $u->username }}',
-                                                                email: '{{ $u->email }}',
-                                                                role: '{{ $u->role }}',
-                                                                status: '{{ $u->account_status }}'
+                                                                full_name: @js($u->full_name),
+                                                                username: @js($u->username),
+                                                                email: @js($u->email),
+                                                                role: @js($u->role),
+                                                                status: @js($u->account_status)
                                                             })">
-                                                                <i class="fas fa-edit me-2"></i> Edit
-                                                            </button>
+                                                            <i class="fas fa-edit me-2"></i> Edit
+                                                        </button>
 
-                                                            {{-- RESET PASSWORD --}}
-                                                            <button class="dropdown-item reset-btn" data-bs-toggle="modal"
-                                                                data-bs-target="#resetModal" data-id="{{ $u->id }}"
-                                                                data-name="{{ $u->full_name }}">
-                                                                <i class="fas fa-key me-2"></i> Reset Password
-                                                            </button>
+                                                        {{-- RESET PASSWORD --}}
+                                                        <button class="dropdown-item reset-btn" data-bs-toggle="modal"
+                                                            data-bs-target="#resetModal" data-id="{{ $u->id }}"
+                                                            data-name="{{ $u->full_name }}">
+                                                            <i class="fas fa-key me-2"></i> Reset Password
+                                                        </button>
 
-                                                            {{-- ACTIVATE / DEACTIVATE (Instant Action) --}}
-                                                            <a class="dropdown-item"
-                                                                href="{{ route('authentication.users.status', $u->id) }}">
-                                                                <i class="fas fa-toggle-on me-2"></i>
-                                                                {{ $u->account_status === 'active' ? 'Deactivate' : 'Activate' }}
-                                                            </a>
+                                                        {{-- ACTIVATE / DEACTIVATE --}}
+                                                        <a class="dropdown-item"
+                                                            href="{{ route('authentication.users.status', $u->id) }}">
+                                                            <i class="fas fa-toggle-on me-2"></i>
+                                                            {{ $u->account_status === 'active' ? 'Deactivate' : 'Activate' }}
+                                                        </a>
 
-                                                        </div>
                                                     </div>
-
                                                 </div>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
 
-                        {{-- PAGINATION --}}
-                        <div class="d-flex justify-content-center my-3">
-                            <button class="btn btn-sm btn-falcon-default me-1" data-list-pagination="prev">
-                                <span class="fas fa-chevron-left"></span>
-                            </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="text-center py-4 text-muted">
+                                            No users found.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
 
-                            <ul class="pagination mb-0"></ul>
-
-                            <button class="btn btn-sm btn-falcon-default ms-1" data-list-pagination="next">
-                                <span class="fas fa-chevron-right"></span>
-                            </button>
-                        </div>
-
+                    {{-- ✅ LARAVEL PAGINATION --}}
+                    <div class="p-3">
+                        {{ $users->links('pagination.custom') }}
                     </div>
                 </div>
             </div>
@@ -187,7 +194,6 @@
                     </div>
 
                     <div class="modal-body">
-
                         <input type="hidden" id="userId" name="id">
 
                         <div class="row g-3">
@@ -225,6 +231,7 @@
 
                         </div>
                     </div>
+
                     <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                         <button type="submit" class="btn btn-primary btn-sm">Save</button>
@@ -266,18 +273,6 @@
 
 @push('scripts')
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const userTable = new List("userTable", {
-                valueNames: ["name", "username", "role", "status"],
-                page: 10,
-                pagination: true
-            });
-
-            document.querySelector(".search").addEventListener("keyup", e => {
-                userTable.search(e.target.value);
-            });
-        });
-
         function openCreateUser() {
             document.getElementById("userModalTitle").innerHTML = "Add User";
             document.getElementById("userForm").action = "{{ route('authentication.users.store') }}";
@@ -287,6 +282,7 @@
             document.getElementById("username").value = "";
             document.getElementById("email").value = "";
             document.getElementById("role").value = "";
+            document.getElementById("account_status").value = "active";
         }
 
         function openEditUser(user) {
@@ -298,24 +294,60 @@
             document.getElementById("username").value = user.username;
             document.getElementById("email").value = user.email;
             document.getElementById("role").value = user.role;
-
             document.getElementById("account_status").value = user.status;
 
             new bootstrap.Modal(document.getElementById("userModal")).show();
         }
 
         document.addEventListener("click", function(e) {
-            if (e.target.closest(".reset-btn")) {
+            const btn = e.target.closest(".reset-btn");
+            if (!btn) return;
 
-                let id = e.target.closest(".reset-btn").dataset.id;
-                let name = e.target.closest(".reset-btn").dataset.name;
+            let id = btn.dataset.id;
+            let name = btn.dataset.name;
 
-                document.getElementById("resetText").innerHTML =
-                    "Are you sure you want to reset the password for <strong>" + name + "</strong>?";
+            document.getElementById("resetText").innerHTML =
+                "Are you sure you want to reset the password for <strong>" + name + "</strong>?";
 
-                document.getElementById("resetForm").action =
-                    "/authentication/users/reset-password/" + id;
-            }
+            document.getElementById("resetForm").action =
+                "/authentication/users/reset-password/" + id;
         });
     </script>
+@endpush
+
+@push('styles')
+    <style>
+        .pagination {
+            font-size: 14px !important;
+        }
+
+        .pagination .page-link {
+            padding: 4px 10px !important;
+            font-size: 14px !important;
+            border-radius: 4px !important;
+            color: #4a4a4a !important;
+            border: 1px solid #d0d5dd !important;
+            background: #f8f9fa !important;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+            color: #fff !important;
+            font-weight: 600 !important;
+        }
+
+        .pagination .page-link:hover {
+            background: #e2e6ea !important;
+            border-color: #c4c9cf !important;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            opacity: .5 !important;
+        }
+
+        .pagination .page-item {
+            margin: 0 2px !important;
+        }
+    </style>
 @endpush
