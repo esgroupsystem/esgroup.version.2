@@ -111,6 +111,7 @@
                     </div>
                 </li>
 
+                {{-- ================= EMPLOYEES ================= --}}
                 <li class="nav-item">
                     <a class="nav-link dropdown-indicator {{ request()->is('employees*') ? 'active' : '' }}"
                         href="#employeesMenu" role="button" data-bs-toggle="collapse"
@@ -133,36 +134,40 @@
                         </li>
 
                         <li class="nav-item">
-                            <a class="nav-link dropdown-indicator
-                                {{ request()->is('claims*') ? 'active' : '' }}"
-                                href="#claimsMenu" role="button" data-bs-toggle="collapse"
-                                aria-expanded="{{ request()->is('claims*') ? 'true' : 'false' }}">
-                                <span class="nav-link-text">Claims</span>
-                            </a>
-
-                            <ul class="nav collapse {{ request()->is('claims*') ? 'show' : '' }}" id="claimsMenu">
-
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('claims*') ? 'active' : '' }}"
-                                        href="{{ route('claims.index') }}">
-                                        <span class="nav-link-text">SSS / Maternity / Paternity</span>
-                                    </a>
-                                </li>
-
-                                <li class="nav-item">
-                                    <a class="nav-link disabled text-muted" href="#">
-                                        <span class="nav-link-text">Cash Advance (Coming Soon)</span>
-                                    </a>
-                                </li>
-
-                            </ul>
-                        </li>
-
-
-                        <li class="nav-item">
                             <a class="nav-link {{ request()->is('employees/departments*') || request()->is('employees/positions*') ? 'active' : '' }}"
                                 href="{{ route('employees.departments.index') }}">
-                                <span class="nav-link-text">Department &amp; Position</span>
+                                <span class="nav-link-text">Department & Position</span>
+                            </a>
+                        </li>
+
+                    </ul>
+                </li>
+
+                {{-- ================= BENEFITS ================= --}}
+                <li class="nav-item">
+                    <a class="nav-link dropdown-indicator {{ request()->is('claims*') ? 'active' : '' }}"
+                        href="#benefitsMenu" role="button" data-bs-toggle="collapse"
+                        aria-expanded="{{ request()->is('claims*') ? 'true' : 'false' }}">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-hand-holding-heart"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Benefits</span>
+                        </div>
+                    </a>
+
+                    <ul class="nav collapse {{ request()->is('claims*') ? 'show' : '' }}" id="benefitsMenu">
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('claims*') ? 'active' : '' }}"
+                                href="{{ route('claims.index') }}">
+                                <span class="nav-link-text">SSS / Maternity / Paternity</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link disabled text-muted" href="#">
+                                <span class="nav-link-text">Cash Advance (Coming Soon)</span>
                             </a>
                         </li>
 

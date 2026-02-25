@@ -13,6 +13,18 @@ class DriverLeave extends Model
         'end_date',
         'days',
         'reason',
+        'offense_level',
+        'first_notice_sent_at',
+        'second_notice_sent_at',
+        'final_notice_sent_at',
+    ];
+
+    protected $casts = [
+        'first_notice_sent_at' => 'datetime',
+        'second_notice_sent_at' => 'datetime',
+        'final_notice_sent_at' => 'datetime',
+        'start_date' => 'date',
+        'end_date' => 'date',
     ];
 
     public function employee()

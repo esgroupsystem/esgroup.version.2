@@ -11,51 +11,106 @@ use Illuminate\Support\Facades\Validator;
 
 class DriverLeaveController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Force PH time
         date_default_timezone_set('Asia/Manila');
 
         $today = Carbon::now('Asia/Manila')->startOfDay();
+        $search = $request->get('search');
+        $baseQuery = DriverLeave::with('employee');
 
-        // ⭐ Load all leaves EXCEPT completed
-        $leaves = DriverLeave::with('employee')
-            ->where(function ($q) {
-                $q->where('status', '!=', 'completed')
-                    ->orWhereNull('status');
-            })
-            ->latest()
-            ->get();
+        if (! empty($search)) {
+            $baseQuery->where(function ($q) use ($search) {
+                $q->whereHas('employee', function ($qq) use ($search) {
+                    $qq->where('full_name', 'like', "%{$search}%");
+                })
+                    ->orWhere('leave_type', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%");
+            });
+        }
 
-        // ⭐ Add remaining status
+        $leaves = (clone $baseQuery)
+            ->orderByRaw("
+            CASE
+                WHEN status IS NULL OR status = '' THEN 1
+                WHEN status = 'active' THEN 1
+                WHEN status = 'on_leave' THEN 1
+                WHEN status = 'completed' THEN 2
+                WHEN status = 'cancelled' THEN 3
+                WHEN status = 'terminated' THEN 3
+                ELSE 2
+            END ASC
+        ")
+            ->orderByDesc('id')
+            ->paginate(10)
+            ->withQueryString();
+
         foreach ($leaves as $leave) {
+            $rawStatus = strtolower($leave->status ?? '');
 
+            $statusLabel = $leave->status ? ucfirst($leave->status) : 'Active';
+            $statusColor = match ($rawStatus) {
+                'completed' => 'success',
+                'cancelled' => 'secondary',
+                'terminated' => 'danger',
+                default => 'primary',
+            };
+
+            $leave->record_status_badge = '<span class="badge bg-'.$statusColor.'">'.e($statusLabel).'</span>';
             $start = $leave->start_date
-                ? Carbon::parse($leave->start_date)->startOfDay()
+                ? Carbon::parse($leave->start_date, 'Asia/Manila')->startOfDay()
                 : null;
 
             $end = $leave->end_date
-                ? Carbon::parse($leave->end_date)->startOfDay()
+                ? Carbon::parse($leave->end_date, 'Asia/Manila')->startOfDay()
                 : null;
 
-            if ($start && $today->lt($start)) {
-                // BEFORE START DATE
+            if (in_array($rawStatus, ['cancelled', 'terminated', 'completed'], true)) {
+                $leave->remaining_status = match ($rawStatus) {
+                    'completed' => '<span class="badge bg-success">Completed</span>',
+                    'cancelled' => '<span class="badge bg-secondary">Cancelled</span>',
+                    'terminated' => '<span class="badge bg-danger">Terminated</span>',
+                    default => '<span class="badge bg-secondary">N/A</span>',
+                };
+
+                continue;
+            }
+
+            if (! $start || ! $end) {
+                $leave->remaining_status = '<span class="badge bg-secondary">No schedule</span>';
+
+                continue;
+            }
+
+            if ($today->lt($start)) {
                 $leave->remaining_status = '<span class="badge bg-secondary">Not started</span>';
 
-            } elseif ($end && $today->gt($end)) {
-                // AFTER END DATE
-                $leave->remaining_status = '<span class="text-muted">Expired</span>';
+                continue;
+            }
 
-            } else {
-                // STARTS TODAY OR ONGOING
-                $remaining_days = $end ? ($today->diffInDays($end) + 1) : 1;
-
+            if ($today->lte($end)) {
+                $remaining_days = $today->diffInDays($end) + 1;
                 $leave->remaining_status =
-                    '<span class="badge bg-success">'.$remaining_days.' days</span>';
+                    '<span class="badge bg-success">On Leave ('.$remaining_days.' day'.($remaining_days > 1 ? 's' : '').' left)</span>';
+
+                continue;
+            }
+
+            $days_after_end = $end->diffInDays($today);
+
+            if ($days_after_end == 1) {
+                $leave->remaining_status = '<span class="badge bg-primary">Ready for Duty</span>';
+            } elseif ($days_after_end >= 2 && $days_after_end <= 9) {
+                $leave->remaining_status = '<span class="badge bg-info">Warning for 1st Notice</span>';
+            } elseif ($days_after_end >= 10 && $days_after_end <= 22) {
+                $leave->remaining_status = '<span class="badge bg-warning text-dark">Warning for 2nd Notice</span>';
+            } else {
+                $leave->remaining_status = '<span class="badge bg-danger">Subject for Termination</span>';
             }
         }
 
-        // ⭐ dashboard counts
+        $allForCounts = (clone $baseQuery)->get();
+
         $counts = [
             'active' => 0,
             'first' => 0,
@@ -63,31 +118,30 @@ class DriverLeaveController extends Controller
             'termination' => 0,
         ];
 
-        foreach ($leaves as $l) {
-
-            $level = $l->offense_level ?? $l->offense ?? null;
+        foreach ($allForCounts as $l) {
+            $level = (int) ($l->offense_level ?? 0);
             $status = strtolower($l->status ?? '');
 
-            if ($level == 1) {
+            if ($level === 1) {
                 $counts['first']++;
-            } elseif ($level == 2) {
+            } elseif ($level === 2) {
                 $counts['second']++;
             } elseif ($level >= 3) {
                 $counts['termination']++;
             } else {
-                if ($status !== 'cancelled' && $status !== 'terminated') {
+                if (! in_array($status, ['cancelled', 'terminated', 'completed'], true)) {
                     $counts['active']++;
                 }
             }
         }
 
+        if ($request->ajax()) {
+            return view('hr_department.leaves.driver.table', compact('leaves', 'today'));
+        }
+
         return view('hr_department.leaves.driver.index', compact('leaves', 'counts', 'today'));
     }
 
-    /**
-     * Handle modal submission to apply action to a leave.
-     * action_type: first | second | terminate | cancel
-     */
     public function action(Request $request, DriverLeave $leave)
     {
         $validator = Validator::make($request->all(), [
@@ -102,51 +156,85 @@ class DriverLeaveController extends Controller
         $action = $request->action_type;
         $note = $request->note;
 
-        // ⭐ Load employee
         $employee = $leave->employee;
 
         if ($action === 'first') {
+
+            if ($leave->first_notice_sent_at) {
+                flash('1st Notice already sent.')->info();
+
+                return back();
+            }
+
+            $leave->first_notice_sent_at = now();
             $leave->offense_level = 1;
             $leave->last_action_note = $note;
             $leave->save();
 
-            flash('1st Offense recorded.')->success();
+            flash('1st Notice marked as Sent.')->success();
 
         } elseif ($action === 'second') {
+
+            if (! $leave->first_notice_sent_at) {
+                flash('Send 1st Notice first.')->warning();
+
+                return back();
+            }
+
+            if ($leave->second_notice_sent_at) {
+                flash('2nd Notice already sent.')->info();
+
+                return back();
+            }
+
+            $leave->second_notice_sent_at = now();
             $leave->offense_level = 2;
             $leave->last_action_note = $note;
             $leave->save();
 
-            flash('2nd Offense recorded.')->success();
+            flash('2nd Notice marked as Sent.')->success();
 
         } elseif ($action === 'terminate') {
+
+            if (! $leave->second_notice_sent_at) {
+                flash('Send 2nd Notice first.')->warning();
+
+                return back();
+            }
+
+            if ($leave->final_notice_sent_at) {
+                flash('Final Notice already sent.')->info();
+
+                return back();
+            }
+
+            $leave->final_notice_sent_at = now();
             $leave->offense_level = 3;
             $leave->status = 'terminated';
             $leave->last_action_note = $note;
             $leave->save();
 
             if ($employee) {
-                $employee->status = 'Terminated';
-                $employee->save();
+                $employee->update(['status' => 'Terminated']);
             }
 
-            flash('Employee termination recorded.')->success();
+            flash('Final Notice marked as Sent (Termination).')->success();
 
         } elseif ($action === 'cancel') {
+
             $leave->status = 'cancelled';
             $leave->last_action_note = $note;
             $leave->save();
 
-            // ⭐ EMPLOYEE BACK TO ACTIVE
             if ($employee) {
                 $employee->status = 'Active';
                 $employee->save();
             }
 
             flash('Leave cancelled & employee returned to Active.')->success();
+
         } elseif ($action === 'ready') {
 
-            // ⭐ READY FOR DUTY
             $leave->status = 'completed';
             $leave->last_action_note = $note;
             $leave->save();

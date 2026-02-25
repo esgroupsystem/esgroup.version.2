@@ -8,7 +8,7 @@
         <div class="card-body">
             <h4 class="mb-3">Edit Leave</h4>
 
-            <form action="{{ route('driver-leave.driver.update', $leave->id) }}" method="POST">
+            <form action="{{ route('driver-leave.driver.update', $leave) }}" method="POST">
                 @csrf
                 @method('PUT')
 

@@ -24,8 +24,11 @@
                     <div class="row">
                         <div class="col-lg-8">
                             <h3 class="mb-2">Conductor Leaves</h3>
-                            <p class="text-muted">Manage leaves for conductors — HR will approve automatically. Use actions to
-                                record offenses or terminate.</p>
+                            <p class="text-muted">
+                                Manage leaves for conductors — HR will approve automatically. Use actions to record notices
+                                or
+                                terminate.
+                            </p>
                         </div>
 
                         <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
@@ -46,9 +49,7 @@
                                 <h6 class="mb-0">Active</h6>
                                 <div class="fs-4 fw-bold">{{ $counts['active'] ?? 0 }}</div>
                             </div>
-                            <div class="text-muted">
-                                <i class="fas fa-check-circle fa-2x"></i>
-                            </div>
+                            <div class="text-muted"><i class="fas fa-check-circle fa-2x"></i></div>
                         </div>
                     </div>
                 </div>
@@ -57,12 +58,10 @@
                     <div class="card shadow-sm p-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-0">1st Offence</h6>
+                                <h6 class="mb-0">1st Notice</h6>
                                 <div class="fs-4 fw-bold">{{ $counts['first'] ?? 0 }}</div>
                             </div>
-                            <div class="text-muted">
-                                <i class="fas fa-comment fa-2x"></i>
-                            </div>
+                            <div class="text-muted"><i class="fas fa-paper-plane fa-2x"></i></div>
                         </div>
                     </div>
                 </div>
@@ -71,12 +70,10 @@
                     <div class="card shadow-sm p-3">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
-                                <h6 class="mb-0">2nd Offence</h6>
+                                <h6 class="mb-0">2nd Notice</h6>
                                 <div class="fs-4 fw-bold">{{ $counts['second'] ?? 0 }}</div>
                             </div>
-                            <div class="text-muted">
-                                <i class="fas fa-envelope fa-2x"></i>
-                            </div>
+                            <div class="text-muted"><i class="fas fa-envelope fa-2x"></i></div>
                         </div>
                     </div>
                 </div>
@@ -88,9 +85,7 @@
                                 <h6 class="mb-0">Termination</h6>
                                 <div class="fs-4 fw-bold">{{ $counts['termination'] ?? 0 }}</div>
                             </div>
-                            <div class="text-muted">
-                                <i class="fas fa-user-times fa-2x"></i>
-                            </div>
+                            <div class="text-muted"><i class="fas fa-user-times fa-2x"></i></div>
                         </div>
                     </div>
                 </div>
@@ -106,149 +101,15 @@
                 <div class="p-3">
                     <div class="row g-3 align-items-center">
                         <div class="col-md-4">
-                            <input class="form-control form-control-sm search" placeholder="Search conductor leave...">
+                            <input id="liveSearch" class="form-control form-control-sm"
+                                placeholder="Search conductor leave..." value="{{ request('search') }}">
                         </div>
                     </div>
                 </div>
 
                 <div class="card-body p-0">
-                    <div id="conductorLeaveTable"
-                        data-list='{"valueNames":["employee","type","from","to","days","remaining"],"page":10,"pagination":true}'>
-                        <div class="table-responsive scrollbar" style="overflow: visible !important;">
-                            <table class="table table-hover table-striped fs-10 mb-0">
-                                <thead class="bg-200 text-900">
-                                    <tr>
-                                        <th class="sort" data-sort="employee">Employee</th>
-                                        <th class="sort" data-sort="type">Leave Type</th>
-                                        <th class="sort" data-sort="from">From</th>
-                                        <th class="sort" data-sort="to">To</th>
-                                        <th class="sort" data-sort="days">No. of Days</th>
-                                        <th class="sort" data-sort="remaining">Remaining</th>
-                                        <th class="text-center">Action</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody class="list">
-                                    @forelse ($leaves as $leave)
-                                        <tr>
-                                            <td class="employee">
-                                                <strong>{{ $leave->employee->full_name }}</strong><br>
-                                                <span
-                                                    class="text-muted">{{ $leave->employee->position?->title ?? '-' }}</span>
-                                            </td>
-
-                                            <td class="type">
-                                                {{ $leave->leave_type }}
-                                                <span class="ms-1" data-bs-toggle="tooltip"
-                                                    title="{{ e($leave->reason ?? 'No reason provided') }}">
-                                                    <i class="fas fa-exclamation-circle text-info"></i>
-                                                </span>
-                                            </td>
-
-                                            <td class="from">
-                                                {{ \Carbon\Carbon::parse($leave->start_date)->format('d M Y') }}</td>
-                                            <td class="to">
-                                                {{ \Carbon\Carbon::parse($leave->end_date)->format('d M Y') }}</td>
-                                            <td class="days">{{ $leave->days }} Days</td>
-
-                                            <td class="remaining">{!! $leave->remaining_status !!}</td>
-
-                                            <td class="text-center">
-                                                <div class="btn-group">
-                                                    <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
-                                                        data-bs-toggle="dropdown" aria-expanded="false">
-                                                        Actions
-                                                    </button>
-
-                                                    <ul class="dropdown-menu dropdown-menu-end">
-                                                        {{-- Edit --}}
-                                                        <li>
-                                                            <a class="dropdown-item"
-                                                                href="{{ route('conductor-leave.conductor.edit', $leave->id) }}">
-                                                                <i class="fas fa-edit me-2 text-primary"></i>Edit Leave
-                                                            </a>
-
-                                                        </li>
-                                                        <li>
-                                                            <a class="dropdown-item action-open-modal" href="#"
-                                                                data-id="{{ $leave->id }}" data-action="ready"
-                                                                data-employee="{{ e($leave->employee->full_name) }}"
-                                                                data-type="{{ e($leave->leave_type) }}">
-                                                                <i class="fas fa-user-check me-2 text-success"></i> Ready
-                                                                for Duty
-                                                            </a>
-                                                        </li>
-
-                                                        <li>
-                                                            <hr class="dropdown-divider">
-                                                        </li>
-
-                                                        {{-- 1st Offense (opens modal) --}}
-                                                        <li>
-                                                            <a class="dropdown-item action-open-modal" href="#"
-                                                                data-id="{{ $leave->id }}" data-action="first"
-                                                                data-employee="{{ e($leave->employee->full_name) }}"
-                                                                data-type="{{ e($leave->leave_type) }}">
-                                                                <i class="fas fa-comment me-2 text-info"></i> 1st Offense -
-                                                                Text
-                                                            </a>
-                                                        </li>
-
-                                                        {{-- 2nd Offense --}}
-                                                        <li>
-                                                            <a class="dropdown-item action-open-modal" href="#"
-                                                                data-id="{{ $leave->id }}" data-action="second"
-                                                                data-employee="{{ e($leave->employee->full_name) }}"
-                                                                data-type="{{ e($leave->leave_type) }}">
-                                                                <i class="fas fa-envelope me-2 text-warning"></i> 2nd
-                                                                Offense - Letter
-                                                            </a>
-                                                        </li>
-
-                                                        {{-- Termination --}}
-                                                        <li>
-                                                            <a class="dropdown-item action-open-modal text-danger"
-                                                                href="#" data-id="{{ $leave->id }}"
-                                                                data-action="terminate"
-                                                                data-employee="{{ e($leave->employee->full_name) }}"
-                                                                data-type="{{ e($leave->leave_type) }}">
-                                                                <i class="fas fa-user-times me-2"></i> Terminate - Final
-                                                                Letter
-                                                            </a>
-                                                        </li>
-
-                                                        {{-- Cancel immediately via modal too --}}
-                                                        <li>
-                                                            <a class="dropdown-item action-open-modal" href="#"
-                                                                data-id="{{ $leave->id }}" data-action="cancel"
-                                                                data-employee="{{ e($leave->employee->full_name) }}"
-                                                                data-type="{{ e($leave->leave_type) }}">
-                                                                <i class="fas fa-ban me-2"></i> Cancel Leave
-                                                            </a>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="7" class="text-center text-muted py-3">No leave records found.
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {{-- pagination (List.js adds pages) --}}
-                        <div class="d-flex justify-content-center my-3">
-                            <button class="btn btn-sm btn-falcon-default me-1" data-list-pagination="prev"><span
-                                    class="fas fa-chevron-left"></span></button>
-                            <ul class="pagination mb-0"></ul>
-                            <button class="btn btn-sm btn-falcon-default ms-1" data-list-pagination="next"><span
-                                    class="fas fa-chevron-right"></span></button>
-                        </div>
+                    <div id="conductorLeaveTable">
+                        @include('hr_department.leaves.conductor.table')
                     </div>
                 </div>
             </div>
@@ -256,9 +117,8 @@
         </div>
     </div>
 
-    {{-- ACTION MODAL (Option A) --}}
-    <div class="modal fade" id="leaveActionModal" tabindex="-1" aria-labelledby="leaveActionModalLabel"
-        aria-hidden="true">
+    {{-- ACTION MODAL --}}
+    <div class="modal fade" id="leaveActionModal" tabindex="-1" aria-labelledby="leaveActionModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <form id="leaveActionForm" method="POST" action="">
                 @csrf
@@ -296,33 +156,12 @@
             </form>
         </div>
     </div>
-
 @endsection
 
 @push('scripts')
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
+        document.addEventListener("DOMContentLoaded", () => {
 
-            // make container allow overflow so tooltips render
-            document.querySelectorAll(".table-responsive").forEach(el => el.style.overflow = "visible");
-
-            // List.js initialization
-            const table = new List("conductorLeaveTable", {
-                valueNames: ["employee", "type", "from", "to", "days", "remaining"],
-                page: 10,
-                pagination: true
-            });
-
-            // search
-            const searchInput = document.querySelector(".search");
-            if (searchInput) {
-                searchInput.addEventListener("keyup", function() {
-                    table.search(this.value);
-                    setTimeout(initTooltips, 150);
-                });
-            }
-
-            // bootstrap tooltips
             function initTooltips() {
                 document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
                     const inst = bootstrap.Tooltip.getInstance(el);
@@ -334,82 +173,148 @@
                 });
             }
 
-            initTooltips();
+            function bindActionModal() {
+                const modalEl = document.getElementById('leaveActionModal');
+                const modal = new bootstrap.Modal(modalEl);
+                const modalForm = document.getElementById('leaveActionForm');
 
-            // Action modal wiring (opens modal and populates form)
-            const modalEl = document.getElementById('leaveActionModal');
-            const modal = new bootstrap.Modal(modalEl);
-            const modalForm = document.getElementById('leaveActionForm');
+                document.querySelectorAll('.action-open-modal').forEach(a => {
+                    a.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (this.classList.contains('disabled')) return;
 
-            document.querySelectorAll('.action-open-modal').forEach(a => {
-                a.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const id = this.dataset.id;
-                    const action = this.dataset.action; // first | second | terminate | cancel
-                    const employee = this.dataset.employee;
-                    const type = this.dataset.type;
+                        const id = this.dataset.id;
+                        const action = this.dataset.action;
+                        const employee = this.dataset.employee || '';
+                        const type = this.dataset.type || '';
 
-                    // set modal form action (POST to route conductor-leave.action)
-                    modalForm.action = "{{ route('conductor-leave.conductor.action', ':id') }}".replace(
-                        ':id', id);
+                        modalForm.action = "{{ route('conductor-leave.conductor.action', ':id') }}"
+                            .replace(':id', id);
 
-                    // fill modal fields
-                    document.getElementById('modal_action_type').value = action;
-                    document.getElementById('modal_employee_name').innerText = employee;
-                    document.getElementById('modal_leave_type').innerText = type;
-                    document.getElementById('modal_note').value = '';
+                        document.getElementById('modal_action_type').value = action;
+                        document.getElementById('modal_employee_name').innerText = employee;
+                        document.getElementById('modal_leave_type').innerText = type;
+                        document.getElementById('modal_note').value = '';
 
-                    // update title & submit button text
-                    let title = 'Confirm Action';
-                    let btnText = 'Confirm';
-                    if (action === 'first') {
-                        title = 'Record 1st Offense';
-                        btnText = 'Record 1st Offense';
-                    }
-                    if (action === 'second') {
-                        title = 'Record 2nd Offense';
-                        btnText = 'Record 2nd Offense';
-                    }
-                    if (action === 'terminate') {
-                        title = 'Terminate Employee';
-                        btnText = 'Terminate';
-                    }
-                    if (action === 'cancel') {
-                        title = 'Cancel Leave';
-                        btnText = 'Cancel Leave';
-                    }
-                    if (action === 'ready') {
-                        title = 'Mark As Ready for Duty';
-                        btnText = 'Set As Ready';
-                    }
+                        let title = 'Confirm Action';
+                        let btnText = 'Confirm';
 
-                    document.getElementById('leaveActionModalLabel').innerText = title;
-                    document.getElementById('modal_submit_btn').innerText = btnText;
+                        if (action === 'first') {
+                            title = 'Mark 1st Notice Sent';
+                            btnText = 'Mark 1st Notice';
+                        }
+                        if (action === 'second') {
+                            title = 'Mark 2nd Notice Sent';
+                            btnText = 'Mark 2nd Notice';
+                        }
+                        if (action === 'terminate') {
+                            title = 'Mark Final Notice Sent (Termination)';
+                            btnText = 'Mark Final Notice';
+                        }
+                        if (action === 'cancel') {
+                            title = 'Cancel Leave';
+                            btnText = 'Cancel Leave';
+                        }
+                        if (action === 'ready') {
+                            title = 'Mark As Ready for Duty';
+                            btnText = 'Set As Ready';
+                        }
 
-                    modal.show();
+                        document.getElementById('leaveActionModalLabel').innerText = title;
+                        document.getElementById('modal_submit_btn').innerText = btnText;
+
+                        modal.show();
+                    });
                 });
-            });
+            }
 
-            // re-init tooltips after pagination clicks
-            document.querySelectorAll("[data-list-pagination]").forEach(btn => {
-                btn.addEventListener("click", () => setTimeout(initTooltips, 150));
+            function refreshBindings() {
+                document.querySelectorAll(".table-responsive").forEach(el => el.style.overflow = "visible");
+                initTooltips();
+                bindActionModal();
+            }
+
+            refreshBindings();
+
+            // ✅ AJAX Live Search
+            let timer = null;
+            const input = document.getElementById("liveSearch");
+
+            if (input) {
+                input.addEventListener("keyup", function() {
+                    const search = this.value;
+                    clearTimeout(timer);
+
+                    timer = setTimeout(() => {
+                        fetch(`?search=${encodeURIComponent(search)}`, {
+                                headers: {
+                                    "X-Requested-With": "XMLHttpRequest"
+                                }
+                            })
+                            .then(res => res.text())
+                            .then(html => {
+                                document.getElementById("conductorLeaveTable").innerHTML = html;
+                                refreshBindings();
+                            });
+                    }, 300);
+                });
+            }
+
+            // ✅ AJAX pagination clicks
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('#conductorLeaveTable .pagination a');
+                if (!link) return;
+
+                e.preventDefault();
+                fetch(link.href, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        document.getElementById("conductorLeaveTable").innerHTML = html;
+                        refreshBindings();
+                    });
             });
 
         });
     </script>
+@endpush
 
+@push('styles')
     <style>
-        /* little visual polish */
-        .card .bg-card {
-            opacity: .06;
+        .pagination {
+            font-size: 14px !important;
         }
 
-        .reason-tip i {
-            cursor: help;
+        .pagination .page-link {
+            padding: 4px 10px !important;
+            font-size: 14px !important;
+            border-radius: 4px !important;
+            color: #4a4a4a !important;
+            border: 1px solid #d0d5dd !important;
+            background: #f8f9fa !important;
         }
 
-        .table th {
-            vertical-align: middle;
+        .pagination .page-item.active .page-link {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+            color: #fff !important;
+            font-weight: 600 !important;
+        }
+
+        .pagination .page-link:hover {
+            background: #e2e6ea !important;
+            border-color: #c4c9cf !important;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            opacity: .5 !important;
+        }
+
+        .pagination .page-item {
+            margin: 0 2px !important;
         }
     </style>
 @endpush
