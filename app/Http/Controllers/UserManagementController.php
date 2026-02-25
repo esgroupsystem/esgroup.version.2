@@ -24,8 +24,8 @@ class UserManagementController extends Controller
                 });
             })
             ->orderByDesc('id')
-            ->paginate(10)          // ✅ Laravel pagination here
-            ->withQueryString();    // ✅ keeps ?q=... while paging
+            ->paginate(10)
+            ->withQueryString();
 
         $roles = Role::orderBy('name')->get();
 

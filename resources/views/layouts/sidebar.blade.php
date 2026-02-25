@@ -20,7 +20,10 @@
         <div class="navbar-vertical-content scrollbar">
             <ul class="navbar-nav flex-column mb-3" id="navbarVerticalNav">
 
-                {{-- DASHBOARD --}}
+                
+                {{--===============================================--}}
+                {{-- ================= DASHBOARD ================= --}}
+                {{--===============================================--}}
                 <li class="nav-item">
                     <a class="nav-link dropdown-indicator d-flex justify-content-between align-items-center"
                         href="#dashboardMenu" data-bs-toggle="collapse"
@@ -43,14 +46,14 @@
                                 Default
                             </a>
                         </li>
-
+                        @role('Developer','IT Head','Operation Manager')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/hr') ? 'active' : '' }}"
                                 href="{{ route('hr.dashboard') }}">
                                 Employees
                             </a>
                         </li>
-
+                        @endrole
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/it-department') ? 'active' : '' }}"
                                 href="{{ route('dashboard.itindex') }}">
@@ -61,7 +64,11 @@
                     </ul>
                 </li>
 
-                {{-- LABEL IT Department --}}
+
+                {{--=========================================================--}}
+                {{-- ================= LABEL IT Department ================= --}}
+                {{--=========================================================--}}
+                @role('Developer','IT Head','IT Officer','Operation Manager')
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">
@@ -73,7 +80,6 @@
                     </div>
                 </li>
 
-                {{-- TICKETS JOB ORDER --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('tickets/job-order') ? 'active' : '' }}"
                         href="{{ route('tickets.joborder.index') }}">
@@ -86,7 +92,6 @@
                     </a>
                 </li>
 
-                {{-- CCTV CONCERN --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
                         href="{{ route('concern.cctv.index') }}">
@@ -98,8 +103,13 @@
                         </div>
                     </a>
                 </li>
+                @endrole
 
-                {{-- LABEL HR Department --}}
+
+                {{--===============================================--}}
+                {{-- ================= EMPLOYEES ================= --}}
+                {{--===============================================--}}
+                @role('Developer','IT Head','HR Head','HR Officer')
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">
@@ -110,8 +120,6 @@
                         </div>
                     </div>
                 </li>
-
-                {{-- ================= EMPLOYEES ================= --}}
                 <li class="nav-item">
                     <a class="nav-link dropdown-indicator {{ request()->is('employees*') ? 'active' : '' }}"
                         href="#employeesMenu" role="button" data-bs-toggle="collapse"
@@ -142,8 +150,9 @@
 
                     </ul>
                 </li>
-
+                {{--==============================================--}}
                 {{-- ================= BENEFITS ================= --}}
+                {{--==============================================--}}
                 <li class="nav-item">
                     <a class="nav-link dropdown-indicator {{ request()->is('claims*') ? 'active' : '' }}"
                         href="#benefitsMenu" role="button" data-bs-toggle="collapse"
@@ -173,11 +182,14 @@
 
                     </ul>
                 </li>
+                @endrole
 
 
+                {{--=======================================================--}}
+                {{-- ================= Attendance Parent ================= --}}
+                {{--=======================================================--}}
+                @role('Developer','IT Head','IT Officer','HR Head','HR Officer')
                 <li class="nav-item">
-
-                    {{-- Attendance Parent --}}
                     <a class="nav-link dropdown-indicator {{ request()->is('attendance*') || request()->is('leave*') ? 'active' : '' }}"
                         href="#attendanceMenu" role="button" data-bs-toggle="collapse"
                         aria-expanded="{{ request()->is('attendance*') || request()->is('leave*') ? 'true' : 'false' }}">
@@ -193,7 +205,8 @@
                     <ul class="nav collapse {{ request()->is('attendance*') || request()->is('leave*') ? 'show' : '' }}"
                         id="attendanceMenu">
 
-                        {{-- LEAVES (Second Level) --}}
+                        @role('Developer','IT Head','HR Head','HR Officer')
+
                         <li class="nav-item">
                             <a class="nav-link dropdown-indicator {{ request()->is('leave*') ? 'active' : '' }}"
                                 href="#leaveMenu" role="button" data-bs-toggle="collapse"
@@ -201,7 +214,6 @@
                                 <span class="nav-link-text">Leaves</span>
                             </a>
 
-                            {{-- THIRD LEVEL --}}
                             <ul class="nav collapse {{ request()->is('leave*') ? 'show' : '' }}" id="leaveMenu">
 
                                 <li class="nav-item">
@@ -219,6 +231,8 @@
                                 </li>
                             </ul>
                         </li>
+                        @endrole
+
                         <li class="nav-item">
                             <a class="nav-link dropdown-indicator {{ request()->is('mirasol-logs*') ? 'active' : '' }}"
                                 href="#mirasolMenu" role="button" data-bs-toggle="collapse"
@@ -238,8 +252,13 @@
                         </li>
                     </ul>
                 </li>
+                @endrole
 
-                {{-- LABEL Maintenance --}}
+
+                {{--=======================================================--}}
+                {{-- ================= LABEL Maintenance ================= --}}
+                {{--=======================================================--}}
+                @role('Developer','IT Head','Maintenance Head','Maintenance Engineer')
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">
@@ -251,7 +270,6 @@
                     </div>
                 </li>
 
-                {{-- Request Orders --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('request*') ? 'active' : '' }}"
                         href="{{ route('request.index') }}">
@@ -264,7 +282,6 @@
                     </a>
                 </li>
 
-                {{-- Received --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('received*') ? 'active' : '' }}"
                         href="{{ route('received.index') }}">
@@ -277,7 +294,6 @@
                     </a>
                 </li>
 
-                {{-- Category --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('category*') ? 'active' : '' }}"
                         href="{{ route('category.index') }}">
@@ -290,7 +306,6 @@
                     </a>
                 </li>
 
-                {{-- Product --}}
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('items*') ? 'active' : '' }}"
                         href="{{ route('items.index') }}">
@@ -302,8 +317,9 @@
                         </div>
                     </a>
                 </li>
-
-                {{-- LABEL Purchaser --}}
+                {{--=====================================================--}}
+                {{-- ================= LABEL Purchaser ================= --}}
+                {{--=====================================================--}}
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">
@@ -326,8 +342,13 @@
                         </div>
                     </a>
                 </li>
+                @endrole
 
-                {{-- LABEL Authentication --}}
+
+                {{--==========================================================--}}
+                {{-- ================= LABEL Authentication ================= --}}
+                {{--==========================================================--}}
+                @role('Developer','IT Head')
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">
@@ -338,7 +359,7 @@
                         </div>
                     </div>
                 </li>
-                {{-- USERS --}}
+
                 <li class="nav-item">
                     <a class="nav-link {{ request()->is('authentication/users*') ? 'active' : '' }}"
                         href="{{ route('authentication.users.index') }}">
@@ -361,9 +382,7 @@
                         </div>
                     </a>
                 </li>
-
-
-
+                @endrole
             </ul>
         </div>
     </div>
