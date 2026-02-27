@@ -24,8 +24,10 @@
                         {{-- Employee --}}
                         <div class="col-md-6">
                             <label class="form-label">Employee</label>
-                            <select name="employee_id" class="form-select" required>
+                            <select name="employee_id" class="form-select js-choice" required
+                                data-placeholder="Type employee name...">
                                 <option value="">Select Employee</option>
+
                                 @foreach ($employees as $emp)
                                     <option value="{{ $emp->id }}">
                                         {{ $emp->full_name }} ({{ $emp->position?->title ?? '-' }})

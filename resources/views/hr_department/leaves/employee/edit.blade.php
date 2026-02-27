@@ -27,8 +27,7 @@
                             <label class="form-label">Employee</label>
                             <select name="employee_id" class="form-select" required>
                                 @foreach ($employees as $emp)
-                                    <option value="{{ $emp->id }}"
-                                        {{ $emp->id == $leave->employee_id ? 'selected' : '' }}>
+                                    <option value="{{ $emp->id }}" {{ $emp->id == $leave->employee_id ? 'selected' : '' }}>
                                         {{ $emp->full_name }} ({{ $emp->position?->title ?? '-' }})
                                     </option>
                                 @endforeach

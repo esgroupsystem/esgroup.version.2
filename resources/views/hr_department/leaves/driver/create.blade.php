@@ -21,7 +21,8 @@
 
                     <div class="col-md-6">
                         <label class="form-label">Driver</label>
-                        <select name="employee_id" class="form-select" required>
+                        <select name="employee_id" class="form-select js-choice" required
+                            data-placeholder="Type driver name...">
                             <option value="">Select Driver</option>
                             @foreach ($drivers as $d)
                                 <option value="{{ $d->id }}">{{ $d->full_name }}</option>

@@ -21,7 +21,8 @@
 
                     <div class="col-md-6">
                         <label class="form-label">Conductor</label>
-                        <select name="employee_id" class="form-select" required>
+                        <select name="employee_id" class="form-select js-choice" required
+                            data-placeholder="Type conductor name...">
                             <option value="">Select Conductor</option>
                             @foreach ($conductors as $c)
                                 <option value="{{ $c->id }}">{{ $c->full_name }}</option>
