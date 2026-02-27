@@ -217,16 +217,23 @@
                             <ul class="nav collapse {{ request()->is('leave*') ? 'show' : '' }}" id="leaveMenu">
 
                                 <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('leave/employee') ? 'active' : '' }}"
+                                        href="{{ route('employee-leave.employee.index') }}">
+                                        <span class="nav-link-text">Employee</span>
+                                    </a>
+                                </li>
+
+                                <li class="nav-item">
                                     <a class="nav-link {{ request()->is('leave/driver') ? 'active' : '' }}"
                                         href="{{ route('driver-leave.driver.index') }}">
-                                        <span class="nav-link-text">Driver (Leave)</span>
+                                        <span class="nav-link-text">Driver</span>
                                     </a>
                                 </li>
 
                                 <li class="nav-item">
                                     <a class="nav-link {{ request()->is('leave/conductor') ? 'active' : '' }}"
                                         href="{{ route('conductor-leave.conductor.index') }}">
-                                        <span class="nav-link-text">Conductor (Leave)</span>
+                                        <span class="nav-link-text">Conductor</span>
                                     </a>
                                 </li>
                             </ul>

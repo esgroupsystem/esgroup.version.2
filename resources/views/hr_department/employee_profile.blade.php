@@ -620,7 +620,7 @@
                                 <option value="Promotion">Promotion</option>
                                 <option value="Assignment">Assignment</option>
                                 <option value="Training">Training</option>
-                                <option value="Disciplinary Action">Disciplinary Action</option>
+                                <option value="Violations">Violations</option>
                             </select>
                         </div>
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\HR_Department\ConductorLeaveController;
 use App\Http\Controllers\HR_Department\DepartmentController;
 use App\Http\Controllers\HR_Department\DriverLeaveController;
 use App\Http\Controllers\HR_Department\EmployeeController;
+use App\Http\Controllers\HR_Department\EmployeeLeaveController;
 use App\Http\Controllers\HR_Department\HRDashboardController;
 use App\Http\Controllers\HR_Department\MirasolBiometricsLogController;
 use App\Http\Controllers\IT_Department\CctvController;
@@ -206,6 +207,16 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('conductor/{leave}/edit', 'edit')->name('conductor.edit');
             Route::put('conductor/{leave}', 'update')->name('conductor.update');
             Route::post('/{leave}/action', 'action')->name('conductor.action');
+        });
+
+    Route::prefix('employee-leave')->middleware(['role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
+        ->name('employee-leave.')->controller(EmployeeLeaveController::class)->group(function () {
+            Route::get('employee', 'index')->name('employee.index');
+            Route::get('employee/create', 'create')->name('employee.create');
+            Route::post('employee/store', 'store')->name('employee.store');
+            Route::get('employee/{leave}/edit', 'edit')->name('employee.edit');
+            Route::put('employee/{leave}', 'update')->name('employee.update');
+            Route::post('{leave}/action', 'action')->name('employee.action');
         });
 
     /*
