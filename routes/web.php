@@ -11,7 +11,7 @@ use App\Http\Controllers\HR_Department\EmployeeController;
 use App\Http\Controllers\HR_Department\EmployeeLeaveController;
 use App\Http\Controllers\HR_Department\HRDashboardController;
 use App\Http\Controllers\HR_Department\MirasolBiometricsLogController;
-use App\Http\Controllers\HR_Department\HROffenseController;
+use App\Http\Controllers\HR_Department\HrOffenseController;
 use App\Http\Controllers\IT_Department\CctvController;
 use App\Http\Controllers\IT_Department\TicketController;
 use App\Http\Controllers\Maintenance\CategoryController;
