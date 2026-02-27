@@ -257,60 +257,57 @@
     </script>
 
     <script>
-        // Convert to "Title Case": Sample Output
-        function toTitleCase(str) {
+        function toTitleCaseLive(str) {
+            // keep spaces while typing
             return str
                 .toLowerCase()
-                .replace(/\s+/g, ' ') // collapse multiple spaces
-                .trim()
                 .replace(/\b\w/g, ch => ch.toUpperCase());
         }
 
-        // Apply formatting without moving cursor weirdly
-        function formatInputValue(el) {
+        function normalizeSpacesFinal(str) {
+            // clean up only when done (blur)
+            return str
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        function applyFormat(el, mode = "live") {
             const start = el.selectionStart;
             const end = el.selectionEnd;
 
             const original = el.value;
-            const formatted = toTitleCase(original);
+
+            let formatted = original;
+            if (mode === "live") {
+                formatted = toTitleCaseLive(original);
+            } else {
+                formatted = normalizeSpacesFinal(toTitleCaseLive(original));
+            }
 
             if (formatted !== original) {
                 el.value = formatted;
-
-                // restore caret position (best effort)
                 if (typeof start === "number" && typeof end === "number") {
                     el.setSelectionRange(start, end);
                 }
             }
         }
 
-        // ✅ Global listener (works for dynamically added inputs too)
-        // Only apply to elements with class "js-titlecase" (safe)
         document.addEventListener("input", function(e) {
             const el = e.target;
-
-            if (!el) return;
             if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
 
-            // Don't touch passwords/emails/numbers etc.
             const type = (el.getAttribute("type") || "").toLowerCase();
             if (["password", "email", "number", "date", "datetime-local", "time", "month", "week", "tel", "url"]
                 .includes(type)) return;
 
-            // apply only when you want
-            // if (!el.classList.contains("js-titlecase")) return;
-
-            formatInputValue(el);
+            applyFormat(el, "live"); // ✅ spaces will work
         });
 
-        // Optional: also format on blur (when leaving field)
         document.addEventListener("blur", function(e) {
             const el = e.target;
-            if (!el) return;
             if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
-            // if (!el.classList.contains("js-titlecase")) return;
 
-            formatInputValue(el);
+            applyFormat(el, "final"); // ✅ now it trims + collapses spaces
         }, true);
     </script>
 
