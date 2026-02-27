@@ -1,0 +1,137 @@
+﻿SECTION,OFFENSE DESCRIPTION,OFFENSE TYPE,OFFENSE GRAVITY
+1.1,"Neglecting or refusing after due demand or notice, or as provided by existing policies without justifiable reason, to remit, pay, reimburse, or liquidate any money, collection or other properties entrusted to him/her by the company, or received by him/her from a business associate or stakeholders or their representative for his administration, or under any other obligation to make delivery of, or return the same. (Type D)",E,CAPITAL
+1.2.1,"Inflicting physical injury on any employee or person, or having inflicted physical injury while within or outside company property or premises or job areas where such outside incident has relation to work or company activities. (Type D)",D,GRAVE
+1.2.2,"An attempt to inflict physical injury on any employee or person, or having inflicted physical injury while within or outside company property or premises or job areas where such outside incident has relation to work or company activities. (Type C)",C,SERIOUS
+1.3,"Any act constituting threat, intimidation, or coercion against any person, or in any manner unduly interfering with, or company operations or other employees from performing their work while within company property or premises or job areas. (Type D)",D,GRAVE
+1.4,Fighting or engaging another in a fight while within or outside company property or premises or job areas provided such outside incident has relation to work or has arisen while inside company premises. (Type D),D,GRAVE
+1.5,"Inciting or provoking a fight under the circumstances described in Section 4 above, but where a fight does not occur. (Type C)",C,SERIOUS
+1.6,Persistently telling smutty jokes that are found offensive by others within office premises. (Type C),C,SERIOUS
+1.7,Any immoral act by the employee either by himself or with another person; including but not limited to sexual harassment committed within company property or premises or job areas or during company activities. (Type E),E,CAPITAL
+2.1,"Theft, robbery or appropriation for personal gain, benefit or profit of any the property of the company or of a fellow employee or a client or customer of the company, regardless of the amount involved. (Type E)",E,CAPITAL
+2.2,Swindling or malversation (estafa) of funds or property of the company or of a fellow employee or of a customer of the company. (Type E),E,CAPITAL
+2.3,Obtaining supplies or materials on fraudulent orders or requests. (Type E),E,CAPITAL
+2.4,"Unauthorized substitutions of company material or equipment with another or of poorer quality, or lesser value. (Type E)",E,CAPITAL
+2.5.1,"Alteration or removal, without authorization, of any property of the company, or other employees resulting in irreparable damage thereto. (Type E)",E,CAPITAL
+2.5.2,"Alteration or removal, without authorization, of any property of the company, or other employees resulting in reparable damage thereto. (Type D)",D,GRAVE
+2.6,"Using company time, material and/or equipment to do unauthorized work within or outside premises, for personal gain which includes using company time and facilities in personal dealership, selling, and other non-work related activities. (Type D)",D,GRAVE
+2.7,"Neglecting or refusing after due demand or notice, or as provided by existing policies without justifiable reason, to remit, pay, reimburse, or liquidate any money, collection or other properties entrusted to him/her by the company, or received by him/her from a business associate or stakeholders or their representative for his administration, or under any other obligation to make delivery of, or return the same. (Type D)",D,GRAVE
+2.8,"Malicious or willful destruction or misuse of company property or that of any employee, or customer of the company. (Type D)",D,GRAVE
+2.9.1,"Damage to Company Property: Any harm or impairment that affects company property's functionality, appearance, or value. Damage amounts from Php 1 to Php 5,000. (Type A)",A,LIGHT
+2.9.2,"Damage to Company Property: Any harm or impairment that affects company property's functionality, appearance, or value. Damage amount from Php 5,001 to Php 10,000. (Type B)",B,MINOR
+2.9.3,"Damage to Company Property: Any harm or impairment that affects company property's functionality, appearance, or value. Damage amount from Php 10,001 to Php 30,000. (Type C)",C,SERIOUS
+2.9.4,"Damage to Company Property: Any harm or impairment that affects company property's functionality, appearance, or value. Damage amounts from Php 30,001 to Php 80,000. (Type D)",D,GRAVE
+2.9.5,"Damage to Company Property: Any harm or impairment that affects company property's functionality, appearance, or value. The total amount of damage exceeded Php 80,001. (Type E)",E,CAPITAL
+2.1,"Lending or using Company funds, assets, collection, or money without authorization. (Type D)",D,GRAVE
+2.11.1,"Shortage in remittance due to computation negligence and dishonesty. Amount short from Php 500 to Php 1,000. (Type C)",C,SERIOUS
+2.11.2,"Shortage in remittance due to computation negligence and dishonesty. Amount short from Php 1,001 to Php 5,000. (Type D)",D,GRAVE
+2.11.3,"Shortage in remittance due to computation negligence and dishonesty. Amount short exceeding Php 5,001. (Type E)",E,CAPITAL
+2.12,Not returning ticket after duty (Type D),D,GRAVE
+3.1,Falsification of documents relating to personal records or data or misrepresentation of any information concerning personal circumstances and qualification. (Type E),E,CAPITAL
+3.2,Falsification or unauthorized alteration of personnel or company records and/or using said falsified records for personal gain or benefit. (Type E),E,CAPITAL
+3.3,"Any attempt to falsify or pad expense reports, receipts, invoices, or any other document, upon which reimbursement and remittance is based. (Type E)",E,CAPITAL
+3.4,"Favoring suppliers, customer, or any other person in consideration of kickbacks, personal rebates or any valuable consideration. (Type E)",E,CAPITAL
+3.5,"Offering or accepting anything of value in exchange for a job, work assignment, work location, or favorable condition of employment. (Type E)",E,CAPITAL
+3.6,"Directly or indirectly requesting or receiving any gift, present, share, percentage, or any form of benefit or favor, for himself/herself or for any other person in connection with any business, contract, application, or transaction between the company and any other party, wherein the employee in his official capacity has to intervene. (Type E)",E,CAPITAL
+3.7,"Directly or indirectly having financial or pecuniary interest in any business, contract or transaction in connection with which he intervenes or takes part in his official capacity. (Type E)",E,CAPITAL
+3.8,"Unauthorized actions clearly over one’s authority such as but not limited to, acts of disbursing, releasing, or authorizing disbursement of company funds without written authority by one’s superior or similar acts that go beyond or outside his authority or responsibility, where the interest of the company is prejudiced. (Type D)",D,GRAVE
+3.9,"Giving a company ID or identification material to any person not entitled to it, or assisting non-employees to enter the company premises and restricted areas without the company’s permission. (Type D)",D,GRAVE
+3.1,"Failure to wear the ID and uniform, or wearing an altered, deformed, or mutilated uniform. (Type A)",A,LIGHT
+3.11,"Giving away or unauthorized disclosure of company trade secrets and/or trade practices or trade processes or any valuable information acquired by his office, or by him on account of his position, to unauthorized persons, or making available such information in advance of its authorized release date and where in the process, the interest of the company is prejudiced. (Type E)",E,CAPITAL
+3.12,"Loitering, wasting time, leaving the place of work during working hours without permission from his/her supervisor, department head, or any designated person, or leaving the company compound without permission at any time before the end of the employee’s work shift. (Type B)",B,MINOR
+3.13,Malingering or feigning illness to avoid doing assigned work or reporting for work. (This includes absence due to Sick Leave but employee is neither at home nor at any medical institution). (Type B),B,MINOR
+3.14,Sleeping on or while on duty. (Type B),B,MINOR
+3.15,"Failure to follow written or oral instructions made by Company superiors, as well as Company memorandum and circulars, or failure to perform assigned work due to negligence. (Type B)",B,MINOR
+3.16,"Persuading, inducing, or influencing another employee to perform an act constituting a violation of this Code or other existing rules and regulations or policies on an office in connection with the duty or function of the latter allowing himself to be persuaded, induced, or influenced to commit such violation or offense. Penalty for the violation committed shall likewise be imposed on the person who employed persuasion, inducement, or influence. (Type C)",C,SERIOUS
+3.17,"Failure to shut off the engine or using aircon, TV, radio, wifi while the bus is parked. (Type B)",B,MINOR
+3.18,Abandoning assigned duty or trip. (Type C),C,SERIOUS
+3.19,Making unauthorized trip or cutting trip and stopping for an unauthorized stopover. (Type C),C,SERIOUS
+3.2,Failure to bring onboard the OR/CR of the bus. (Type C),C,SERIOUS
+3.21,Driving with expired license. (Type C),C,SERIOUS
+3.22,Not picking up passengers. (Type C),C,SERIOUS
+3.23,Discourteous to passengers. (Type C),C,SERIOUS
+3.24,"Improper grooming and/or hygiene (wearing earrings, wearing jewelry or accessories except for wristwatch, wearing hat/cap, have a facial hair ""bigote and balbas"", have long hair or uncombed hair, have bad breath, body odor, etc.). (Type B)",B,MINOR
+3.25,Failure to alight passenger to their destination or leaving passenger at any facility that is not their destination. (Type B),B,MINOR
+3.26,Not giving exact change or not giving discount to authorized passengers. (Type B),B,MINOR
+3.27,Not helping the driver in maneuvering the bus and breakdown. (Type B),B,MINOR
+3.28,Ticket combination irregularity. (Type C),C,SERIOUS
+3.29,Sliding punch of ticket. (Type C),C,SERIOUS
+3.3,Delaying ticket issuance. (Type C),C,SERIOUS
+3.31,Incorrect punching and tearing of tickets and negligence (Type C),C,SERIOUS
+3.32,Conducting with expired license (Type D),D,GRAVE
+3.33,"Failure to bring onboard the ticket booklet, trip report and the like onboard the bus (Type D)",D,GRAVE
+3.34,Lowering or overcharging of fare and cutting fare (Type D),D,GRAVE
+3.35,Discrimination of passenger (Type C),C,SERIOUS
+3.36,Not issuing ticket to passenger (Type D),D,GRAVE
+3.37,"Using fake, unregistered, used ticket or reissuing ticket and jumping ticket (Type D)",D,GRAVE
+3.38,Collecting fare more than the amount indicated in the ticket (Type D),D,GRAVE
+3.39,Collecting fare without issuance of ticket (Type D),D,GRAVE
+3.4,"Lost trip report, lost ticket booklet, loss ticket stub and the like (Type C)",C,SERIOUS
+3.41,Jumping ticket (Type D),D,GRAVE
+3.42,"Allowing free ride, free freight and discount to unauthorized passengers (Type C)",C,SERIOUS
+3.43,Possession of unregistered ticket (Type E),E,CAPITAL
+3.44,Removing ticket head stub. All violations causing damage or loss to the company shall include the penalty of PAYMENT OF DAMAGES (Type D),D,GRAVE
+4.1,"Unauthorized possession and carrying of firearms, explosives, or other deadly weapon while on company premises (Type E)",E,CAPITAL
+4.2,"Forced or unauthorized entry into an office or premises of the company during off hours without committing acts punishable under sections 1,4,5 and 8 of Article II hereof. (Type C)",C,SERIOUS
+4.3,Entering restricted areas without permission (Type C),C,SERIOUS
+4.4,Creating or contributing to unsafe and unsanitary conditions inside company premises (Type A),A,LIGHT
+4.5,Violation or failure to follow a general safety rule and/or practice (Type A),A,LIGHT
+4.6,Littering inside the company premises and immediate surrounding area (Type A),A,LIGHT
+4.7,Unauthorized and/or unjustified use of fire protection equipment (Type C),C,SERIOUS
+4.8,"Operating and/or tampering of switches, controls, installations, machines or equipments without authorization (Type C)",C,SERIOUS
+4.9,Failure to report immediately a personal injury occurring on company time or property (Type A),A,LIGHT
+4.1,"Willful disregard of office directive relating to sanitary conditions, cleanliness, and orderliness of the office, security of office supplies, and equipment or performing any act contributing to unsanitary condition or practice on company premises or job areas (Type A)",A,LIGHT
+4.11.1,"Reporting for work while having a serious contagious disease which may endanger the health of other employees, knowing about it, yet failing to report or willfully withholding information thereof from company authorities. If the contagious disease is not of a serious nature (Type C)",C,SERIOUS
+4.11.2,"Reporting for work while having a serious contagious disease which may endanger the health of other employees, knowing about it, yet failing to report or willfully withholding information thereof from company authorities (Type D)",D,GRAVE
+4.12,Failure to undergo scheduled Drug Testing by the company and failure to obey as directed or ordered by the company (Type E),E,CAPITAL
+4.13,"Scuffling, “horsing around,” or throwing things or otherwise wasting time during work hours (Type B)",B,MINOR
+4.14,"Reckless driving (no safe distance, overtaking on shoulder, curve and rough road, over speeding, swerving, etc.) (Type C)",C,SERIOUS
+4.15,Smoking inside the bus or near the bus while it is already waiting for passengers (Type B),B,MINOR
+4.16,Using electronic handheld devices or using headset/earphone while driving (Type A),A,LIGHT
+4.17,Delaying trip or leaving the bus unattended while waiting for passengers (Type A),A,LIGHT
+4.18,"Road/Traffic violation (beating the red light, no loading and unloading, not wearing seatbelt, not passing on yellow lane, etc.) (Type B)",B,MINOR
+4.19,Allowing non-authorized vendors inside the bus (Type C),C,SERIOUS
+4.2,Not cleaning the bus or driving a dirty bus (Type B),B,MINOR
+5.1.1,Reporting for work while under the influence of liquor and/ or intoxicating drinks (Type C),C,SERIOUS
+5.1.2,Reporting for work while under the influence of prohibited drugs (Type E),E,CAPITAL
+5.2.1,"Drinking or bringing in any liquor, intoxicating drinks into company premises or on company- sponsored activities (Type C)",C,SERIOUS
+5.2.2,Use of or bringing in prohibited drugs inside the company premises or during company duty activities (Type E),E,CAPITAL
+5.3,"Making false, vicious, or malicious statement concerning any employee (Type E)",E,CAPITAL
+5.4,"Any act constituting offense against honor (libel, defamation, slander) committed while in company premises or in relation to work (Type D)",D,GRAVE
+5.5,Conduct of grossly scandalous or indecent nature or using profane or indecent language in addressing another person on company time or on company property (Type C),C,SERIOUS
+5.6,"Any and all act constituting sexual harassment and/or any motives committed against a customer, and co-employees regardless of position, rank, or gender.",,FALSE
+5.6.1,Persistently telling smutty jokes to a co- employee or customer who has indicated that he/ she finds them offensive (Type C),C,SERIOUS
+5.6.2,Taunting a co-employee or passenger with constant talk of sex or sexual innuendoes (Type C),C,SERIOUS
+5.6.3,Displaying offensive pictures or publications in the workplace (Type C),C,SERIOUS
+5.6.4,Asking co-employee or passenger intimate questions on his/ her sexual activities,C,SERIOUS
+5.6.5,Making offensive hand or body gestures at a co- employee or passenger (Type C),C,SERIOUS
+5.6.6,"Making obscene phone calls to a co- employee or customer during and outside work hours, etc. (Type C)",C,SERIOUS
+5.6.7,"Pinching, unnecessarily brushing up against a co- employee or passenger’s body (Type C)",C,SERIOUS
+5.6.8,"Requesting for dates or favors in exchange for a job, favorable working conditions, or assignments, etc. (Type D)",D,GRAVE
+5.6.9,Touching a co-employee or pasenger in sensitive parts of his/ her body to threats of a sexual nature and actual sexual assault (Type E),E,CAPITAL
+5.6.10,"Directing or inducing another to commit any act of sexual harassment as herein defined, or who cooperates in the commission thereof by another without which it would not have been committed shall also be liable under these rules. Penalty shall likewise be imposed on the person who employed inducement or cooperated (Type C)",C,SERIOUS
+5.7,Attempt to commit or committing any crime against chastity while in company premises or at job sites or committing any act constituting immorality of such scandalous proportions as to offend the moral sensibilities of the community (Type E),E,CAPITAL
+5.8,"Taking part in any gambling, unauthorized lottery, loaning of money with excessive interest rates, or any other game of chance during company time or while within the company premises (Type C)",C,SERIOUS
+5.9,Conviction of any crime punishable under the Revised Penal Code of the Philippines and other existing laws of the country (Type E),E,CAPITAL
+6.1,Habitual Tardiness. This is defined as ten or more instances of tardiness or combined tardiness resulting in a total loss of 120 minutes or more within one month (Type A),A,LIGHT
+6.2,"Overbreak. Taking coffee or snack breaks of more than 15 minutes at a time, for five or more instances or a total loss of thirty minutes or more in one calendar month (Type A)",A,LIGHT
+6.3,Violation or failure to follow a general safety rule and/or practice (Type A),A,LIGHT
+6.4,Denied permission to be absent. If an employee’s request for leave of absence is denied and he nevertheless absents himself he shall be subject to immediate discharge unless he is able to present valid and acceptable reason which he could not have presented to management before incurring the absence (Type E),E,CAPITAL
+6.5,"Gross and habitual neglect by the employee of his duties. Abandonment of job is a form of neglect of duty. This constitutes (1) failure to report for work or absence without valid or justifiable reason and (2) a clear intention to severe the employer-employee relationship, with the second element as the more determinative factor and being manifested by some overt acts (Type E)",E,CAPITAL
+6.6,"Failure to return to work on the working day immediately following the expiration of leave of absence or suspension, unless such leave is extended with proper approval (Type A)",A,LIGHT
+6.7,"Failure to report for overtime work after having been duly advised and scheduled to work according to overtime policy, or doing overtime work, in lesser time than sought to be charged, without justifiable reason (Type A)",A,LIGHT
+6.8,"Unauthorized defacing of any company property or willful defacing, tampering, smudging, printing or “dirtying” of walls or façade of any company property of any form of vandalism committed on company properties owned by the ES Group of Companies (Type C)",C,SERIOUS
+6.9,"Willfully holding back, slowing down, hindering or limiting work output, or otherwise “feather bedding” or giving instructions to fellow employees to hold back, slow down, hinder, or limit output (Type E)",E,CAPITAL
+6.10.1,"Causing loss of company time or money because of unauthorized use, operation or possession of machines, tools, vehicles or equipment or while performing work other than those assigned to him or her (Type D)",D,GRAVE
+6.10.2,"Causing loss of company time or money because of unauthorized use, operation, or possession of machines, tools, vehicles or equipment or while performing work other than those assigned to him or her. Where the unauthorized use resulted in irreparable damage to the property (Type E)",E,CAPITAL
+6.11,"Causing loss of time and money to the company because of negligence in the performance of official duties, neglect of duty, or persistently doing unsatisfactory work. This includes violation of standard operating procedures (Type C)",C,SERIOUS
+6.12,"Making false, vicious, or malicious statements concerning the company (Type C)",C,SERIOUS
+6.13,"Selling, soliciting, collecting contributions for any purposes whatsoever or conducting private business during office hours on company premises or work areas without proper authorizations from the company (Type C)",C,SERIOUS
+6.14,"Holding any position or employment, with compensation, in any other business, firm, or organization—regardless of whether it is engaged in a similar line of business as the company or not—without prior written approval from management. (Type E)",E,CAPITAL
+6.15,Abandonment of work or not reporting for work that has been scheduled (Type C),C,SERIOUS
+7.1,Refusing to accept job assignments without justifiable reason (Type D),D,GRAVE
+7.2,Willful disobedience of the lawful orders of the company and any of its officers (Type E),E,CAPITAL
+7.3,Any act constituting disrespect and disregard of authority of company superiors and officers (Type D),D,GRAVE
+7.4,"Any act which constitutes resistance, threat, intimidation, or assault against a person of authority in the company or any of his agent (Type D)",D,GRAVE
+7.5,Any other act constituting insubordination or negligence not included in the preceding sections (Type D),D,GRAVE
+7.6,"Leaving or not stopping for inspector, dispatcher, controller, scheduler (Type C)",C,SERIOUS
+7.7,Refusing to board superior and other employees of the company inside the bus (Type C),C,SERIOUS

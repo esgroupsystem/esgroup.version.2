@@ -20,10 +20,10 @@
         <div class="navbar-vertical-content scrollbar">
             <ul class="navbar-nav flex-column mb-3" id="navbarVerticalNav">
 
-                
-                {{--===============================================--}}
+
+                {{-- =============================================== --}}
                 {{-- ================= DASHBOARD ================= --}}
-                {{--===============================================--}}
+                {{-- =============================================== --}}
                 <li class="nav-item">
                     <a class="nav-link dropdown-indicator d-flex justify-content-between align-items-center"
                         href="#dashboardMenu" data-bs-toggle="collapse"
@@ -46,13 +46,13 @@
                                 Default
                             </a>
                         </li>
-                        @role('Developer','IT Head','Operation Manager')
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('dashboard/hr') ? 'active' : '' }}"
-                                href="{{ route('hr.dashboard') }}">
-                                Employees
-                            </a>
-                        </li>
+                        @role('Developer', 'IT Head', 'Operation Manager')
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('dashboard/hr') ? 'active' : '' }}"
+                                    href="{{ route('hr.dashboard') }}">
+                                    Employees
+                                </a>
+                            </li>
                         @endrole
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/it-department') ? 'active' : '' }}"
@@ -65,330 +65,344 @@
                 </li>
 
 
-                {{--=========================================================--}}
-                {{-- ================= LABEL IT Department ================= --}}
-                {{--=========================================================--}}
-                @role('Developer','IT Head','IT Officer','Operation Manager')
-                <li class="nav-item">
-                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                        <div class="col-auto navbar-vertical-label">
-                            IT Department
-                        </div>
-                        <div class="col ps-0">
-                            <hr class="mb-0 navbar-vertical-divider">
-                        </div>
-                    </div>
-                </li>
+                {{-- ========================================================= --}}
+                {{-- ================= IT Department ================= --}}
+                {{-- ========================================================= --}}
 
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('tickets/job-order') ? 'active' : '' }}"
-                        href="{{ route('tickets.joborder.index') }}">
-                        <div class="d-flex align-items-center">
-                            <span class="nav-link-icon">
-                                <span class="fas fa-ticket-alt"></span>
-                            </span>
-                            <span class="nav-link-text ps-1">Tickets Job Order</span>
+                @role('Developer', 'IT Head', 'IT Officer', 'Operation Manager')
+                    <li class="nav-item">
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">
+                                IT Department
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider">
+                            </div>
                         </div>
-                    </a>
-                </li>
+                    </li>
 
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
-                        href="{{ route('concern.cctv.index') }}">
-                        <div class="d-flex align-items-center">
-                            <span class="nav-link-icon">
-                                <span class="fas fa-video"></span>
-                            </span>
-                            <span class="nav-link-text ps-1">CCTV Concern</span>
-                        </div>
-                    </a>
-                </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('tickets/job-order') ? 'active' : '' }}"
+                            href="{{ route('tickets.joborder.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-ticket-alt"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Tickets Job Order</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
+                            href="{{ route('concern.cctv.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-video"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">CCTV Concern</span>
+                            </div>
+                        </a>
+                    </li>
                 @endrole
 
 
-                {{--===============================================--}}
+                {{-- =============================================== --}}
                 {{-- ================= EMPLOYEES ================= --}}
-                {{--===============================================--}}
-                @role('Developer','IT Head','HR Head','HR Officer')
-                <li class="nav-item">
-                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                        <div class="col-auto navbar-vertical-label">
-                            HR Department
+                {{-- =============================================== --}}
+
+                @role('Developer', 'IT Head', 'HR Head', 'HR Officer')
+                    <li class="nav-item">
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">
+                                HR Department
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider">
+                            </div>
                         </div>
-                        <div class="col ps-0">
-                            <hr class="mb-0 navbar-vertical-divider">
-                        </div>
-                    </div>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link dropdown-indicator {{ request()->is('employees*') ? 'active' : '' }}"
-                        href="#employeesMenu" role="button" data-bs-toggle="collapse"
-                        aria-expanded="{{ request()->is('employees*') ? 'true' : 'false' }}">
-                        <div class="d-flex align-items-center">
-                            <span class="nav-link-icon">
-                                <span class="fas fa-users"></span>
-                            </span>
-                            <span class="nav-link-text ps-1">Employees</span>
-                        </div>
-                    </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-indicator {{ request()->is('employees*') ? 'active' : '' }}"
+                            href="#employeesMenu" role="button" data-bs-toggle="collapse"
+                            aria-expanded="{{ request()->is('employees*') ? 'true' : 'false' }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-users"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Employees</span>
+                            </div>
+                        </a>
 
-                    <ul class="nav collapse {{ request()->is('employees*') ? 'show' : '' }}" id="employeesMenu">
+                        <ul class="nav collapse {{ request()->is('employees*') ? 'show' : '' }}" id="employeesMenu">
 
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('employees') ? 'active' : '' }}"
-                                href="{{ route('employees.staff.index') }}">
-                                <span class="nav-link-text">Employee List</span>
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('employees') ? 'active' : '' }}"
+                                    href="{{ route('employees.staff.index') }}">
+                                    <span class="nav-link-text">Employee List</span>
+                                </a>
+                            </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('employees/departments*') || request()->is('employees/positions*') ? 'active' : '' }}"
-                                href="{{ route('employees.departments.index') }}">
-                                <span class="nav-link-text">Department & Position</span>
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('employees/departments*') || request()->is('employees/positions*') ? 'active' : '' }}"
+                                    href="{{ route('employees.departments.index') }}">
+                                    <span class="nav-link-text">Department & Position</span>
+                                </a>
+                            </li>
 
-                    </ul>
-                </li>
-                {{--==============================================--}}
-                {{-- ================= BENEFITS ================= --}}
-                {{--==============================================--}}
-                <li class="nav-item">
-                    <a class="nav-link dropdown-indicator {{ request()->is('claims*') ? 'active' : '' }}"
-                        href="#benefitsMenu" role="button" data-bs-toggle="collapse"
-                        aria-expanded="{{ request()->is('claims*') ? 'true' : 'false' }}">
-                        <div class="d-flex align-items-center">
-                            <span class="nav-link-icon">
-                                <span class="fas fa-hand-holding-heart"></span>
-                            </span>
-                            <span class="nav-link-text ps-1">Benefits</span>
-                        </div>
-                    </a>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('employees/offenses*') ? 'active' : '' }}"
+                                    href="{{ route('violation.offenses.index') }}">
+                                    <span class="nav-link-text">HR Offenses</span>
+                                </a>
+                            </li>
 
-                    <ul class="nav collapse {{ request()->is('claims*') ? 'show' : '' }}" id="benefitsMenu">
+                        </ul>
+                    </li>
+                    {{-- ============================================== --}}
+                    {{-- ================= BENEFITS ================= --}}
+                    {{-- ============================================== --}}
 
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('claims*') ? 'active' : '' }}"
-                                href="{{ route('claims.index') }}">
-                                <span class="nav-link-text">SSS / Maternity / Paternity</span>
-                            </a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-indicator {{ request()->is('claims*') ? 'active' : '' }}"
+                            href="#benefitsMenu" role="button" data-bs-toggle="collapse"
+                            aria-expanded="{{ request()->is('claims*') ? 'true' : 'false' }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-hand-holding-heart"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Benefits</span>
+                            </div>
+                        </a>
 
-                        <li class="nav-item">
-                            <a class="nav-link disabled text-muted" href="#">
-                                <span class="nav-link-text">Cash Advance (Coming Soon)</span>
-                            </a>
-                        </li>
+                        <ul class="nav collapse {{ request()->is('claims*') ? 'show' : '' }}" id="benefitsMenu">
 
-                    </ul>
-                </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('claims*') ? 'active' : '' }}"
+                                    href="{{ route('claims.index') }}">
+                                    <span class="nav-link-text">SSS / Maternity / Paternity</span>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link disabled text-muted" href="#">
+                                    <span class="nav-link-text">Cash Advance (Coming Soon)</span>
+                                </a>
+                            </li>
+
+                        </ul>
+                    </li>
                 @endrole
 
 
-                {{--=======================================================--}}
+                {{-- ======================================================= --}}
                 {{-- ================= Attendance Parent ================= --}}
-                {{--=======================================================--}}
-                @role('Developer','IT Head','IT Officer','HR Head','HR Officer')
-                <li class="nav-item">
-                    <a class="nav-link dropdown-indicator {{ request()->is('attendance*') || request()->is('leave*') ? 'active' : '' }}"
-                        href="#attendanceMenu" role="button" data-bs-toggle="collapse"
-                        aria-expanded="{{ request()->is('attendance*') || request()->is('leave*') ? 'true' : 'false' }}">
+                {{-- ======================================================= --}}
 
-                        <div class="d-flex align-items-center">
-                            <span class="nav-link-icon">
-                                <span class="fas fa-calendar-check"></span>
-                            </span>
-                            <span class="nav-link-text ps-1">Attendance</span>
-                        </div>
-                    </a>
+                @role('Developer', 'IT Head', 'IT Officer', 'HR Head', 'HR Officer')
+                    <li class="nav-item">
+                        <a class="nav-link dropdown-indicator {{ request()->is('attendance*') || request()->is('leave*') ? 'active' : '' }}"
+                            href="#attendanceMenu" role="button" data-bs-toggle="collapse"
+                            aria-expanded="{{ request()->is('attendance*') || request()->is('leave*') ? 'true' : 'false' }}">
 
-                    <ul class="nav collapse {{ request()->is('attendance*') || request()->is('leave*') ? 'show' : '' }}"
-                        id="attendanceMenu">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-calendar-check"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Attendance</span>
+                            </div>
+                        </a>
 
-                        @role('Developer','IT Head','HR Head','HR Officer')
+                        <ul class="nav collapse {{ request()->is('attendance*') || request()->is('leave*') ? 'show' : '' }}"
+                            id="attendanceMenu">
 
-                        <li class="nav-item">
-                            <a class="nav-link dropdown-indicator {{ request()->is('leave*') ? 'active' : '' }}"
-                                href="#leaveMenu" role="button" data-bs-toggle="collapse"
-                                aria-expanded="{{ request()->is('leave*') ? 'true' : 'false' }}">
-                                <span class="nav-link-text">Leaves</span>
-                            </a>
-
-                            <ul class="nav collapse {{ request()->is('leave*') ? 'show' : '' }}" id="leaveMenu">
-
+                            @role('Developer', 'IT Head', 'HR Head', 'HR Officer')
                                 <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('leave/employee') ? 'active' : '' }}"
-                                        href="{{ route('employee-leave.employee.index') }}">
-                                        <span class="nav-link-text">Employee</span>
+                                    <a class="nav-link dropdown-indicator {{ request()->is('leave*') ? 'active' : '' }}"
+                                        href="#leaveMenu" role="button" data-bs-toggle="collapse"
+                                        aria-expanded="{{ request()->is('leave*') ? 'true' : 'false' }}">
+                                        <span class="nav-link-text">Leaves</span>
                                     </a>
-                                </li>
 
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('leave/driver') ? 'active' : '' }}"
-                                        href="{{ route('driver-leave.driver.index') }}">
-                                        <span class="nav-link-text">Driver</span>
-                                    </a>
-                                </li>
+                                    <ul class="nav collapse {{ request()->is('leave*') ? 'show' : '' }}" id="leaveMenu">
 
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('leave/conductor') ? 'active' : '' }}"
-                                        href="{{ route('conductor-leave.conductor.index') }}">
-                                        <span class="nav-link-text">Conductor</span>
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                        @endrole
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->is('leave/employee') ? 'active' : '' }}"
+                                                href="{{ route('employee-leave.employee.index') }}">
+                                                <span class="nav-link-text">Employee</span>
+                                            </a>
+                                        </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link dropdown-indicator {{ request()->is('mirasol-logs*') ? 'active' : '' }}"
-                                href="#mirasolMenu" role="button" data-bs-toggle="collapse"
-                                aria-expanded="{{ request()->is('mirasol-logs*') ? 'true' : 'false' }}">
-                                <span class="nav-link-text">Mirasol Biometrics</span>
-                            </a>
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->is('leave/driver') ? 'active' : '' }}"
+                                                href="{{ route('driver-leave.driver.index') }}">
+                                                <span class="nav-link-text">Driver</span>
+                                            </a>
+                                        </li>
 
-                            <ul class="nav collapse {{ request()->is('mirasol-logs*') ? 'show' : '' }}"
-                                id="mirasolMenu">
-                                <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('mirasol-logs') ? 'active' : '' }}"
-                                        href="{{ route('mirasol-logs.index') }}">
-                                        <span class="nav-link-text">Logs</span>
-                                    </a>
+                                        <li class="nav-item">
+                                            <a class="nav-link {{ request()->is('leave/conductor') ? 'active' : '' }}"
+                                                href="{{ route('conductor-leave.conductor.index') }}">
+                                                <span class="nav-link-text">Conductor</span>
+                                            </a>
+                                        </li>
+                                    </ul>
                                 </li>
-                            </ul>
-                        </li>
-                    </ul>
-                </li>
+                            @endrole
+
+                            <li class="nav-item">
+                                <a class="nav-link dropdown-indicator {{ request()->is('mirasol-logs*') ? 'active' : '' }}"
+                                    href="#mirasolMenu" role="button" data-bs-toggle="collapse"
+                                    aria-expanded="{{ request()->is('mirasol-logs*') ? 'true' : 'false' }}">
+                                    <span class="nav-link-text">Mirasol Biometrics</span>
+                                </a>
+
+                                <ul class="nav collapse {{ request()->is('mirasol-logs*') ? 'show' : '' }}"
+                                    id="mirasolMenu">
+                                    <li class="nav-item">
+                                        <a class="nav-link {{ request()->is('mirasol-logs') ? 'active' : '' }}"
+                                            href="{{ route('mirasol-logs.index') }}">
+                                            <span class="nav-link-text">Logs</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
                 @endrole
 
 
-                {{--=======================================================--}}
+                {{-- ======================================================= --}}
                 {{-- ================= LABEL Maintenance ================= --}}
-                {{--=======================================================--}}
-                @role('Developer','IT Head','Maintenance Head','Maintenance Engineer')
-                <li class="nav-item">
-                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                        <div class="col-auto navbar-vertical-label">
-                            Maintenance
-                        </div>
-                        <div class="col ps-0">
-                            <hr class="mb-0 navbar-vertical-divider">
-                        </div>
-                    </div>
-                </li>
+                {{-- ======================================================= --}}
 
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('request*') ? 'active' : '' }}"
-                        href="{{ route('request.index') }}">
-                        <div class="d-flex align-items-center">
-                            <span class="nav-link-icon">
-                                <span class="fas fa-inbox"></span>
-                            </span>
-                            <span class="nav-link-text ps-1">Request Items</span>
+                @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer')
+                    <li class="nav-item">
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">
+                                Maintenance
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider">
+                            </div>
                         </div>
-                    </a>
-                </li>
+                    </li>
 
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('received*') ? 'active' : '' }}"
-                        href="{{ route('received.index') }}">
-                        <div class="d-flex align-items-center">
-                            <span class="nav-link-icon">
-                                <span class="fas fa-toolbox"></span>
-                            </span>
-                            <span class="nav-link-text ps-1">Receiving Area</span>
-                        </div>
-                    </a>
-                </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('request*') ? 'active' : '' }}"
+                            href="{{ route('request.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-inbox"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Request Items</span>
+                            </div>
+                        </a>
+                    </li>
 
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('category*') ? 'active' : '' }}"
-                        href="{{ route('category.index') }}">
-                        <div class="d-flex align-items-center">
-                            <span class="nav-link-icon">
-                                <span class="far fa-list-alt"></span>
-                            </span>
-                            <span class="nav-link-text ps-1">Categories</span>
-                        </div>
-                    </a>
-                </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('received*') ? 'active' : '' }}"
+                            href="{{ route('received.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-toolbox"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Receiving Area</span>
+                            </div>
+                        </a>
+                    </li>
 
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('items*') ? 'active' : '' }}"
-                        href="{{ route('items.index') }}">
-                        <div class="d-flex align-items-center">
-                            <span class="nav-link-icon">
-                                <span class="fas fa-toolbox"></span>
-                            </span>
-                            <span class="nav-link-text ps-1">Products</span>
-                        </div>
-                    </a>
-                </li>
-                {{--=====================================================--}}
-                {{-- ================= LABEL Purchaser ================= --}}
-                {{--=====================================================--}}
-                <li class="nav-item">
-                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                        <div class="col-auto navbar-vertical-label">
-                            Accounting
-                        </div>
-                        <div class="col ps-0">
-                            <hr class="mb-0 navbar-vertical-divider">
-                        </div>
-                    </div>
-                </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('category*') ? 'active' : '' }}"
+                            href="{{ route('category.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="far fa-list-alt"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Categories</span>
+                            </div>
+                        </a>
+                    </li>
 
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('purchase*') ? 'active' : '' }}"
-                        href="{{ route('purchase.index') }}">
-                        <div class="d-flex align-items-center">
-                            <span class="nav-link-icon">
-                                <span class="fas fa-dolly"></span>
-                            </span>
-                            <span class="nav-link-text ps-1">Purchase Order</span>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('items*') ? 'active' : '' }}"
+                            href="{{ route('items.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-toolbox"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Products</span>
+                            </div>
+                        </a>
+                    </li>
+                    {{-- ===================================================== --}}
+                    {{-- ================= LABEL Purchaser ================= --}}
+                    {{-- ===================================================== --}}
+
+                    <li class="nav-item">
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">
+                                Accounting
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider">
+                            </div>
                         </div>
-                    </a>
-                </li>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('purchase*') ? 'active' : '' }}"
+                            href="{{ route('purchase.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-dolly"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Purchase Order</span>
+                            </div>
+                        </a>
+                    </li>
                 @endrole
 
 
-                {{--==========================================================--}}
+                {{-- ========================================================== --}}
                 {{-- ================= LABEL Authentication ================= --}}
-                {{--==========================================================--}}
-                @role('Developer','IT Head')
-                <li class="nav-item">
-                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                        <div class="col-auto navbar-vertical-label">
-                            Authentication
-                        </div>
-                        <div class="col ps-0">
-                            <hr class="mb-0 navbar-vertical-divider">
-                        </div>
-                    </div>
-                </li>
+                {{-- ========================================================== --}}
 
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('authentication/users*') ? 'active' : '' }}"
-                        href="{{ route('authentication.users.index') }}">
-                        <div class="d-flex align-items-center">
-                            <span class="nav-link-icon">
-                                <span class="fas fa-user-shield"></span>
-                            </span>
-                            <span class="nav-link-text ps-1">Users</span>
+                @role('Developer', 'IT Head')
+                    <li class="nav-item">
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">
+                                Authentication
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider">
+                            </div>
                         </div>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ request()->is('authentication/roles*') ? 'active' : '' }}"
-                        href="{{ route('roles.index') }}">
-                        <div class="d-flex align-items-center">
-                            <span class="nav-link-icon">
-                                <span class="fas fa-user-secret"></span>
-                            </span>
-                            <span class="nav-link-text ps-1">Roles</span>
-                        </div>
-                    </a>
-                </li>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('authentication/users*') ? 'active' : '' }}"
+                            href="{{ route('authentication.users.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-user-shield"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Users</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('authentication/roles*') ? 'active' : '' }}"
+                            href="{{ route('roles.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-user-secret"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Roles</span>
+                            </div>
+                        </a>
+                    </li>
                 @endrole
             </ul>
         </div>
