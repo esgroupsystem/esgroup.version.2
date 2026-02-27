@@ -257,58 +257,36 @@
     </script>
 
     <script>
-        function toTitleCaseLive(str) {
-            // keep spaces while typing
-            return str
-                .toLowerCase()
-                .replace(/\b\w/g, ch => ch.toUpperCase());
+        function stripWrappingQuotes(s) {
+            if (!s) return s;
+            s = s.replace(/[“”]/g, '"').replace(/[‘’]/g, "'");
+            return s.replace(/^\s*["'](.*)["']\s*$/s, '$1');
         }
 
-        function normalizeSpacesFinal(str) {
-            // clean up only when done (blur)
-            return str
-                .replace(/\s+/g, ' ')
-                .trim();
-        }
-
-        function applyFormat(el, mode = "live") {
-            const start = el.selectionStart;
-            const end = el.selectionEnd;
-
-            const original = el.value;
-
-            let formatted = original;
-            if (mode === "live") {
-                formatted = toTitleCaseLive(original);
-            } else {
-                formatted = normalizeSpacesFinal(toTitleCaseLive(original));
-            }
-
-            if (formatted !== original) {
-                el.value = formatted;
-                if (typeof start === "number" && typeof end === "number") {
-                    el.setSelectionRange(start, end);
-                }
-            }
-        }
-
-        document.addEventListener("input", function(e) {
+        document.addEventListener("paste", function(e) {
             const el = e.target;
             if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
 
-            const type = (el.getAttribute("type") || "").toLowerCase();
-            if (["password", "email", "number", "date", "datetime-local", "time", "month", "week", "tel", "url"]
-                .includes(type)) return;
+            const pasted = (e.clipboardData || window.clipboardData)?.getData("text");
+            if (!pasted) return;
 
-            applyFormat(el, "live"); // ✅ spaces will work
+            const cleaned = stripWrappingQuotes(pasted);
+
+            if (cleaned !== pasted) {
+                e.preventDefault();
+
+                const start = el.selectionStart ?? el.value.length;
+                const end = el.selectionEnd ?? el.value.length;
+
+                el.value = el.value.slice(0, start) + cleaned + el.value.slice(end);
+
+                const pos = start + cleaned.length;
+                if (typeof el.setSelectionRange === "function") el.setSelectionRange(pos, pos);
+                el.dispatchEvent(new Event("input", {
+                    bubbles: true
+                }));
+            }
         });
-
-        document.addEventListener("blur", function(e) {
-            const el = e.target;
-            if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement)) return;
-
-            applyFormat(el, "final"); // ✅ now it trims + collapses spaces
-        }, true);
     </script>
 
     @stack('scripts')
