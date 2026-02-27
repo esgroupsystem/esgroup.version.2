@@ -40,12 +40,12 @@ class EmployeeController extends Controller
         $employees = $query->paginate(20)->withQueryString();
 
         if ($request->ajax()) {
-            return view('hr_department.employees.table', compact('employees'))->render();
+            return view('hr_department.employees.modals._table', compact('employees'))->render();
         }
 
         $departments = Department::with('positions')->get();
 
-        return view('hr_department.index', compact('employees', 'departments'));
+        return view('hr_department.employees.index', compact('employees', 'departments'));
     }
 
     /* ==========================================================
@@ -99,7 +99,7 @@ class EmployeeController extends Controller
             }
         }
 
-        return view('hr_department.employee_profile', compact(
+        return view('hr_department.employees.modals._employee_profile', compact(
             'employee', 'departments', 'tenure', 'age', 'deptMap', 'posMap', 'logs'
         ));
     }
@@ -147,7 +147,7 @@ class EmployeeController extends Controller
 
             flash('Employee added successfully!')->success();
 
-            return redirect()->route('employees.staff.show', $employee->id);
+            return redirect()->route('employees.staff.index');
 
         } catch (ValidationException $e) {
 
@@ -272,9 +272,6 @@ class EmployeeController extends Controller
                         }
 
                         Storage::disk('public')->put($fileName, $data);
-
-                        $asset->profile_picture = $fileName;
-                        $asset->save();
 
                         $asset->profile_picture = $fileName;
                         $asset->save();
@@ -645,7 +642,7 @@ class EmployeeController extends Controller
         $employee = Employee::with(['asset', 'histories', 'attachments', 'position', 'department'])
             ->findOrFail($id);
 
-        $pdf = Pdf::loadView('hr_department.employee_201_pdf', compact('employee'))
+        $pdf = Pdf::loadView('hr_department.employees.modals._employee_201_pdf', compact('employee'))
             ->setPaper('A4', 'portrait');
 
         return $pdf->stream($employee->employee_id.'_201.pdf');
