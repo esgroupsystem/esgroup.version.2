@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeLog;
+use App\Models\HrOffense;
 use App\Models\Position;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -55,13 +56,16 @@ class EmployeeController extends Controller
     {
         $employee->load([
             'asset',
-            'histories' => fn ($q) => $q->orderBy('start_date', 'desc'),
+            'histories' => fn ($q) => $q
+                ->with('offense')
+                ->orderByDesc('created_at'),
             'attachments',
             'position',
             'department',
             'department.positions',
         ]);
 
+        $offenses = HrOffense::orderBy('section')->get();
         $departments = Department::with('positions')->get();
         $deptMap = $departments->pluck('name', 'id');
         $posMap = Position::pluck('title', 'id');
@@ -69,7 +73,7 @@ class EmployeeController extends Controller
         $logs = $employee->logs()
             ->with('user')
             ->orderByDesc('created_at')
-            ->paginate(10)
+            ->paginate(3)
             ->withQueryString();
 
         $age = '—';
@@ -99,8 +103,93 @@ class EmployeeController extends Controller
             }
         }
 
+        // ✅ Build “clean view data” (no more heavy PHP in Blade)
+        $historyItems = $employee->histories->map(function ($h) {
+
+            // dates
+            $start = $h->start_date ? Carbon::parse($h->start_date) : null;
+            $end = $h->end_date ? Carbon::parse($h->end_date) : null;
+            $isPresent = empty($h->end_date);
+
+            $rangeText = ($start ? $start->format('M d, Y') : '—').' • '.($end ? $end->format('M d, Y') : 'Present');
+
+            $durationText = null;
+            if ($start) {
+                $durationText = $end ? $start->diffForHumans($end, true) : $start->diffForHumans(now(), true);
+            }
+
+            // actions (ensure array)
+            $actions = $h->disciplinary_action;
+            if (is_string($actions)) {
+                $actions = $actions ? [$actions] : [];
+            }
+            if (! is_array($actions)) {
+                $actions = [];
+            }
+
+            $hasSda = in_array('Salary Deduction Authorization', $actions, true);
+            $hasSuspension = in_array('Suspension', $actions, true);
+
+            // SDA
+            $sdaTotal = ! is_null($h->sda_amount) ? (float) $h->sda_amount : null;
+            $perCutoffAmount = $h->sda_terms ? (float) $h->sda_terms : null; // ✅ you decided this is per cutoff amount now
+
+            $sdaStart = $h->sda_start_date ? Carbon::parse($h->sda_start_date) : null;
+            $sdaEnd = $h->sda_end_date ? Carbon::parse($h->sda_end_date) : null;
+
+            $sdaRangeText = null;
+            if ($sdaStart || $sdaEnd) {
+                $sdaRangeText = ($sdaStart ? $sdaStart->format('M d, Y') : '—').' • '.($sdaEnd ? $sdaEnd->format('M d, Y') : 'Ongoing');
+            }
+
+            // months (no decimals)
+            $monthsDuration = null;
+            if ($hasSda && $sdaTotal !== null && $perCutoffAmount && $perCutoffAmount > 0) {
+                $totalCutoffs = $sdaTotal / $perCutoffAmount;
+                $monthsDuration = (int) round($totalCutoffs / 2); // 10 & 25 cutoff = 2 per month
+            }
+
+            // Suspension dates
+            $susStart = $h->suspension_start_date ? Carbon::parse($h->suspension_start_date) : null;
+            $susEnd = $h->suspension_end_date ? Carbon::parse($h->suspension_end_date) : null;
+
+            $susRangeText = null;
+            if ($susStart || $susEnd) {
+                $susRangeText = ($susStart ? $susStart->format('M d, Y') : '—').' • '.($susEnd ? $susEnd->format('M d, Y') : 'Ongoing');
+            }
+
+            return [
+                'model' => $h, // keep original model (for id, description, etc.)
+                'title' => $h->title,
+                'is_present' => $isPresent,
+                'range_text' => $rangeText,
+                'duration_text' => $durationText,
+
+                'offense_section' => ($h->title === 'Violations' && $h->offense) ? $h->offense->section : null,
+
+                'actions' => $actions,
+                'has_sda' => $hasSda,
+                'has_suspension' => $hasSuspension,
+
+                'sda_total' => $sdaTotal,
+                'per_cutoff_amount' => $hasSda ? $perCutoffAmount : null,
+                'months_duration' => $monthsDuration,
+                'sda_range_text' => $hasSda ? $sdaRangeText : null,
+
+                'sus_range_text' => $hasSuspension ? $susRangeText : null,
+            ];
+        });
+
         return view('hr_department.employees.modals._employee_profile', compact(
-            'employee', 'departments', 'tenure', 'age', 'deptMap', 'posMap', 'logs'
+            'employee',
+            'departments',
+            'tenure',
+            'age',
+            'deptMap',
+            'posMap',
+            'logs',
+            'offenses',
+            'historyItems'
         ));
     }
 
@@ -477,20 +566,89 @@ class EmployeeController extends Controller
     public function storeHistory(Request $request, Employee $employee)
     {
         try {
-            $request->validate([
+            $validated = $request->validate([
                 'title' => 'required|string|max:255',
+
+                'offense_id' => [
+                    'nullable',
+                    'required_if:title,Violations',
+                    'exists:hr_offenses,id',
+                ],
+
+                'disciplinary_action' => 'nullable|array',
+                'disciplinary_action.*' => 'in:Salary Deduction Authorization,Suspension',
+
+                // SDA (end date is now nullable)
+                'sda_amount' => 'nullable|numeric|min:0',
+                'sda_terms' => 'nullable|integer|min:1',
+                'sda_start_date' => 'nullable|date',
+                'sda_end_date' => 'nullable|date|after_or_equal:sda_start_date',
+
+                // Suspension dates (new)
+                'suspension_start_date' => 'nullable|date',
+                'suspension_end_date' => 'nullable|date|after_or_equal:suspension_start_date',
+
                 'description' => 'nullable|string',
                 'start_date' => 'nullable|date',
-                'end_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
             ]);
 
-            $employee->histories()->create($request->all());
+            // auto-fill description
+            if (($validated['title'] ?? '') === 'Violations'
+                && ! empty($validated['offense_id'])
+                && empty(trim($validated['description'] ?? ''))
+            ) {
+                $offense = HrOffense::find($validated['offense_id']);
+                if ($offense) {
+                    $validated['description'] = $offense->offense_description;
+                }
+            }
 
-            $this->logEmployee($employee, 'added_history', [
-                'title' => $request->title,
-                'start_date' => $request->start_date,
-                'end_date' => $request->end_date,
-            ]);
+            $actions = $validated['disciplinary_action'] ?? [];
+            $hasSda = in_array('Salary Deduction Authorization', $actions, true);
+            $hasSuspension = in_array('Suspension', $actions, true);
+
+            // SDA required fields (end date optional)
+            if ($hasSda) {
+                $errors = [];
+
+                if (! array_key_exists('sda_amount', $validated) || is_null($validated['sda_amount'])) {
+                    $errors['sda_amount'] = 'SDA total amount is required when SDA is selected.';
+                }
+                if (! array_key_exists('sda_terms', $validated) || is_null($validated['sda_terms'])) {
+                    $errors['sda_terms'] = 'Deduction terms is required when SDA is selected.';
+                }
+                if (empty($validated['sda_start_date'] ?? null)) {
+                    $errors['sda_start_date'] = 'Deduction start date is required when SDA is selected.';
+                }
+
+                if (! empty($errors)) {
+                    return back()->withErrors($errors)->withInput();
+                }
+            } else {
+                $validated['sda_amount'] = null;
+                $validated['sda_terms'] = null;
+                $validated['sda_start_date'] = null;
+                $validated['sda_end_date'] = null;
+            }
+
+            // Suspension required fields (end date optional)
+            if ($hasSuspension) {
+                if (empty($validated['suspension_start_date'] ?? null)) {
+                    return back()->withErrors([
+                        'suspension_start_date' => 'Suspension start date is required when Suspension is selected.',
+                    ])->withInput();
+                }
+
+                // since we disabled general start/end when suspension checked, keep clean:
+                $validated['start_date'] = null;
+                $validated['end_date'] = null;
+            } else {
+                $validated['suspension_start_date'] = null;
+                $validated['suspension_end_date'] = null;
+            }
+
+            $employee->histories()->create($validated);
 
             flash('History added!')->success();
 
@@ -648,6 +806,9 @@ class EmployeeController extends Controller
         return $pdf->stream($employee->employee_id.'_201.pdf');
     }
 
+    /* ==========================================================
+        GET POSITIONS BY DEPARTMENT (for dynamic dropdown)
+    ========================================================== */
     public function getPositions($id)
     {
         $positions = Position::where('department_id', $id)->get();
@@ -655,6 +816,9 @@ class EmployeeController extends Controller
         return response()->json($positions);
     }
 
+    /* ==========================================================
+        HELPER METHODS
+    ========================================================== */
     private function logEmployee(Employee $employee, string $action, array $meta = []): void
     {
         EmployeeLog::create([
@@ -665,6 +829,9 @@ class EmployeeController extends Controller
         ]);
     }
 
+    /* ==========================================================
+        DIFF CHANGES (for logging what changed in updates)
+    ========================================================== */
     private function diffChanges(array $before, array $after): array
     {
         $changed = [];
@@ -687,6 +854,9 @@ class EmployeeController extends Controller
         return $changed;
     }
 
+    /* ==========================================================
+        NORMALIZE DATE (for consistent storage and diffing)
+    ========================================================== */
     private function normalizeDate(?string $value): ?string
     {
         if (! $value) {
@@ -699,6 +869,9 @@ class EmployeeController extends Controller
         }
     }
 
+    /* ==========================================================
+        CHECK PERMANENT ID (for AJAX validation)
+    ========================================================== */
     public function checkPermanentId(Request $request)
     {
         $value = trim((string) $request->query('value', ''));
