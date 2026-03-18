@@ -10,7 +10,7 @@ class LeaveNotificationService
 {
     public function sendToHrOfficers($leave, string $noticeType, string $category): void
     {
-        $hrOfficers = User::whereIn('role', 'HR Officer')
+        $hrOfficers = User::whereIn('role', ['HR Officer', 'Developer'])
             ->whereNotNull('email')
             ->get();
 
