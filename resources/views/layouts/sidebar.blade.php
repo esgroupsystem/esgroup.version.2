@@ -54,12 +54,24 @@
                                 </a>
                             </li>
                         @endrole
+
+                        @role('Developer', 'IT Head')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('dashboard/it-department') ? 'active' : '' }}"
                                 href="{{ route('dashboard.itindex') }}">
                                 IT Department
                             </a>
                         </li>
+                        @endrole
+
+                        @role('Developer', 'IT Head', 'Operation Manager', 'Maintenance Head', 'Maintenance Engineer')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('maintenance/items/dashboard') ? 'active' : '' }}"
+                                href="{{ route('items.dashboard') }}">
+                                Maintenance Stock
+                            </a>
+                        </li>
+                        @endrole
 
                     </ul>
                 </li>
@@ -288,7 +300,7 @@
                         </div>
                     </li>
 
-                    <li class="nav-item">
+                    {{-- <li class="nav-item">
                         <a class="nav-link {{ request()->is('request*') ? 'active' : '' }}"
                             href="{{ route('request.index') }}">
                             <div class="d-flex align-items-center">
@@ -298,19 +310,23 @@
                                 <span class="nav-link-text ps-1">Request Items</span>
                             </div>
                         </a>
-                    </li>
+                    </li> --}}
 
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('received*') ? 'active' : '' }}"
-                            href="{{ route('received.index') }}">
+                        <a class="nav-link {{ request()->is('receivings*') ? 'active' : '' }}"
+                            href="{{ route('receivings.index') }}">
                             <div class="d-flex align-items-center">
                                 <span class="nav-link-icon">
-                                    <span class="fas fa-toolbox"></span>
+                                    <span class="fas fa-truck-loading"></span>
                                 </span>
                                 <span class="nav-link-text ps-1">Receiving Area</span>
                             </div>
                         </a>
                     </li>
+
+                    {{-- ===================================================== --}}
+                    {{-- ================= LABEL Inventory ================= --}}
+                    {{-- ===================================================== --}}
 
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('category*') ? 'active' : '' }}"
@@ -339,7 +355,7 @@
                     {{-- ================= LABEL Purchaser ================= --}}
                     {{-- ===================================================== --}}
 
-                    <li class="nav-item">
+                    {{-- <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
                                 Accounting
@@ -360,7 +376,7 @@
                                 <span class="nav-link-text ps-1">Purchase Order</span>
                             </div>
                         </a>
-                    </li>
+                    </li> --}}
                 @endrole
 
 

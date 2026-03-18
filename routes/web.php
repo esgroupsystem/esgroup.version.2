@@ -10,13 +10,14 @@ use App\Http\Controllers\HR_Department\DriverLeaveController;
 use App\Http\Controllers\HR_Department\EmployeeController;
 use App\Http\Controllers\HR_Department\EmployeeLeaveController;
 use App\Http\Controllers\HR_Department\HRDashboardController;
-use App\Http\Controllers\HR_Department\MirasolBiometricsLogController;
 use App\Http\Controllers\HR_Department\HrOffenseController;
+use App\Http\Controllers\HR_Department\MirasolBiometricsLogController;
 use App\Http\Controllers\IT_Department\CctvController;
 use App\Http\Controllers\IT_Department\TicketController;
 use App\Http\Controllers\Maintenance\CategoryController;
 use App\Http\Controllers\Maintenance\ItemsController;
 use App\Http\Controllers\Maintenance\PurchaseReceiveController;
+use App\Http\Controllers\Maintenance\ReceivingController;
 use App\Http\Controllers\Maintenance\RequestController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserManagementController;
@@ -200,7 +201,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
         });
 
-
     /*
     |--------------------------------------------------------------------------
     | Leave Management
@@ -329,6 +329,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/edit/{id}', 'edit')->name('edit');
             Route::post('/update/{id}', 'update')->name('update');
             Route::get('/status/{id}', 'destroy')->name('destroy');
+            Route::get('/dashboard', 'dashboard')->name('dashboard');
 
         });
 
@@ -336,6 +337,13 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('po/receiving', 'index')->name('index');
             Route::get('po/receiving/{id}', 'details')->name('details');
             Route::post('po/item/{id}/receive', 'receive')->name('received');
+        });
+
+        Route::prefix('receivings')->name('receivings.')->controller(ReceivingController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/store', 'store')->name('store');
+            Route::get('/{id}', 'show')->name('show');
         });
     });
 

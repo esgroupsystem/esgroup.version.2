@@ -28,6 +28,33 @@ class ItemsController extends Controller
         return view('maintenance.items.index', compact('categories', 'items', 'stock'));
     }
 
+    public function dashboard()
+    {
+        $productsWithStock = Product::with('category')
+            ->where('stock_qty', '>', 0)
+            ->orderBy('stock_qty', 'desc')
+            ->paginate(10, ['*'], 'with_stock');
+
+        $productsLowStock = Product::with('category')
+            ->where('stock_qty', '<=', 5)
+            ->orderBy('stock_qty', 'asc')
+            ->paginate(10, ['*'], 'low_stock');
+
+        $totalItems = Product::count();
+        $totalStock = Product::sum('stock_qty');
+        $lowStock = Product::where('stock_qty', '>', 0)->where('stock_qty', '<=', 5)->count();
+        $outOfStock = Product::where('stock_qty', '<=', 0)->count();
+
+        return view('maintenance.items.dashboard', compact(
+            'productsWithStock',
+            'productsLowStock',
+            'totalItems',
+            'totalStock',
+            'lowStock',
+            'outOfStock'
+        ));
+    }
+
     public function store(Request $request)
     {
         $request->validate([
