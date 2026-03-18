@@ -12,3 +12,7 @@ Schedule::command('crosschex:sync')
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->runInBackground();
+
+Schedule::command('leaves:employee-ready-for-duty')->dailyAt('05:00');
+Schedule::command('leaves:driver-ready-for-duty')->dailyAt('05:00');
+Schedule::command('leaves:conductor-ready-for-duty')->dailyAt('05:00');

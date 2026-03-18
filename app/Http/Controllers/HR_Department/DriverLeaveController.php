@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
+use App\Mail\LeaveNoticeail;
 use App\Models\DriverLeave;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class DriverLeaveController extends Controller
@@ -31,16 +33,16 @@ class DriverLeaveController extends Controller
 
         $leaves = (clone $baseQuery)
             ->orderByRaw("
-            CASE
-                WHEN status IS NULL OR status = '' THEN 1
-                WHEN status = 'active' THEN 1
-                WHEN status = 'on_leave' THEN 1
-                WHEN status = 'completed' THEN 2
-                WHEN status = 'cancelled' THEN 3
-                WHEN status = 'terminated' THEN 3
-                ELSE 2
-            END ASC
-        ")
+                CASE
+                    WHEN status IS NULL OR status = '' THEN 1
+                    WHEN status = 'active' THEN 1
+                    WHEN status = 'on_leave' THEN 1
+                    WHEN status = 'completed' THEN 2
+                    WHEN status = 'cancelled' THEN 3
+                    WHEN status = 'terminated' THEN 3
+                    ELSE 2
+                END ASC
+            ")
             ->orderByDesc('id')
             ->paginate(10)
             ->withQueryString();
@@ -57,6 +59,7 @@ class DriverLeaveController extends Controller
             };
 
             $leave->record_status_badge = '<span class="badge bg-'.$statusColor.'">'.e($statusLabel).'</span>';
+
             $start = $leave->start_date
                 ? Carbon::parse($leave->start_date, 'Asia/Manila')->startOfDay()
                 : null;
@@ -89,20 +92,20 @@ class DriverLeaveController extends Controller
             }
 
             if ($today->lte($end)) {
-                $remaining_days = $today->diffInDays($end) + 1;
+                $remainingDays = $today->diffInDays($end) + 1;
                 $leave->remaining_status =
-                    '<span class="badge bg-success">On Leave ('.$remaining_days.' day'.($remaining_days > 1 ? 's' : '').' left)</span>';
+                    '<span class="badge bg-success">On Leave ('.$remainingDays.' day'.($remainingDays > 1 ? 's' : '').' left)</span>';
 
                 continue;
             }
 
-            $days_after_end = $end->diffInDays($today);
+            $daysAfterEnd = $end->diffInDays($today);
 
-            if ($days_after_end == 1) {
+            if ($daysAfterEnd == 1) {
                 $leave->remaining_status = '<span class="badge bg-primary">Ready for Duty</span>';
-            } elseif ($days_after_end >= 2 && $days_after_end <= 9) {
+            } elseif ($daysAfterEnd >= 2 && $daysAfterEnd <= 9) {
                 $leave->remaining_status = '<span class="badge bg-info">Warning for 1st Notice</span>';
-            } elseif ($days_after_end >= 10 && $days_after_end <= 22) {
+            } elseif ($daysAfterEnd >= 10 && $daysAfterEnd <= 22) {
                 $leave->remaining_status = '<span class="badge bg-warning text-dark">Warning for 2nd Notice</span>';
             } else {
                 $leave->remaining_status = '<span class="badge bg-danger">Subject for Termination</span>';
@@ -155,7 +158,6 @@ class DriverLeaveController extends Controller
 
         $action = $request->action_type;
         $note = $request->note;
-
         $employee = $leave->employee;
 
         if ($action === 'first') {
@@ -255,7 +257,7 @@ class DriverLeaveController extends Controller
         $drivers = Employee::whereHas('position', function ($q) {
             $q->where('title', 'Driver');
         })
-            ->where('status', 'Active')   // ⭐ Only active drivers allowed
+            ->where('status', 'Active')
             ->get();
 
         return view('hr_department.leaves.driver.create', compact('drivers'));
@@ -279,9 +281,9 @@ class DriverLeaveController extends Controller
             'end_date' => $request->end_date,
             'days' => $days,
             'reason' => $request->reason,
+            'status' => 'Active',
         ]);
 
-        // ⭐ UPDATE EMPLOYEE STATUS TO "On Leave"
         $employee = Employee::find($request->employee_id);
         if ($employee) {
             $employee->status = 'On Leave';

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
+use App\Mail\LeaveNoticeMail;
 use App\Models\ConductorLeave;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class ConductorLeaveController extends Controller
@@ -20,13 +22,13 @@ class ConductorLeaveController extends Controller
 
         $baseQuery = ConductorLeave::with('employee');
 
-        if (! empty($search)) {
+        if (!empty($search)) {
             $baseQuery->where(function ($q) use ($search) {
                 $q->whereHas('employee', function ($qq) use ($search) {
                     $qq->where('full_name', 'like', "%{$search}%");
                 })
-                    ->orWhere('leave_type', 'like', "%{$search}%")
-                    ->orWhere('status', 'like', "%{$search}%");
+                ->orWhere('leave_type', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%");
             });
         }
 
@@ -57,7 +59,7 @@ class ConductorLeaveController extends Controller
                 default => 'primary',
             };
 
-            $leave->record_status_badge = '<span class="badge bg-'.$statusColor.'">'.e($statusLabel).'</span>';
+            $leave->record_status_badge = '<span class="badge bg-' . $statusColor . '">' . e($statusLabel) . '</span>';
 
             $start = $leave->start_date
                 ? Carbon::parse($leave->start_date, 'Asia/Manila')->startOfDay()
@@ -67,7 +69,6 @@ class ConductorLeaveController extends Controller
                 ? Carbon::parse($leave->end_date, 'Asia/Manila')->startOfDay()
                 : null;
 
-            // locked statuses override
             if (in_array($rawStatus, ['cancelled', 'terminated', 'completed'], true)) {
                 $leave->remaining_status = match ($rawStatus) {
                     'completed' => '<span class="badge bg-success">Completed</span>',
@@ -79,33 +80,30 @@ class ConductorLeaveController extends Controller
                 continue;
             }
 
-            if (! $start || ! $end) {
+            if (!$start || !$end) {
                 $leave->remaining_status = '<span class="badge bg-secondary">No schedule</span>';
-
                 continue;
             }
 
             if ($today->lt($start)) {
                 $leave->remaining_status = '<span class="badge bg-secondary">Not started</span>';
-
                 continue;
             }
 
             if ($today->lte($end)) {
-                $remaining_days = $today->diffInDays($end) + 1;
+                $remainingDays = $today->diffInDays($end) + 1;
                 $leave->remaining_status =
-                    '<span class="badge bg-success">On Leave ('.$remaining_days.' day'.($remaining_days > 1 ? 's' : '').' left)</span>';
-
+                    '<span class="badge bg-success">On Leave (' . $remainingDays . ' day' . ($remainingDays > 1 ? 's' : '') . ' left)</span>';
                 continue;
             }
 
-            $days_after_end = $end->diffInDays($today);
+            $daysAfterEnd = $end->diffInDays($today);
 
-            if ($days_after_end == 1) {
+            if ($daysAfterEnd == 1) {
                 $leave->remaining_status = '<span class="badge bg-primary">Ready for Duty</span>';
-            } elseif ($days_after_end >= 2 && $days_after_end <= 9) {
+            } elseif ($daysAfterEnd >= 2 && $daysAfterEnd <= 9) {
                 $leave->remaining_status = '<span class="badge bg-info">Warning for 1st Notice</span>';
-            } elseif ($days_after_end >= 10 && $days_after_end <= 22) {
+            } elseif ($daysAfterEnd >= 10 && $daysAfterEnd <= 22) {
                 $leave->remaining_status = '<span class="badge bg-warning text-dark">Warning for 2nd Notice</span>';
             } else {
                 $leave->remaining_status = '<span class="badge bg-danger">Subject for Termination</span>';
@@ -132,7 +130,7 @@ class ConductorLeaveController extends Controller
             } elseif ($level >= 3) {
                 $counts['termination']++;
             } else {
-                if (! in_array($status, ['cancelled', 'terminated', 'completed'], true)) {
+                if (!in_array($status, ['cancelled', 'terminated', 'completed'], true)) {
                     $counts['active']++;
                 }
             }
@@ -158,18 +156,16 @@ class ConductorLeaveController extends Controller
 
         $action = $request->action_type;
         $note = $request->note;
-
         $employee = $leave->employee;
 
         if ($action === 'first') {
 
             if ($leave->first_notice_sent_at) {
                 flash('1st Notice already sent.')->info();
-
                 return back();
             }
 
-            $leave->first_notice_sent_at = now();
+            $leave->first_notice_sent_at = now('Asia/Manila');
             $leave->offense_level = 1;
             $leave->last_action_note = $note;
             $leave->save();
@@ -178,19 +174,17 @@ class ConductorLeaveController extends Controller
 
         } elseif ($action === 'second') {
 
-            if (! $leave->first_notice_sent_at) {
+            if (!$leave->first_notice_sent_at) {
                 flash('Send 1st Notice first.')->warning();
-
                 return back();
             }
 
             if ($leave->second_notice_sent_at) {
                 flash('2nd Notice already sent.')->info();
-
                 return back();
             }
 
-            $leave->second_notice_sent_at = now();
+            $leave->second_notice_sent_at = now('Asia/Manila');
             $leave->offense_level = 2;
             $leave->last_action_note = $note;
             $leave->save();
@@ -199,19 +193,17 @@ class ConductorLeaveController extends Controller
 
         } elseif ($action === 'terminate') {
 
-            if (! $leave->second_notice_sent_at) {
+            if (!$leave->second_notice_sent_at) {
                 flash('Send 2nd Notice first.')->warning();
-
                 return back();
             }
 
             if ($leave->final_notice_sent_at) {
                 flash('Final Notice already sent.')->info();
-
                 return back();
             }
 
-            $leave->final_notice_sent_at = now();
+            $leave->final_notice_sent_at = now('Asia/Manila');
             $leave->offense_level = 3;
             $leave->status = 'terminated';
             $leave->last_action_note = $note;
@@ -238,8 +230,14 @@ class ConductorLeaveController extends Controller
 
         } elseif ($action === 'ready') {
 
+            if ($leave->ready_for_duty_notified_at) {
+                flash('Ready for Duty already notified.')->info();
+                return back();
+            }
+
             $leave->status = 'completed';
             $leave->last_action_note = $note;
+            $leave->ready_for_duty_notified_at = now('Asia/Manila');
             $leave->save();
 
             if ($employee) {
@@ -258,8 +256,8 @@ class ConductorLeaveController extends Controller
         $conductors = Employee::whereHas('position', function ($q) {
             $q->where('title', 'Conductor');
         })
-            ->where('status', 'Active')
-            ->get();
+        ->where('status', 'Active')
+        ->get();
 
         return view('hr_department.leaves.conductor.create', compact('conductors'));
     }
@@ -271,17 +269,19 @@ class ConductorLeaveController extends Controller
             'leave_type' => 'required',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'reason' => 'nullable|string',
         ]);
 
         $days = Carbon::parse($request->start_date)->diffInDays(Carbon::parse($request->end_date)) + 1;
 
-        ConductorLeave::create([
+        $leave = ConductorLeave::create([
             'employee_id' => $request->employee_id,
             'leave_type' => $request->leave_type,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'days' => $days,
             'reason' => $request->reason,
+            'status' => 'Active',
         ]);
 
         $employee = Employee::find($request->employee_id);
@@ -324,6 +324,7 @@ class ConductorLeaveController extends Controller
             'days' => $days,
             'reason' => $request->reason,
         ]);
+
 
         flash('Leave updated successfully')->success();
 

@@ -20,13 +20,13 @@ class EmployeeLeaveController extends Controller
 
         $baseQuery = EmployeeLeave::with('employee');
 
-        if (!empty($search)) {
+        if (! empty($search)) {
             $baseQuery->where(function ($q) use ($search) {
                 $q->whereHas('employee', function ($qq) use ($search) {
                     $qq->where('full_name', 'like', "%{$search}%");
                 })
-                ->orWhere('leave_type', 'like', "%{$search}%")
-                ->orWhere('status', 'like', "%{$search}%");
+                    ->orWhere('leave_type', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%");
             });
         }
 
@@ -57,10 +57,10 @@ class EmployeeLeaveController extends Controller
                 default => 'primary',
             };
 
-            $leave->record_status_badge = '<span class="badge bg-' . $statusColor . '">' . e($statusLabel) . '</span>';
+            $leave->record_status_badge = '<span class="badge bg-'.$statusColor.'">'.e($statusLabel).'</span>';
 
             $start = $leave->start_date ? Carbon::parse($leave->start_date, 'Asia/Manila')->startOfDay() : null;
-            $end   = $leave->end_date ? Carbon::parse($leave->end_date, 'Asia/Manila')->startOfDay() : null;
+            $end = $leave->end_date ? Carbon::parse($leave->end_date, 'Asia/Manila')->startOfDay() : null;
 
             if (in_array($rawStatus, ['cancelled', 'terminated', 'completed'], true)) {
                 $leave->remaining_status = match ($rawStatus) {
@@ -69,23 +69,27 @@ class EmployeeLeaveController extends Controller
                     'terminated' => '<span class="badge bg-danger">Terminated</span>',
                     default => '<span class="badge bg-secondary">N/A</span>',
                 };
+
                 continue;
             }
 
-            if (!$start || !$end) {
+            if (! $start || ! $end) {
                 $leave->remaining_status = '<span class="badge bg-secondary">No schedule</span>';
+
                 continue;
             }
 
             if ($today->lt($start)) {
                 $leave->remaining_status = '<span class="badge bg-secondary">Not started</span>';
+
                 continue;
             }
 
             if ($today->lte($end)) {
                 $remaining_days = $today->diffInDays($end) + 1;
                 $leave->remaining_status =
-                    '<span class="badge bg-success">On Leave (' . $remaining_days . ' day' . ($remaining_days > 1 ? 's' : '') . ' left)</span>';
+                    '<span class="badge bg-success">On Leave ('.$remaining_days.' day'.($remaining_days > 1 ? 's' : '').' left)</span>';
+
                 continue;
             }
 
@@ -111,11 +115,16 @@ class EmployeeLeaveController extends Controller
             $level = (int) ($l->offense_level ?? 0);
             $status = strtolower($l->status ?? '');
 
-            if ($level === 1) $counts['first']++;
-            elseif ($level === 2) $counts['second']++;
-            elseif ($level >= 3) $counts['termination']++;
-            else {
-                if (!in_array($status, ['cancelled', 'terminated', 'completed'], true)) $counts['active']++;
+            if ($level === 1) {
+                $counts['first']++;
+            } elseif ($level === 2) {
+                $counts['second']++;
+            } elseif ($level >= 3) {
+                $counts['termination']++;
+            } else {
+                if (! in_array($status, ['cancelled', 'terminated', 'completed'], true)) {
+                    $counts['active']++;
+                }
             }
         }
 
@@ -133,7 +142,9 @@ class EmployeeLeaveController extends Controller
             'note' => 'nullable|string|max:1000',
         ]);
 
-        if ($validator->fails()) return back()->withErrors($validator);
+        if ($validator->fails()) {
+            return back()->withErrors($validator);
+        }
 
         $action = $request->action_type;
         $note = $request->note;
@@ -141,7 +152,9 @@ class EmployeeLeaveController extends Controller
         $employee = $leave->employee;
 
         if ($action === 'first') {
-            if ($leave->first_notice_sent_at) return back()->with('info', '1st Notice already sent.');
+            if ($leave->first_notice_sent_at) {
+                return back()->with('info', '1st Notice already sent.');
+            }
 
             $leave->first_notice_sent_at = now();
             $leave->offense_level = 1;
@@ -151,8 +164,12 @@ class EmployeeLeaveController extends Controller
             flash('1st Notice marked as Sent.')->success();
 
         } elseif ($action === 'second') {
-            if (!$leave->first_notice_sent_at) return back()->with('warning', 'Send 1st Notice first.');
-            if ($leave->second_notice_sent_at) return back()->with('info', '2nd Notice already sent.');
+            if (! $leave->first_notice_sent_at) {
+                return back()->with('warning', 'Send 1st Notice first.');
+            }
+            if ($leave->second_notice_sent_at) {
+                return back()->with('info', '2nd Notice already sent.');
+            }
 
             $leave->second_notice_sent_at = now();
             $leave->offense_level = 2;
@@ -162,8 +179,12 @@ class EmployeeLeaveController extends Controller
             flash('2nd Notice marked as Sent.')->success();
 
         } elseif ($action === 'terminate') {
-            if (!$leave->second_notice_sent_at) return back()->with('warning', 'Send 2nd Notice first.');
-            if ($leave->final_notice_sent_at) return back()->with('info', 'Final Notice already sent.');
+            if (! $leave->second_notice_sent_at) {
+                return back()->with('warning', 'Send 2nd Notice first.');
+            }
+            if ($leave->final_notice_sent_at) {
+                return back()->with('info', 'Final Notice already sent.');
+            }
 
             $leave->final_notice_sent_at = now();
             $leave->offense_level = 3;
@@ -171,7 +192,9 @@ class EmployeeLeaveController extends Controller
             $leave->last_action_note = $note;
             $leave->save();
 
-            if ($employee) $employee->update(['status' => 'Terminated']);
+            if ($employee) {
+                $employee->update(['status' => 'Terminated']);
+            }
 
             flash('Final Notice marked as Sent (Termination).')->success();
 
@@ -180,7 +203,9 @@ class EmployeeLeaveController extends Controller
             $leave->last_action_note = $note;
             $leave->save();
 
-            if ($employee) $employee->update(['status' => 'Active']);
+            if ($employee) {
+                $employee->update(['status' => 'Active']);
+            }
 
             flash('Leave cancelled & employee returned to Active.')->success();
 
@@ -189,7 +214,9 @@ class EmployeeLeaveController extends Controller
             $leave->last_action_note = $note;
             $leave->save();
 
-            if ($employee) $employee->update(['status' => 'Active']);
+            if ($employee) {
+                $employee->update(['status' => 'Active']);
+            }
 
             flash('Employee marked as Ready for Duty.')->success();
         }
@@ -223,6 +250,7 @@ class EmployeeLeaveController extends Controller
         EmployeeLeave::create([
             'employee_id' => $request->employee_id,
             'leave_type' => $request->leave_type,
+            'status'   => 'Active',
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'days' => $days,
@@ -230,7 +258,9 @@ class EmployeeLeaveController extends Controller
         ]);
 
         $employee = Employee::find($request->employee_id);
-        if ($employee) $employee->update(['status' => 'On Leave']);
+        if ($employee) {
+            $employee->update(['status' => 'On Leave']);
+        }
 
         flash('Employee Leave Created Successfully!')->success();
 
