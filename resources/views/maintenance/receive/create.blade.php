@@ -137,11 +137,6 @@
                                         <td>
                                             <select name="product_id[]" class="form-select product-select" required>
                                                 <option value="">Select Product</option>
-                                                @foreach ($products as $product)
-                                                    <option value="{{ $product->id }}">
-                                                        {{ $product->product_name }}
-                                                    </option>
-                                                @endforeach
                                             </select>
                                         </td>
                                         <td>
@@ -184,13 +179,15 @@
 @endsection
 
 @php
-    $productData = $products->map(function ($p) {
-        return [
-            'id' => (string) $p->id,
-            'name' => $p->product_name,
-            'stock' => (string) $p->stock_qty,
-        ];
-    })->values();
+    $productData = $products
+        ->map(function ($p) {
+            return [
+                'id' => (string) $p->id,
+                'name' => $p->product_name,
+                'stock' => (string) $p->stock_qty,
+            ];
+        })
+        ->values();
 @endphp
 
 @push('scripts')
@@ -208,44 +205,17 @@
                 .filter(Boolean);
         }
 
-        function buildProductOptions(currentValue = '') {
+        function filterProducts(search = '', currentValue = '') {
             const selectedIds = getSelectedProductIds();
+            const keyword = (search || '').trim().toLowerCase();
 
-            let html = '<option value="">Select Product</option>';
-
-            productData.forEach(product => {
+            return productData.filter(product => {
                 const usedElsewhere = selectedIds.includes(product.id) && product.id !== currentValue;
 
-                if (!usedElsewhere) {
-                    html +=
-                        `<option value="${product.id}" ${product.id === currentValue ? 'selected' : ''}>${product.name}</option>`;
-                }
+                if (usedElsewhere) return false;
+                if (!keyword) return false; // IMPORTANT: show nothing first
+                return product.name.toLowerCase().includes(keyword);
             });
-
-            return html;
-        }
-
-        function initChoiceForSelect(select) {
-            if (!window.Choices) return;
-
-            if (select._choicesInstance) {
-                select._choicesInstance.destroy();
-                select._choicesInstance = null;
-            }
-
-            const instance = new Choices(select, {
-                searchEnabled: true,
-                placeholder: true,
-                allowHTML: false,
-                itemSelectText: '',
-                shouldSort: false,
-                searchPlaceholderValue: 'Search product...'
-            });
-
-            select._choicesInstance = instance;
-
-            select.removeEventListener('change', onProductChange);
-            select.addEventListener('change', onProductChange);
         }
 
         function updateStockLabel(select) {
@@ -270,15 +240,114 @@
             }, 0);
         }
 
-        function refreshOtherRows(activeSelect) {
+        function initChoiceForSelect(select) {
+            if (!window.Choices) return;
+
+            const currentValue = select.value || '';
+
+            if (select._choicesInstance) {
+                select._choicesInstance.destroy();
+                select._choicesInstance = null;
+            }
+
+            // remove existing options first
+            select.innerHTML = '<option value="">Select Product</option>';
+
+            const instance = new Choices(select, {
+                searchEnabled: true,
+                searchChoices: false,
+                shouldSort: false,
+                allowHTML: false,
+                itemSelectText: '',
+                placeholder: true,
+                placeholderValue: 'Select Product',
+                searchPlaceholderValue: 'Search product...',
+                noChoicesText: 'Type to search product',
+                noResultsText: 'No product found',
+                duplicateItemsAllowed: false,
+                removeItemButton: false
+            });
+
+            select._choicesInstance = instance;
+
+            // restore selected item if there is one
+            if (currentValue && productMap[currentValue]) {
+                instance.setChoices([{
+                    value: productMap[currentValue].id,
+                    label: productMap[currentValue].name,
+                    selected: true
+                }], 'value', 'label', true);
+            }
+
+            // when typing, only then show matching products
+            select.addEventListener('search', function(event) {
+                const searchValue = event.detail.value || '';
+                const matches = filterProducts(searchValue, currentValue);
+
+                instance.clearChoices();
+
+                if (currentValue && productMap[currentValue]) {
+                    instance.setChoices([{
+                        value: productMap[currentValue].id,
+                        label: productMap[currentValue].name,
+                        selected: true
+                    }], 'value', 'label', true);
+                }
+
+                if (searchValue.trim() !== '') {
+                    const choices = matches.map(product => ({
+                        value: product.id,
+                        label: product.name,
+                        selected: product.id === currentValue
+                    }));
+
+                    instance.setChoices(choices, 'value', 'label', false);
+                }
+            });
+
+            // when dropdown opens, keep it empty first unless already selected
+            select.addEventListener('showDropdown', function() {
+                const input = select.closest('td')?.querySelector('.choices__input--cloned');
+                const keyword = input ? input.value.trim() : '';
+
+                instance.clearChoices();
+
+                if (currentValue && productMap[currentValue]) {
+                    instance.setChoices([{
+                        value: productMap[currentValue].id,
+                        label: productMap[currentValue].name,
+                        selected: true
+                    }], 'value', 'label', true);
+                }
+
+                if (keyword !== '') {
+                    const matches = filterProducts(keyword, currentValue);
+
+                    const choices = matches.map(product => ({
+                        value: product.id,
+                        label: product.name,
+                        selected: product.id === currentValue
+                    }));
+
+                    instance.setChoices(choices, 'value', 'label', false);
+                }
+            });
+
+            select.removeEventListener('change', onProductChange);
+            select.addEventListener('change', onProductChange);
+
+            updateStockLabel(select);
+        }
+
+        function refreshOtherRows(activeSelect = null) {
             document.querySelectorAll('.product-select').forEach(select => {
+                const currentValue = select.value;
+
                 if (select === activeSelect) {
                     updateStockLabel(select);
                     return;
                 }
 
-                const currentValue = select.value;
-                select.innerHTML = buildProductOptions(currentValue);
                 initChoiceForSelect(select);
                 select.value = currentValue;
                 updateStockLabel(select);
@@ -288,7 +357,6 @@
         function refreshAllRows() {
             document.querySelectorAll('.product-select').forEach(select => {
                 const currentValue = select.value;
-                select.innerHTML = buildProductOptions(currentValue);
                 initChoiceForSelect(select);
                 select.value = currentValue;
                 updateStockLabel(select);
@@ -300,28 +368,27 @@
             const row = document.createElement('tr');
 
             row.innerHTML = `
-            <td>
-                <select name="product_id[]" class="form-select product-select" required>
-                    <option value="">Select Product</option>
-                </select>
-            </td>
-            <td>
-                <input type="text" class="form-control stock-display bg-light" value="—" readonly>
-            </td>
-            <td>
-                <input type="number" name="qty_delivered[]" class="form-control" min="1" required>
-            </td>
-            <td class="text-center">
-                <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">
-                    Remove
-                </button>
-            </td>
-        `;
+                <td>
+                    <select name="product_id[]" class="form-select product-select" required>
+                        <option value="">Select Product</option>
+                    </select>
+                </td>
+                <td>
+                    <input type="text" class="form-control stock-display bg-light" value="—" readonly>
+                </td>
+                <td>
+                    <input type="number" name="qty_delivered[]" class="form-control" min="1" required>
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">
+                        Remove
+                    </button>
+                </td>
+            `;
 
             tableBody.appendChild(row);
 
             const select = row.querySelector('.product-select');
-            select.innerHTML = buildProductOptions('');
             initChoiceForSelect(select);
             updateStockLabel(select);
         }
@@ -383,14 +450,21 @@
 
 @push('styles')
     <style>
-        .choices__list--dropdown,
-        .choices__list--dropdown .choices__list {
-            max-height: none !important;
-            overflow-y: visible !important;
-        }
-
         .table-responsive {
             overflow: visible !important;
+        }
+
+        .choices {
+            margin-bottom: 0;
+        }
+
+        .choices__list--dropdown,
+        .choices__list[aria-expanded] {
+            z-index: 1055 !important;
+        }
+
+        .choices__inner {
+            min-height: 38px;
         }
     </style>
 @endpush
