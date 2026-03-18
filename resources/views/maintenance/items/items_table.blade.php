@@ -4,6 +4,7 @@
             <tr>
                 <th>Item Name</th>
                 <th>Category</th>
+                <th>Supplier / Shop</th>
                 <th class="text-center">Actions</th>
             </tr>
         </thead>
@@ -25,16 +26,23 @@
 
                     {{-- CATEGORY --}}
                     <td>
-                        <div class="fw-semibold text-110">{{ $item->category->name }}</div>
+                        <div class="fw-semibold text-110">{{ $item->category->name ?? 'N/A' }}</div>
                         @if ($item->part_number)
                             <div class="text-600 fs-9">#{{ $item->part_number }}</div>
                         @endif
                     </td>
 
+                    {{-- SUPPLIER --}}
+                    <td>
+                        <div class="fw-semibold text-110">
+                            {{ $item->supplier_name ?: 'N/A' }}
+                        </div>
+                    </td>
+
                     {{-- ACTIONS --}}
                     <td class="text-center">
                         <div class="dropdown font-sans-serif position-static">
-                            <button class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal"
+                            <button type="button" class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal"
                                 data-bs-toggle="dropdown">
                                 <span class="fas fa-ellipsis-h fs-10"></span>
                             </button>
@@ -43,22 +51,26 @@
                                 <div class="py-2">
 
                                     {{-- EDIT --}}
-                                    <button class="dropdown-item"
-                                        onclick="openEditItem({{ $item->id }},
+                                    <button type="button" class="dropdown-item"
+                                        onclick="openEditItem(
+                                            {{ $item->id }},
                                             '{{ $item->category_id }}',
-                                            '{{ $item->product_name }}',
-                                            '{{ $item->unit }}',
-                                            '{{ $item->part_number }}',
-                                            `{{ $item->details }}`)">
+                                            @json($item->product_name),
+                                            @json($item->supplier_name),
+                                            @json($item->unit),
+                                            @json($item->part_number),
+                                            @json($item->details)
+                                        )">
                                         <i class="fas fa-edit me-2"></i> Edit
                                     </button>
 
                                     {{-- DELETE --}}
-                                    <form action="{{ route('items.destroy', $item->id) }}"
-                                        method="POST" class="d-inline confirm-delete">
+                                    <form action="{{ route('items.destroy', $item->id) }}" method="POST"
+                                        class="confirm-delete m-0"
+                                        onsubmit="return confirm('Are you sure you want to delete this item?')">
                                         @csrf
                                         @method('DELETE')
-                                        <button class="dropdown-item text-danger">
+                                        <button type="submit" class="dropdown-item text-danger">
                                             <i class="fas fa-trash me-2"></i> Delete
                                         </button>
                                     </form>
@@ -71,7 +83,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="3" class="text-center text-muted py-3">No items found.</td>
+                    <td colspan="4" class="text-center text-muted py-3">No items found.</td>
                 </tr>
             @endforelse
         </tbody>

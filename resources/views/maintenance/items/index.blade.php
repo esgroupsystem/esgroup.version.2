@@ -95,6 +95,11 @@
                             <input type="text" class="form-control" name="product_name" id="itemName" required>
                         </div>
 
+                        <div class="mb-3">
+                            <label class="form-label">Supplier / Shop Name</label>
+                            <input type="text" class="form-control" name="supplier_name" id="itemSupplier">
+                        </div>
+
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Unit</label>
@@ -129,7 +134,6 @@
         </div>
     </div>
 
-
     {{-- STOCK MODAL --}}
     <div class="modal fade" id="stockModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-centered">
@@ -145,7 +149,6 @@
                 <div class="modal-body bg-100">
                     <div id="stockTableContainer">
                         @include('maintenance.items.stock_table', ['products' => $stock])
-
                     </div>
                 </div>
 
@@ -161,12 +164,11 @@
 
 @endsection
 
-
 @push('scripts')
     <script>
         /* ------------------------------
-               AJAX PAGINATION INSIDE MODAL
-            ------------------------------ */
+                       AJAX PAGINATION INSIDE MODAL
+                    ------------------------------ */
         document.addEventListener("DOMContentLoaded", function() {
 
             function loadStockTable(url) {
@@ -186,7 +188,7 @@
                 document.querySelectorAll("#stockTableContainer .pagination a")
                     .forEach(link => {
                         link.addEventListener("click", function(e) {
-                            e.preventDefault(); // prevent modal from closing
+                            e.preventDefault();
                             loadStockTable(this.href);
                         });
                     });
@@ -201,17 +203,37 @@
         function openCreateItem() {
             document.getElementById("itemModalTitle").innerText = "Add Item";
             document.getElementById("itemForm").action = "{{ route('items.store') }}";
+
+            const methodInput = document.querySelector('#itemForm input[name="_method"]');
+            if (methodInput) {
+                methodInput.remove();
+            }
+
+            document.getElementById("itemForm").reset();
+            document.getElementById("itemCategory").selectedIndex = 0;
+            document.getElementById("itemSupplier").value = '';
+            document.getElementById("itemDetails").value = '';
         }
 
-        function openEditItem(id, category_id, name, unit, part_number, details) {
-            document.getElementById("itemModalTitle").innerText = "Edit Item";
-            document.getElementById("itemForm").action = "/maintenance/items/" + id;
+        function openEditItem(id, categoryId, productName, supplierName, unit, partNumber, details) {
+            document.getElementById('itemModalTitle').innerText = 'Edit Item';
+            document.getElementById('itemForm').action = '/maintenance/items/' + id;
 
-            document.getElementById("itemCategory").value = category_id;
-            document.getElementById("itemName").value = name;
-            document.getElementById("itemUnit").value = unit;
-            document.getElementById("itemPartNumber").value = part_number;
-            document.getElementById("itemDetails").value = details;
+            let methodInput = document.querySelector('#itemForm input[name="_method"]');
+            if (!methodInput) {
+                methodInput = document.createElement('input');
+                methodInput.type = 'hidden';
+                methodInput.name = '_method';
+                document.getElementById('itemForm').appendChild(methodInput);
+            }
+            methodInput.value = 'PUT';
+
+            document.getElementById('itemCategory').value = categoryId ?? '';
+            document.getElementById('itemName').value = productName ?? '';
+            document.getElementById('itemSupplier').value = supplierName ?? '';
+            document.getElementById('itemUnit').value = unit ?? '';
+            document.getElementById('itemPartNumber').value = partNumber ?? '';
+            document.getElementById('itemDetails').value = details ?? '';
 
             new bootstrap.Modal(document.getElementById('itemModal')).show();
         }

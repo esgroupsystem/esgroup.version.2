@@ -60,6 +60,7 @@ class ItemsController extends Controller
         $request->validate([
             'category_id' => 'required|exists:categories,id',
             'product_name' => 'required|string|max:255',
+            'supplier_name' => 'nullable|string|max:255',
             'unit' => 'nullable|string|max:255',
             'part_number' => 'nullable|string|max:255',
             'details' => 'nullable|string',
@@ -68,6 +69,7 @@ class ItemsController extends Controller
         Product::create([
             'category_id' => $request->category_id,
             'product_name' => $request->product_name,
+            'supplier_name' => $request->supplier_name,
             'unit' => $request->unit,
             'part_number' => $request->part_number,
             'details' => $request->details,
@@ -105,9 +107,14 @@ class ItemsController extends Controller
 
     public function destroy($id)
     {
-        Product::findOrFail($id)->delete();
+        $product = Product::findOrFail($id);
 
-        flash('Item deleted successfully!')->success();
+        try {
+            $product->delete();
+            flash('Item deleted successfully!')->success();
+        } catch (\Exception $e) {
+            flash('Cannot delete this item because it is already used in other records.')->error();
+        }
 
         return back();
     }

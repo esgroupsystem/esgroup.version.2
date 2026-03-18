@@ -36,7 +36,17 @@ class ReceivingController extends Controller
 
     public function create()
     {
-        $products = Product::select('id', 'product_name', 'stock_qty')
+        $products = Product::with('category')
+            ->select(
+                'id',
+                'category_id',
+                'product_name',
+                'supplier_name',
+                'unit',
+                'part_number',
+                'details',
+                'stock_qty'
+            )
             ->orderBy('product_name')
             ->get();
 
