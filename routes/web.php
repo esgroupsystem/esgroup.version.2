@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Accounting\AccountingController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\BusDetailController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HR_Department\ConductorLeaveController;
@@ -16,9 +17,11 @@ use App\Http\Controllers\IT_Department\CctvController;
 use App\Http\Controllers\IT_Department\TicketController;
 use App\Http\Controllers\Maintenance\CategoryController;
 use App\Http\Controllers\Maintenance\ItemsController;
+use App\Http\Controllers\Maintenance\PartsOutController;
 use App\Http\Controllers\Maintenance\PurchaseReceiveController;
 use App\Http\Controllers\Maintenance\ReceivingController;
 use App\Http\Controllers\Maintenance\RequestController;
+use App\Http\Controllers\Maintenance\StockTransferController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Middleware\ForceLockscreen;
@@ -342,10 +345,36 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         Route::prefix('receivings')->name('receivings.')->controller(ReceivingController::class)->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/create', 'create')->name('create');
+            Route::get('/search-products', 'searchProducts')->name('search-products');
             Route::post('/store', 'store')->name('store');
             Route::get('/{id}', 'show')->name('show');
-            Route::get('/search-products','searchProducts')->name('search-products');
         });
+
+        Route::prefix('parts-out')->name('parts-out.')->controller(PartsOutController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::get('/search-products', 'searchProducts')->name('search-products');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{partsOut}', 'show')->name('show');
+            Route::get('/{partsOut}/edit', 'edit')->name('edit');
+            Route::put('/{partsOut}', 'update')->name('update');
+            Route::patch('/{partsOut}/cancel', 'cancel')->name('cancel');
+            Route::get('/{partsOut}/print', 'print')->name('print');
+        });
+
+        Route::prefix('buses')->name('buses.')->controller(BusDetailController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/{busDetail}', 'show')->name('show');
+            Route::get('/{busDetail}/maintenance-history', 'maintenanceHistory')->name('maintenance-history');
+        });
+    });
+
+    Route::middleware(['auth', 'role:Developer,IT Head,Maintenance Head,Maintenance Engineer'])->group(function () {
+        Route::get('stock-transfers/search-products', [StockTransferController::class, 'searchProducts'])
+            ->name('stock-transfers.search-products');
+
+        Route::resource('stock-transfers', StockTransferController::class)
+            ->only(['index', 'create', 'store', 'show']);
     });
 
     /*

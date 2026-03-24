@@ -14,25 +14,19 @@
 
         <div class="content">
 
-            {{-- TOP WELCOME CARD --}}
+            {{-- HEADER --}}
             <div class="row g-3 mb-3">
                 <div class="col-12">
-                    <div class="card bg-body-tertiary dark__bg-opacity-50 shadow-none border overflow-hidden">
-                        <div class="bg-holder bg-card d-none d-sm-block"
-                            style="background-image:url({{ asset('assets/img/illustrations/ticket-bg.png') }});">
-                        </div>
-
-                        <div class="card-body position-relative py-3">
+                    <div class="card bg-body-tertiary border-0 shadow-sm overflow-hidden">
+                        <div class="card-body py-3">
                             <div class="d-flex flex-column flex-sm-row align-items-sm-center">
-                                <img src="{{ asset('assets/img/illustrations/ticket-welcome.png') }}" alt="dashboard"
-                                    width="90" class="me-sm-3 mb-2 mb-sm-0" />
                                 <div>
-                                    <h6 class="mb-1 text-primary">Welcome to</h6>
+                                    <h6 class="mb-1 text-primary">Maintenance</h6>
                                     <h4 class="mb-1 text-primary fw-bold">
-                                        Maintenance <span class="text-info fw-medium">Stock Dashboard</span>
+                                        Stock Dashboard
                                     </h4>
                                     <p class="text-700 mb-0 fs-10">
-                                        Overview of maintenance parts and current stock availability.
+                                        Easy stock monitoring for Main and Balintawak.
                                     </p>
                                 </div>
 
@@ -47,160 +41,168 @@
                 </div>
             </div>
 
-
-            {{-- SUMMARY CARDS --}}
+            {{-- SUMMARY --}}
             <div class="row g-3 mb-3">
-                <div class="col-md-6 col-xl-3">
-                    <div class="card h-100">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="text-600 fs-10 mb-1">Total Products</div>
-                                <h4 class="mb-0">{{ $totalItems }}</h4>
-                            </div>
-                            <div class="icon-item icon-item-lg bg-primary-subtle text-primary border border-primary-subtle">
-                                <span class="fas fa-box-open"></span>
-                            </div>
+                <div class="col-md-6 col-xl-2">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-600 fs-10 mb-1">Products</div>
+                            <h4 class="mb-0">{{ number_format($totalItems) }}</h4>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-md-6 col-xl-3">
-                    <div class="card h-100">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="text-600 fs-10 mb-1">Total Stock Qty</div>
-                                <h4 class="mb-0">{{ $totalStock }}</h4>
-                            </div>
-                            <div class="icon-item icon-item-lg bg-info-subtle text-info border border-info-subtle">
-                                <span class="fas fa-cubes"></span>
-                            </div>
+                <div class="col-md-6 col-xl-2">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-600 fs-10 mb-1">Combined Stock</div>
+                            <h4 class="mb-0">{{ number_format($totalStock) }}</h4>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-md-6 col-xl-3">
-                    <div class="card h-100">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="text-600 fs-10 mb-1">Low Stock</div>
-                                <h4 class="mb-0 text-warning">{{ $lowStock }}</h4>
-                            </div>
-                            <div class="icon-item icon-item-lg bg-warning-subtle text-warning border border-warning-subtle">
-                                <span class="fas fa-exclamation-triangle"></span>
-                            </div>
+                <div class="col-md-6 col-xl-2">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-600 fs-10 mb-1">Main Stock</div>
+                            <h4 class="mb-0 text-primary">{{ number_format($mainTotalStock) }}</h4>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-md-6 col-xl-3">
-                    <div class="card h-100">
-                        <div class="card-body d-flex justify-content-between align-items-center">
-                            <div>
-                                <div class="text-600 fs-10 mb-1">Out of Stock</div>
-                                <h4 class="mb-0 text-danger">{{ $outOfStock }}</h4>
-                            </div>
-                            <div class="icon-item icon-item-lg bg-danger-subtle text-danger border border-danger-subtle">
-                                <span class="fas fa-times-circle"></span>
-                            </div>
+                <div class="col-md-6 col-xl-2">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-600 fs-10 mb-1">Balintawak Stock</div>
+                            <h4 class="mb-0 text-info">{{ number_format($balintawakTotalStock) }}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-xl-2">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-600 fs-10 mb-1">Low Stock</div>
+                            <h4 class="mb-0 text-warning">{{ number_format($lowStock) }}</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 col-xl-2">
+                    <div class="card h-100 border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="text-600 fs-10 mb-1">Out of Stock</div>
+                            <h4 class="mb-0 text-danger">{{ number_format($outOfStock) }}</h4>
                         </div>
                     </div>
                 </div>
             </div>
 
+            {{-- FILTER BAR --}}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <form method="GET" action="{{ route('items.dashboard') }}">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-md-6">
+                                <label class="form-label">Search Product / Part Number</label>
+                                <input type="text" name="search" class="form-control" value="{{ $search }}"
+                                    placeholder="Search by product name or part number">
+                            </div>
 
-            {{-- AVAILABLE STOCK TABLE --}}
-            <div class="card mb-4" id="availableStockTable">
-                <div class="card-header border-bottom border-200 px-0">
-                    <div class="d-lg-flex justify-content-between align-items-center">
-                        <div class="row flex-between-center gy-2 px-x1">
-                            <div class="col-auto pe-0">
-                                <h6 class="mb-0">
-                                    <span class="fas fa-check-circle text-success me-2"></span>
-                                    Available Stocks
-                                </h6>
+                            <div class="col-md-4">
+                                <label class="form-label">Filter View</label>
+                                <select name="location" class="form-select">
+                                    <option value="">All</option>
+                                    <option value="main" {{ $locationFilter === 'main' ? 'selected' : '' }}>Main Only
+                                    </option>
+                                    <option value="balintawak" {{ $locationFilter === 'balintawak' ? 'selected' : '' }}>
+                                        Balintawak Only</option>
+                                    <option value="needs_transfer"
+                                        {{ $locationFilter === 'needs_transfer' ? 'selected' : '' }}>Needs Transfer
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-2 d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-1"></i> Apply
+                                </button>
                             </div>
                         </div>
+                    </form>
+                </div>
+            </div>
 
-                        <div class="border-bottom border-200 my-3 d-lg-none"></div>
-
-                        <div class="d-flex align-items-center justify-content-lg-end px-x1">
-                            <span class="badge badge-subtle-success fs-10 px-3 py-2">
-                                Total Records: {{ $productsWithStock->total() }}
-                            </span>
-                        </div>
+            {{-- MAIN STOCK TABLE --}}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">
+                            <span class="fas fa-warehouse text-primary me-2"></span>
+                            Main Stock
+                        </h6>
+                        <p class="text-muted fs-10 mb-0 mt-1">
+                            Current available stock in {{ $mainLocation->name ?? 'Main' }}.
+                        </p>
                     </div>
+                    <span class="badge badge-subtle-primary fs-10 px-3 py-2">
+                        Total Records: {{ $mainStocksPaginated->total() }}
+                    </span>
                 </div>
 
                 <div class="card-body p-0">
-                    <div class="table-responsive scrollbar" style="max-height: 500px;">
-                        <table class="table table-sm table-hover mb-0 fs-10 align-middle">
-                            <thead class="bg-body-tertiary">
+                    <div class="table-responsive scrollbar">
+                        <table class="table table-hover table-striped align-middle mb-0 fs-10">
+                            <thead class="bg-200 text-900">
                                 <tr>
-                                    <th class="text-800">Category</th>
-                                    <th class="text-800">Product</th>
-                                    <th class="text-800 text-center">Unit</th>
-                                    <th class="text-800 text-center">Status</th>
-                                    <th class="text-800 text-center">Stock</th>
-                                    <th class="text-800" style="min-width: 150px;">Indicator</th>
+                                    <th>Category</th>
+                                    <th>Product</th>
+                                    <th class="text-center">Unit</th>
+                                    <th class="text-center">Available Qty</th>
+                                    <th class="text-center">Status</th>
                                 </tr>
                             </thead>
-
                             <tbody>
-                                @forelse ($productsWithStock as $p)
-                                    @php
-                                        $qty = $p->stock_qty ?? 0;
-                                        $percent = min(100, ($qty / 10) * 100);
-                                    @endphp
-
+                                @forelse($mainStocksPaginated as $p)
                                     <tr>
-                                        <td class="align-middle white-space-nowrap">
-                                            <span class="text-700">{{ $p->category->name ?? '—' }}</span>
-                                        </td>
-
-                                        <td class="align-middle">
-                                            <div class="fw-semi-bold text-900">{{ $p->product_name }}</div>
+                                        <td>{{ $p->category->name ?? ($p->category->category_name ?? '—') }}</td>
+                                        <td>
+                                            <div class="fw-semibold">{{ $p->product_name }}</div>
                                             <div class="text-500 fs-11">{{ $p->details ?: 'No details available' }}</div>
+                                            @if ($p->part_number)
+                                                <div class="text-500 fs-11">Part No: {{ $p->part_number }}</div>
+                                            @endif
                                         </td>
-
-                                        <td class="align-middle text-center">
-                                            <span class="badge badge-subtle-secondary px-2 py-1">
-                                                {{ $p->unit ?: '—' }}
-                                            </span>
-                                        </td>
-
-                                        <td class="align-middle text-center">
-                                            @if ($qty <= 5)
-                                                <span class="badge rounded-pill badge-subtle-warning px-3 py-2">
-                                                    Low
+                                        <td class="text-center">{{ $p->unit ?: '—' }}</td>
+                                        <td class="text-center">
+                                            @if ($p->main_qty <= 0)
+                                                <span class="badge badge-subtle-danger px-3 py-2">
+                                                    {{ $p->main_qty }}
+                                                </span>
+                                            @elseif($p->main_qty <= 5)
+                                                <span class="badge badge-subtle-warning px-3 py-2">
+                                                    {{ $p->main_qty }}
                                                 </span>
                                             @else
-                                                <span class="badge rounded-pill badge-subtle-success px-3 py-2">
-                                                    Available
+                                                <span class="badge badge-subtle-success px-3 py-2">
+                                                    {{ $p->main_qty }}
                                                 </span>
                                             @endif
                                         </td>
-
-                                        <td class="align-middle text-center fw-bold fs-9">
-                                            {{ $qty }}
-                                        </td>
-
-                                        <td class="align-middle">
-                                            <div class="progress bg-200" style="height: 8px;">
-                                                <div class="progress-bar
-                                                    @if ($qty <= 5) bg-warning
-                                                    @else bg-success @endif"
-                                                    role="progressbar" style="width: {{ $percent }}%;"
-                                                    aria-valuenow="{{ $percent }}" aria-valuemin="0"
-                                                    aria-valuemax="100">
-                                                </div>
-                                            </div>
+                                        <td class="text-center">
+                                            @if ($p->main_qty <= 0)
+                                                <span class="badge badge-subtle-danger px-3 py-2">Out of Stock</span>
+                                            @elseif($p->main_qty <= 5)
+                                                <span class="badge badge-subtle-warning px-3 py-2">Low Stock</span>
+                                            @else
+                                                <span class="badge badge-subtle-success px-3 py-2">Available</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center py-5 text-muted">
-                                            <span class="fas fa-box-open fs-5 mb-2 d-block text-400"></span>
-                                            No available stock found.
+                                        <td colspan="5" class="text-center py-5 text-muted">
+                                            No Main stock found.
                                         </td>
                                     </tr>
                                 @endforelse
@@ -211,105 +213,81 @@
 
                 <div class="card-footer bg-body-tertiary py-2">
                     <div class="d-flex justify-content-end">
-                        {{ $productsWithStock->links('pagination.custom') }}
+                        {{ $mainStocksPaginated->links('pagination.custom') }}
                     </div>
                 </div>
             </div>
 
-
-            {{-- LOW / OUT OF STOCK TABLE --}}
-            <div class="card" id="criticalStockTable">
-                <div class="card-header border-bottom border-200 px-0">
-                    <div class="d-lg-flex justify-content-between align-items-center">
-                        <div class="row flex-between-center gy-2 px-x1">
-                            <div class="col-auto pe-0">
-                                <h6 class="mb-0">
-                                    <span class="fas fa-exclamation-triangle text-warning me-2"></span>
-                                    Low / Out of Stock Items
-                                </h6>
-                            </div>
-                        </div>
-
-                        <div class="border-bottom border-200 my-3 d-lg-none"></div>
-
-                        <div class="d-flex align-items-center justify-content-lg-end px-x1">
-                            <span class="badge badge-subtle-warning fs-10 px-3 py-2">
-                                Total Records: {{ $productsLowStock->total() }}
-                            </span>
-                        </div>
+            {{-- BALINTAWAK STOCK TABLE --}}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">
+                            <span class="fas fa-warehouse text-info me-2"></span>
+                            Balintawak Stock
+                        </h6>
+                        <p class="text-muted fs-10 mb-0 mt-1">
+                            Current available stock in {{ $balintawakLocation->name ?? 'Balintawak' }}.
+                        </p>
                     </div>
+                    <span class="badge badge-subtle-info fs-10 px-3 py-2">
+                        Total Records: {{ $balintawakStocksPaginated->total() }}
+                    </span>
                 </div>
 
                 <div class="card-body p-0">
-                    <div class="table-responsive scrollbar" style="max-height: 500px;">
-                        <table class="table table-sm table-hover mb-0 fs-10 align-middle">
-                            <thead class="bg-body-tertiary">
+                    <div class="table-responsive scrollbar">
+                        <table class="table table-hover table-striped align-middle mb-0 fs-10">
+                            <thead class="bg-200 text-900">
                                 <tr>
-                                    <th class="text-800">Category</th>
-                                    <th class="text-800">Product</th>
-                                    <th class="text-800 text-center">Unit</th>
-                                    <th class="text-800 text-center">Status</th>
-                                    <th class="text-800 text-center">Stock</th>
-                                    <th class="text-800" style="min-width: 150px;">Indicator</th>
+                                    <th>Category</th>
+                                    <th>Product</th>
+                                    <th class="text-center">Unit</th>
+                                    <th class="text-center">Available Qty</th>
+                                    <th class="text-center">Status</th>
                                 </tr>
                             </thead>
-
                             <tbody>
-                                @forelse ($productsLowStock as $p)
-                                    @php
-                                        $qty = $p->stock_qty ?? 0;
-                                        $percent = max(0, min(100, ($qty / 10) * 100));
-                                    @endphp
-
+                                @forelse($balintawakStocksPaginated as $p)
                                     <tr>
-                                        <td class="align-middle white-space-nowrap">
-                                            <span class="text-700">{{ $p->category->name ?? '—' }}</span>
-                                        </td>
-
-                                        <td class="align-middle">
-                                            <div class="fw-semi-bold text-900">{{ $p->product_name }}</div>
+                                        <td>{{ $p->category->name ?? ($p->category->category_name ?? '—') }}</td>
+                                        <td>
+                                            <div class="fw-semibold">{{ $p->product_name }}</div>
                                             <div class="text-500 fs-11">{{ $p->details ?: 'No details available' }}</div>
+                                            @if ($p->part_number)
+                                                <div class="text-500 fs-11">Part No: {{ $p->part_number }}</div>
+                                            @endif
                                         </td>
-
-                                        <td class="align-middle text-center">
-                                            <span class="badge badge-subtle-secondary px-2 py-1">
-                                                {{ $p->unit ?: '—' }}
-                                            </span>
-                                        </td>
-
-                                        <td class="align-middle text-center">
-                                            @if ($qty <= 0)
-                                                <span class="badge rounded-pill badge-subtle-danger px-3 py-2">
-                                                    Out of Stock
+                                        <td class="text-center">{{ $p->unit ?: '—' }}</td>
+                                        <td class="text-center">
+                                            @if ($p->balintawak_qty <= 0)
+                                                <span class="badge badge-subtle-danger px-3 py-2">
+                                                    {{ $p->balintawak_qty }}
                                                 </span>
-                                            @elseif ($qty <= 5)
-                                                <span class="badge rounded-pill badge-subtle-warning px-3 py-2">
-                                                    Low
+                                            @elseif($p->balintawak_qty <= 5)
+                                                <span class="badge badge-subtle-warning px-3 py-2">
+                                                    {{ $p->balintawak_qty }}
+                                                </span>
+                                            @else
+                                                <span class="badge badge-subtle-success px-3 py-2">
+                                                    {{ $p->balintawak_qty }}
                                                 </span>
                                             @endif
                                         </td>
-
-                                        <td class="align-middle text-center fw-bold fs-9">
-                                            {{ $qty }}
-                                        </td>
-
-                                        <td class="align-middle">
-                                            <div class="progress bg-200" style="height: 8px;">
-                                                <div class="progress-bar
-                                                    @if ($qty <= 0) bg-danger
-                                                    @elseif($qty <= 5) bg-warning @endif"
-                                                    role="progressbar" style="width: {{ $percent }}%;"
-                                                    aria-valuenow="{{ $percent }}" aria-valuemin="0"
-                                                    aria-valuemax="100">
-                                                </div>
-                                            </div>
+                                        <td class="text-center">
+                                            @if ($p->balintawak_qty <= 0)
+                                                <span class="badge badge-subtle-danger px-3 py-2">Out of Stock</span>
+                                            @elseif($p->balintawak_qty <= 5)
+                                                <span class="badge badge-subtle-warning px-3 py-2">Low Stock</span>
+                                            @else
+                                                <span class="badge badge-subtle-success px-3 py-2">Available</span>
+                                            @endif
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="text-center py-5 text-muted">
-                                            <span class="fas fa-box-open fs-5 mb-2 d-block text-400"></span>
-                                            No low or out of stock items found.
+                                        <td colspan="5" class="text-center py-5 text-muted">
+                                            No Balintawak stock found.
                                         </td>
                                     </tr>
                                 @endforelse
@@ -320,7 +298,81 @@
 
                 <div class="card-footer bg-body-tertiary py-2">
                     <div class="d-flex justify-content-end">
-                        {{ $productsLowStock->links('pagination.custom') }}
+                        {{ $balintawakStocksPaginated->links('pagination.custom') }}
+                    </div>
+                </div>
+            </div>
+
+            {{-- NEEDS TRANSFER --}}
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">
+                            <span class="fas fa-exchange-alt text-warning me-2"></span>
+                            Needs Transfer Suggestion
+                        </h6>
+                        <p class="text-muted fs-10 mb-0 mt-1">
+                            Suggested stock movement between Main and Balintawak.
+                        </p>
+                    </div>
+                    <span class="badge badge-subtle-warning fs-10 px-3 py-2">
+                        Total Records: {{ $needsTransferPaginated->total() }}
+                    </span>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="table-responsive scrollbar">
+                        <table class="table table-hover table-striped align-middle mb-0 fs-10">
+                            <thead class="bg-200 text-900">
+                                <tr>
+                                    <th>Category</th>
+                                    <th>Product</th>
+                                    <th class="text-center">Main Qty</th>
+                                    <th class="text-center">Balintawak Qty</th>
+                                    <th class="text-center">Suggestion</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($needsTransferPaginated as $p)
+                                    <tr>
+                                        <td>{{ $p->category->name ?? ($p->category->category_name ?? '—') }}</td>
+                                        <td>
+                                            <div class="fw-semibold">{{ $p->product_name }}</div>
+                                            @if ($p->part_number)
+                                                <div class="text-500 fs-11">Part No: {{ $p->part_number }}</div>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge badge-subtle-primary px-3 py-2">
+                                                {{ $p->main_qty }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge badge-subtle-info px-3 py-2">
+                                                {{ $p->balintawak_qty }}
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge badge-subtle-warning px-3 py-2">
+                                                {{ $p->transfer_suggestion }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5 text-muted">
+                                            No transfer suggestions found.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card-footer bg-body-tertiary py-2">
+                    <div class="d-flex justify-content-end">
+                        {{ $needsTransferPaginated->links('pagination.custom') }}
                     </div>
                 </div>
             </div>

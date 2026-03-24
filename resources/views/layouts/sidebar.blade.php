@@ -56,21 +56,21 @@
                         @endrole
 
                         @role('Developer', 'IT Head')
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('dashboard/it-department') ? 'active' : '' }}"
-                                href="{{ route('dashboard.itindex') }}">
-                                IT Department
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('dashboard/it-department') ? 'active' : '' }}"
+                                    href="{{ route('dashboard.itindex') }}">
+                                    IT Department
+                                </a>
+                            </li>
                         @endrole
 
                         @role('Developer', 'IT Head', 'Operation Manager', 'Maintenance Head', 'Maintenance Engineer')
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('maintenance/items/dashboard') ? 'active' : '' }}"
-                                href="{{ route('items.dashboard') }}">
-                                Maintenance Stock
-                            </a>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('maintenance/items/dashboard') ? 'active' : '' }}"
+                                    href="{{ route('items.dashboard') }}">
+                                    Maintenance Stock
+                                </a>
+                            </li>
                         @endrole
 
                     </ul>
@@ -287,12 +287,93 @@
                 {{-- ======================================================= --}}
                 {{-- ================= LABEL Maintenance ================= --}}
                 {{-- ======================================================= --}}
+                @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer')
+                    <li class="nav-item">
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">
+                                Stock Movements
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider">
+                            </div>
+                        </div>
+                    </li>
+
+                    {{-- Parts Out --}}
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('parts-out*') ? 'active' : '' }}"
+                            href="{{ route('parts-out.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-tools"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Parts Issuance</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('buses*') ? 'active' : '' }}"
+                            href="{{ route('buses.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-bus"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Vehicle History</span>
+                            </div>
+                        </a>
+                    </li>
+                    {{-- ===================================================== --}}
+                    {{-- ================= LABEL Inventory ================= --}}
+                    {{-- ===================================================== --}}
+
+                    <li class="nav-item">
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">
+                                Inventory Management
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider">
+                            </div>
+                        </div>
+                    </li>
+
+                    {{-- Receiving --}}
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('receivings*') ? 'active' : '' }}"
+                            href="{{ route('receivings.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-truck-loading"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Receiving Area</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    {{-- Stock Transfer --}}
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('stock-transfers*') ? 'active' : '' }}"
+                            href="{{ route('stock-transfers.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-exchange-alt"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Stock Transfer</span>
+                            </div>
+                        </a>
+                    </li>
+                @endrole
+
+                {{-- ===================================================== --}}
+                {{-- ================= LABEL Inventory ================= --}}
+                {{-- ===================================================== --}}
 
                 @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer')
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
-                                Maintenance
+                                Products Management
                             </div>
                             <div class="col ps-0">
                                 <hr class="mb-0 navbar-vertical-divider">
@@ -311,18 +392,6 @@
                             </div>
                         </a>
                     </li> --}}
-
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('receivings*') ? 'active' : '' }}"
-                            href="{{ route('receivings.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-truck-loading"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Receiving Area</span>
-                            </div>
-                        </a>
-                    </li>
 
                     {{-- ===================================================== --}}
                     {{-- ================= LABEL Inventory ================= --}}

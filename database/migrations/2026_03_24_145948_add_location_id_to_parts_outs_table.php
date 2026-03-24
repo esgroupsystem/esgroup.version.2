@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('conductor_leaves', function (Blueprint $table) {
-            $table->timestamp('ready_for_duty_notified_at')->nullable()->after('last_action_note');
+        Schema::table('parts_outs', function (Blueprint $table) {
+            $table->foreignId('location_id')->nullable()->after('vehicle_id')->constrained('locations')->nullOnDelete();
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('conductor_leaves', function (Blueprint $table) {
-            $table->dropColumn('ready_for_duty_notified_at');
+        Schema::table('parts_outs', function (Blueprint $table) {
+            $table->dropConstrainedForeignId('location_id');
         });
     }
 };

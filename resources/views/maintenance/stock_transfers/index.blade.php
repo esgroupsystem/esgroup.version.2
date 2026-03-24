@@ -1,9 +1,8 @@
 @extends('layouts.app')
-@section('title', 'Receiving Records')
+@section('title', 'Stock Transfers')
 
 @section('content')
     <div class="container" data-layout="container">
-
         <script>
             var isFluid = JSON.parse(localStorage.getItem('isFluid'));
             if (isFluid) {
@@ -34,13 +33,13 @@
                 <div class="card-body bg-body-tertiary">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                         <div>
-                            <h6 class="text-primary mb-1">Maintenance</h6>
+                            <h6 class="text-warning mb-1">Maintenance</h6>
                             <h4 class="mb-1 fw-bold">
-                                <span class="fas fa-truck-loading text-primary me-2"></span>
-                                Receiving Records
+                                <span class="fas fa-exchange-alt text-warning me-2"></span>
+                                Stock Transfers
                             </h4>
                             <p class="text-muted mb-0 fs-10">
-                                View delivered items and stock receiving transactions.
+                                View and manage stock movement from one location to another.
                             </p>
                         </div>
 
@@ -48,8 +47,8 @@
                             <a href="{{ route('items.dashboard') }}" class="btn btn-falcon-default btn-sm">
                                 <span class="fas fa-chart-bar me-1"></span> Stock Dashboard
                             </a>
-                            <a href="{{ route('receivings.create') }}" class="btn btn-primary btn-sm">
-                                <span class="fas fa-plus me-1"></span> New Receiving
+                            <a href="{{ route('stock-transfers.create') }}" class="btn btn-primary btn-sm">
+                                <span class="fas fa-plus me-1"></span> New Transfer
                             </a>
                         </div>
                     </div>
@@ -58,83 +57,77 @@
 
             {{-- MAIN CARD --}}
             <div class="card border-0 shadow-sm">
-
                 <div class="card-header bg-white border-bottom">
                     <div class="row g-3 align-items-end">
                         <div class="col-md-8 col-lg-6">
-                            <label class="form-label mb-1">Search Receiving Records</label>
-
+                            <label class="form-label mb-1">Search Transfer Records</label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-body-tertiary border-end-0">
                                     <span class="fas fa-search text-500"></span>
                                 </span>
-
-                                <input id="liveSearch" class="form-control border-start-0"
-                                    placeholder="Search receiving number, delivered by, remarks..."
-                                    value="{{ request('search') }}">
+                                <input type="text" id="liveSearch" class="form-control border-start-0"
+                                    placeholder="Search transfer no., requester, receiver, remarks..."
+                                    value="{{ $search ?? '' }}">
                             </div>
-
                             <div class="form-text fs-11">
-                                Search by receiving number, delivered by, or remarks.
+                                Search by transfer number, requested by, received by, or remarks.
                             </div>
                         </div>
 
                         <div class="col-md-4 col-lg-6 text-md-end">
-                            @isset($receivings)
-                                <span class="badge badge-subtle-primary px-3 py-2 fs-10">
-                                    Total Records: {{ $receivings->total() }}
-                                </span>
-                            @endisset
+                            <span class="badge badge-subtle-warning px-3 py-2 fs-10">
+                                Total Records: {{ $transfers->total() }}
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <div id="receivingTable">
-                    @include('maintenance.receive.table')
+                <div id="transferTableWrapper">
+                    @include('maintenance.stock_transfers.table', ['transfers' => $transfers])
                 </div>
-
             </div>
         </div>
     </div>
-@endsection
 
-@push('scripts')
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            let timer = null;
-            const searchBox = document.getElementById("liveSearch");
-            const tableWrapper = document.getElementById("receivingTable");
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('liveSearch');
+            const wrapper = document.getElementById('transferTableWrapper');
+            let timeout = null;
 
-            function loadReceivings(url = null) {
-                const value = searchBox.value || '';
-                const fetchUrl = url || `?search=${encodeURIComponent(value)}`;
+            function loadTransfers(url = null) {
+                const search = input.value || '';
+                const requestUrl = url ||
+                    `{{ route('stock-transfers.index') }}?search=${encodeURIComponent(search)}`;
 
-                fetch(fetchUrl, {
+                fetch(requestUrl, {
                         headers: {
-                            "X-Requested-With": "XMLHttpRequest"
+                            'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(res => res.text())
+                    .then(response => response.text())
                     .then(html => {
-                        tableWrapper.innerHTML = html;
+                        wrapper.innerHTML = html;
+                        bindPagination();
                     })
-                    .catch(err => console.error('Error loading receivings:', err));
+                    .catch(error => console.error('Error loading transfers:', error));
             }
 
-            searchBox.addEventListener("keyup", function() {
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    loadReceivings();
-                }, 300);
+            function bindPagination() {
+                wrapper.querySelectorAll('.pagination a').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        loadTransfers(this.href);
+                    });
+                });
+            }
+
+            input.addEventListener('keyup', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => loadTransfers(), 300);
             });
 
-            document.addEventListener("click", function(e) {
-                const link = e.target.closest(".pagination a");
-                if (link) {
-                    e.preventDefault();
-                    loadReceivings(link.getAttribute("href"));
-                }
-            });
+            bindPagination();
         });
     </script>
-@endpush
+@endsection

@@ -117,42 +117,24 @@
                                 <p class="text-muted fs-10 mb-0">You can add multiple products in one receiving record.</p>
                             </div>
 
-                            <button type="button" class="btn btn-success btn-sm" onclick="addRow()">
+                            <button type="button" class="btn btn-success btn-sm" id="addRowBtn">
                                 <span class="fas fa-plus me-1"></span> Add Product
                             </button>
                         </div>
 
-                        <div class="table-responsive">
+                        <div class="table-responsive scrollbar" style="overflow: visible !important;">
                             <table class="table table-bordered align-middle" id="itemsTable">
                                 <thead class="bg-200 text-900">
                                     <tr>
-                                        <th style="width: 55%;">Product</th>
-                                        <th style="width: 20%;">Current Stock</th>
-                                        <th style="width: 15%;">Qty Delivered</th>
-                                        <th style="width: 10%;" class="text-center">Action</th>
+                                        <th style="min-width: 280px;">Product</th>
+                                        <th style="width: 110px;">Current Stock</th>
+                                        <th style="width: 90px;">Unit</th>
+                                        <th style="width: 130px;">Part No.</th>
+                                        <th style="width: 120px;">Qty Delivered</th>
+                                        <th style="width: 70px;" class="text-center">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>
-                                            <select name="product_id[]" class="form-select product-select" required>
-                                                <option value="">Select Product</option>
-                                            </select>
-                                        </td>
-                                        <td>
-                                            <input type="text" class="form-control stock-display bg-light" value="—"
-                                                readonly>
-                                        </td>
-                                        <td>
-                                            <input type="number" name="qty_delivered[]" class="form-control" min="1"
-                                                required>
-                                        </td>
-                                        <td class="text-center">
-                                            <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">
-                                                Remove
-                                            </button>
-                                        </td>
-                                    </tr>
+                                <tbody id="itemsBody">
                                 </tbody>
                             </table>
                         </div>
@@ -176,288 +158,169 @@
             </div>
         </div>
     </div>
-@endsection
-
-@php
-    $productData = $products
-        ->map(function ($p) {
-            return [
-                'id' => (string) $p->id,
-                'name' => $p->product_name,
-                'supplier_name' => $p->supplier_name,
-                'category' => optional($p->category)->name,
-                'unit' => $p->unit,
-                'part_number' => $p->part_number,
-                'details' => $p->details,
-                'stock' => (string) $p->stock_qty,
-            ];
-        })
-        ->values();
-@endphp
-
-@push('scripts')
     <script>
-        const productData = @json($productData);
+        document.addEventListener('DOMContentLoaded', function() {
+            const itemsBody = document.getElementById('itemsBody');
+            const addRowBtn = document.getElementById('addRowBtn');
 
-        const productMap = {};
-        productData.forEach(product => {
-            productMap[String(product.id)] = product;
-        });
+            function getRowHtml() {
+                return `
+                    <tr>
+                        <td>
+                            <input type="hidden" name="product_id[]" class="product-id">
+                            <div class="product-search-wrapper">
+                                <input type="text" class="form-control form-control-sm product-search-input"
+                                    placeholder="Type at least 2 letters to search product..." autocomplete="off">
+                                <div class="product-results"></div>
+                            </div>
+                            <div class="selected-product-box mt-2 d-none"></div>
+                        </td>
 
-        function escapeHtml(value) {
-            if (value === null || value === undefined) return '';
-            return String(value)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
+                        <td>
+                            <input type="text" class="form-control form-control-sm stock-display bg-light" readonly>
+                        </td>
 
-        function buildProductChoiceHtml(product) {
-            if (!product) return '';
+                        <td>
+                            <input type="text" class="form-control form-control-sm unit-display bg-light" readonly>
+                        </td>
 
-            let meta = [];
+                        <td>
+                            <input type="text" class="form-control form-control-sm part-number-display bg-light" readonly>
+                        </td>
 
-            if (product.supplier_name) {
-                meta.push(`<span class="product-badge">Supplier: ${escapeHtml(product.supplier_name)}</span>`);
+                        <td>
+                            <input type="number" name="qty_delivered[]" class="form-control form-control-sm"
+                                min="1" value="1" required>
+                        </td>
+
+                        <td class="text-center">
+                            <button type="button" class="btn btn-falcon-danger btn-sm remove-row">
+                                <span class="fas fa-trash"></span>
+                            </button>
+                        </td>
+                    </tr>
+                `;
             }
 
-            if (product.unit) {
-                meta.push(`<span class="product-badge">Unit: ${escapeHtml(product.unit)}</span>`);
+            function addRow() {
+                itemsBody.insertAdjacentHTML('beforeend', getRowHtml());
             }
 
-            if (product.part_number) {
-                meta.push(`<span class="product-badge">Part #: ${escapeHtml(product.part_number)}</span>`);
+            addRowBtn.addEventListener('click', addRow);
+            addRow();
+
+            function getSelectedProductIds() {
+                return Array.from(document.querySelectorAll('.product-id'))
+                    .map(input => input.value)
+                    .filter(val => val !== '');
             }
 
-            if (product.category) {
-                meta.push(`<span class="product-badge">Category: ${escapeHtml(product.category)}</span>`);
-            }
-
-            return `
-            <div class="product-choice-wrap">
-                <div class="product-choice-title">${escapeHtml(product.name)}</div>
-                ${meta.length ? `<div class="product-choice-meta">${meta.join('')}</div>` : ''}
-                ${product.details ? `<div class="product-choice-details">${escapeHtml(product.details)}</div>` : ''}
-            </div>
-        `;
-        }
-
-        function getSelectedProductIds(excludeSelect = null) {
-            return Array.from(document.querySelectorAll('.product-select'))
-                .filter(select => select !== excludeSelect)
-                .map(select => String(select.value || ''))
-                .filter(Boolean);
-        }
-
-        function filterProducts(search = '', currentValue = '', currentSelect = null) {
-            const selectedIds = getSelectedProductIds(currentSelect);
-            const keyword = (search || '').trim().toLowerCase();
-
-            return productData.filter(product => {
-                const productId = String(product.id);
-                const usedElsewhere = selectedIds.includes(productId) && productId !== String(currentValue);
-
-                if (usedElsewhere) return false;
-
-                // If no search typed yet, do not show all products.
-                // Only keep the currently selected product visible.
-                if (!keyword) {
-                    return productId === String(currentValue);
-                }
-
-                return (
-                    (product.name || '').toLowerCase().includes(keyword) ||
-                    (product.supplier_name || '').toLowerCase().includes(keyword) ||
-                    (product.category || '').toLowerCase().includes(keyword) ||
-                    (product.unit || '').toLowerCase().includes(keyword) ||
-                    (product.part_number || '').toLowerCase().includes(keyword) ||
-                    (product.details || '').toLowerCase().includes(keyword)
-                );
-            });
-        }
-
-        function updateStockLabel(select) {
-            const row = select.closest('tr');
-            const stockInput = row.querySelector('.stock-display');
-            const productId = String(select.value || '');
-
-            if (!productId || !productMap[productId]) {
-                stockInput.value = '—';
-                return;
-            }
-
-            stockInput.value = productMap[productId].stock ?? '—';
-        }
-
-        function buildChoicesForSelect(select, searchValue = '') {
-            const currentValue = String(select.value || '');
-            const keyword = (searchValue || '').trim();
-            const products = filterProducts(searchValue, currentValue, select);
-
-            const choices = [{
-                value: '',
-                label: keyword ? 'Select Product' : 'Type to search product...',
-                selected: currentValue === '',
-                disabled: false
-            }];
-
-            products.forEach(product => {
-                const productId = String(product.id);
-                choices.push({
-                    value: productId,
-                    label: buildProductChoiceHtml(product),
-                    selected: productId === currentValue,
-                    disabled: false
-                });
-            });
-
-            return choices;
-        }
-
-        function setChoicesForSelect(select, searchValue = '') {
-            const instance = select._choicesInstance;
-            if (!instance) return;
-
-            const currentValue = String(select.value || '');
-            const choices = buildChoicesForSelect(select, searchValue);
-
-            instance.clearChoices();
-            instance.setChoices(choices, 'value', 'label', true);
-
-            if (currentValue && productMap[currentValue]) {
-                instance.setChoiceByValue(currentValue);
-            }
-        }
-
-        function onProductChange(e) {
-            const activeSelect = e.target;
-            updateStockLabel(activeSelect);
-            refreshOtherRows(activeSelect);
-        }
-
-        function initChoiceForSelect(select) {
-            if (!window.Choices || !select) return;
-            if (select._choicesInstance) return;
-
-            const instance = new Choices(select, {
-                searchEnabled: true,
-                searchChoices: false,
-                shouldSort: false,
-                allowHTML: true,
-                itemSelectText: '',
-                placeholder: true,
-                placeholderValue: 'Select Product',
-                searchPlaceholderValue: 'Type product, supplier, unit, part number...',
-                noChoicesText: 'Type to search product',
-                noResultsText: 'No product found',
-                duplicateItemsAllowed: false,
-                removeItemButton: false,
-                classNames: {
-                    containerOuter: 'choices form-select p-0'
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.remove-row')) {
+                    const rows = itemsBody.querySelectorAll('tr');
+                    if (rows.length > 1) {
+                        e.target.closest('tr').remove();
+                    }
                 }
             });
 
-            select._choicesInstance = instance;
+            let searchTimeout;
 
-            // Start empty
-            setChoicesForSelect(select, '');
+            document.addEventListener('input', function(e) {
+                if (!e.target.classList.contains('product-search-input')) return;
 
-            select.removeEventListener('change', onProductChange);
-            select.addEventListener('change', onProductChange);
+                const input = e.target;
+                const row = input.closest('tr');
+                const resultsBox = row.querySelector('.product-results');
+                const keyword = input.value.trim();
 
-            select.addEventListener('search', function(event) {
-                const searchValue = event.detail.value || '';
-                setChoicesForSelect(select, searchValue);
-            });
+                clearTimeout(searchTimeout);
 
-            select.addEventListener('showDropdown', function() {
-                const input = select.closest('td')?.querySelector('.choices__input--cloned');
-                const keyword = input ? input.value.trim() : '';
-                setChoicesForSelect(select, keyword);
-            });
-
-            updateStockLabel(select);
-        }
-
-        function refreshOtherRows(activeSelect = null) {
-            document.querySelectorAll('.product-select').forEach(select => {
-                if (select === activeSelect) {
-                    updateStockLabel(select);
+                if (keyword.length < 2) {
+                    resultsBox.style.display = 'none';
+                    resultsBox.innerHTML = '';
                     return;
                 }
 
-                setChoicesForSelect(select);
-                updateStockLabel(select);
+                searchTimeout = setTimeout(() => {
+                    const selectedIds = getSelectedProductIds()
+                        .filter(id => id !== row.querySelector('.product-id').value);
+
+                    fetch(`{{ route('receivings.search-products') }}?search=${encodeURIComponent(keyword)}&exclude_ids=${encodeURIComponent(selectedIds.join(','))}`, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            resultsBox.innerHTML = '';
+
+                            if (!data.length) {
+                                resultsBox.innerHTML =
+                                    `<div class="product-result-item text-muted">No products found.</div>`;
+                                resultsBox.style.display = 'block';
+                                return;
+                            }
+
+                            data.forEach(item => {
+                                const div = document.createElement('div');
+                                div.className = 'product-result-item';
+                                div.innerHTML = `
+                                    <div class="result-title">${item.name ?? ''}</div>
+                                    <div class="result-meta">
+                                        Supplier: ${item.supplier_name ?? 'N/A'} |
+                                        Unit: ${item.unit ?? 'N/A'} |
+                                        Part #: ${item.part_number ?? 'N/A'} |
+                                        Stock: ${item.stock ?? 0}
+                                    </div>
+                                `;
+
+                                div.addEventListener('click', function() {
+                                    row.querySelector('.product-id').value =
+                                        item.id;
+                                    row.querySelector('.stock-display').value =
+                                        item.stock ?? 0;
+                                    row.querySelector('.unit-display').value =
+                                        item.unit ?? '';
+                                    row.querySelector('.part-number-display')
+                                        .value = item.part_number ?? '';
+                                    row.querySelector('.selected-product-box')
+                                        .classList.remove('d-none');
+                                    row.querySelector('.selected-product-box')
+                                        .innerHTML = `
+                                        <div class="fw-semibold text-primary">${item.name ?? ''}</div>
+                                        <small class="text-muted">
+                                            Supplier: ${item.supplier_name ?? 'N/A'} |
+                                            Category: ${item.category ?? 'N/A'} |
+                                            Stock: ${item.stock ?? 0}
+                                        </small>
+                                    `;
+                                    input.value = item.name ?? '';
+                                    resultsBox.style.display = 'none';
+                                });
+
+                                resultsBox.appendChild(div);
+                            });
+
+                            resultsBox.style.display = 'block';
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            resultsBox.innerHTML =
+                                `<div class="product-result-item text-danger">Error loading products.</div>`;
+                            resultsBox.style.display = 'block';
+                        });
+                }, 350);
             });
-        }
 
-        function refreshAllRows() {
-            document.querySelectorAll('.product-select').forEach(select => {
-                initChoiceForSelect(select);
-                setChoicesForSelect(select);
-                updateStockLabel(select);
+            document.addEventListener('click', function(e) {
+                document.querySelectorAll('.product-results').forEach(box => {
+                    if (!box.closest('.product-search-wrapper').contains(e.target)) {
+                        box.style.display = 'none';
+                    }
+                });
             });
-        }
 
-        function addRow() {
-            const tableBody = document.querySelector('#itemsTable tbody');
-            const row = document.createElement('tr');
-
-            row.innerHTML = `
-            <td>
-                <select name="product_id[]" class="form-select product-select" required>
-                    <option value="">Select Product</option>
-                </select>
-            </td>
-            <td>
-                <input type="text" class="form-control stock-display bg-light" value="—" readonly>
-            </td>
-            <td>
-                <input type="number" name="qty_delivered[]" class="form-control" min="1" required>
-            </td>
-            <td class="text-center">
-                <button type="button" class="btn btn-danger btn-sm" onclick="removeRow(this)">
-                    Remove
-                </button>
-            </td>
-        `;
-
-            tableBody.appendChild(row);
-
-            const select = row.querySelector('.product-select');
-            initChoiceForSelect(select);
-            refreshAllRows();
-        }
-
-        function removeRow(button) {
-            const rows = document.querySelectorAll('#itemsTable tbody tr');
-            if (rows.length <= 1) return;
-
-            const row = button.closest('tr');
-            const select = row.querySelector('.product-select');
-
-            if (select && select._choicesInstance) {
-                select._choicesInstance.destroy();
-                select._choicesInstance = null;
-            }
-
-            row.remove();
-            refreshAllRows();
-        }
-
-        function removeProofPreview() {
-            const proofInput = document.getElementById('proofImageInput');
-            const previewWrapper = document.getElementById('proofPreviewWrapper');
-            const previewImage = document.getElementById('proofPreview');
-
-            proofInput.value = '';
-            previewImage.src = '';
-            previewWrapper.style.display = 'none';
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
             const proofInput = document.getElementById('proofImageInput');
             const previewWrapper = document.getElementById('proofPreviewWrapper');
             const previewImage = document.getElementById('proofPreview');
@@ -480,8 +343,16 @@
                     reader.readAsDataURL(file);
                 });
             }
-
-            refreshAllRows();
         });
+
+        function removeProofPreview() {
+            const proofInput = document.getElementById('proofImageInput');
+            const previewWrapper = document.getElementById('proofPreviewWrapper');
+            const previewImage = document.getElementById('proofPreview');
+
+            proofInput.value = '';
+            previewImage.src = '';
+            previewWrapper.style.display = 'none';
+        }
     </script>
-@endpush
+@endsection

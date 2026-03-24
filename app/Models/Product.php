@@ -20,4 +20,19 @@ class Product extends Model
     {
         return $this->belongsTo(Category::class);
     }
+
+    public function stocks()
+    {
+        return $this->hasMany(ProductStock::class, 'product_id');
+    }
+
+    public function transferItems()
+    {
+        return $this->hasMany(StockTransferItem::class, 'product_id');
+    }
+
+    public function getStockAt($locationId)
+    {
+        return $this->stocks()->where('location_id', $locationId)->value('qty') ?? 0;
+    }
 }

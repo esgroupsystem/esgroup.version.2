@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Receiving Records')
+@section('title', 'Parts Out')
 
 @section('content')
     <div class="container" data-layout="container">
@@ -36,11 +36,11 @@
                         <div>
                             <h6 class="text-primary mb-1">Maintenance</h6>
                             <h4 class="mb-1 fw-bold">
-                                <span class="fas fa-truck-loading text-primary me-2"></span>
-                                Receiving Records
+                                <span class="fas fa-tools text-primary me-2"></span>
+                                Parts Out
                             </h4>
                             <p class="text-muted mb-0 fs-10">
-                                View delivered items and stock receiving transactions.
+                                Monitor issued and installed parts used for buses, cars, and other vehicles.
                             </p>
                         </div>
 
@@ -48,8 +48,8 @@
                             <a href="{{ route('items.dashboard') }}" class="btn btn-falcon-default btn-sm">
                                 <span class="fas fa-chart-bar me-1"></span> Stock Dashboard
                             </a>
-                            <a href="{{ route('receivings.create') }}" class="btn btn-primary btn-sm">
-                                <span class="fas fa-plus me-1"></span> New Receiving
+                            <a href="{{ route('parts-out.create') }}" class="btn btn-primary btn-sm">
+                                <span class="fas fa-plus me-1"></span> New Parts Out
                             </a>
                         </div>
                     </div>
@@ -58,83 +58,84 @@
 
             {{-- MAIN CARD --}}
             <div class="card border-0 shadow-sm">
-
                 <div class="card-header bg-white border-bottom">
                     <div class="row g-3 align-items-end">
                         <div class="col-md-8 col-lg-6">
-                            <label class="form-label mb-1">Search Receiving Records</label>
-
+                            <label class="form-label mb-1">Search Parts Out Records</label>
                             <div class="input-group input-group-sm">
                                 <span class="input-group-text bg-body-tertiary border-end-0">
                                     <span class="fas fa-search text-500"></span>
                                 </span>
-
-                                <input id="liveSearch" class="form-control border-start-0"
-                                    placeholder="Search receiving number, delivered by, remarks..."
+                                <input type="text" id="searchInput" class="form-control border-start-0"
+                                    placeholder="Search parts out no., mechanic, requester, JO no., date..."
                                     value="{{ request('search') }}">
                             </div>
-
                             <div class="form-text fs-11">
-                                Search by receiving number, delivered by, or remarks.
+                                Search by parts out number, mechanic, requester, job order number, or date.
                             </div>
                         </div>
 
                         <div class="col-md-4 col-lg-6 text-md-end">
-                            @isset($receivings)
+                            @isset($partsOuts)
                                 <span class="badge badge-subtle-primary px-3 py-2 fs-10">
-                                    Total Records: {{ $receivings->total() }}
+                                    Total Records: {{ $partsOuts->total() }}
                                 </span>
                             @endisset
                         </div>
                     </div>
                 </div>
 
-                <div id="receivingTable">
-                    @include('maintenance.receive.table')
+                <div id="partsOutTable">
+                    @include('maintenance.parts_out.table', ['partsOuts' => $partsOuts])
                 </div>
-
             </div>
         </div>
     </div>
-@endsection
 
-@push('scripts')
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            let timer = null;
-            const searchBox = document.getElementById("liveSearch");
-            const tableWrapper = document.getElementById("receivingTable");
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const tableWrapper = document.getElementById('partsOutTable');
+            let timeout = null;
 
-            function loadReceivings(url = null) {
-                const value = searchBox.value || '';
-                const fetchUrl = url || `?search=${encodeURIComponent(value)}`;
+            function loadTable(url = null) {
+                const search = searchInput.value || '';
+                const requestUrl = url || `{{ route('parts-out.index') }}?search=${encodeURIComponent(search)}`;
 
-                fetch(fetchUrl, {
+                fetch(requestUrl, {
                         headers: {
-                            "X-Requested-With": "XMLHttpRequest"
+                            'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(res => res.text())
+                    .then(response => response.text())
                     .then(html => {
                         tableWrapper.innerHTML = html;
+                        bindPagination();
                     })
-                    .catch(err => console.error('Error loading receivings:', err));
+                    .catch(error => console.error('Error loading table:', error));
             }
 
-            searchBox.addEventListener("keyup", function() {
-                clearTimeout(timer);
-                timer = setTimeout(() => {
-                    loadReceivings();
-                }, 300);
+            function bindPagination() {
+                tableWrapper.querySelectorAll('.pagination a').forEach(link => {
+                    link.addEventListener('click', function(e) {
+                        e.preventDefault();
+
+                        const url = new URL(this.href, window.location.origin);
+                        url.searchParams.set('search', searchInput.value || '');
+
+                        loadTable(url.toString());
+                    });
+                });
+            }
+
+            searchInput.addEventListener('keyup', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => {
+                    loadTable();
+                }, 400);
             });
 
-            document.addEventListener("click", function(e) {
-                const link = e.target.closest(".pagination a");
-                if (link) {
-                    e.preventDefault();
-                    loadReceivings(link.getAttribute("href"));
-                }
-            });
+            bindPagination();
         });
     </script>
-@endpush
+@endsection

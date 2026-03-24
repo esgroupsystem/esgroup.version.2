@@ -13,4 +13,9 @@ class BusDetail extends Model
     {
         return $this->hasMany(JobOrder::class);
     }
+
+    public function partsOuts()
+    {
+        return $this->hasMany(PartsOut::class, 'vehicle_id');
+    }
 }
