@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
+use App\Models\Location;
 use App\Models\Product;
+use App\Models\ProductStock;
 use App\Models\Receiving;
 use App\Models\ReceivingItem;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -145,6 +147,12 @@ class ReceivingController extends Controller
                 }
             }
 
+            $defaultLocation = Location::where('name', 'Main Office')->first();
+
+            if (! $defaultLocation) {
+                throw new \Exception('Default receiving location "Main Office" was not found. Please create it first or update the controller location name.');
+            }
+
             $receiving = Receiving::create([
                 'receiving_number' => 'TEMP',
                 'delivered_by' => $validated['delivered_by'],
@@ -173,17 +181,26 @@ class ReceivingController extends Controller
                     throw new ModelNotFoundException('Product not found for row '.($index + 1).'.');
                 }
 
-                $stockBefore = (int) $product->stock_qty;
-                $stockAfter = $stockBefore + $qty;
-
                 ReceivingItem::create([
                     'receiving_id' => $receiving->id,
                     'product_id' => $productId,
                     'qty_delivered' => $qty,
                 ]);
 
+                $productStock = ProductStock::lockForUpdate()->firstOrCreate(
+                    [
+                        'product_id' => $product->id,
+                        'location_id' => $defaultLocation->id,
+                    ],
+                    [
+                        'qty' => 0,
+                    ]
+                );
+
+                $productStock->increment('qty', $qty);
+
                 $product->update([
-                    'stock_qty' => $stockAfter,
+                    'stock_qty' => ProductStock::where('product_id', $product->id)->sum('qty'),
                 ]);
             }
 
@@ -191,7 +208,7 @@ class ReceivingController extends Controller
 
             return redirect()
                 ->route('receivings.index')
-                ->with('success', 'Receiving saved successfully, proof uploaded, and stocks updated.');
+                ->with('success', 'Receiving saved successfully, stock added to Main Office, and total stock updated.');
         } catch (ModelNotFoundException $e) {
             DB::rollBack();
 

@@ -12,6 +12,10 @@ class ProductStock extends Model
         'qty',
     ];
 
+    protected $casts = [
+        'qty' => 'integer',
+    ];
+
     public function product()
     {
         return $this->belongsTo(Product::class);

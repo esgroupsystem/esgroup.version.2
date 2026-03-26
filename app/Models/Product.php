@@ -16,6 +16,25 @@ class Product extends Model
         'stock_qty',
     ];
 
+    protected static function booted()
+    {
+        static::created(function ($product) {
+            $locations = Location::all();
+
+            foreach ($locations as $location) {
+                ProductStock::firstOrCreate(
+                    [
+                        'product_id' => $product->id,
+                        'location_id' => $location->id,
+                    ],
+                    [
+                        'qty' => 0,
+                    ]
+                );
+            }
+        });
+    }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -33,6 +52,13 @@ class Product extends Model
 
     public function getStockAt($locationId)
     {
-        return $this->stocks()->where('location_id', $locationId)->value('qty') ?? 0;
+        return (int) $this->stocks()
+            ->where('location_id', $locationId)
+            ->value('qty') ?? 0;
+    }
+
+    public function totalStock()
+    {
+        return (int) $this->stocks()->sum('qty');
     }
 }

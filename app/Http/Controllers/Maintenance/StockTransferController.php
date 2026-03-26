@@ -98,7 +98,7 @@ class StockTransferController extends Controller
             'remarks' => ['nullable', 'string'],
 
             'product_id' => ['required', 'array', 'min:1'],
-            'product_id.*' => ['required', 'integer', 'exists:products,id'],
+            'product_id.*' => ['required', 'integer', 'exists:products,id', 'distinct'],
 
             'qty' => ['required', 'array', 'min:1'],
             'qty.*' => ['required', 'integer', 'min:1'],
@@ -114,6 +114,7 @@ class StockTransferController extends Controller
             'product_id.array' => 'Product list format is invalid.',
             'product_id.min' => 'Please add at least one product.',
             'product_id.*.exists' => 'One of the selected products does not exist.',
+            'product_id.*.distinct' => 'Duplicate products are not allowed in the same transfer.',
             'qty.required' => 'Quantity is required.',
             'qty.array' => 'Quantity list format is invalid.',
             'qty.min' => 'Please provide quantity for at least one product.',
@@ -125,12 +126,6 @@ class StockTransferController extends Controller
             return back()
                 ->withInput()
                 ->with('error', 'Product count and quantity count do not match.');
-        }
-
-        if (count($validated['product_id']) !== count(array_unique($validated['product_id']))) {
-            return back()
-                ->withInput()
-                ->with('error', 'Duplicate products are not allowed in the same transfer.');
         }
 
         DB::beginTransaction();
@@ -177,7 +172,7 @@ class StockTransferController extends Controller
                     throw new \Exception("Quantity must be greater than zero on row {$rowNumber}.");
                 }
 
-                $product = Product::find($productId);
+                $product = Product::lockForUpdate()->find($productId);
 
                 if (! $product) {
                     throw new ModelNotFoundException("Product not found on row {$rowNumber}.");
@@ -193,6 +188,13 @@ class StockTransferController extends Controller
                     ]
                 );
 
+                if ((int) $fromStock->qty < $qty) {
+                    throw new \Exception(
+                        "Insufficient stock for product: {$product->product_name} on row {$rowNumber}. ".
+                        "Available in {$fromLocation->name}: {$fromStock->qty}, Requested: {$qty}."
+                    );
+                }
+
                 $toStock = ProductStock::lockForUpdate()->firstOrCreate(
                     [
                         'product_id' => $productId,
@@ -203,31 +205,17 @@ class StockTransferController extends Controller
                     ]
                 );
 
-                $fromQtyBefore = (int) $fromStock->qty;
-                $toQtyBefore = (int) $toStock->qty;
-
-                if ($fromQtyBefore < $qty) {
-                    throw new \Exception(
-                        "Insufficient stock for product: {$product->product_name} on row {$rowNumber}. ".
-                        "Available in {$fromLocation->name}: {$fromQtyBefore}, Requested: {$qty}."
-                    );
-                }
-
-                $fromQtyAfter = $fromQtyBefore - $qty;
-                $toQtyAfter = $toQtyBefore + $qty;
-
-                $fromStock->update([
-                    'qty' => $fromQtyAfter,
-                ]);
-
-                $toStock->update([
-                    'qty' => $toQtyAfter,
-                ]);
+                $fromStock->decrement('qty', $qty);
+                $toStock->increment('qty', $qty);
 
                 StockTransferItem::create([
                     'stock_transfer_id' => $transfer->id,
                     'product_id' => $productId,
                     'qty' => $qty,
+                ]);
+
+                $product->update([
+                    'stock_qty' => ProductStock::where('product_id', $productId)->sum('qty'),
                 ]);
             }
 
@@ -314,9 +302,7 @@ class StockTransferController extends Controller
 
             $excludeIds = collect($request->get('exclude_ids', []))
                 ->flatten()
-                ->map(function ($id) {
-                    return is_numeric($id) ? (int) $id : null;
-                })
+                ->map(fn ($id) => is_numeric($id) ? (int) $id : null)
                 ->filter()
                 ->unique()
                 ->values()
@@ -337,8 +323,12 @@ class StockTransferController extends Controller
                 ], 422);
             }
 
-            $products = Product::query()
-                ->with(['category', 'stocks'])
+            $products = Product::with([
+                'category',
+                'stocks' => function ($query) use ($locationId) {
+                    $query->where('location_id', $locationId);
+                },
+            ])
                 ->when(! empty($excludeIds), function ($query) use ($excludeIds) {
                     $query->whereNotIn('id', $excludeIds);
                 })
@@ -348,15 +338,12 @@ class StockTransferController extends Controller
                         ->orWhere('supplier_name', 'like', "%{$search}%")
                         ->orWhere('details', 'like', "%{$search}%");
                 })
-                ->whereHas('stocks', function ($q) use ($locationId) {
-                    $q->where('location_id', $locationId)
-                        ->where('qty', '>', 0);
-                })
                 ->orderBy('product_name')
                 ->take(20)
                 ->get()
-                ->map(function ($product) use ($locationId) {
-                    $stock = $product->stocks->where('location_id', (int) $locationId)->first();
+                ->map(function ($product) {
+                    $stockRow = $product->stocks->first();
+                    $stockQty = $stockRow ? (int) $stockRow->qty : 0;
 
                     return [
                         'id' => $product->id,
@@ -366,8 +353,11 @@ class StockTransferController extends Controller
                         'unit' => $product->unit,
                         'part_number' => $product->part_number,
                         'details' => $product->details,
-                        'stock' => $stock ? (int) $stock->qty : 0,
+                        'stock' => $stockQty,
                     ];
+                })
+                ->filter(function ($product) {
+                    return $product['stock'] > 0;
                 })
                 ->values();
 
