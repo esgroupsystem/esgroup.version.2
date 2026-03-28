@@ -283,6 +283,31 @@
                     </li>
                 @endrole
 
+                @role('Developer', 'IT Head')
+                    <li class="nav-item">
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">
+                                Payroll
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider">
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('payroll-plotting*') ? 'active' : '' }}"
+                            href="{{ route('payroll-plotting.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-calendar-alt"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Plotting Schedule</span>
+                            </div>
+                        </a>
+                    </li>
+                @endrole
+
 
                 {{-- ======================================================= --}}
                 {{-- ================= LABEL Maintenance ================= --}}

@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('driver_leaves', function (Blueprint $table) {
+        Schema::table('conductor_leaves', function (Blueprint $table) {
             $table->dropColumn([
                 'first_notice_sent_at',
                 'second_notice_sent_at',

@@ -15,26 +15,13 @@
         </script>
 
         <div class="content">
-            @php
-                $stats = $all ?? collect();
-                $countByDevice = $stats->groupBy('device_sn')->map->count()->sortDesc();
-                $topDevice = $countByDevice->keys()->first();
-                $topDeviceCount = $countByDevice->first() ?? 0;
-
-                $countByEmployee = $stats->groupBy('employee_no')->map->count()->sortDesc();
-                $topEmployee = $countByEmployee->keys()->first();
-                $topEmployeeCount = $countByEmployee->first() ?? 0;
-
-                $missingEmployeeNo = $stats->whereNull('employee_no')->count();
-            @endphp
-
             {{-- SYNC CARD --}}
             <div class="card monitor-card shadow-sm mb-3">
                 <div class="card-header bg-body-tertiary border-bottom border-200">
                     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
                         <div>
                             <h6 class="mb-0">Sync Logs</h6>
-                            <small class="text-muted">Select start and end date to sync 100% for that range</small>
+                            <small class="text-muted">Select start and end date to sync logs from device/source</small>
                         </div>
                     </div>
                 </div>
@@ -62,37 +49,6 @@
                             <a class="btn btn-outline-secondary btn-sm" href="{{ route('mirasol-logs.index') }}">Reset</a>
                         </div>
                     </form>
-
-                    <hr class="soft-divider">
-
-                    <div class="row g-3">
-                        <div class="col-6 col-md-3">
-                            <div class="p-3 border monitor-tile h-100">
-                                <div class="text-muted fs-11">Total Logs (Filtered)</div>
-                                <div class="fs-4 fw-bold mt-1">{{ $stats->count() }}</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="p-3 border monitor-tile h-100">
-                                <div class="text-muted fs-11">Top Device</div>
-                                <div class="fw-bold mt-1">{{ $topDevice ?? '—' }}</div>
-                                <div class="form-hint">{{ $topDeviceCount }} logs</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="p-3 border monitor-tile h-100">
-                                <div class="text-muted fs-11">Top Employee No</div>
-                                <div class="fw-bold mt-1">{{ $topEmployee ?? '—' }}</div>
-                                <div class="form-hint">{{ $topEmployeeCount }} logs</div>
-                            </div>
-                        </div>
-                        <div class="col-6 col-md-3">
-                            <div class="p-3 border monitor-tile h-100">
-                                <div class="text-muted fs-11">Missing Employee No</div>
-                                <div class="fs-4 fw-bold mt-1">{{ $missingEmployeeNo }}</div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -101,44 +57,93 @@
                 <div class="card-header bg-body-tertiary border-bottom border-200">
                     <div class="d-flex flex-column flex-lg-row gap-2 align-items-lg-center justify-content-between">
                         <div>
-                            <h5 class="mb-0">Mirasol Biometrics Summary</h5>
-                            <small class="text-muted">Shows per-day: First Time In and Last Time Out (only after
-                                Search)</small>
+                            <h5 class="mb-0">Attendance Monitoring Summary</h5>
+                            <small class="text-muted">
+                                Cutoff Coverage: <strong>{{ $cutoffLabel }}</strong>
+                            </small>
                         </div>
-                        <form method="GET" action="{{ route('mirasol-logs.index') }}" class="d-flex gap-2 flex-wrap">
 
-                            <select name="employee_no" class="form-select form-select-sm" style="width:260px;">
-                                <option value="">-- Select Employee (Logs) --</option>
-                                @foreach ($people as $p)
-                                    <option value="{{ $p->employee_no }}" @selected(request('employee_no') == $p->employee_no)>
-                                        {{ $p->employee_name }} ({{ $p->employee_no }})
+                        <form method="GET" action="{{ route('mirasol-logs.index') }}" class="row g-2 align-items-center">
+                            <div class="col-auto">
+                                <input type="text" name="q" list="employeeSuggestions"
+                                    class="form-control form-control-sm" style="width: 260px;"
+                                    placeholder="Search employee name / employee no..." value="{{ request('q') }}"
+                                    required>
+
+                                <datalist id="employeeSuggestions">
+                                    @foreach ($people as $p)
+                                        @if (!empty($p['employee_name']))
+                                            <option value="{{ $p['employee_name'] }}">
+                                                {{ $p['employee_name'] }}{{ !empty($p['employee_no']) ? ' - ' . $p['employee_no'] : '' }}
+                                            </option>
+                                        @endif
+
+                                        @if (!empty($p['employee_no']))
+                                            <option value="{{ $p['employee_no'] }}">
+                                                {{ $p['employee_name'] }}
+                                            </option>
+                                        @endif
+                                    @endforeach
+                                </datalist>
+                            </div>
+
+                            <div class="col-auto">
+                                <select name="cutoff_month" class="form-select form-select-sm">
+                                    @for ($m = 1; $m <= 12; $m++)
+                                        <option value="{{ $m }}"
+                                            {{ (int) $cutoffMonth === $m ? 'selected' : '' }}>
+                                            {{ \Carbon\Carbon::create(null, $m, 1)->format('F') }}
+                                        </option>
+                                    @endfor
+                                </select>
+                            </div>
+
+                            <div class="col-auto">
+                                <select name="cutoff_year" class="form-select form-select-sm">
+                                    @for ($y = now()->year - 2; $y <= now()->year + 3; $y++)
+                                        <option value="{{ $y }}"
+                                            {{ (int) $cutoffYear === $y ? 'selected' : '' }}>
+                                            {{ $y }}
+                                        </option>
+                                    @endfor
+                                </select>
+                            </div>
+
+                            <div class="col-auto">
+                                <select name="cutoff_type" class="form-select form-select-sm">
+                                    <option value="11_25" {{ $cutoffType === '11_25' ? 'selected' : '' }}>
+                                        11 - 25
                                     </option>
-                                @endforeach
-                            </select>
+                                    <option value="26_10" {{ $cutoffType === '26_10' ? 'selected' : '' }}>
+                                        26 - 10
+                                    </option>
+                                </select>
+                            </div>
 
-                            <input type="date" name="date_from"
-                                class="form-control form-control-sm date-field date-compact"
-                                value="{{ request('date_from') }}">
-
-                            <input type="date" name="date_to"
-                                class="form-control form-control-sm date-field date-compact"
-                                value="{{ request('date_to') }}">
-
-                            <button class="btn btn-outline-secondary btn-sm" type="submit">Search</button>
+                            <div class="col-auto">
+                                <button class="btn btn-outline-secondary btn-sm" type="submit">
+                                    Search
+                                </button>
+                            </div>
                         </form>
-
                     </div>
                 </div>
 
-                <div class="table-responsive scrollbar jo-table-wrap">
+                <div class="table-responsive mb-0">
                     <table class="table table-sm table-hover mb-0 fs-10 align-middle jo-table">
                         <thead class="bg-body-tertiary border-bottom border-200">
                             <tr>
-                                <th class="ps-3" style="width:60px;">ID</th>
-                                <th style="width:220px;">Full Name</th>
-                                <th style="width:180px;">Date</th>
-                                <th style="width:120px;">Time In</th>
-                                <th style="width:120px;">Time Out</th>
+                                <th class="ps-3" style="width:60px;">#</th>
+                                <th style="width:220px;">Employee Name</th>
+                                <th style="width:120px;">Employee No</th>
+                                <th style="width:170px;">Date</th>
+                                <th style="width:170px;">Plotted Schedule</th>
+                                <th style="width:110px;">Time In</th>
+                                <th style="width:110px;">Time Out</th>
+                                <th style="width:100px;">Total Hours</th>
+                                <th style="width:100px;">Late</th>
+                                <th style="width:100px;">Undertime</th>
+                                <th style="width:120px;">Attendance Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -149,30 +154,99 @@
                                     </td>
 
                                     <td class="fw-semi-bold">
-                                        {{ $r->employee_name ?? '—' }}
+                                        {{ $r['employee_name'] ?? '—' }}
+                                        @if (!empty($r['shift_name']))
+                                            <div class="text-muted fs-11">{{ $r['shift_name'] }}</div>
+                                        @endif
                                     </td>
 
                                     <td class="text-muted">
-                                        {{ $r->log_date ? \Carbon\Carbon::parse($r->log_date)->format('F d, Y (l)') : '—' }}
+                                        {{ $r['employee_no'] ?: '—' }}
+                                    </td>
+
+                                    <td class="text-muted">
+                                        {{ $r['log_date'] ? \Carbon\Carbon::parse($r['log_date'])->format('F d, Y (l)') : '—' }}
                                     </td>
 
                                     <td>
-                                        {{ $r->time_in ? \Carbon\Carbon::parse($r->time_in)->format('h:i A') : '—' }}
+                                        @if (($r['schedule_status'] ?? null) === 'scheduled')
+                                            <div class="fw-semibold text-success">
+                                                {{ !empty($r['scheduled_time_in']) ? \Carbon\Carbon::parse($r['scheduled_time_in'])->format('h:i A') : '—' }}
+                                                -
+                                                {{ !empty($r['scheduled_time_out']) ? \Carbon\Carbon::parse($r['scheduled_time_out'])->format('h:i A') : '—' }}
+                                            </div>
+                                            <div class="fs-11 text-muted">
+                                                Grace: {{ $r['grace_minutes'] ?? 15 }} min
+                                            </div>
+                                        @elseif (($r['schedule_status'] ?? null) === 'rest_day')
+                                            <span class="badge bg-warning-subtle text-warning border">Rest Day</span>
+                                        @elseif (($r['schedule_status'] ?? null) === 'leave')
+                                            <span class="badge bg-info-subtle text-info border">Leave</span>
+                                        @elseif (($r['schedule_status'] ?? null) === 'holiday')
+                                            <span class="badge bg-danger-subtle text-danger border">Holiday</span>
+                                        @else
+                                            <span class="badge bg-secondary-subtle text-secondary border">No Schedule</span>
+                                        @endif
                                     </td>
 
                                     <td>
-                                        {{ $r->time_out ? \Carbon\Carbon::parse($r->time_out)->format('h:i A') : '—' }}
+                                        {{ !empty($r['actual_time_in']) ? \Carbon\Carbon::parse($r['actual_time_in'])->format('h:i A') : '—' }}
+                                    </td>
+
+                                    <td>
+                                        {{ !empty($r['actual_time_out']) ? \Carbon\Carbon::parse($r['actual_time_out'])->format('h:i A') : '—' }}
+                                    </td>
+
+                                    <td class="fw-semibold">
+                                        {{ $r['worked_hours_label'] ?? '—' }}
+                                    </td>
+
+                                    <td>
+                                        @if (($r['late_minutes'] ?? 0) > 0)
+                                            <span class="badge bg-warning-subtle text-warning border">
+                                                {{ $r['late_label'] }}
+                                            </span>
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        @if (($r['undertime_minutes'] ?? 0) > 0)
+                                            <span class="badge bg-danger-subtle text-danger border">
+                                                {{ $r['undertime_label'] }}
+                                            </span>
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        <div
+                                            class="small border rounded px-2 py-1 bg-{{ $r['attendance_class'] ?? 'secondary' }}-subtle text-{{ $r['attendance_class'] ?? 'secondary' }}">
+                                            {{ $r['attendance_note'] ?? '—' }}
+                                        </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="text-center">
+                                    <td colspan="11" class="text-center">
                                         <div class="empty-state py-4">
                                             <div class="icon"><span class="fas fa-fingerprint"></span></div>
-                                            <div class="fw-bold">No Records Found</div>
-                                            <div class="text-muted fs-11">
-                                                Try changing your search text/date range.
-                                            </div>
+
+                                            @if (!($isSearch ?? false))
+                                                <div class="fw-bold">Search Employee First</div>
+                                                <div class="text-muted fs-11">
+                                                    Please search an employee name or employee number to view cutoff
+                                                    attendance logs.
+                                                </div>
+                                            @else
+                                                <div class="fw-bold">No Records Found</div>
+                                                <div class="text-muted fs-11">
+                                                    No biometrics logs or plotting schedule found for the selected employee
+                                                    and cutoff.
+                                                </div>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
@@ -181,8 +255,7 @@
                     </table>
                 </div>
 
-
-                @if ($isSearch)
+                @if ($isSearch ?? false)
                     <div class="card-footer bg-body-tertiary border-top border-200">
                         <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center">
                             <small class="text-muted">
@@ -194,7 +267,6 @@
                     </div>
                 @endif
             </div>
-
         </div>
     </div>
 
@@ -258,7 +330,6 @@
             const metaR = document.getElementById('syncMetaRight');
             const syncBtn = document.getElementById('syncBtn');
 
-            // Ensure alert boxes exist (create if missing)
             const modalBody = modalEl.querySelector('.modal-body');
 
             let errBox = document.getElementById('syncErrorBox');
@@ -298,7 +369,6 @@
 
             let pollTimer = null;
             let queuedTimer = null;
-            let redirectParams = null;
 
             const stop = () => {
                 if (pollTimer) clearInterval(pollTimer);
@@ -365,12 +435,10 @@
 
                     if (data.done) {
                         stop();
-                        if (!data.error && redirectParams) {
-                            setTimeout(() => {
-                                window.location.href =
-                                    `{{ route('mirasol-logs.index') }}?${new URLSearchParams(redirectParams)}`;
-                            }, 700);
-                        }
+                        setTimeout(() => {
+                            const url = new URL(window.location.href);
+                            window.location.href = url.toString();
+                        }, 700);
                     }
                 } catch (e) {
                     console.error(e);
@@ -442,12 +510,6 @@
                         if (syncBtn) syncBtn.disabled = false;
                         return;
                     }
-
-                    redirectParams = {
-                        show: 1,
-                        date_from: data.date_from,
-                        date_to: data.date_to
-                    };
 
                     pollTimer = setInterval(() => poll(data.jobId), 1000);
                     poll(data.jobId);

@@ -22,6 +22,7 @@ use App\Http\Controllers\Maintenance\PurchaseReceiveController;
 use App\Http\Controllers\Maintenance\ReceivingController;
 use App\Http\Controllers\Maintenance\RequestController;
 use App\Http\Controllers\Maintenance\StockTransferController;
+use App\Http\Controllers\Payroll\EmployeePlottingScheduleController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Middleware\ForceLockscreen;
@@ -237,6 +238,13 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('employee/{leave}/edit', 'edit')->name('employee.edit');
             Route::put('employee/{leave}', 'update')->name('employee.update');
             Route::post('{leave}/action', 'action')->name('employee.action');
+        });
+
+    Route::prefix('payroll-plotting')->middleware(['auth', 'role:Developer,IT Head'])
+        ->name('payroll-plotting.')->controller(EmployeePlottingScheduleController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/save-monthly', 'saveMonthly')->name('save-monthly');
+            Route::post('/quick-fill', 'quickFill') -> name('quick-fill');
         });
 
     /*
