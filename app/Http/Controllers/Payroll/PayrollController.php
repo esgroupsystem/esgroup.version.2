@@ -6,6 +6,7 @@ use App\Exports\PayrollItemsExport;
 use App\Http\Controllers\Controller;
 use App\Models\DailyAttendanceSummary;
 use App\Models\Payroll;
+use App\Models\PayrollAttendanceAdjustment;
 use App\Models\PayrollEmployeeSalary;
 use App\Models\PayrollItem;
 use App\Services\Payroll\DailyAttendanceSummaryService;
@@ -14,8 +15,8 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Models\PayrollAttendanceAdjustment;
 
 class PayrollController extends Controller
 {
@@ -101,7 +102,15 @@ class PayrollController extends Controller
 
         $payroll = null;
 
-        DB::transaction(function () use ($validated, $startDate, $endDate, $request, $summaries, &$payroll, $governmentDeductionService) {
+        DB::transaction(function () use (
+            $validated,
+            $startDate,
+            $endDate,
+            $request,
+            $summaries,
+            &$payroll,
+            $governmentDeductionService
+        ) {
             $payroll = Payroll::create([
                 'payroll_number' => $this->generatePayrollNumber(
                     (int) $validated['cutoff_year'],
@@ -153,26 +162,40 @@ class PayrollController extends Controller
                     })
                     ->sum('overtime_minutes');
 
-                $approvedOtDates = $this->getApprovedOvertimeDates($first, $startDate, $endDate);
-
-                $totalOvertimeMinutes = (int) $rows
-                    ->filter(function ($row) use ($approvedOtDates) {
-                        $workDate = optional($row->work_date)->toDateString();
-
-                        return $workDate && in_array($workDate, $approvedOtDates, true);
-                    })
-                    ->sum('overtime_minutes');
-
-                $totalAbsentDays = (int) $rows->where('is_absent', true)->count();
+                $totalAbsentDays = (int) $rows->filter(function ($row) {
+                    return (bool) ($row->is_absent ?? false)
+                        || strtolower((string) ($row->attendance_status ?? '')) === 'absent';
+                })->count();
                 $totalRestDayWorked = (int) $rows->where('attendance_status', 'rest_day_worked')->count();
                 $totalHolidayWorked = (int) $rows->where('attendance_status', 'holiday_worked')->count();
                 $totalLeaveDays = (int) $rows->where('attendance_status', 'leave')->count();
 
                 $grossPay = round($rates['daily_rate'] * $totalPayableDays, 2);
 
-                $lateDeduction = round($rates['late_deduction_per_minute'] * $totalLateMinutes, 2);
-                $undertimeDeduction = round($rates['undertime_deduction_per_minute'] * $totalUndertimeMinutes, 2);
-                $absenceDeduction = round($rates['absent_deduction_per_day'] * $totalAbsentDays, 2);
+                $lateRatePerMinute = round((float) ($rates['late_deduction_per_minute'] ?? $rates['minute_rate'] ?? 0), 6);
+                $undertimeRatePerMinute = round((float) ($rates['undertime_deduction_per_minute'] ?? $rates['minute_rate'] ?? 0), 6);
+                $absenceRatePerDay = round((float) ($rates['absent_deduction_per_day'] ?? $rates['daily_rate'] ?? 0), 2);
+
+                if ($lateRatePerMinute <= 0) {
+                    $lateRatePerMinute = round((float) ($rates['minute_rate'] ?? 0), 6);
+                }
+
+                if ($undertimeRatePerMinute <= 0) {
+                    $undertimeRatePerMinute = round((float) ($rates['minute_rate'] ?? 0), 6);
+                }
+
+                if ($absenceRatePerDay <= 0) {
+                    $absenceRatePerDay = round((float) ($rates['daily_rate'] ?? 0), 2);
+                }
+
+                $lateDeduction = round($lateRatePerMinute * $totalLateMinutes, 2);
+                $undertimeDeduction = round($undertimeRatePerMinute * $totalUndertimeMinutes, 2);
+                $absenceDeduction = round($absenceRatePerDay * $totalAbsentDays, 2);
+
+                $attendanceDeductions = round(
+                    $lateDeduction + $undertimeDeduction + $absenceDeduction,
+                    2
+                );
 
                 $overtimeHours = $totalOvertimeMinutes / 60;
                 $overtimePay = round($rates['ot_rate_per_hour'] * $overtimeHours, 2);
@@ -181,8 +204,18 @@ class PayrollController extends Controller
                 $restDayPay = 0;
                 $leavePay = 0;
 
-                $otherAdditions = round($rates['allowance'], 2);
-                $otherDeductions = 0;
+                // Monthly allowance split into 2 cutoffs
+                $allowancePerCutoff = round(((float) ($rates['allowance'] ?? 0)) / 2, 2);
+                $otherAdditions = $allowancePerCutoff;
+
+                $loanDeductions = [
+                    'sss_loan' => round((float) ($rates['sss_loan'] ?? 0), 2),
+                    'pagibig_loan' => round((float) ($rates['pagibig_loan'] ?? 0), 2),
+                    'vale' => round((float) ($rates['vale'] ?? 0), 2),
+                    'other_loans' => round((float) ($rates['other_loans'] ?? 0), 2),
+                ];
+
+                $otherDeductions = round(array_sum($loanDeductions), 2);
 
                 $taxableCompensation = round(
                     $grossPay
@@ -201,16 +234,19 @@ class PayrollController extends Controller
                     'taxable_cutoff_compensation' => $taxableCompensation,
                 ]);
 
+                $government = $this->applyGovernmentDeductionRules(
+                    $government,
+                    $validated['cutoff_type']
+                );
+
                 $netPay = round(
                     $grossPay
-                    - $lateDeduction
-                    - $undertimeDeduction
-                    - $absenceDeduction
                     + $overtimePay
                     + $holidayPay
                     + $restDayPay
                     + $leavePay
                     + $otherAdditions
+                    - $attendanceDeductions
                     - $otherDeductions
                     - $government['total_employee_government_deductions'],
                     2
@@ -222,10 +258,12 @@ class PayrollController extends Controller
                     'biometric_employee_id' => $first->biometric_employee_id,
                     'employee_no' => $first->employee_no,
                     'employee_name' => $first->employee_name,
+
                     'monthly_rate' => $rates['monthly_rate'],
                     'daily_rate' => $rates['daily_rate'],
                     'hourly_rate' => $rates['hourly_rate'],
                     'minute_rate' => $rates['minute_rate'],
+
                     'total_worked_days' => $totalWorkedDays,
                     'total_payable_days' => $totalPayableDays,
                     'total_payable_hours' => $totalPayableHours,
@@ -237,6 +275,7 @@ class PayrollController extends Controller
                     'total_rest_day_worked' => $totalRestDayWorked,
                     'total_holiday_worked' => $totalHolidayWorked,
                     'total_leave_days' => $totalLeaveDays,
+
                     'gross_pay' => $grossPay,
                     'late_deduction' => $lateDeduction,
                     'undertime_deduction' => $undertimeDeduction,
@@ -246,25 +285,50 @@ class PayrollController extends Controller
                     'rest_day_pay' => $restDayPay,
                     'leave_pay' => $leavePay,
                     'taxable_compensation' => $taxableCompensation,
+
                     'sss_employee' => $government['sss_employee'],
                     'sss_employer' => $government['sss_employer'],
                     'philhealth_employee' => $government['philhealth_employee'],
                     'philhealth_employer' => $government['philhealth_employer'],
                     'pagibig_employee' => $government['pagibig_employee'],
                     'pagibig_employer' => $government['pagibig_employer'],
-                    'withholding_tax' => $government['withholding_tax'],
+                    'withholding_tax' => 0,
+
                     'total_employee_government_deductions' => $government['total_employee_government_deductions'],
                     'total_employer_government_contributions' => $government['total_employer_government_contributions'],
+
                     'other_additions' => $otherAdditions,
                     'other_deductions' => $otherDeductions,
                     'net_pay' => $netPay,
+
                     'meta' => [
                         'period_start' => $startDate->toDateString(),
                         'period_end' => $endDate->toDateString(),
+                        'cutoff_type' => $validated['cutoff_type'],
+                        'government_schedule' => $validated['cutoff_type'] === 'first'
+                            ? '1st cutoff (11-25): SSS only'
+                            : '2nd cutoff (26-10): PhilHealth + Pag-IBIG only',
                         'attendance_status_breakdown' => $rows
                             ->groupBy('attendance_status')
                             ->map(fn ($items) => $items->count())
                             ->toArray(),
+                        'salary_deductions' => $loanDeductions,
+                        'allowance' => [
+                            'monthly_allowance' => round((float) ($rates['allowance'] ?? 0), 2),
+                            'allowance_per_cutoff' => $allowancePerCutoff,
+                        ],
+                        'attendance_deductions' => [
+                            'late_minutes' => $totalLateMinutes,
+                            'late_rate_per_minute' => $lateRatePerMinute,
+                            'late_deduction' => $lateDeduction,
+                            'undertime_minutes' => $totalUndertimeMinutes,
+                            'undertime_rate_per_minute' => $undertimeRatePerMinute,
+                            'undertime_deduction' => $undertimeDeduction,
+                            'absent_days' => $totalAbsentDays,
+                            'absence_rate_per_day' => $absenceRatePerDay,
+                            'absence_deduction' => $absenceDeduction,
+                            'total_attendance_deductions' => $attendanceDeductions,
+                        ],
                     ],
                 ]);
             }
@@ -349,6 +413,7 @@ class PayrollController extends Controller
     {
         return [
             'gross_pay' => round((float) $payroll->items->sum('gross_pay'), 2),
+            'other_additions' => round((float) $payroll->items->sum('other_additions'), 2),
             'late_deduction' => round((float) $payroll->items->sum('late_deduction'), 2),
             'undertime_deduction' => round((float) $payroll->items->sum('undertime_deduction'), 2),
             'absence_deduction' => round((float) $payroll->items->sum('absence_deduction'), 2),
@@ -359,8 +424,9 @@ class PayrollController extends Controller
             'sss_employee' => round((float) $payroll->items->sum('sss_employee'), 2),
             'philhealth_employee' => round((float) $payroll->items->sum('philhealth_employee'), 2),
             'pagibig_employee' => round((float) $payroll->items->sum('pagibig_employee'), 2),
-            'withholding_tax' => round((float) $payroll->items->sum('withholding_tax'), 2),
+            'withholding_tax' => 0,
             'total_employee_government_deductions' => round((float) $payroll->items->sum('total_employee_government_deductions'), 2),
+            'other_deductions' => round((float) $payroll->items->sum('other_deductions'), 2),
             'net_pay' => round((float) $payroll->items->sum('net_pay'), 2),
         ];
     }
@@ -488,35 +554,13 @@ class PayrollController extends Controller
         });
 
         if (! $hasMatch) {
-            return [
-                'employee_id' => null,
-                'monthly_rate' => 0,
-                'daily_rate' => 0,
-                'hourly_rate' => 0,
-                'minute_rate' => 0,
-                'allowance' => 0,
-                'ot_rate_per_hour' => 0,
-                'late_deduction_per_minute' => 0,
-                'undertime_deduction_per_minute' => 0,
-                'absent_deduction_per_day' => 0,
-            ];
+            return $this->emptyRatePayload();
         }
 
         $salary = $query->first();
 
         if (! $salary) {
-            return [
-                'employee_id' => null,
-                'monthly_rate' => 0,
-                'daily_rate' => 0,
-                'hourly_rate' => 0,
-                'minute_rate' => 0,
-                'allowance' => 0,
-                'ot_rate_per_hour' => 0,
-                'late_deduction_per_minute' => 0,
-                'undertime_deduction_per_minute' => 0,
-                'absent_deduction_per_day' => 0,
-            ];
+            return $this->emptyRatePayload();
         }
 
         $monthlyRate = 0;
@@ -530,27 +574,104 @@ class PayrollController extends Controller
             $monthlyRate = $dailyRate > 0 ? round($dailyRate * 26, 2) : 0;
         }
 
-        $hourlyRate = $dailyRate > 0 ? round($dailyRate / 8, 2) : 0;
-        $minuteRate = $hourlyRate > 0 ? round($hourlyRate / 60, 4) : 0;
+        $hourlyRate = $dailyRate > 0 ? round($dailyRate / 8, 4) : 0;
+        $minuteRate = $hourlyRate > 0 ? round($hourlyRate / 60, 6) : 0;
+
+        // Fallback rates:
+        // if custom rates are not set, use computed regular salary rates
+        $lateRatePerMinute = (float) ($salary->late_deduction_per_minute ?? 0);
+        if ($lateRatePerMinute <= 0) {
+            $lateRatePerMinute = $minuteRate;
+        }
+
+        $undertimeRatePerMinute = (float) ($salary->undertime_deduction_per_minute ?? 0);
+        if ($undertimeRatePerMinute <= 0) {
+            $undertimeRatePerMinute = $minuteRate;
+        }
+
+        $absentRatePerDay = (float) ($salary->absent_deduction_per_day ?? 0);
+        if ($absentRatePerDay <= 0) {
+            $absentRatePerDay = $dailyRate;
+        }
 
         return [
             'employee_id' => null,
+            'salary_id' => $salary->id,
             'monthly_rate' => round($monthlyRate, 2),
             'daily_rate' => round($dailyRate, 2),
-            'hourly_rate' => $hourlyRate,
-            'minute_rate' => $minuteRate,
+            'hourly_rate' => round($hourlyRate, 4),
+            'minute_rate' => round($minuteRate, 6),
+
             'allowance' => round((float) ($salary->allowance ?? 0), 2),
             'ot_rate_per_hour' => round((float) ($salary->ot_rate_per_hour ?? 0), 2),
-            'late_deduction_per_minute' => round((float) ($salary->late_deduction_per_minute ?? 0), 4),
-            'undertime_deduction_per_minute' => round((float) ($salary->undertime_deduction_per_minute ?? 0), 4),
-            'absent_deduction_per_day' => round((float) ($salary->absent_deduction_per_day ?? 0), 2),
+
+            'late_deduction_per_minute' => round($lateRatePerMinute, 6),
+            'undertime_deduction_per_minute' => round($undertimeRatePerMinute, 6),
+            'absent_deduction_per_day' => round($absentRatePerDay, 2),
+
+            'sss_loan' => round((float) ($salary->sss_loan ?? 0), 2),
+            'pagibig_loan' => round((float) ($salary->pagibig_loan ?? 0), 2),
+            'vale' => round((float) ($salary->vale ?? 0), 2),
+            'other_loans' => round((float) ($salary->other_loans ?? 0), 2),
         ];
+    }
+
+    protected function emptyRatePayload(): array
+    {
+        return [
+            'employee_id' => null,
+            'salary_id' => null,
+            'monthly_rate' => 0,
+            'daily_rate' => 0,
+            'hourly_rate' => 0,
+            'minute_rate' => 0,
+            'allowance' => 0,
+            'ot_rate_per_hour' => 0,
+            'late_deduction_per_minute' => 0,
+            'undertime_deduction_per_minute' => 0,
+            'absent_deduction_per_day' => 0,
+            'sss_loan' => 0,
+            'pagibig_loan' => 0,
+            'vale' => 0,
+            'other_loans' => 0,
+        ];
+    }
+
+    protected function applyGovernmentDeductionRules(array $government, string $cutoffType): array
+    {
+        $government['withholding_tax'] = 0;
+
+        if ($cutoffType === 'first') {
+            $government['philhealth_employee'] = 0;
+            $government['philhealth_employer'] = 0;
+            $government['pagibig_employee'] = 0;
+            $government['pagibig_employer'] = 0;
+        } else {
+            $government['sss_employee'] = 0;
+            $government['sss_employer'] = 0;
+        }
+
+        $government['total_employee_government_deductions'] = round(
+            (float) ($government['sss_employee'] ?? 0)
+            + (float) ($government['philhealth_employee'] ?? 0)
+            + (float) ($government['pagibig_employee'] ?? 0),
+            2
+        );
+
+        $government['total_employer_government_contributions'] = round(
+            (float) ($government['sss_employer'] ?? 0)
+            + (float) ($government['philhealth_employer'] ?? 0)
+            + (float) ($government['pagibig_employer'] ?? 0),
+            2
+        );
+
+        return $government;
     }
 
     protected function columnExists(string $table, string $column): bool
     {
         try {
-            return \Schema::hasColumn($table, $column);
+            return Schema::hasColumn($table, $column);
         } catch (\Throwable $e) {
             return false;
         }
@@ -587,7 +708,6 @@ class PayrollController extends Controller
             return [];
         }
 
-        // Change these conditions based on your actual OT adjustment structure
         return $query
             ->where(function ($q) {
                 $q->where('adjustment_type', 'overtime')

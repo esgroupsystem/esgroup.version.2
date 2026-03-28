@@ -18,6 +18,10 @@ class PayrollEmployeeSalary extends Model
         'late_deduction_per_minute',
         'undertime_deduction_per_minute',
         'absent_deduction_per_day',
+        'sss_loan',
+        'pagibig_loan',
+        'vale',
+        'other_loans',
         'is_active',
         'remarks',
     ];
@@ -29,6 +33,10 @@ class PayrollEmployeeSalary extends Model
         'late_deduction_per_minute' => 'decimal:4',
         'undertime_deduction_per_minute' => 'decimal:4',
         'absent_deduction_per_day' => 'decimal:2',
+        'sss_loan' => 'decimal:2',
+        'pagibig_loan' => 'decimal:2',
+        'vale' => 'decimal:2',
+        'other_loans' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 }

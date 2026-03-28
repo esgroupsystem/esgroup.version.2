@@ -347,7 +347,7 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('payrolls.*') ? 'active' : '' }}"
+                        <a class="nav-link {{ request()->routeIs('payroll.*') ? 'active' : '' }}"
                             href="{{ route('payroll.index') }}">
                             <div class="d-flex align-items-center">
                                 <span class="nav-link-icon">

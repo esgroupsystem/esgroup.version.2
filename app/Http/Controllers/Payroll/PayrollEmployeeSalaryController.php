@@ -77,9 +77,18 @@ class PayrollEmployeeSalaryController extends Controller
             'late_deduction_per_minute' => ['nullable', 'numeric', 'min:0'],
             'undertime_deduction_per_minute' => ['nullable', 'numeric', 'min:0'],
             'absent_deduction_per_day' => ['nullable', 'numeric', 'min:0'],
+            'sss_loan' => ['nullable', 'numeric', 'min:0'],
+            'pagibig_loan' => ['nullable', 'numeric', 'min:0'],
+            'vale' => ['nullable', 'numeric', 'min:0'],
+            'other_loans' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'remarks' => ['nullable', 'string'],
         ]);
+
+        $computed = $this->computeRates(
+            (float) $validated['basic_salary'],
+            $validated['rate_type']
+        );
 
         PayrollEmployeeSalary::create([
             'biometric_employee_id' => $validated['biometric_employee_id'],
@@ -89,10 +98,14 @@ class PayrollEmployeeSalaryController extends Controller
             'rate_type' => $validated['rate_type'],
             'basic_salary' => $validated['basic_salary'],
             'allowance' => $validated['allowance'] ?? 0,
-            'ot_rate_per_hour' => $validated['ot_rate_per_hour'] ?? 0,
-            'late_deduction_per_minute' => $validated['late_deduction_per_minute'] ?? 0,
-            'undertime_deduction_per_minute' => $validated['undertime_deduction_per_minute'] ?? 0,
-            'absent_deduction_per_day' => $validated['absent_deduction_per_day'] ?? 0,
+            'ot_rate_per_hour' => $validated['ot_rate_per_hour'] ?? $computed['hourly_rate'],
+            'late_deduction_per_minute' => $computed['per_minute_rate'],
+            'undertime_deduction_per_minute' => $computed['per_minute_rate'],
+            'absent_deduction_per_day' => $computed['daily_rate'],
+            'sss_loan' => $validated['sss_loan'] ?? 0,
+            'pagibig_loan' => $validated['pagibig_loan'] ?? 0,
+            'vale' => $validated['vale'] ?? 0,
+            'other_loans' => $validated['other_loans'] ?? 0,
             'is_active' => (bool) ($validated['is_active'] ?? true),
             'remarks' => $validated['remarks'] ?? null,
         ]);
@@ -122,9 +135,18 @@ class PayrollEmployeeSalaryController extends Controller
             'late_deduction_per_minute' => ['nullable', 'numeric', 'min:0'],
             'undertime_deduction_per_minute' => ['nullable', 'numeric', 'min:0'],
             'absent_deduction_per_day' => ['nullable', 'numeric', 'min:0'],
+            'sss_loan' => ['nullable', 'numeric', 'min:0'],
+            'pagibig_loan' => ['nullable', 'numeric', 'min:0'],
+            'vale' => ['nullable', 'numeric', 'min:0'],
+            'other_loans' => ['nullable', 'numeric', 'min:0'],
             'is_active' => ['nullable', 'boolean'],
             'remarks' => ['nullable', 'string'],
         ]);
+
+        $computed = $this->computeRates(
+            (float) $validated['basic_salary'],
+            $validated['rate_type']
+        );
 
         $payrollEmployeeSalary->update([
             'employee_no' => $validated['employee_no'] ?? null,
@@ -133,10 +155,14 @@ class PayrollEmployeeSalaryController extends Controller
             'rate_type' => $validated['rate_type'],
             'basic_salary' => $validated['basic_salary'],
             'allowance' => $validated['allowance'] ?? 0,
-            'ot_rate_per_hour' => $validated['ot_rate_per_hour'] ?? 0,
-            'late_deduction_per_minute' => $validated['late_deduction_per_minute'] ?? 0,
-            'undertime_deduction_per_minute' => $validated['undertime_deduction_per_minute'] ?? 0,
-            'absent_deduction_per_day' => $validated['absent_deduction_per_day'] ?? 0,
+            'ot_rate_per_hour' => $validated['ot_rate_per_hour'] ?? $computed['hourly_rate'],
+            'late_deduction_per_minute' => $computed['per_minute_rate'],
+            'undertime_deduction_per_minute' => $computed['per_minute_rate'],
+            'absent_deduction_per_day' => $computed['daily_rate'],
+            'sss_loan' => $validated['sss_loan'] ?? 0,
+            'pagibig_loan' => $validated['pagibig_loan'] ?? 0,
+            'vale' => $validated['vale'] ?? 0,
+            'other_loans' => $validated['other_loans'] ?? 0,
             'is_active' => (bool) ($validated['is_active'] ?? true),
             'remarks' => $validated['remarks'] ?? null,
         ]);
@@ -204,6 +230,10 @@ class PayrollEmployeeSalaryController extends Controller
                     'late_deduction_per_minute' => 0,
                     'undertime_deduction_per_minute' => 0,
                     'absent_deduction_per_day' => 0,
+                    'sss_loan' => 0,
+                    'pagibig_loan' => 0,
+                    'vale' => 0,
+                    'other_loans' => 0,
                     'is_active' => true,
                     'remarks' => null,
                 ]);
@@ -215,5 +245,33 @@ class PayrollEmployeeSalaryController extends Controller
         return redirect()
             ->route('payroll-employee-salaries.index')
             ->with('success', "Biometrics sync completed. {$inserted} employee salary record(s) added.");
+    }
+
+    private function computeRates(float $basicSalary, string $rateType): array
+    {
+        $workingDaysPerMonth = 22;
+        $hoursPerDay = 8;
+        $minutesPerHour = 60;
+
+        if ($basicSalary <= 0) {
+            return [
+                'daily_rate' => 0,
+                'hourly_rate' => 0,
+                'per_minute_rate' => 0,
+            ];
+        }
+
+        $dailyRate = $rateType === 'monthly'
+            ? ($basicSalary / $workingDaysPerMonth)
+            : $basicSalary;
+
+        $hourlyRate = $dailyRate / $hoursPerDay;
+        $perMinuteRate = $hourlyRate / $minutesPerHour;
+
+        return [
+            'daily_rate' => round($dailyRate, 2),
+            'hourly_rate' => round($hourlyRate, 2),
+            'per_minute_rate' => round($perMinuteRate, 4),
+        ];
     }
 }

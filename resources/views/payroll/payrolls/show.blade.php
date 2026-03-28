@@ -163,14 +163,17 @@
                                         <td>
                                             SSS: {{ number_format($item->sss_employee, 2) }}<br>
                                             PHIC: {{ number_format($item->philhealth_employee, 2) }}<br>
-                                            HDMF: {{ number_format($item->pagibig_employee, 2) }}<br>
-                                            TAX: {{ number_format($item->withholding_tax, 2) }}
+                                            HDMF: {{ number_format($item->pagibig_employee, 2) }}
+                                            <br>
+                                            <small class="text-muted">
+                                                {{ data_get($item->meta, 'government_schedule') }}
+                                            </small>
                                         </td>
                                         <td>
-                                            {{ number_format(
-                                                $item->late_deduction + $item->undertime_deduction + $item->absence_deduction + $item->other_deductions,
-                                                2,
-                                            ) }}
+                                            Late/UT/Absence:
+                                            {{ number_format($item->late_deduction + $item->undertime_deduction + $item->absence_deduction, 2) }}<br>
+                                            Salary Deductions:
+                                            {{ number_format($item->other_deductions, 2) }}
                                         </td>
                                         <td><strong>{{ number_format($item->net_pay, 2) }}</strong></td>
                                         <td>
