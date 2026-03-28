@@ -36,38 +36,15 @@
                         <div class="col-lg-auto">
                             <form method="GET" action="{{ route('payroll-plotting.index') }}"
                                 class="row g-2 align-items-center" id="filterForm">
-                                <div class="col-auto">
-                                    <input type="text" name="search" list="employeeSuggestions"
+                                <div class="col-auto position-relative">
+                                    <input type="text" name="search" id="employeeSearchInput"
                                         class="form-control form-control-sm" style="width: 280px;"
                                         placeholder="Search employee name / employee no / bio id..."
-                                        value="{{ request('search') }}" required>
+                                        value="{{ request('search') }}" autocomplete="off">
 
-                                    <datalist id="employeeSuggestions">
-                                        @foreach ($suggestions as $suggestion)
-                                            <option value="{{ $suggestion->employee_name }}">
-                                                {{ $suggestion->employee_name }}
-                                                @if ($suggestion->employee_no)
-                                                    - {{ $suggestion->employee_no }}
-                                                @endif
-                                                @if ($suggestion->biometric_employee_id)
-                                                    - Bio ID: {{ $suggestion->biometric_employee_id }}
-                                                @endif
-                                            </option>
-
-                                            @if ($suggestion->employee_no)
-                                                <option value="{{ $suggestion->employee_no }}">
-                                                    {{ $suggestion->employee_name }} - {{ $suggestion->employee_no }}
-                                                </option>
-                                            @endif
-
-                                            @if ($suggestion->biometric_employee_id)
-                                                <option value="{{ $suggestion->biometric_employee_id }}">
-                                                    {{ $suggestion->employee_name }} - Bio ID:
-                                                    {{ $suggestion->biometric_employee_id }}
-                                                </option>
-                                            @endif
-                                        @endforeach
-                                    </datalist>
+                                    <div id="employeeSearchSuggestions" class="list-group position-absolute w-100 shadow-sm"
+                                        style="top: 100%; left: 0; z-index: 1050; display: none; max-height: 260px; overflow-y: auto;">
+                                    </div>
                                 </div>
 
                                 <div class="col-auto">
@@ -197,82 +174,62 @@
         </div>
     </div>
 
-    <style>
-        .plotting-table th,
-        .plotting-table td {
-            vertical-align: top;
-        }
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            function bindPlottingEvents(scope = document) {
+                const statusFields = scope.querySelectorAll('.plot-status');
 
-        .employee-col {
-            min-width: 240px;
-            width: 240px;
-            z-index: 4;
-        }
+                function applyCellColor(select) {
+                    const td = select.closest('.plot-cell');
+                    if (!td) return;
 
-        .day-col {
-            min-width: 155px;
-            width: 155px;
-        }
+                    td.classList.remove('plot-scheduled', 'plot-rest-day', 'plot-leave', 'plot-holiday');
 
-        .sticky-col {
-            position: sticky;
-            left: 0;
-            z-index: 3;
-            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.04);
-        }
+                    if (select.value === 'scheduled') td.classList.add('plot-scheduled');
+                    if (select.value === 'rest_day') td.classList.add('plot-rest-day');
+                    if (select.value === 'leave') td.classList.add('plot-leave');
+                    if (select.value === 'holiday') td.classList.add('plot-holiday');
+                }
 
-        .sticky-head {
-            top: 0;
-            z-index: 5;
-        }
+                statusFields.forEach(function(select) {
+                    applyCellColor(select);
 
-        .plot-cell {
-            padding: .4rem;
-            transition: background-color .2s ease;
-        }
+                    select.addEventListener('change', function() {
+                        applyCellColor(this);
 
-        .plot-mini-card {
-            min-width: 140px;
-        }
+                        const cell = this.closest('.plot-cell');
+                        const timeInputs = cell.querySelectorAll('input[type="time"]');
 
-        .plot-mini-card .form-control,
-        .plot-mini-card .form-select {
-            font-size: 11px;
-            padding: .28rem .45rem;
-        }
+                        if (this.value !== 'scheduled') {
+                            timeInputs.forEach(function(input) {
+                                input.value = '';
+                            });
+                        }
+                    });
+                });
+            }
 
-        .plot-scheduled {
-            background-color: rgba(25, 135, 84, .08);
-        }
+            bindPlottingEvents(document);
 
-        .plot-rest-day {
-            background-color: rgba(255, 193, 7, .13);
-        }
+            document.addEventListener('click', function(e) {
+                const link = e.target.closest('#plottingTableWrapper .pagination a');
+                if (!link) return;
 
-        .plot-leave {
-            background-color: rgba(13, 202, 240, .10);
-        }
+                e.preventDefault();
 
-        .plot-holiday {
-            background-color: rgba(220, 53, 69, .08);
-        }
-
-        .bg-success-subtle {
-            background-color: rgba(25, 135, 84, .10) !important;
-        }
-
-        .bg-warning-subtle {
-            background-color: rgba(255, 193, 7, .15) !important;
-        }
-
-        .bg-info-subtle {
-            background-color: rgba(13, 202, 240, .12) !important;
-        }
-
-        .bg-danger-subtle {
-            background-color: rgba(220, 53, 69, .10) !important;
-        }
-    </style>
+                fetch(link.href, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('plottingTableWrapper').innerHTML = html;
+                        bindPlottingEvents(document.getElementById('plottingTableWrapper'));
+                    });
+            });
+        });
+    </script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -328,6 +285,68 @@
                         bindPlottingEvents(document.getElementById('plottingTableWrapper'));
                     });
             });
+
+            const searchInput = document.getElementById('employeeSearchInput');
+            const suggestionBox = document.getElementById('employeeSearchSuggestions');
+
+            let debounceTimer = null;
+
+            if (searchInput && suggestionBox) {
+                searchInput.addEventListener('input', function() {
+                    const keyword = this.value.trim();
+
+                    clearTimeout(debounceTimer);
+
+                    if (keyword.length < 2) {
+                        suggestionBox.style.display = 'none';
+                        suggestionBox.innerHTML = '';
+                        return;
+                    }
+
+                    debounceTimer = setTimeout(() => {
+                        fetch(`{{ route('payroll-plotting.search-suggestions') }}?q=${encodeURIComponent(keyword)}`, {
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                suggestionBox.innerHTML = '';
+
+                                if (!data.length) {
+                                    suggestionBox.style.display = 'none';
+                                    return;
+                                }
+
+                                data.forEach(item => {
+                                    const button = document.createElement('button');
+                                    button.type = 'button';
+                                    button.className =
+                                        'list-group-item list-group-item-action';
+                                    button.textContent = item.label;
+
+                                    button.addEventListener('click', function() {
+                                        searchInput.value = item.value;
+                                        suggestionBox.style.display = 'none';
+                                    });
+
+                                    suggestionBox.appendChild(button);
+                                });
+
+                                suggestionBox.style.display = 'block';
+                            })
+                            .catch(() => {
+                                suggestionBox.style.display = 'none';
+                            });
+                    }, 250);
+                });
+
+                document.addEventListener('click', function(e) {
+                    if (!searchInput.contains(e.target) && !suggestionBox.contains(e.target)) {
+                        suggestionBox.style.display = 'none';
+                    }
+                });
+            }
         });
     </script>
 @endsection

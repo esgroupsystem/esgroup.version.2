@@ -227,54 +227,33 @@
 
                         <ul class="nav collapse {{ request()->is('attendance*') || request()->is('leave*') ? 'show' : '' }}"
                             id="attendanceMenu">
-
-                            @role('Developer', 'IT Head', 'HR Head', 'HR Officer')
-                                <li class="nav-item">
-                                    <a class="nav-link dropdown-indicator {{ request()->is('leave*') ? 'active' : '' }}"
-                                        href="#leaveMenu" role="button" data-bs-toggle="collapse"
-                                        aria-expanded="{{ request()->is('leave*') ? 'true' : 'false' }}">
-                                        <span class="nav-link-text">Leaves</span>
-                                    </a>
-
-                                    <ul class="nav collapse {{ request()->is('leave*') ? 'show' : '' }}" id="leaveMenu">
-
-                                        <li class="nav-item">
-                                            <a class="nav-link {{ request()->is('leave/employee') ? 'active' : '' }}"
-                                                href="{{ route('employee-leave.employee.index') }}">
-                                                <span class="nav-link-text">Employee</span>
-                                            </a>
-                                        </li>
-
-                                        <li class="nav-item">
-                                            <a class="nav-link {{ request()->is('leave/driver') ? 'active' : '' }}"
-                                                href="{{ route('driver-leave.driver.index') }}">
-                                                <span class="nav-link-text">Driver</span>
-                                            </a>
-                                        </li>
-
-                                        <li class="nav-item">
-                                            <a class="nav-link {{ request()->is('leave/conductor') ? 'active' : '' }}"
-                                                href="{{ route('conductor-leave.conductor.index') }}">
-                                                <span class="nav-link-text">Conductor</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-                            @endrole
-
                             <li class="nav-item">
-                                <a class="nav-link dropdown-indicator {{ request()->is('mirasol-logs*') ? 'active' : '' }}"
-                                    href="#mirasolMenu" role="button" data-bs-toggle="collapse"
-                                    aria-expanded="{{ request()->is('mirasol-logs*') ? 'true' : 'false' }}">
-                                    <span class="nav-link-text">Mirasol Biometrics</span>
+                                <a class="nav-link dropdown-indicator {{ request()->is('leave*') ? 'active' : '' }}"
+                                    href="#leaveMenu" role="button" data-bs-toggle="collapse"
+                                    aria-expanded="{{ request()->is('leave*') ? 'true' : 'false' }}">
+                                    <span class="nav-link-text">Leaves</span>
                                 </a>
 
-                                <ul class="nav collapse {{ request()->is('mirasol-logs*') ? 'show' : '' }}"
-                                    id="mirasolMenu">
+                                <ul class="nav collapse {{ request()->is('leave*') ? 'show' : '' }}" id="leaveMenu">
+
                                     <li class="nav-item">
-                                        <a class="nav-link {{ request()->is('mirasol-logs') ? 'active' : '' }}"
-                                            href="{{ route('mirasol-logs.index') }}">
-                                            <span class="nav-link-text">Logs</span>
+                                        <a class="nav-link {{ request()->is('leave/employee') ? 'active' : '' }}"
+                                            href="{{ route('employee-leave.employee.index') }}">
+                                            <span class="nav-link-text">Employee</span>
+                                        </a>
+                                    </li>
+
+                                    <li class="nav-item">
+                                        <a class="nav-link {{ request()->is('leave/driver') ? 'active' : '' }}"
+                                            href="{{ route('driver-leave.driver.index') }}">
+                                            <span class="nav-link-text">Driver</span>
+                                        </a>
+                                    </li>
+
+                                    <li class="nav-item">
+                                        <a class="nav-link {{ request()->is('leave/conductor') ? 'active' : '' }}"
+                                            href="{{ route('conductor-leave.conductor.index') }}">
+                                            <span class="nav-link-text">Conductor</span>
                                         </a>
                                     </li>
                                 </ul>
@@ -284,10 +263,11 @@
                 @endrole
 
                 @role('Developer', 'IT Head')
+                    {{-- Employee Schedule --}}
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
-                                Payroll
+                                Employee Schedule / Rates
                             </div>
                             <div class="col ps-0">
                                 <hr class="mb-0 navbar-vertical-divider">
@@ -302,7 +282,78 @@
                                 <span class="nav-link-icon">
                                     <span class="fas fa-calendar-alt"></span>
                                 </span>
-                                <span class="nav-link-text ps-1">Plotting Schedule</span>
+                                <span class="nav-link-text ps-1">Work Schedule</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('payroll-employee-salaries.*') ? 'active' : '' }}"
+                            href="{{ route('payroll-employee-salaries.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-money-bill-wave"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Employee Rates</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">
+                                Payroll Process
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider">
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('mirasol-logs.*') ? 'active' : '' }}"
+                            href="{{ route('mirasol-logs.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-fingerprint"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Mirasol Biometrics</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('payroll-attendance-adjustments.*') ? 'active' : '' }}"
+                            href="{{ route('payroll-attendance-adjustments.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-edit"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Adjustment</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('attendance-summary.*') ? 'active' : '' }}"
+                            href="{{ route('attendance-summary.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-clipboard-list"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Attendance Summary</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('payrolls.*') ? 'active' : '' }}"
+                            href="{{ route('payroll.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-money-check-alt"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Payroll</span>
                             </div>
                         </a>
                     </li>

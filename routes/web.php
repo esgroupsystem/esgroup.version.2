@@ -22,7 +22,11 @@ use App\Http\Controllers\Maintenance\PurchaseReceiveController;
 use App\Http\Controllers\Maintenance\ReceivingController;
 use App\Http\Controllers\Maintenance\RequestController;
 use App\Http\Controllers\Maintenance\StockTransferController;
+use App\Http\Controllers\Payroll\AttendanceSummaryController;
 use App\Http\Controllers\Payroll\EmployeePlottingScheduleController;
+use App\Http\Controllers\Payroll\PayrollAttendanceAdjustmentController;
+use App\Http\Controllers\Payroll\PayrollController;
+use App\Http\Controllers\Payroll\PayrollEmployeeSalaryController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Middleware\ForceLockscreen;
@@ -240,11 +244,81 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('{leave}/action', 'action')->name('employee.action');
         });
 
+    /*
+    |--------------------------------------------------------------------------
+    | Plotting Schedule
+    |-------------------------------------------------------------------------- */
+
     Route::prefix('payroll-plotting')->middleware(['auth', 'role:Developer,IT Head'])
         ->name('payroll-plotting.')->controller(EmployeePlottingScheduleController::class)->group(function () {
             Route::get('/', 'index')->name('index');
             Route::post('/save-monthly', 'saveMonthly')->name('save-monthly');
-            Route::post('/quick-fill', 'quickFill') -> name('quick-fill');
+            Route::post('/quick-fill', 'quickFill')->name('quick-fill');
+            Route::get('/search-suggestions', 'searchSuggestions')->name('search-suggestions');
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Payroll Attendance Adjustments
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('payroll-attendance-adjustments')->middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head'])
+        ->name('payroll-attendance-adjustments.')->controller(PayrollAttendanceAdjustmentController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{payrollAttendanceAdjustment}/edit', 'edit')->name('edit');
+            Route::put('/{payrollAttendanceAdjustment}', 'update')->name('update');
+            Route::delete('/{payrollAttendanceAdjustment}', 'destroy')->name('destroy');
+        });
+
+    Route::prefix('attendance-summary')->middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head'])
+        ->name('attendance-summary.')->controller(AttendanceSummaryController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::post('/create', 'rebuild')->name('rebuild');
+        });
+
+    Route::middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
+        ->prefix('payroll')
+        ->group(function () {
+            Route::get('employee-salaries/sync', [PayrollEmployeeSalaryController::class, 'syncFromBiometrics'])
+                ->name('payroll-employee-salaries.sync');
+
+            Route::resource('employee-salaries', PayrollEmployeeSalaryController::class)
+                ->except(['show'])
+                ->parameters(['employee-salaries' => 'payrollEmployeeSalary'])
+                ->names('payroll-employee-salaries');
+        });
+
+    Route::prefix('payroll')->middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
+        ->name('payroll.')->controller(PayrollController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+
+            Route::get('/payrolls/{payroll}/items/{item}', 'showItem')
+                ->whereNumber('payroll')
+                ->name('items.show');
+
+            Route::post('/payrolls/{payroll}/finalize', 'finalize')
+                ->whereNumber('payroll')
+                ->name('finalize');
+
+            Route::get('/payrolls/{payroll}/export/excel', 'exportExcel')
+                ->whereNumber('payroll')
+                ->name('export.excel');
+
+            Route::get('/payrolls/{payroll}/export/pdf', 'exportPdf')
+                ->whereNumber('payroll')
+                ->name('export.pdf');
+
+            Route::get('/{payroll}', 'show')
+                ->whereNumber('payroll')
+                ->name('show');
+
+            Route::delete('/{payroll}', 'destroy')
+                ->whereNumber('payroll')
+                ->name('destroy');
         });
 
     /*

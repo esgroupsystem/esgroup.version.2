@@ -7,6 +7,7 @@ use App\Models\EmployeePlottingSchedule;
 use App\Models\MirasolBiometricsLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class EmployeePlottingScheduleController extends Controller
@@ -27,33 +28,25 @@ class EmployeePlottingScheduleController extends Controller
             $cutoffType
         );
 
-        $suggestions = MirasolBiometricsLog::query()
-            ->selectRaw('
-        MAX(crosschex_id) as crosschex_id,
-        employee_id as biometric_employee_id,
-        employee_no,
-        employee_name
-    ')
-            ->whereNotNull('employee_name')
-            ->groupBy('employee_id', 'employee_no', 'employee_name')
-            ->orderBy('employee_name')
-            ->limit(300)
-            ->get();
-
-        $employeesQuery = MirasolBiometricsLog::query()
+        $employeeBaseQuery = MirasolBiometricsLog::query()
             ->selectRaw('
             MAX(crosschex_id) as crosschex_id,
             employee_id as biometric_employee_id,
             employee_no,
             employee_name
         ')
-            ->whereNotNull('employee_name');
+            ->whereNotNull('employee_name')
+            ->groupBy('employee_id', 'employee_no', 'employee_name');
+
+        $employeesQuery = DB::query()
+            ->fromSub($employeeBaseQuery, 'employees')
+            ->orderBy('employee_name');
 
         if ($search !== '') {
             $employeesQuery->where(function ($q) use ($search) {
                 $q->where('employee_name', 'like', "%{$search}%")
                     ->orWhere('employee_no', 'like', "%{$search}%")
-                    ->orWhere('employee_id', 'like', "%{$search}%")
+                    ->orWhere('biometric_employee_id', 'like', "%{$search}%")
                     ->orWhere('crosschex_id', 'like', "%{$search}%");
             });
         } else {
@@ -61,12 +54,10 @@ class EmployeePlottingScheduleController extends Controller
         }
 
         $employees = $employeesQuery
-            ->groupBy('employee_id', 'employee_no', 'employee_name')
-            ->orderBy('employee_name')
             ->paginate($perPage)
             ->withQueryString();
 
-        $pageEmployees = $employees->getCollection();
+        $pageEmployees = collect($employees->items());
 
         $bioIds = $pageEmployees->pluck('biometric_employee_id')->filter()->values()->all();
         $employeeNos = $pageEmployees->pluck('employee_no')->filter()->values()->all();
@@ -122,8 +113,7 @@ class EmployeePlottingScheduleController extends Controller
                 'cutoffType',
                 'startDate',
                 'endDate',
-                'cutoffLabel',
-                'suggestions'
+                'cutoffLabel'
             ));
         }
 
@@ -137,8 +127,7 @@ class EmployeePlottingScheduleController extends Controller
             'cutoffType',
             'startDate',
             'endDate',
-            'cutoffLabel',
-            'suggestions'
+            'cutoffLabel'
         ));
     }
 
@@ -240,7 +229,6 @@ class EmployeePlottingScheduleController extends Controller
                     'page' => $request->page,
                 ])
                 ->with('success', 'Cutoff plotting schedule saved successfully.');
-
         } catch (\Throwable $e) {
             \Log::error('Error saving plotting schedule', [
                 'message' => $e->getMessage(),
@@ -406,5 +394,42 @@ class EmployeePlottingScheduleController extends Controller
         $previousMonth = $today->copy()->subMonth();
 
         return [(int) $previousMonth->month, (int) $previousMonth->year, '26_10'];
+    }
+
+    public function searchSuggestions(Request $request)
+    {
+        $term = trim((string) $request->get('q', ''));
+
+        if ($term === '' || mb_strlen($term) < 2) {
+            return response()->json([]);
+        }
+
+        $suggestions = MirasolBiometricsLog::query()
+            ->selectRaw('
+            MAX(crosschex_id) as crosschex_id,
+            employee_id as biometric_employee_id,
+            employee_no,
+            employee_name
+        ')
+            ->whereNotNull('employee_name')
+            ->where(function ($query) use ($term) {
+                $query->where('employee_name', 'like', "%{$term}%")
+                    ->orWhere('employee_no', 'like', "%{$term}%")
+                    ->orWhere('employee_id', 'like', "%{$term}%")
+                    ->orWhere('crosschex_id', 'like', "%{$term}%");
+            })
+            ->groupBy('employee_id', 'employee_no', 'employee_name')
+            ->orderBy('employee_name')
+            ->limit(10)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'label' => trim($item->employee_name.' | '.($item->employee_no ?: 'No Emp No').' | Bio ID: '.($item->biometric_employee_id ?: '-')),
+                    'value' => $item->employee_name,
+                ];
+            })
+            ->values();
+
+        return response()->json($suggestions);
     }
 }

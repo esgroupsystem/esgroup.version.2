@@ -276,3 +276,80 @@
     padding: 8px 10px;
     min-height: 38px;
 }
+
+
+/* plotting table */
+.plotting-table th,
+.plotting-table td {
+    vertical-align: top;
+}
+
+.employee-col {
+    min-width: 240px;
+    width: 240px;
+    z-index: 4;
+}
+
+.day-col {
+    min-width: 155px;
+    width: 155px;
+}
+
+.sticky-col {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.04);
+}
+
+.sticky-head {
+    top: 0;
+    z-index: 5;
+}
+
+.plot-cell {
+    padding: 0.4rem;
+    transition: background-color 0.2s ease;
+}
+
+.plot-mini-card {
+    min-width: 140px;
+}
+
+.plot-mini-card .form-control,
+.plot-mini-card .form-select {
+    font-size: 11px;
+    padding: 0.28rem 0.45rem;
+}
+
+.plot-scheduled {
+    background-color: rgba(25, 135, 84, 0.08);
+}
+
+.plot-rest-day {
+    background-color: rgba(255, 193, 7, 0.13);
+}
+
+.plot-leave {
+    background-color: rgba(13, 202, 240, 0.1);
+}
+
+.plot-holiday {
+    background-color: rgba(220, 53, 69, 0.08);
+}
+
+.bg-success-subtle {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+}
+
+.bg-warning-subtle {
+    background-color: rgba(255, 193, 7, 0.15) !important;
+}
+
+.bg-info-subtle {
+    background-color: rgba(13, 202, 240, 0.12) !important;
+}
+
+.bg-danger-subtle {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+}
