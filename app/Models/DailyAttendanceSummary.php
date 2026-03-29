@@ -35,7 +35,10 @@ class DailyAttendanceSummary extends Model
         'is_rest_day',
         'is_leave',
         'is_holiday',
+        'holiday_name',
         'holiday_type',
+        'holiday_worked_multiplier',
+        'holiday_not_worked_multiplier',
 
         'has_adjustment',
         'adjustment_type',
@@ -67,6 +70,7 @@ class DailyAttendanceSummary extends Model
         'work_date' => 'date',
         'actual_time_in' => 'datetime',
         'actual_time_out' => 'datetime',
+
         'has_biometrics' => 'boolean',
         'is_rest_day' => 'boolean',
         'is_leave' => 'boolean',
@@ -77,8 +81,12 @@ class DailyAttendanceSummary extends Model
         'ignore_undertime' => 'boolean',
         'is_absent' => 'boolean',
         'is_incomplete_log' => 'boolean',
+
         'payable_days' => 'decimal:2',
         'payable_hours' => 'decimal:2',
+        'holiday_worked_multiplier' => 'decimal:2',
+        'holiday_not_worked_multiplier' => 'decimal:2',
+
         'computed_at' => 'datetime',
     ];
 }

@@ -1,12 +1,12 @@
-@extends('layouts.app')
 
-@section('title', 'Payroll Employee Detail')
 
-@section('content')
+<?php $__env->startSection('title', 'Payroll Employee Detail'); ?>
+
+<?php $__env->startSection('content'); ?>
     <div class="container-fluid" data-layout="container">
         <div class="content">
 
-            @php
+            <?php
                 $attendanceDeduction =
                     (float) $item->late_deduction +
                     (float) $item->undertime_deduction +
@@ -37,9 +37,9 @@
                 $undertimeMinutesTotal = (int) $summaries->sum('undertime_minutes');
                 $payableDaysTotal = (float) $summaries->sum('payable_days');
                 $payableHoursTotal = (float) $summaries->sum('payable_hours');
-            @endphp
+            ?>
 
-            {{-- Header / Employee Overview --}}
+            
             <div class="card shadow-sm border-0 mb-3">
                 <div class="card-header bg-body-tertiary border-bottom">
                     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
@@ -48,39 +48,41 @@
                                 <div class="avatar avatar-xl">
                                     <div class="avatar-name rounded-circle bg-primary-subtle text-primary">
                                         <span class="fs-4 fw-bold">
-                                            {{ strtoupper(substr($item->employee_name ?? 'N', 0, 1)) }}
+                                            <?php echo e(strtoupper(substr($item->employee_name ?? 'N', 0, 1))); ?>
+
                                         </span>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h4 class="mb-1 text-dark">{{ $item->employee_name }}</h4>
+                                    <h4 class="mb-1 text-dark"><?php echo e($item->employee_name); ?></h4>
                                     <div class="text-muted small d-flex flex-wrap gap-3">
                                         <span>
                                             <i class="fas fa-calendar-alt me-1 text-primary"></i>
-                                            {{ $payroll->cutoff_label }}
+                                            <?php echo e($payroll->cutoff_label); ?>
+
                                         </span>
 
-                                        @if ($item->employee_no)
+                                        <?php if($item->employee_no): ?>
                                             <span>
                                                 <i class="fas fa-id-badge me-1 text-info"></i>
-                                                Employee No: <strong>{{ $item->employee_no }}</strong>
+                                                Employee No: <strong><?php echo e($item->employee_no); ?></strong>
                                             </span>
-                                        @endif
+                                        <?php endif; ?>
 
-                                        @if ($item->biometric_employee_id)
+                                        <?php if($item->biometric_employee_id): ?>
                                             <span>
                                                 <i class="fas fa-fingerprint me-1 text-warning"></i>
-                                                Bio ID: <strong>{{ $item->biometric_employee_id }}</strong>
+                                                Bio ID: <strong><?php echo e($item->biometric_employee_id); ?></strong>
                                             </span>
-                                        @endif
+                                        <?php endif; ?>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="text-lg-end">
-                            <a href="{{ route('payroll.show', $payroll) }}" class="btn btn-outline-secondary">
+                            <a href="<?php echo e(route('payroll.show', $payroll)); ?>" class="btn btn-outline-secondary">
                                 <i class="fas fa-arrow-left me-1"></i> Back to Payroll
                             </a>
                         </div>
@@ -92,77 +94,77 @@
                         <div class="col-md-6 col-xl">
                             <div class="border rounded-3 p-3 h-100 bg-body">
                                 <small class="text-muted d-block mb-1">Gross Pay</small>
-                                <h5 class="mb-0 text-dark">₱ {{ number_format($item->gross_pay, 2) }}</h5>
+                                <h5 class="mb-0 text-dark">₱ <?php echo e(number_format($item->gross_pay, 2)); ?></h5>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl">
                             <div class="border rounded-3 p-3 h-100 bg-primary-subtle border-primary">
                                 <small class="text-primary d-block mb-1 fw-semibold">Allowance This Cutoff</small>
-                                <h5 class="mb-0 text-primary fw-bold">₱ {{ number_format($allowancePerCutoff, 2) }}</h5>
+                                <h5 class="mb-0 text-primary fw-bold">₱ <?php echo e(number_format($allowancePerCutoff, 2)); ?></h5>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl">
                             <div class="border rounded-3 p-3 h-100 bg-info-subtle border-info">
                                 <small class="text-info d-block mb-1 fw-semibold">Gross + Allowance</small>
-                                <h5 class="mb-0 text-info fw-bold">₱ {{ number_format($grossWithAllowance, 2) }}</h5>
+                                <h5 class="mb-0 text-info fw-bold">₱ <?php echo e(number_format($grossWithAllowance, 2)); ?></h5>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl">
                             <div class="border rounded-3 p-3 h-100 bg-body">
                                 <small class="text-muted d-block mb-1">Attendance Deductions</small>
-                                <h5 class="mb-0 text-warning">₱ {{ number_format($attendanceDeduction, 2) }}</h5>
+                                <h5 class="mb-0 text-warning">₱ <?php echo e(number_format($attendanceDeduction, 2)); ?></h5>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl">
                             <div class="border rounded-3 p-3 h-100 bg-body">
                                 <small class="text-muted d-block mb-1">Salary Deductions</small>
-                                <h5 class="mb-0 text-danger">₱ {{ number_format($salaryDeduction, 2) }}</h5>
+                                <h5 class="mb-0 text-danger">₱ <?php echo e(number_format($salaryDeduction, 2)); ?></h5>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl">
                             <div class="border rounded-3 p-3 h-100 bg-body">
                                 <small class="text-muted d-block mb-1">Government Deduction</small>
-                                <h5 class="mb-0 text-danger">₱ {{ number_format($governmentDeduction, 2) }}</h5>
+                                <h5 class="mb-0 text-danger">₱ <?php echo e(number_format($governmentDeduction, 2)); ?></h5>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl">
                             <div class="border rounded-3 p-3 h-100 bg-body">
                                 <small class="text-muted d-block mb-1">Overtime Pay</small>
-                                <h5 class="mb-0 text-info">₱ {{ number_format($item->overtime_pay, 2) }}</h5>
+                                <h5 class="mb-0 text-info">₱ <?php echo e(number_format($item->overtime_pay, 2)); ?></h5>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl">
                             <div class="border rounded-3 p-3 h-100 bg-body">
                                 <small class="text-muted d-block mb-1">Payable Days</small>
-                                <h5 class="mb-0 text-dark">{{ number_format($item->total_payable_days, 2) }}</h5>
+                                <h5 class="mb-0 text-dark"><?php echo e(number_format($item->total_payable_days, 2)); ?></h5>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl">
                             <div class="border rounded-3 p-3 h-100 bg-danger-subtle border-danger">
                                 <small class="text-danger d-block mb-1 fw-semibold">Total All Deductions</small>
-                                <h5 class="mb-0 text-danger fw-bold">₱ {{ number_format($totalAllDeductions, 2) }}</h5>
+                                <h5 class="mb-0 text-danger fw-bold">₱ <?php echo e(number_format($totalAllDeductions, 2)); ?></h5>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl">
                             <div class="border rounded-3 p-3 h-100 bg-success-subtle border-success">
                                 <small class="text-success d-block mb-1 fw-semibold">Net Pay (with Allowance)</small>
-                                <h4 class="mb-0 text-success fw-bold">₱ {{ number_format($finalNetPay, 2) }}</h4>
+                                <h4 class="mb-0 text-success fw-bold">₱ <?php echo e(number_format($finalNetPay, 2)); ?></h4>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {{-- Breakdown Cards --}}
+            
             <div class="row g-3 mb-3">
                 <div class="col-lg-6">
                     <div class="card shadow-sm border-0 h-100">
@@ -178,76 +180,87 @@
                                     <tbody>
                                         <tr>
                                             <td class="text-muted">Gross Pay</td>
-                                            <td class="text-end fw-semibold">₱ {{ number_format($item->gross_pay, 2) }}
+                                            <td class="text-end fw-semibold">₱ <?php echo e(number_format($item->gross_pay, 2)); ?>
+
                                             </td>
                                         </tr>
                                         <tr>
                                             <td class="text-muted">Allowance This Cutoff</td>
                                             <td class="text-end text-primary fw-semibold">
-                                                + ₱ {{ number_format($allowancePerCutoff, 2) }}
+                                                + ₱ <?php echo e(number_format($allowancePerCutoff, 2)); ?>
+
                                             </td>
                                         </tr>
 
                                         <tr class="table-light">
                                             <td class="fw-bold">Gross + Allowance</td>
                                             <td class="text-end fw-bold text-info">
-                                                ₱ {{ number_format($grossWithAllowance, 2) }}
+                                                ₱ <?php echo e(number_format($grossWithAllowance, 2)); ?>
+
                                             </td>
                                         </tr>
 
                                         <tr>
                                             <td class="text-muted">Late Deduction</td>
                                             <td class="text-end text-warning fw-semibold">
-                                                - ₱ {{ number_format($item->late_deduction, 2) }}
+                                                - ₱ <?php echo e(number_format($item->late_deduction, 2)); ?>
+
                                             </td>
                                         </tr>
                                         <tr>
                                             <td class="text-muted">Undertime Deduction</td>
                                             <td class="text-end text-warning fw-semibold">
-                                                - ₱ {{ number_format($item->undertime_deduction, 2) }}
+                                                - ₱ <?php echo e(number_format($item->undertime_deduction, 2)); ?>
+
                                             </td>
                                         </tr>
                                         <tr>
                                             <td class="text-muted">Absence Deduction</td>
                                             <td class="text-end text-danger fw-semibold">
-                                                - ₱ {{ number_format($item->absence_deduction, 2) }}
+                                                - ₱ <?php echo e(number_format($item->absence_deduction, 2)); ?>
+
                                             </td>
                                         </tr>
                                         <tr>
                                             <td class="text-muted">Total Attendance Deductions</td>
                                             <td class="text-end text-danger fw-bold">
-                                                - ₱ {{ number_format($attendanceDeduction, 2) }}
+                                                - ₱ <?php echo e(number_format($attendanceDeduction, 2)); ?>
+
                                             </td>
                                         </tr>
                                         <tr>
                                             <td class="text-muted">Salary Deductions</td>
                                             <td class="text-end text-danger fw-semibold">
-                                                - ₱ {{ number_format($salaryDeduction, 2) }}
+                                                - ₱ <?php echo e(number_format($salaryDeduction, 2)); ?>
+
                                             </td>
                                         </tr>
                                         <tr>
                                             <td class="text-muted">Government Deduction</td>
                                             <td class="text-end text-danger fw-semibold">
-                                                - ₱ {{ number_format($governmentDeduction, 2) }}
+                                                - ₱ <?php echo e(number_format($governmentDeduction, 2)); ?>
+
                                             </td>
                                         </tr>
                                         <tr>
                                             <td class="text-muted">Overtime Pay</td>
                                             <td class="text-end text-info fw-semibold">
-                                                ₱ {{ number_format($item->overtime_pay, 2) }}
+                                                ₱ <?php echo e(number_format($item->overtime_pay, 2)); ?>
+
                                             </td>
                                         </tr>
                                         <tr class="table-success">
                                             <td class="fw-bold">Net Pay (with Allowance)</td>
                                             <td class="text-end fw-bold text-success fs-6">
-                                                ₱ {{ number_format($finalNetPay, 2) }}
+                                                ₱ <?php echo e(number_format($finalNetPay, 2)); ?>
+
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
 
-                            @if (!empty($attendanceBreakdown))
+                            <?php if(!empty($attendanceBreakdown)): ?>
                                 <hr>
                                 <div>
                                     <h6 class="mb-3 text-dark">Attendance Deduction Details</h6>
@@ -256,16 +269,18 @@
                                             <div class="border rounded-3 p-3 h-100">
                                                 <small class="text-muted d-block mb-1">Late</small>
                                                 <div class="fw-semibold">
-                                                    {{ number_format((float) data_get($attendanceBreakdown, 'late_minutes', 0), 0) }}
+                                                    <?php echo e(number_format((float) data_get($attendanceBreakdown, 'late_minutes', 0), 0)); ?>
+
                                                     min
                                                 </div>
                                                 <small class="text-muted d-block">
                                                     Rate: ₱
-                                                    {{ number_format((float) data_get($attendanceBreakdown, 'late_rate_per_minute', 0), 4) }}/min
+                                                    <?php echo e(number_format((float) data_get($attendanceBreakdown, 'late_rate_per_minute', 0), 4)); ?>/min
                                                 </small>
                                                 <div class="text-warning fw-bold mt-2">
                                                     ₱
-                                                    {{ number_format((float) data_get($attendanceBreakdown, 'late_deduction', 0), 2) }}
+                                                    <?php echo e(number_format((float) data_get($attendanceBreakdown, 'late_deduction', 0), 2)); ?>
+
                                                 </div>
                                             </div>
                                         </div>
@@ -274,16 +289,18 @@
                                             <div class="border rounded-3 p-3 h-100">
                                                 <small class="text-muted d-block mb-1">Undertime</small>
                                                 <div class="fw-semibold">
-                                                    {{ number_format((float) data_get($attendanceBreakdown, 'undertime_minutes', 0), 0) }}
+                                                    <?php echo e(number_format((float) data_get($attendanceBreakdown, 'undertime_minutes', 0), 0)); ?>
+
                                                     min
                                                 </div>
                                                 <small class="text-muted d-block">
                                                     Rate: ₱
-                                                    {{ number_format((float) data_get($attendanceBreakdown, 'undertime_rate_per_minute', 0), 4) }}/min
+                                                    <?php echo e(number_format((float) data_get($attendanceBreakdown, 'undertime_rate_per_minute', 0), 4)); ?>/min
                                                 </small>
                                                 <div class="text-warning fw-bold mt-2">
                                                     ₱
-                                                    {{ number_format((float) data_get($attendanceBreakdown, 'undertime_deduction', 0), 2) }}
+                                                    <?php echo e(number_format((float) data_get($attendanceBreakdown, 'undertime_deduction', 0), 2)); ?>
+
                                                 </div>
                                             </div>
                                         </div>
@@ -292,22 +309,24 @@
                                             <div class="border rounded-3 p-3 h-100">
                                                 <small class="text-muted d-block mb-1">Absence</small>
                                                 <div class="fw-semibold">
-                                                    {{ number_format((float) data_get($attendanceBreakdown, 'absent_days', 0), 0) }}
+                                                    <?php echo e(number_format((float) data_get($attendanceBreakdown, 'absent_days', 0), 0)); ?>
+
                                                     day(s)
                                                 </div>
                                                 <small class="text-muted d-block">
                                                     Rate: ₱
-                                                    {{ number_format((float) data_get($attendanceBreakdown, 'absence_rate_per_day', 0), 2) }}/day
+                                                    <?php echo e(number_format((float) data_get($attendanceBreakdown, 'absence_rate_per_day', 0), 2)); ?>/day
                                                 </small>
                                                 <div class="text-danger fw-bold mt-2">
                                                     ₱
-                                                    {{ number_format((float) data_get($attendanceBreakdown, 'absence_deduction', 0), 2) }}
+                                                    <?php echo e(number_format((float) data_get($attendanceBreakdown, 'absence_deduction', 0), 2)); ?>
+
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            @endif
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
@@ -325,21 +344,21 @@
                                 <div class="col-12">
                                     <div class="border rounded-3 p-3 h-100">
                                         <small class="text-muted d-block mb-1">SSS Employee Share</small>
-                                        <h6 class="mb-0">₱ {{ number_format($item->sss_employee, 2) }}</h6>
+                                        <h6 class="mb-0">₱ <?php echo e(number_format($item->sss_employee, 2)); ?></h6>
                                     </div>
                                 </div>
 
                                 <div class="col-12">
                                     <div class="border rounded-3 p-3 h-100">
                                         <small class="text-muted d-block mb-1">PhilHealth Employee Share</small>
-                                        <h6 class="mb-0">₱ {{ number_format($item->philhealth_employee, 2) }}</h6>
+                                        <h6 class="mb-0">₱ <?php echo e(number_format($item->philhealth_employee, 2)); ?></h6>
                                     </div>
                                 </div>
 
                                 <div class="col-12">
                                     <div class="border rounded-3 p-3 h-100">
                                         <small class="text-muted d-block mb-1">Pag-IBIG Employee Share</small>
-                                        <h6 class="mb-0">₱ {{ number_format($item->pagibig_employee, 2) }}</h6>
+                                        <h6 class="mb-0">₱ <?php echo e(number_format($item->pagibig_employee, 2)); ?></h6>
                                     </div>
                                 </div>
                             </div>
@@ -347,13 +366,15 @@
                             <hr>
 
                             <div class="small text-muted mb-2">
-                                {{ data_get($item->meta, 'government_schedule', 'Government deduction schedule') }}
+                                <?php echo e(data_get($item->meta, 'government_schedule', 'Government deduction schedule')); ?>
+
                             </div>
 
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="fw-semibold text-muted">Total Government Deduction</span>
                                 <span class="fw-bold text-danger fs-6">
-                                    ₱ {{ number_format($governmentDeduction, 2) }}
+                                    ₱ <?php echo e(number_format($governmentDeduction, 2)); ?>
+
                                 </span>
                             </div>
                         </div>
@@ -374,7 +395,7 @@
                                     <div class="border rounded-3 p-3 h-100">
                                         <small class="text-muted d-block mb-1">SSS Loan</small>
                                         <h6 class="mb-0">₱
-                                            {{ number_format((float) data_get($salaryBreakdown, 'sss_loan', 0), 2) }}</h6>
+                                            <?php echo e(number_format((float) data_get($salaryBreakdown, 'sss_loan', 0), 2)); ?></h6>
                                     </div>
                                 </div>
 
@@ -382,7 +403,8 @@
                                     <div class="border rounded-3 p-3 h-100">
                                         <small class="text-muted d-block mb-1">Pag-IBIG Loan</small>
                                         <h6 class="mb-0">₱
-                                            {{ number_format((float) data_get($salaryBreakdown, 'pagibig_loan', 0), 2) }}
+                                            <?php echo e(number_format((float) data_get($salaryBreakdown, 'pagibig_loan', 0), 2)); ?>
+
                                         </h6>
                                     </div>
                                 </div>
@@ -391,7 +413,7 @@
                                     <div class="border rounded-3 p-3 h-100">
                                         <small class="text-muted d-block mb-1">Vale</small>
                                         <h6 class="mb-0">₱
-                                            {{ number_format((float) data_get($salaryBreakdown, 'vale', 0), 2) }}</h6>
+                                            <?php echo e(number_format((float) data_get($salaryBreakdown, 'vale', 0), 2)); ?></h6>
                                     </div>
                                 </div>
 
@@ -399,7 +421,8 @@
                                     <div class="border rounded-3 p-3 h-100">
                                         <small class="text-muted d-block mb-1">Other Loans</small>
                                         <h6 class="mb-0">₱
-                                            {{ number_format((float) data_get($salaryBreakdown, 'other_loans', 0), 2) }}
+                                            <?php echo e(number_format((float) data_get($salaryBreakdown, 'other_loans', 0), 2)); ?>
+
                                         </h6>
                                     </div>
                                 </div>
@@ -410,7 +433,8 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="fw-semibold text-muted">Total Salary Deductions</span>
                                 <span class="fw-bold text-danger fs-6">
-                                    ₱ {{ number_format($salaryDeduction, 2) }}
+                                    ₱ <?php echo e(number_format($salaryDeduction, 2)); ?>
+
                                 </span>
                             </div>
                         </div>
@@ -418,7 +442,7 @@
                 </div>
             </div>
 
-            {{-- Daily Attendance Breakdown --}}
+            
             <div class="card shadow-sm border-0">
                 <div class="card-header bg-body-tertiary border-bottom">
                     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
@@ -452,8 +476,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse ($summaries as $row)
-                                    @php
+                                <?php $__empty_1 = true; $__currentLoopData = $summaries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                                    <?php
                                         $status = strtolower($row->attendance_status ?? 'n/a');
 
                                         $badgeClass = match ($status) {
@@ -466,98 +490,105 @@
                                             'leave' => 'primary',
                                             default => 'dark',
                                         };
-                                    @endphp
+                                    ?>
 
                                     <tr>
                                         <td class="text-nowrap fw-semibold">
-                                            {{ optional($row->work_date)->format('M d, Y') }}
+                                            <?php echo e(optional($row->work_date)->format('M d, Y')); ?>
+
                                         </td>
 
                                         <td class="text-nowrap">
-                                            <span class="badge bg-{{ $badgeClass }}">
-                                                {{ strtoupper(str_replace('_', ' ', $row->attendance_status ?? 'N/A')) }}
+                                            <span class="badge bg-<?php echo e($badgeClass); ?>">
+                                                <?php echo e(strtoupper(str_replace('_', ' ', $row->attendance_status ?? 'N/A'))); ?>
+
                                             </span>
                                         </td>
 
                                         <td class="text-nowrap">
-                                            {{ $row->scheduled_time_in ? \Carbon\Carbon::parse($row->scheduled_time_in)->format('h:i A') : '--' }}
+                                            <?php echo e($row->scheduled_time_in ? \Carbon\Carbon::parse($row->scheduled_time_in)->format('h:i A') : '--'); ?>
+
                                             -
-                                            {{ $row->scheduled_time_out ? \Carbon\Carbon::parse($row->scheduled_time_out)->format('h:i A') : '--' }}
+                                            <?php echo e($row->scheduled_time_out ? \Carbon\Carbon::parse($row->scheduled_time_out)->format('h:i A') : '--'); ?>
+
                                         </td>
 
                                         <td class="text-nowrap">
-                                            {{ $row->actual_time_in ? \Carbon\Carbon::parse($row->actual_time_in)->format('h:i A') : '--' }}
+                                            <?php echo e($row->actual_time_in ? \Carbon\Carbon::parse($row->actual_time_in)->format('h:i A') : '--'); ?>
+
                                             -
-                                            {{ $row->actual_time_out ? \Carbon\Carbon::parse($row->actual_time_out)->format('h:i A') : '--' }}
+                                            <?php echo e($row->actual_time_out ? \Carbon\Carbon::parse($row->actual_time_out)->format('h:i A') : '--'); ?>
+
                                         </td>
 
                                         <td class="text-center text-warning fw-semibold">
-                                            {{ $row->late_minutes ?? 0 }} min
+                                            <?php echo e($row->late_minutes ?? 0); ?> min
                                         </td>
 
                                         <td class="text-center text-warning fw-semibold">
-                                            {{ $row->undertime_minutes ?? 0 }} min
+                                            <?php echo e($row->undertime_minutes ?? 0); ?> min
                                         </td>
 
                                         <td class="text-center">
                                             <span class="fw-semibold">
-                                                {{ number_format(($row->worked_minutes ?? 0) / 60, 2) }} hr
+                                                <?php echo e(number_format(($row->worked_minutes ?? 0) / 60, 2)); ?> hr
                                             </span>
                                         </td>
 
                                         <td class="text-center text-info fw-semibold">
-                                            {{ number_format(($row->overtime_minutes ?? 0) / 60, 2) }} hr
+                                            <?php echo e(number_format(($row->overtime_minutes ?? 0) / 60, 2)); ?> hr
                                         </td>
 
                                         <td class="text-center">
                                             <div class="fw-semibold">
-                                                {{ number_format($row->payable_days ?? 0, 2) }} day
+                                                <?php echo e(number_format($row->payable_days ?? 0, 2)); ?> day
                                             </div>
                                             <small class="text-muted">
-                                                {{ number_format($row->payable_hours ?? 0, 2) }} hr
+                                                <?php echo e(number_format($row->payable_hours ?? 0, 2)); ?> hr
                                             </small>
                                         </td>
 
                                         <td>
                                             <span class="text-muted">
-                                                {{ $row->remarks ?: '—' }}
+                                                <?php echo e($row->remarks ?: '—'); ?>
+
                                             </span>
                                         </td>
                                     </tr>
-                                @empty
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                                     <tr>
                                         <td colspan="10" class="text-center text-muted py-5">
                                             <i class="fas fa-folder-open fa-2x mb-2 d-block text-muted"></i>
                                             No daily attendance summary found for this employee.
                                         </td>
                                     </tr>
-                                @endforelse
+                                <?php endif; ?>
                             </tbody>
 
-                            @if ($summaries->isNotEmpty())
+                            <?php if($summaries->isNotEmpty()): ?>
                                 <tfoot class="table-light">
                                     <tr class="fw-bold">
                                         <th colspan="4" class="text-end">TOTAL</th>
                                         <th class="text-center text-warning">
-                                            {{ $lateMinutesTotal }} min
+                                            <?php echo e($lateMinutesTotal); ?> min
                                         </th>
                                         <th class="text-center text-warning">
-                                            {{ $undertimeMinutesTotal }} min
+                                            <?php echo e($undertimeMinutesTotal); ?> min
                                         </th>
                                         <th class="text-center">
-                                            {{ number_format($workedHoursTotal, 2) }} hr
+                                            <?php echo e(number_format($workedHoursTotal, 2)); ?> hr
                                         </th>
                                         <th class="text-center text-info">
-                                            {{ number_format($overtimeHoursTotal, 2) }} hr
+                                            <?php echo e(number_format($overtimeHoursTotal, 2)); ?> hr
                                         </th>
                                         <th class="text-center">
-                                            <div>{{ number_format($payableDaysTotal, 2) }} day</div>
-                                            <small>{{ number_format($payableHoursTotal, 2) }} hr</small>
+                                            <div><?php echo e(number_format($payableDaysTotal, 2)); ?> day</div>
+                                            <small><?php echo e(number_format($payableHoursTotal, 2)); ?> hr</small>
                                         </th>
                                         <th></th>
                                     </tr>
                                 </tfoot>
-                            @endif
+                            <?php endif; ?>
                         </table>
                     </div>
                 </div>
@@ -565,4 +596,6 @@
 
         </div>
     </div>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\esgroup.version.2\resources\views/payroll/payrolls/show_item.blade.php ENDPATH**/ ?>

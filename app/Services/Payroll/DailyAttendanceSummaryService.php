@@ -125,15 +125,16 @@ class DailyAttendanceSummaryService
 
         $holiday = class_exists(Holiday::class)
             ? Holiday::query()
+                ->when($this->columnExists('holidays', 'is_active'), fn ($q) => $q->where('is_active', true))
                 ->where(function ($q) use ($workDate) {
-                    $q->whereDate('holiday_date', $workDate->toDateString());
-
-                    if ($this->columnExists('holidays', 'work_date')) {
-                        $q->orWhereDate('work_date', $workDate->toDateString());
-                    }
-
-                    if ($this->columnExists('holidays', 'date')) {
-                        $q->orWhereDate('date', $workDate->toDateString());
+                    if ($this->columnExists('holidays', 'observed_date')) {
+                        $q->whereDate('observed_date', $workDate->toDateString());
+                    } elseif ($this->columnExists('holidays', 'holiday_date')) {
+                        $q->whereDate('holiday_date', $workDate->toDateString());
+                    } elseif ($this->columnExists('holidays', 'date')) {
+                        $q->whereDate('date', $workDate->toDateString());
+                    } elseif ($this->columnExists('holidays', 'work_date')) {
+                        $q->whereDate('work_date', $workDate->toDateString());
                     }
                 })
                 ->first()
@@ -165,7 +166,6 @@ class DailyAttendanceSummaryService
         $firstLogState = $logs->first()?->state;
         $lastLogState = $logs->last()?->state;
 
-        // ORIGINAL SCHEDULE
         $scheduledTimeIn = $schedule?->time_in;
         $scheduledTimeOut = $schedule?->time_out;
         $graceMinutes = (int) ($schedule?->grace_minutes ?? 0);
@@ -180,7 +180,10 @@ class DailyAttendanceSummaryService
         $isLeave = $scheduleStatus === 'leave';
 
         $isHoliday = ! is_null($holiday);
-        $holidayType = $holiday->type ?? $holiday->holiday_type ?? $holiday->name ?? null;
+        $holidayName = $holiday?->name;
+        $holidayType = $holiday?->holiday_type;
+        $holidayWorkedMultiplier = (float) ($holiday?->worked_multiplier ?? 0);
+        $holidayNotWorkedMultiplier = (float) ($holiday?->not_worked_multiplier ?? 0);
 
         $hasAdjustment = ! is_null($adjustment);
         $adjustmentType = $adjustment?->adjustment_type;
@@ -194,15 +197,9 @@ class DailyAttendanceSummaryService
         $adjustmentRemarks = $adjustment?->remarks;
 
         $remarks = [];
-
         $forcedPresent = false;
         $forcedAbsent = false;
 
-        /*
-        |--------------------------------------------------------------------------
-        | APPLY ADJUSTMENT AS EFFECTIVE OVERRIDE
-        |--------------------------------------------------------------------------
-        */
         if ($adjustment) {
             switch ($adjustmentType) {
                 case 'change_schedule':
@@ -381,7 +378,6 @@ class DailyAttendanceSummaryService
                     $overtimeMinutes = $scheduleOut->diffInMinutes($actualTimeOut);
                 }
 
-                // STRICT WINDOW BASED ON EFFECTIVE SCHEDULE
                 $effectiveStart = $actualTimeIn->gt($scheduleIn) ? $actualTimeIn->copy() : $scheduleIn->copy();
                 $effectiveEnd = $actualTimeOut->lt($scheduleOut) ? $actualTimeOut->copy() : $scheduleOut->copy();
 
@@ -431,13 +427,31 @@ class DailyAttendanceSummaryService
             $remarks[] = 'Worked on rest day.';
         } elseif ($isHoliday && ! $hasBiometrics && ! $forcedPresent) {
             $attendanceStatus = 'holiday';
-            $payableHours = 0;
-            $payableDays = 0;
+
+            // If holiday has no work but is still paid
+            if ($holidayNotWorkedMultiplier > 0) {
+                $payableHours = round($scheduledPayableMinutes / 60, 2);
+                $payableDays = $scheduledPayableMinutes > 0 ? 1 : 0;
+            } else {
+                $payableHours = 0;
+                $payableDays = 0;
+            }
+
             $remarks[] = 'Holiday with no work.';
         } elseif (($isHoliday && $hasBiometrics) || $adjustmentType === 'holiday_work') {
             $attendanceStatus = 'holiday_worked';
+
             $payableHours = round($workedMinutes / 60, 2);
-            $payableDays = 0;
+
+            if ($scheduledPayableMinutes > 0 && $workedMinutes > 0) {
+                $payableDays = round($workedMinutes / $scheduledPayableMinutes, 4);
+                if ($payableDays > 1) {
+                    $payableDays = 1;
+                }
+            } else {
+                $payableDays = 0;
+            }
+
             $remarks[] = 'Worked on holiday.';
         } elseif ($forcedPresent && ! $actualTimeIn && ! $actualTimeOut) {
             $attendanceStatus = 'adjusted_present';
@@ -516,7 +530,10 @@ class DailyAttendanceSummaryService
                 'is_rest_day' => $isRestDay,
                 'is_leave' => $isLeave,
                 'is_holiday' => $isHoliday,
+                'holiday_name' => $holidayName,
                 'holiday_type' => $holidayType,
+                'holiday_worked_multiplier' => $holidayWorkedMultiplier,
+                'holiday_not_worked_multiplier' => $holidayNotWorkedMultiplier,
 
                 'has_adjustment' => $hasAdjustment,
                 'adjustment_type' => $adjustmentType,

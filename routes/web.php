@@ -24,6 +24,7 @@ use App\Http\Controllers\Maintenance\RequestController;
 use App\Http\Controllers\Maintenance\StockTransferController;
 use App\Http\Controllers\Payroll\AttendanceSummaryController;
 use App\Http\Controllers\Payroll\EmployeePlottingScheduleController;
+use App\Http\Controllers\Payroll\HolidayController;
 use App\Http\Controllers\Payroll\PayrollAttendanceAdjustmentController;
 use App\Http\Controllers\Payroll\PayrollController;
 use App\Http\Controllers\Payroll\PayrollEmployeeSalaryController;
@@ -243,6 +244,15 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::put('employee/{leave}', 'update')->name('employee.update');
             Route::post('{leave}/action', 'action')->name('employee.action');
         });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Holiday Management
+    |-------------------------------------------------------------------------- */
+
+    Route::middleware(['auth', 'role:Developer,IT Head'])->group(function () {
+        Route::resource('holidays', HolidayController::class);
+    });
 
     /*
     |--------------------------------------------------------------------------

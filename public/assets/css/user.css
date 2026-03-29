@@ -277,7 +277,6 @@
     min-height: 38px;
 }
 
-
 /* plotting table */
 .plotting-table th,
 .plotting-table td {
@@ -352,4 +351,184 @@
 
 .bg-danger-subtle {
     background-color: rgba(220, 53, 69, 0.1) !important;
+}
+/* end plotting table */
+
+/* summary table */
+.attendance-summary-page .card {
+    border: 1px solid #d9e2ef !important;
+    box-shadow: 0 0.35rem 1rem rgba(15, 23, 42, 0.06) !important;
+}
+
+.attendance-summary-page .card-header {
+    background: #f8fafc !important;
+}
+
+.attendance-summary-page .section-title,
+.attendance-summary-page h4,
+.attendance-summary-page h5,
+.attendance-summary-page h6 {
+    color: #1f2937 !important;
+}
+
+.attendance-summary-page .text-muted,
+.attendance-summary-page small.text-muted,
+.attendance-summary-page .fs-10.text-muted,
+.attendance-summary-page .fs-11.text-muted {
+    color: #5b6472 !important;
+}
+
+/* Filter area */
+.attendance-summary-page .form-label {
+    color: #344054;
+    font-weight: 600;
+}
+
+.attendance-summary-page .form-control,
+.attendance-summary-page .form-select {
+    border-color: #cbd5e1;
+    color: #1f2937;
+    background-color: #ffffff;
+}
+
+.attendance-summary-page .form-control:focus,
+.attendance-summary-page .form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.15rem rgba(59, 130, 246, 0.15);
+}
+
+/* Stat cards */
+.attendance-summary-page .summary-stat-card .stat-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.attendance-summary-page .summary-stat-card .stat-value {
+    color: #111827;
+    font-weight: 700;
+}
+
+.attendance-summary-page .summary-stat-card .stat-help {
+    color: #667085;
+}
+
+/* Table */
+.attendance-summary-page .attendance-table {
+    color: #1f2937;
+}
+
+.attendance-summary-page .attendance-table thead th {
+    background: #e9eef5 !important;
+    color: #344054 !important;
+    font-weight: 700;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    border-bottom: 1px solid #cfd8e3 !important;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.attendance-summary-page .attendance-table tbody td {
+    border-color: #e5e7eb !important;
+    vertical-align: top;
+    color: #1f2937;
+}
+
+.attendance-summary-page .attendance-table tbody tr:hover {
+    background-color: #f8fbff !important;
+}
+
+.attendance-summary-page .attendance-table .main-value {
+    color: #111827;
+    font-weight: 600;
+}
+
+.attendance-summary-page .attendance-table .sub-value {
+    color: #667085;
+    font-size: 0.74rem;
+}
+
+/* Better plain text colors inside table */
+.attendance-summary-page .attendance-table .text-success {
+    color: #0f9f6e !important;
+}
+
+.attendance-summary-page .attendance-table .text-primary {
+    color: #2563eb !important;
+}
+
+.attendance-summary-page .attendance-table .text-warning {
+    color: #d97706 !important;
+}
+
+.attendance-summary-page .attendance-table .text-danger {
+    color: #dc2626 !important;
+}
+
+/* Badges */
+.attendance-summary-page .badge-phoenix {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border-width: 1px;
+}
+
+.attendance-summary-page .badge-phoenix-success {
+    background: #dcfce7 !important;
+    color: #166534 !important;
+    border-color: #86efac !important;
+}
+
+.attendance-summary-page .badge-phoenix-warning {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+    border-color: #fcd34d !important;
+}
+
+.attendance-summary-page .badge-phoenix-danger {
+    background: #fee2e2 !important;
+    color: #991b1b !important;
+    border-color: #fca5a5 !important;
+}
+
+.attendance-summary-page .badge-phoenix-info {
+    background: #dbeafe !important;
+    color: #1d4ed8 !important;
+    border-color: #93c5fd !important;
+}
+
+.attendance-summary-page .badge-phoenix-secondary {
+    background: #e5e7eb !important;
+    color: #374151 !important;
+    border-color: #cbd5e1 !important;
+}
+
+.attendance-summary-page .badge-phoenix-primary {
+    background: #e0e7ff !important;
+    color: #4338ca !important;
+    border-color: #a5b4fc !important;
+}
+
+.attendance-summary-page .badge-phoenix-light {
+    background: #f3f4f6 !important;
+    color: #374151 !important;
+    border-color: #d1d5db !important;
+}
+
+/* Header badges */
+.attendance-summary-page .top-pill {
+    font-weight: 600;
+    font-size: 0.78rem;
+}
+
+/* Empty state */
+.attendance-summary-page .empty-state-title {
+    color: #1f2937;
+    font-weight: 700;
+}
+
+.attendance-summary-page .empty-state-text {
+    color: #667085;
 }

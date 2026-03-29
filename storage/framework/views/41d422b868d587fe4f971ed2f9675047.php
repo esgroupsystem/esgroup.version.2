@@ -13,8 +13,8 @@
             </div>
 
             <div class="text-xl-end">
-                <div class="fw-semibold text-dark">{{ $summaries->total() }} record(s)</div>
-                <small class="text-muted">{{ $cutoffLabel }}</small>
+                <div class="fw-semibold text-dark"><?php echo e($summaries->total()); ?> record(s)</div>
+                <small class="text-muted"><?php echo e($cutoffLabel); ?></small>
             </div>
         </div>
     </div>
@@ -37,13 +37,13 @@
                         <th class="text-nowrap">Adjustment</th>
                         <th class="text-nowrap">Holiday</th>
                         <th class="text-nowrap">Payable</th>
-                        {{-- <th style="min-width: 260px;" class="pe-3">Remarks</th> --}}
+                        
                     </tr>
                 </thead>
 
                 <tbody>
-                    @forelse ($summaries as $row)
-                        @php
+                    <?php $__empty_1 = true; $__currentLoopData = $summaries; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $row): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+                        <?php
                             $statusClass = match ($row->attendance_status) {
                                 'present', 'adjusted_present' => 'success',
                                 'late', 'undertime', 'late_undertime' => 'warning',
@@ -61,175 +61,165 @@
                                 : 'NO STATUS';
 
                             $workedHours = ((int) $row->worked_minutes) / 60;
-                        @endphp
+                        ?>
 
                         <tr>
                             <td class="text-nowrap ps-3">
                                 <div class="fw-semibold text-dark">
-                                    {{ optional($row->work_date)->format('M d, Y') }}
+                                    <?php echo e(optional($row->work_date)->format('M d, Y')); ?>
+
                                 </div>
                                 <div class="text-muted fs-11">
-                                    {{ optional($row->work_date)->format('l') }}
+                                    <?php echo e(optional($row->work_date)->format('l')); ?>
+
                                 </div>
                             </td>
 
                             <td>
                                 <div class="d-flex flex-column">
-                                    <div class="fw-semibold text-dark">{{ $row->employee_name }}</div>
+                                    <div class="fw-semibold text-dark"><?php echo e($row->employee_name); ?></div>
                                     <div class="text-muted fs-11">
-                                        <strong>Emp No:</strong> {{ $row->employee_no ?: '—' }}
+                                        <strong>Emp No:</strong> <?php echo e($row->employee_no ?: '—'); ?>
+
                                     </div>
                                     <div class="text-muted fs-11">
-                                        <strong>Biometric ID:</strong> {{ $row->biometric_employee_id ?: '—' }}
+                                        <strong>Biometric ID:</strong> <?php echo e($row->biometric_employee_id ?: '—'); ?>
+
                                     </div>
                                 </div>
                             </td>
 
                             <td class="text-nowrap">
-                                <div class="fw-semibold text-dark">{{ $row->shift_name ?: '—' }}</div>
-                                <div class="text-muted fs-11">{{ $scheduleStatusLabel }}</div>
+                                <div class="fw-semibold text-dark"><?php echo e($row->shift_name ?: '—'); ?></div>
+                                <div class="text-muted fs-11"><?php echo e($scheduleStatusLabel); ?></div>
                             </td>
 
                             <td class="text-nowrap">
-                                @if ($row->scheduled_time_in || $row->scheduled_time_out)
+                                <?php if($row->scheduled_time_in || $row->scheduled_time_out): ?>
                                     <div class="fw-semibold text-dark">
-                                        {{ $row->scheduled_time_in ? \Carbon\Carbon::parse($row->scheduled_time_in)->format('h:i A') : '—' }}
+                                        <?php echo e($row->scheduled_time_in ? \Carbon\Carbon::parse($row->scheduled_time_in)->format('h:i A') : '—'); ?>
+
                                         <span class="text-muted mx-1">to</span>
-                                        {{ $row->scheduled_time_out ? \Carbon\Carbon::parse($row->scheduled_time_out)->format('h:i A') : '—' }}
+                                        <?php echo e($row->scheduled_time_out ? \Carbon\Carbon::parse($row->scheduled_time_out)->format('h:i A') : '—'); ?>
+
                                     </div>
                                     <div class="text-muted fs-11">
-                                        Grace Period: {{ (int) $row->grace_minutes }} min
+                                        Grace Period: <?php echo e((int) $row->grace_minutes); ?> min
                                     </div>
-                                @else
+                                <?php else: ?>
                                     <span class="text-muted">—</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
 
                             <td class="text-nowrap">
-                                @if ($row->actual_time_in)
+                                <?php if($row->actual_time_in): ?>
                                     <div class="fw-semibold text-success">
-                                        {{ $row->actual_time_in->format('h:i A') }}
+                                        <?php echo e($row->actual_time_in->format('h:i A')); ?>
+
                                     </div>
                                     <div class="text-muted fs-11">
-                                        {{ $row->actual_time_in->format('M d, Y') }}
+                                        <?php echo e($row->actual_time_in->format('M d, Y')); ?>
+
                                     </div>
-                                @else
+                                <?php else: ?>
                                     <span class="text-muted">—</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
 
                             <td class="text-nowrap">
-                                @if ($row->actual_time_out)
+                                <?php if($row->actual_time_out): ?>
                                     <div class="fw-semibold text-primary">
-                                        {{ $row->actual_time_out->format('h:i A') }}
+                                        <?php echo e($row->actual_time_out->format('h:i A')); ?>
+
                                     </div>
                                     <div class="text-muted fs-11">
-                                        {{ $row->actual_time_out->format('M d, Y') }}
+                                        <?php echo e($row->actual_time_out->format('M d, Y')); ?>
+
                                     </div>
-                                @else
+                                <?php else: ?>
                                     <span class="text-muted">—</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
 
                             <td class="text-center">
-                                @if ((int) $row->late_minutes > 0)
+                                <?php if((int) $row->late_minutes > 0): ?>
                                     <span class="badge badge-phoenix badge-phoenix-warning px-2 py-1">
-                                        {{ (int) $row->late_minutes }} min
+                                        <?php echo e((int) $row->late_minutes); ?> min
                                     </span>
-                                @else
+                                <?php else: ?>
                                     <span class="text-muted">0 min</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
 
                             <td class="text-center">
-                                @if ((int) $row->undertime_minutes > 0)
+                                <?php if((int) $row->undertime_minutes > 0): ?>
                                     <span class="badge badge-phoenix badge-phoenix-warning px-2 py-1">
-                                        {{ (int) $row->undertime_minutes }} min
+                                        <?php echo e((int) $row->undertime_minutes); ?> min
                                     </span>
-                                @else
+                                <?php else: ?>
                                     <span class="text-muted">0 min</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
 
                             <td class="text-center">
-                                <div class="fw-semibold text-dark">{{ (int) $row->worked_minutes }} min</div>
+                                <div class="fw-semibold text-dark"><?php echo e((int) $row->worked_minutes); ?> min</div>
                                 <div class="text-muted fs-11">
-                                    {{ number_format($workedHours, 2) }} hr
+                                    <?php echo e(number_format($workedHours, 2)); ?> hr
                                 </div>
                             </td>
 
                             <td class="text-nowrap">
-                                <span class="badge badge-phoenix badge-phoenix-{{ $statusClass }} px-3 py-2">
-                                    {{ $statusLabel }}
+                                <span class="badge badge-phoenix badge-phoenix-<?php echo e($statusClass); ?> px-3 py-2">
+                                    <?php echo e($statusLabel); ?>
+
                                 </span>
                             </td>
 
                             <td>
-                                @if ($row->has_adjustment)
+                                <?php if($row->has_adjustment): ?>
                                     <div>
                                         <span class="badge badge-phoenix badge-phoenix-primary px-2 py-1">
                                             ADJUSTED
                                         </span>
                                     </div>
                                     <div class="text-muted fs-11 mt-1">
-                                        {{ $row->adjustment_type ? strtoupper(str_replace('_', ' ', $row->adjustment_type)) : 'Manual Adjustment' }}
+                                        <?php echo e($row->adjustment_type ? strtoupper(str_replace('_', ' ', $row->adjustment_type)) : 'Manual Adjustment'); ?>
+
                                     </div>
-                                @else
+                                <?php else: ?>
                                     <span class="text-muted">—</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
 
                             <td>
-                                @if ($row->is_holiday)
+                                <?php if($row->is_holiday): ?>
                                     <div>
                                         <span class="badge badge-phoenix badge-phoenix-info px-2 py-1">
-                                            {{ $row->holiday_type ?: 'HOLIDAY' }}
+                                            <?php echo e($row->holiday_type ?: 'HOLIDAY'); ?>
+
                                         </span>
                                     </div>
                                     <div class="text-muted fs-11 mt-1">
-                                        {{ $row->holiday_name ?: 'Holiday Applied' }}
+                                        <?php echo e($row->holiday_name ?: 'Holiday Applied'); ?>
+
                                     </div>
-                                @else
+                                <?php else: ?>
                                     <span class="text-muted">—</span>
-                                @endif
+                                <?php endif; ?>
                             </td>
 
                             <td class="text-nowrap">
                                 <div class="fw-semibold text-dark">
-                                    {{ number_format((float) $row->payable_days, 2) }} day
+                                    <?php echo e(number_format((float) $row->payable_days, 2)); ?> day
                                 </div>
                                 <div class="text-muted fs-11">
-                                    {{ number_format((float) $row->payable_hours, 2) }} hr
+                                    <?php echo e(number_format((float) $row->payable_hours, 2)); ?> hr
                                 </div>
                             </td>
 
-                            {{-- <td class="pe-3">
-                                @if ($row->remarks || $row->schedule_remarks || $row->adjustment_remarks)
-                                    <div class="small lh-sm">
-                                        @if ($row->remarks)
-                                            <div class="mb-1 text-body">
-                                                {{ $row->remarks }}
-                                            </div>
-                                        @endif
-
-                                        @if ($row->schedule_remarks)
-                                            <div class="mb-1 text-muted">
-                                                <strong>Schedule:</strong> {{ $row->schedule_remarks }}
-                                            </div>
-                                        @endif
-
-                                        @if ($row->adjustment_remarks)
-                                            <div class="text-primary">
-                                                <strong>Adjustment:</strong> {{ $row->adjustment_remarks }}
-                                            </div>
-                                        @endif
-                                    </div>
-                                @else
-                                    <span class="text-muted">—</span>
-                                @endif
-                            </td> --}}
+                            
                         </tr>
-                    @empty
+                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                         <tr>
                             <td colspan="14" class="text-center py-5">
                                 <div class="d-flex flex-column align-items-center justify-content-center">
@@ -246,24 +236,27 @@
                                 </div>
                             </td>
                         </tr>
-                    @endforelse
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
     </div>
 
-    @if ($summaries->hasPages())
+    <?php if($summaries->hasPages()): ?>
         <div class="card-footer bg-body-tertiary border-top border-200 py-3">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <small class="text-muted">
-                    Showing {{ $summaries->firstItem() }} to {{ $summaries->lastItem() }}
-                    of {{ $summaries->total() }} records
+                    Showing <?php echo e($summaries->firstItem()); ?> to <?php echo e($summaries->lastItem()); ?>
+
+                    of <?php echo e($summaries->total()); ?> records
                 </small>
 
                 <div>
-                    {{ $summaries->links('pagination::bootstrap-5') }}
+                    <?php echo e($summaries->links('pagination::bootstrap-5')); ?>
+
                 </div>
             </div>
         </div>
-    @endif
+    <?php endif; ?>
 </div>
+<?php /**PATH C:\xampp\htdocs\esgroup.version.2\resources\views/payroll/attendance_summary/table.blade.php ENDPATH**/ ?>
