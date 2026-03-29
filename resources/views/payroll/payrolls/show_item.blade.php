@@ -19,17 +19,30 @@
                 $salaryBreakdown = data_get($item->meta, 'salary_deductions', []);
                 $attendanceBreakdown = data_get($item->meta, 'attendance_deductions', []);
                 $allowanceBreakdown = data_get($item->meta, 'allowance', []);
+                $holidayBreakdown = data_get($item->meta, 'holiday_breakdown', []);
 
                 $monthlyAllowance = (float) data_get($allowanceBreakdown, 'monthly_allowance', 0);
-                $allowancePerCutoff = (float) data_get(
-                    $allowanceBreakdown,
-                    'allowance_per_cutoff',
-                    $item->other_additions ?? 0,
+                $allowancePerCutoff = (float) data_get($allowanceBreakdown, 'allowance_per_cutoff', 0);
+
+                $holidayPay = (float) data_get(
+                    $holidayBreakdown,
+                    'holiday_pay',
+                    data_get($allowanceBreakdown, 'holiday_pay', $item->holiday_pay ?? 0),
+                );
+                $restDayPay = (float) data_get(
+                    $holidayBreakdown,
+                    'rest_day_pay',
+                    data_get($allowanceBreakdown, 'rest_day_pay', $item->rest_day_pay ?? 0),
+                );
+                $leavePay = (float) data_get(
+                    $holidayBreakdown,
+                    'leave_pay',
+                    data_get($allowanceBreakdown, 'leave_pay', $item->leave_pay ?? 0),
                 );
 
-                // ADD ALLOWANCE TO PAY TOTALS
-                $grossWithAllowance = (float) $item->gross_pay + $allowancePerCutoff;
-                $finalNetPay = (float) $item->net_pay + $allowancePerCutoff;
+                $totalAdditions = (float) $item->other_additions;
+                $grossWithAdditions = (float) $item->gross_pay + $totalAdditions;
+                $finalNetPay = (float) $item->net_pay;
 
                 $workedHoursTotal = (float) ($summaries->sum('worked_minutes') / 60);
                 $overtimeHoursTotal = (float) ($summaries->sum('overtime_minutes') / 60);
@@ -37,6 +50,9 @@
                 $undertimeMinutesTotal = (int) $summaries->sum('undertime_minutes');
                 $payableDaysTotal = (float) $summaries->sum('payable_days');
                 $payableHoursTotal = (float) $summaries->sum('payable_hours');
+
+                $totalHolidayWorked = (int) data_get($holidayBreakdown, 'total_holiday_worked', 0);
+                $totalRestDayWorked = (int) data_get($holidayBreakdown, 'total_rest_day_worked', 0);
             @endphp
 
             {{-- Header / Employee Overview --}}
@@ -105,8 +121,29 @@
 
                         <div class="col-md-6 col-xl">
                             <div class="border rounded-3 p-3 h-100 bg-info-subtle border-info">
-                                <small class="text-info d-block mb-1 fw-semibold">Gross + Allowance</small>
-                                <h5 class="mb-0 text-info fw-bold">₱ {{ number_format($grossWithAllowance, 2) }}</h5>
+                                <small class="text-info d-block mb-1 fw-semibold">Holiday Pay</small>
+                                <h5 class="mb-0 text-info fw-bold">₱ {{ number_format($holidayPay, 2) }}</h5>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-xl">
+                            <div class="border rounded-3 p-3 h-100 bg-warning-subtle border-warning">
+                                <small class="text-warning d-block mb-1 fw-semibold">Rest Day Pay</small>
+                                <h5 class="mb-0 text-warning fw-bold">₱ {{ number_format($restDayPay, 2) }}</h5>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-xl">
+                            <div class="border rounded-3 p-3 h-100 bg-secondary-subtle border-secondary">
+                                <small class="text-secondary d-block mb-1 fw-semibold">Total Additions</small>
+                                <h5 class="mb-0 text-secondary fw-bold">₱ {{ number_format($totalAdditions, 2) }}</h5>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 col-xl">
+                            <div class="border rounded-3 p-3 h-100 bg-success-subtle border-success">
+                                <small class="text-success d-block mb-1 fw-semibold">Gross + Additions</small>
+                                <h5 class="mb-0 text-success fw-bold">₱ {{ number_format($grossWithAdditions, 2) }}</h5>
                             </div>
                         </div>
 
@@ -154,7 +191,7 @@
 
                         <div class="col-md-6 col-xl">
                             <div class="border rounded-3 p-3 h-100 bg-success-subtle border-success">
-                                <small class="text-success d-block mb-1 fw-semibold">Net Pay (with Allowance)</small>
+                                <small class="text-success d-block mb-1 fw-semibold">Net Pay</small>
                                 <h4 class="mb-0 text-success fw-bold">₱ {{ number_format($finalNetPay, 2) }}</h4>
                             </div>
                         </div>
@@ -187,11 +224,31 @@
                                                 + ₱ {{ number_format($allowancePerCutoff, 2) }}
                                             </td>
                                         </tr>
+                                        <tr>
+                                            <td class="text-muted">Holiday Pay</td>
+                                            <td class="text-end text-info fw-semibold">
+                                                + ₱ {{ number_format($holidayPay, 2) }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-muted">Rest Day Pay</td>
+                                            <td class="text-end text-warning fw-semibold">
+                                                + ₱ {{ number_format($restDayPay, 2) }}
+                                            </td>
+                                        </tr>
+                                        @if ($leavePay > 0)
+                                            <tr>
+                                                <td class="text-muted">Leave Pay</td>
+                                                <td class="text-end text-secondary fw-semibold">
+                                                    + ₱ {{ number_format($leavePay, 2) }}
+                                                </td>
+                                            </tr>
+                                        @endif
 
                                         <tr class="table-light">
-                                            <td class="fw-bold">Gross + Allowance</td>
+                                            <td class="fw-bold">Gross + Total Additions</td>
                                             <td class="text-end fw-bold text-info">
-                                                ₱ {{ number_format($grossWithAllowance, 2) }}
+                                                ₱ {{ number_format($grossWithAdditions, 2) }}
                                             </td>
                                         </tr>
 
@@ -234,11 +291,11 @@
                                         <tr>
                                             <td class="text-muted">Overtime Pay</td>
                                             <td class="text-end text-info fw-semibold">
-                                                ₱ {{ number_format($item->overtime_pay, 2) }}
+                                                + ₱ {{ number_format($item->overtime_pay, 2) }}
                                             </td>
                                         </tr>
                                         <tr class="table-success">
-                                            <td class="fw-bold">Net Pay (with Allowance)</td>
+                                            <td class="fw-bold">Net Pay</td>
                                             <td class="text-end fw-bold text-success fs-6">
                                                 ₱ {{ number_format($finalNetPay, 2) }}
                                             </td>
@@ -364,43 +421,47 @@
                     <div class="card shadow-sm border-0 h-100">
                         <div class="card-header bg-body-tertiary border-bottom">
                             <h6 class="mb-0">
-                                <i class="fas fa-minus-circle me-2 text-warning"></i>
-                                Salary Deductions
+                                <i class="fas fa-plus-circle me-2 text-success"></i>
+                                Additions Summary
                             </h6>
                         </div>
                         <div class="card-body">
                             <div class="row g-3">
                                 <div class="col-12">
                                     <div class="border rounded-3 p-3 h-100">
-                                        <small class="text-muted d-block mb-1">SSS Loan</small>
-                                        <h6 class="mb-0">₱
-                                            {{ number_format((float) data_get($salaryBreakdown, 'sss_loan', 0), 2) }}</h6>
+                                        <small class="text-muted d-block mb-1">Allowance This Cutoff</small>
+                                        <h6 class="mb-0 text-primary">₱ {{ number_format($allowancePerCutoff, 2) }}</h6>
                                     </div>
                                 </div>
 
                                 <div class="col-12">
                                     <div class="border rounded-3 p-3 h-100">
-                                        <small class="text-muted d-block mb-1">Pag-IBIG Loan</small>
-                                        <h6 class="mb-0">₱
-                                            {{ number_format((float) data_get($salaryBreakdown, 'pagibig_loan', 0), 2) }}
-                                        </h6>
+                                        <small class="text-muted d-block mb-1">Holiday Pay</small>
+                                        <h6 class="mb-0 text-info">₱ {{ number_format($holidayPay, 2) }}</h6>
+                                        @if ($totalHolidayWorked > 0)
+                                            <small class="text-muted">
+                                                {{ $totalHolidayWorked }} holiday worked day(s)
+                                            </small>
+                                        @endif
                                     </div>
                                 </div>
 
                                 <div class="col-12">
                                     <div class="border rounded-3 p-3 h-100">
-                                        <small class="text-muted d-block mb-1">Vale</small>
-                                        <h6 class="mb-0">₱
-                                            {{ number_format((float) data_get($salaryBreakdown, 'vale', 0), 2) }}</h6>
+                                        <small class="text-muted d-block mb-1">Rest Day Pay</small>
+                                        <h6 class="mb-0 text-warning">₱ {{ number_format($restDayPay, 2) }}</h6>
+                                        @if ($totalRestDayWorked > 0)
+                                            <small class="text-muted">
+                                                {{ $totalRestDayWorked }} rest day worked day(s)
+                                            </small>
+                                        @endif
                                     </div>
                                 </div>
 
                                 <div class="col-12">
                                     <div class="border rounded-3 p-3 h-100">
-                                        <small class="text-muted d-block mb-1">Other Loans</small>
-                                        <h6 class="mb-0">₱
-                                            {{ number_format((float) data_get($salaryBreakdown, 'other_loans', 0), 2) }}
-                                        </h6>
+                                        <small class="text-muted d-block mb-1">Leave Pay</small>
+                                        <h6 class="mb-0 text-secondary">₱ {{ number_format($leavePay, 2) }}</h6>
                                     </div>
                                 </div>
                             </div>
@@ -408,9 +469,9 @@
                             <hr>
 
                             <div class="d-flex justify-content-between align-items-center">
-                                <span class="fw-semibold text-muted">Total Salary Deductions</span>
-                                <span class="fw-bold text-danger fs-6">
-                                    ₱ {{ number_format($salaryDeduction, 2) }}
+                                <span class="fw-semibold text-muted">Total Additions</span>
+                                <span class="fw-bold text-success fs-6">
+                                    ₱ {{ number_format($totalAdditions, 2) }}
                                 </span>
                             </div>
                         </div>

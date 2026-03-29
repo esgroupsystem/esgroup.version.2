@@ -336,6 +336,18 @@
                     </li>
 
                     <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('manual-biometrics.*') ? 'active' : '' }}"
+                            href="{{ route('manual-biometrics.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-keyboard"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Manual Biometrics</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('payroll-attendance-adjustments.*') ? 'active' : '' }}"
                             href="{{ route('payroll-attendance-adjustments.index') }}">
                             <div class="d-flex align-items-center">

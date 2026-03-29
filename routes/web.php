@@ -25,6 +25,7 @@ use App\Http\Controllers\Maintenance\StockTransferController;
 use App\Http\Controllers\Payroll\AttendanceSummaryController;
 use App\Http\Controllers\Payroll\EmployeePlottingScheduleController;
 use App\Http\Controllers\Payroll\HolidayController;
+use App\Http\Controllers\Payroll\ManualBiometricsEncodingController;
 use App\Http\Controllers\Payroll\PayrollAttendanceAdjustmentController;
 use App\Http\Controllers\Payroll\PayrollController;
 use App\Http\Controllers\Payroll\PayrollEmployeeSalaryController;
@@ -265,6 +266,18 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/save-monthly', 'saveMonthly')->name('save-monthly');
             Route::post('/quick-fill', 'quickFill')->name('quick-fill');
             Route::get('/search-suggestions', 'searchSuggestions')->name('search-suggestions');
+        });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Manual Biometrics Encoding
+    |-------------------------------------------------------------------------- */
+
+    Route::prefix('manual-biometrics')->middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head'])
+        ->name('manual-biometrics.')->controller(ManualBiometricsEncodingController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/search-employees', 'searchEmployees')->name('search-employees');
+            Route::post('/', 'store')->name('store');
         });
 
     /*

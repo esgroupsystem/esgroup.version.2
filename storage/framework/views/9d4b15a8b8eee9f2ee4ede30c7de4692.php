@@ -206,53 +206,53 @@
             
             <div class="row g-3 mb-3">
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-success fs-9 fw-bold text-uppercase">Present</span>
+                                <span class="stat-label text-success">Present</span>
                                 <span class="fas fa-user-check text-success"></span>
                             </div>
-                            <h3 class="mb-1"><?php echo e(number_format($presentCount)); ?></h3>
-                            <p class="text-muted mb-0 fs-10">Present and adjusted present records</p>
+                            <h3 class="mb-1 stat-value"><?php echo e(number_format($presentCount)); ?></h3>
+                            <p class="mb-0 fs-10 stat-help">Present and adjusted present records</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-warning fs-9 fw-bold text-uppercase">Late / Undertime</span>
+                                <span class="stat-label text-warning">Late / Undertime</span>
                                 <span class="fas fa-clock text-warning"></span>
                             </div>
-                            <h3 class="mb-1"><?php echo e(number_format($lateCount + $undertimeCount)); ?></h3>
-                            <p class="text-muted mb-0 fs-10">Attendance with time deduction indicators</p>
+                            <h3 class="mb-1 stat-value"><?php echo e(number_format($lateCount + $undertimeCount)); ?></h3>
+                            <p class="text-muted mb-0 fs-10 stat-help">Attendance with time deduction indicators</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-danger fs-9 fw-bold text-uppercase">Absent / Incomplete</span>
+                                <span class="stat-label text-danger">Absent / Incomplete</span>
                                 <span class="fas fa-exclamation-triangle text-danger"></span>
                             </div>
-                            <h3 class="mb-1"><?php echo e(number_format($absentCount + $incompleteCount)); ?></h3>
-                            <p class="text-muted mb-0 fs-10">Needs checking or adjustment</p>
+                            <h3 class="mb-1 stat-value"><?php echo e(number_format($absentCount + $incompleteCount)); ?></h3>
+                            <p class="text-muted mb-0 fs-10 stat-help">Needs checking or adjustment</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-info fs-9 fw-bold text-uppercase">Holiday / Rest Day</span>
+                                <span class="stat-label text-info">Holiday / Rest Day</span>
                                 <span class="fas fa-calendar-day text-info"></span>
                             </div>
-                            <h3 class="mb-1"><?php echo e(number_format($holidayCount + $restDayCount)); ?></h3>
-                            <p class="text-muted mb-0 fs-10">Special day related attendance records</p>
+                            <h3 class="mb-1 stat-value"><?php echo e(number_format($holidayCount + $restDayCount)); ?></h3>
+                            <p class="text-muted mb-0 fs-10 stat-help">Special day related attendance records</p>
                         </div>
                     </div>
                 </div>
@@ -261,41 +261,41 @@
             
             <div class="row g-3 mb-3">
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="text-primary fs-9 fw-bold text-uppercase mb-2">With Adjustment</div>
-                            <h4 class="mb-1"><?php echo e(number_format($adjustmentCount)); ?></h4>
-                            <small class="text-muted">Records affected by attendance adjustment</small>
+                            <h4 class="mb-1 stat-value"><?php echo e(number_format($adjustmentCount)); ?></h4>
+                            <p class="text-muted mb-0 fs-10 stat-help">Records affected by attendance adjustment</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="text-info fs-9 fw-bold text-uppercase mb-2">Holiday Count</div>
-                            <h4 class="mb-1"><?php echo e(number_format($holidayCount)); ?></h4>
-                            <small class="text-muted">Holiday and holiday worked records</small>
+                            <h4 class="mb-1 stat-value"><?php echo e(number_format($holidayCount)); ?></h4>
+                            <p class="text-muted mb-0 fs-10 stat-help">Holiday and holiday worked records</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="text-secondary fs-9 fw-bold text-uppercase mb-2">Rest Day Count</div>
-                            <h4 class="mb-1"><?php echo e(number_format($restDayCount)); ?></h4>
-                            <small class="text-muted">Rest day and rest day worked records</small>
+                            <h4 class="mb-1 stat-value"><?php echo e(number_format($restDayCount)); ?></h4>
+                            <p class="text-muted mb-0 fs-10 stat-help">Rest day and rest day worked records</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-sm-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="text-primary fs-9 fw-bold text-uppercase mb-2">Leave Count</div>
-                            <h4 class="mb-1"><?php echo e(number_format($leaveCount)); ?></h4>
-                            <small class="text-muted">Employees marked as leave</small>
+                            <h4 class="mb-1 stat-value"><?php echo e(number_format($leaveCount)); ?></h4>
+                            <p class="text-muted mb-0 fs-10 stat-help">Employees marked as leave</p>
                         </div>
                     </div>
                 </div>
@@ -304,44 +304,41 @@
             
             <div class="row g-3 mb-3">
                 <div class="col-md-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="text-warning fs-9 fw-bold text-uppercase mb-2">Total Late Minutes</div>
-                            <h4 class="mb-1"><?php echo e(number_format((float) $totalLateMinutes, 0)); ?> min</h4>
-                            <small class="text-muted"><?php echo e(number_format($totalLateMinutes / 60, 2)); ?> hr equivalent</small>
+                            <h4 class="mb-1 stat-value"><?php echo e(number_format((float) $totalLateMinutes, 0)); ?> min</h4>
+                            <p class="text-muted mb-0 fs-10 stat-help">Total minutes employees were late</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-md-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="text-warning fs-9 fw-bold text-uppercase mb-2">Total Undertime Minutes</div>
-                            <h4 class="mb-1"><?php echo e(number_format((float) $totalUndertimeMinutes, 0)); ?> min</h4>
-                            <small class="text-muted"><?php echo e(number_format($totalUndertimeMinutes / 60, 2)); ?> hr
-                                equivalent</small>
+                            <h4 class="mb-1 stat-value"><?php echo e(number_format((float) $totalUndertimeMinutes, 0)); ?> min</h4>
+                            <p class="text-muted mb-0 fs-10 stat-help">Total minutes employees were under time</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-md-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="text-success fs-9 fw-bold text-uppercase mb-2">Total Worked Hours</div>
-                            <h4 class="mb-1"><?php echo e(number_format($totalWorkedMinutes / 60, 2)); ?> hr</h4>
-                            <small class="text-muted"><?php echo e(number_format((float) $totalWorkedMinutes, 0)); ?> total
-                                minutes</small>
+                            <h4 class="mb-1 stat-value"><?php echo e(number_format($totalWorkedMinutes / 60, 2)); ?> hr</h4>
+                            <p class="text-muted mb-0 fs-10 stat-help">Total hours employees have worked</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="col-md-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="text-primary fs-9 fw-bold text-uppercase mb-2">Payable Summary</div>
-                            <h4 class="mb-1"><?php echo e(number_format((float) $totalPayableDays, 2)); ?> day(s)</h4>
-                            <small class="text-muted"><?php echo e(number_format((float) $totalPayableHours, 2)); ?> payable
-                                hour(s)</small>
+                            <h4 class="mb-1 stat-value"><?php echo e(number_format((float) $totalPayableDays, 2)); ?> day(s)</h4>
+                            <p class="text-muted mb-0 fs-10 stat-help">Total days employees are payable for</p>
                         </div>
                     </div>
                 </div>

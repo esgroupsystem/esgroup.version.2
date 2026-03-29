@@ -170,7 +170,7 @@ class PayrollController extends Controller
                 $totalHolidayWorked = (int) $rows->where('attendance_status', 'holiday_worked')->count();
                 $totalLeaveDays = (int) $rows->where('attendance_status', 'leave')->count();
 
-                $grossPay = round($rates['daily_rate'] * $totalPayableDays, 2);
+                $grossPay = round(((float) $rates['daily_rate']) * ((float) $totalPayableDays), 2);
 
                 $lateRatePerMinute = round((float) ($rates['late_deduction_per_minute'] ?? $rates['minute_rate'] ?? 0), 6);
                 $undertimeRatePerMinute = round((float) ($rates['undertime_deduction_per_minute'] ?? $rates['minute_rate'] ?? 0), 6);
@@ -200,13 +200,56 @@ class PayrollController extends Controller
                 $overtimeHours = $totalOvertimeMinutes / 60;
                 $overtimePay = round($rates['ot_rate_per_hour'] * $overtimeHours, 2);
 
+                $dailyRate = (float) ($rates['daily_rate'] ?? 0);
+
                 $holidayPay = 0;
                 $restDayPay = 0;
                 $leavePay = 0;
 
+                /*
+                |--------------------------------------------------------------------------
+                | Holiday Pay
+                |--------------------------------------------------------------------------
+                | Assumption:
+                | - regular holiday worked  = +100% extra (total 200% including base day)
+                | - special holiday worked  = +30% extra
+                |
+                | Since gross pay already includes payable days, we only add the EXTRA here.
+                */
+                $holidayRows = $rows->filter(function ($row) {
+                    return strtolower((string) ($row->attendance_status ?? '')) === 'holiday_worked';
+                });
+
+                foreach ($holidayRows as $row) {
+                    $holidayType = strtolower((string) ($row->holiday_type ?? ''));
+
+                    if (str_contains($holidayType, 'regular')) {
+                        // Gross already contains 1 day, so add only extra 100%
+                        $holidayPay += $dailyRate * 1.00;
+                    } elseif (str_contains($holidayType, 'special')) {
+                        // Gross already contains 1 day, so add only extra 30%
+                        $holidayPay += $dailyRate * 0.30;
+                    } else {
+                        // Fallback if holiday type is unknown
+                        $holidayPay += $dailyRate * 0.30;
+                    }
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | Rest Day Worked
+                |--------------------------------------------------------------------------
+                | If you want rest day worked to add 30%, keep this.
+                | If your company uses a different rule, adjust multiplier.
+                */
+                $restDayPay = round($totalRestDayWorked * ($dailyRate * 0.30), 2);
+
+                $holidayPay = round($holidayPay, 2);
+                $leavePay = round($leavePay, 2);
+
                 // Monthly allowance split into 2 cutoffs
                 $allowancePerCutoff = round(((float) ($rates['allowance'] ?? 0)) / 2, 2);
-                $otherAdditions = $allowancePerCutoff;
+                $otherAdditions = round($allowancePerCutoff + $holidayPay + $restDayPay + $leavePay, 2);
 
                 $loanDeductions = [
                     'sss_loan' => round((float) ($rates['sss_loan'] ?? 0), 2),
@@ -220,9 +263,6 @@ class PayrollController extends Controller
                 $taxableCompensation = round(
                     $grossPay
                     + $overtimePay
-                    + $holidayPay
-                    + $restDayPay
-                    + $leavePay
                     + $otherAdditions,
                     2
                 );
@@ -242,9 +282,6 @@ class PayrollController extends Controller
                 $netPay = round(
                     $grossPay
                     + $overtimePay
-                    + $holidayPay
-                    + $restDayPay
-                    + $leavePay
                     + $otherAdditions
                     - $attendanceDeductions
                     - $otherDeductions
@@ -328,6 +365,20 @@ class PayrollController extends Controller
                             'absence_rate_per_day' => $absenceRatePerDay,
                             'absence_deduction' => $absenceDeduction,
                             'total_attendance_deductions' => $attendanceDeductions,
+                        ], 'holiday_breakdown' => [
+                            'total_holiday_worked' => $totalHolidayWorked,
+                            'holiday_pay' => $holidayPay,
+                            'total_rest_day_worked' => $totalRestDayWorked,
+                            'rest_day_pay' => $restDayPay,
+                            'leave_pay' => $leavePay,
+                        ],
+                        'allowance' => [
+                            'monthly_allowance' => round((float) ($rates['allowance'] ?? 0), 2),
+                            'allowance_per_cutoff' => $allowancePerCutoff,
+                            'holiday_pay' => $holidayPay,
+                            'rest_day_pay' => $restDayPay,
+                            'leave_pay' => $leavePay,
+                            'total_other_additions' => $otherAdditions,
                         ],
                     ],
                 ]);
@@ -568,14 +619,14 @@ class PayrollController extends Controller
 
         if ($salary->rate_type === 'monthly') {
             $monthlyRate = (float) $salary->basic_salary;
-            $dailyRate = $monthlyRate > 0 ? round($monthlyRate / 26, 2) : 0;
+            $dailyRate = $monthlyRate > 0 ? ($monthlyRate / 26) : 0;
         } else {
             $dailyRate = (float) $salary->basic_salary;
-            $monthlyRate = $dailyRate > 0 ? round($dailyRate * 26, 2) : 0;
+            $monthlyRate = $dailyRate > 0 ? ($dailyRate * 26) : 0;
         }
 
-        $hourlyRate = $dailyRate > 0 ? round($dailyRate / 8, 4) : 0;
-        $minuteRate = $hourlyRate > 0 ? round($hourlyRate / 60, 6) : 0;
+        $hourlyRate = $dailyRate > 0 ? ($dailyRate / 8) : 0;
+        $minuteRate = $hourlyRate > 0 ? ($hourlyRate / 60) : 0;
 
         // Fallback rates:
         // if custom rates are not set, use computed regular salary rates
@@ -598,8 +649,8 @@ class PayrollController extends Controller
             'employee_id' => null,
             'salary_id' => $salary->id,
             'monthly_rate' => round($monthlyRate, 2),
-            'daily_rate' => round($dailyRate, 2),
-            'hourly_rate' => round($hourlyRate, 4),
+            'daily_rate' => round($dailyRate, 6),
+            'hourly_rate' => round($hourlyRate, 6),
             'minute_rate' => round($minuteRate, 6),
 
             'allowance' => round((float) ($salary->allowance ?? 0), 2),
