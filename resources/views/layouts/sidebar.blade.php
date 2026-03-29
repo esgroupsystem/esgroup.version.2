@@ -263,6 +263,42 @@
                 @endrole
 
                 @role('Developer', 'IT Head')
+
+                <li class="nav-item">
+                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                            <div class="col-auto navbar-vertical-label">
+                                Biometric Management
+                            </div>
+                            <div class="col ps-0">
+                                <hr class="mb-0 navbar-vertical-divider">
+                            </div>
+                        </div>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('mirasol-logs.*') ? 'active' : '' }}"
+                            href="{{ route('mirasol-logs.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-fingerprint"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Mirasol Biometrics</span>
+                            </div>
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('manual-biometrics.*') ? 'active' : '' }}"
+                            href="{{ route('manual-biometrics.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-keyboard"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Manual Biometrics</span>
+                            </div>
+                        </a>
+                    </li>
+
                     {{-- Employee Schedule --}}
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
@@ -321,30 +357,6 @@
                                 <hr class="mb-0 navbar-vertical-divider">
                             </div>
                         </div>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('mirasol-logs.*') ? 'active' : '' }}"
-                            href="{{ route('mirasol-logs.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-fingerprint"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Mirasol Biometrics</span>
-                            </div>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('manual-biometrics.*') ? 'active' : '' }}"
-                            href="{{ route('manual-biometrics.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-keyboard"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Manual Biometrics</span>
-                            </div>
-                        </a>
                     </li>
 
                     <li class="nav-item">
