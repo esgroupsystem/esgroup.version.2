@@ -487,10 +487,15 @@ class DailyAttendanceSummaryService
 
             if ($scheduledPayableMinutes > 0 && $workedMinutes > 0) {
                 $payableHours = round($workedMinutes / 60, 2);
-                $payableDays = round($workedMinutes / $scheduledPayableMinutes, 4);
-
-                if ($payableDays > 1) {
+                
+                if ($lateMinutes == 0 && $undertimeMinutes == 0) {
                     $payableDays = 1;
+                } else {
+                    $payableDays = round($workedMinutes / $scheduledPayableMinutes, 4);
+
+                    if ($payableDays > 1) {
+                        $payableDays = 1;
+                    }
                 }
             }
 

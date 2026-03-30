@@ -146,7 +146,7 @@ class PayrollController extends Controller
                 $rates = $this->resolveEmployeeRates($first);
 
                 $totalWorkedMinutes = (int) $rows->sum('worked_minutes');
-                $totalPayableDays = round((float) $rows->sum('payable_days'), 2);
+                $totalPayableDays = round((float) $rows->sum('payable_days'), 2); // for display/reference only
                 $totalPayableHours = round((float) $rows->sum('payable_hours'), 2);
                 $totalWorkedDays = round($totalWorkedMinutes / 480, 2);
 
@@ -167,11 +167,18 @@ class PayrollController extends Controller
                     return (bool) ($row->is_absent ?? false)
                         || strtolower((string) ($row->attendance_status ?? '')) === 'absent';
                 })->count();
+
                 $totalRestDayWorked = (int) $rows->where('attendance_status', 'rest_day_worked')->count();
                 $totalHolidayWorked = (int) $rows->where('attendance_status', 'holiday_worked')->count();
                 $totalLeaveDays = (int) $rows->where('attendance_status', 'leave')->count();
 
-                $grossPay = round(((float) $rates['daily_rate']) * ((float) $totalPayableDays), 2);
+                $expectedWorkingDays = (int) $rows->filter(function ($row) {
+                    $status = strtolower((string) ($row->attendance_status ?? ''));
+
+                    return ! in_array($status, ['rest_day'], true);
+                })->count();
+
+                $grossPay = round(((float) $rates['daily_rate']) * $expectedWorkingDays, 2);
 
                 $lateRatePerMinute = round((float) ($rates['late_deduction_per_minute'] ?? $rates['minute_rate'] ?? 0), 6);
                 $undertimeRatePerMinute = round((float) ($rates['undertime_deduction_per_minute'] ?? $rates['minute_rate'] ?? 0), 6);
