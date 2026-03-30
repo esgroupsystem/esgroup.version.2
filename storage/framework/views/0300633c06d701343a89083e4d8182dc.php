@@ -1,22 +1,21 @@
-@extends('layouts.landing')
-@section('content')
+<?php $__env->startSection('content'); ?>
     <div class="container-fluid">
         <div class="row min-vh-100 flex-center g-0">
             <div class="col-lg-8 col-xxl-5 py-3 position-relative">
-                <img class="bg-auth-circle-shape" src="{{ asset('assets/img/icons/spot-illustrations/bg-shape.png') }}"
+                <img class="bg-auth-circle-shape" src="<?php echo e(asset('assets/img/icons/spot-illustrations/bg-shape.png')); ?>"
                     alt="" width="250">
-                <img class="bg-auth-circle-shape-2" src="{{ asset('assets/img/icons/spot-illustrations/shape-1.png') }}"
+                <img class="bg-auth-circle-shape-2" src="<?php echo e(asset('assets/img/icons/spot-illustrations/shape-1.png')); ?>"
                     alt="" width="150">
 
                 <div class="card overflow-hidden z-1">
                     <div class="card-body p-0">
                         <div class="row g-0 h-100">
 
-                            {{-- LEFT SECTION --}}
+                            
                             <div class="col-md-5 text-center bg-card-gradient">
                                 <div class="position-relative p-4 pt-md-5 pb-md-7" data-bs-theme="light">
                                     <div class="bg-holder bg-auth-card-shape"
-                                        style="background-image:url({{ asset('assets/img/icons/spot-illustrations/half-circle.png') }});">
+                                        style="background-image:url(<?php echo e(asset('assets/img/icons/spot-illustrations/half-circle.png')); ?>);">
                                     </div>
 
                                     <div class="z-1 position-relative">
@@ -36,7 +35,7 @@
                                 </div>
                             </div>
 
-                            {{-- RIGHT SECTION --}}
+                            
                             <div class="col-md-7 d-flex flex-center">
                                 <div class="p-4 p-md-5 flex-grow-1">
 
@@ -44,24 +43,24 @@
                                         <div class="col-auto">
                                             <div class="d-md-flex align-items-center text-center text-md-start">
                                                 
-                                                {{-- USER AVATAR --}}
+                                                
                                                 <div class="avatar avatar-4xl me-4">
                                                     <img class="rounded-circle"
-                                                        src="{{ asset('assets/img/lockscreen/profile_lockscreen.jpg') }}"
+                                                        src="<?php echo e(asset('assets/img/lockscreen/profile_lockscreen.jpg')); ?>"
                                                         alt="User Avatar">
                                                 </div>
 
-                                                {{-- USER INFO --}}
+                                                
                                                 <div class="flex-1">
-                                                    <h4>Hello, {{ Auth::user()->name ?? Auth::user()->username }}</h4>
+                                                    <h4>Hello, <?php echo e(Auth::user()->name ?? Auth::user()->username); ?></h4>
                                                     <p class="mb-0">Enter your password to unlock your session.</p>
                                                 </div>
                                             </div>
 
-                                            {{-- PASSWORD FORM --}}
+                                            
                                             <form class="mt-4 row gx-2" method="POST"
-                                                action="{{ route('lockscreen.unlock') }}">
-                                                @csrf
+                                                action="<?php echo e(route('lockscreen.unlock')); ?>">
+                                                <?php echo csrf_field(); ?>
 
                                                 <div class="col">
                                                     <input class="form-control" type="password" name="password"
@@ -75,17 +74,17 @@
                                                 </div>
                                             </form>
 
-                                            {{-- Error --}}
-                                            @if ($errors->any())
-                                                <p class="text-danger small mt-2">{{ $errors->first() }}</p>
-                                            @endif
+                                            
+                                            <?php if($errors->any()): ?>
+                                                <p class="text-danger small mt-2"><?php echo e($errors->first()); ?></p>
+                                            <?php endif; ?>
 
                                         </div>
                                     </div>
 
                                 </div>
                             </div>
-                            {{-- END RIGHT --}}
+                            
                         </div>
                     </div>
                 </div>
@@ -93,4 +92,6 @@
             </div>
         </div>
     </div>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.landing', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\esgroup.version.2\resources\views/landing/lockscreen.blade.php ENDPATH**/ ?>
