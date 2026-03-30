@@ -24,6 +24,7 @@ class Payroll extends Model
     ];
 
     protected $casts = [
+        'id' => 'integer',
         'period_start' => 'date',
         'period_end' => 'date',
         'generated_at' => 'datetime',

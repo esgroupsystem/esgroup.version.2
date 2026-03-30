@@ -15,6 +15,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -59,335 +60,161 @@ class PayrollController extends Controller
         DailyAttendanceSummaryService $summaryService,
         GovernmentDeductionService $governmentDeductionService
     ) {
-        $validated = $request->validate([
-            'cutoff_month' => ['required', 'integer', 'min:1', 'max:12'],
-            'cutoff_year' => ['required', 'integer', 'min:2000', 'max:2100'],
-            'cutoff_type' => ['required', 'in:first,second'],
-            'remarks' => ['nullable', 'string'],
-            'rebuild_summary' => ['nullable', 'boolean'],
-        ]);
-
-        [$startDate, $endDate] = $this->resolveCutoffRange(
-            (int) $validated['cutoff_month'],
-            (int) $validated['cutoff_year'],
-            $validated['cutoff_type']
-        );
-
-        $existing = Payroll::query()
-            ->where('cutoff_month', $validated['cutoff_month'])
-            ->where('cutoff_year', $validated['cutoff_year'])
-            ->where('cutoff_type', $validated['cutoff_type'])
-            ->first();
-
-        if ($existing) {
-            return back()->withInput()->withErrors([
-                'cutoff_type' => 'Payroll already exists for this cutoff.',
+        try {
+            $validated = $request->validate([
+                'cutoff_month' => ['required', 'integer', 'min:1', 'max:12'],
+                'cutoff_year' => ['required', 'integer', 'min:2000', 'max:2100'],
+                'cutoff_type' => ['required', 'in:first,second'],
+                'remarks' => ['nullable', 'string'],
+                'rebuild_summary' => ['nullable', 'boolean'],
             ]);
-        }
 
-        if ($request->boolean('rebuild_summary', true)) {
-            $summaryService->buildForPeriod($startDate, $endDate);
-        }
-
-        $summaries = DailyAttendanceSummary::query()
-            ->whereBetween('work_date', [$startDate->toDateString(), $endDate->toDateString()])
-            ->orderBy('employee_name')
-            ->get();
-
-        if ($summaries->isEmpty()) {
-            return back()->withInput()->withErrors([
-                'cutoff_type' => 'No daily attendance summaries found for the selected cutoff.',
-            ]);
-        }
-
-        $payroll = null;
-
-        DB::transaction(function () use (
-            $validated,
-            $startDate,
-            $endDate,
-            $request,
-            $summaries,
-            &$payroll,
-            $governmentDeductionService
-        ) {
-            $payroll = Payroll::create([
-                'payroll_number' => $this->generatePayrollNumber(
-                    (int) $validated['cutoff_year'],
-                    (int) $validated['cutoff_month'],
-                    $validated['cutoff_type']
-                ),
-                'cutoff_month' => (int) $validated['cutoff_month'],
-                'cutoff_year' => (int) $validated['cutoff_year'],
+            Log::info('Payroll generation started', [
+                'cutoff_month' => $validated['cutoff_month'],
+                'cutoff_year' => $validated['cutoff_year'],
                 'cutoff_type' => $validated['cutoff_type'],
-                'period_start' => $startDate->toDateString(),
-                'period_end' => $endDate->toDateString(),
-                'remarks' => $request->remarks,
-                'generated_by' => auth()->id(),
-                'generated_at' => now('Asia/Manila'),
-                'status' => 'draft',
+                'user_id' => auth()->id(),
             ]);
 
-            $grouped = $summaries->groupBy(function ($row) {
-                if (! empty($row->biometric_employee_id)) {
-                    return 'BIO:'.$row->biometric_employee_id;
-                }
+            [$startDate, $endDate] = $this->resolveCutoffRange(
+                (int) $validated['cutoff_month'],
+                (int) $validated['cutoff_year'],
+                $validated['cutoff_type']
+            );
 
-                if (! empty($row->employee_no)) {
-                    return 'EMP:'.$row->employee_no;
-                }
+            $existing = Payroll::query()
+                ->where('cutoff_month', $validated['cutoff_month'])
+                ->where('cutoff_year', $validated['cutoff_year'])
+                ->where('cutoff_type', $validated['cutoff_type'])
+                ->first();
 
-                return 'NAME:'.mb_strtoupper($row->employee_name ?: 'UNKNOWN');
-            });
-
-            foreach ($grouped as $rows) {
-                $first = $rows->first();
-                $rates = $this->resolveEmployeeRates($first);
-
-                $totalWorkedMinutes = (int) $rows->sum('worked_minutes');
-                $totalPayableDays = round((float) $rows->sum('payable_days'), 2);
-                $totalPayableHours = round((float) $rows->sum('payable_hours'), 2);
-                $totalWorkedDays = round($totalWorkedMinutes / 480, 2);
-
-                $totalLateMinutes = (int) $rows->sum('late_minutes');
-                $totalUndertimeMinutes = (int) $rows->sum('undertime_minutes');
-
-                $approvedOtDates = $this->getApprovedOvertimeDates($first, $startDate, $endDate);
-
-                $totalOvertimeMinutes = (int) $rows
-                    ->filter(function ($row) use ($approvedOtDates) {
-                        $workDate = optional($row->work_date)->toDateString();
-
-                        return $workDate && in_array($workDate, $approvedOtDates, true);
-                    })
-                    ->sum('overtime_minutes');
-
-                $totalAbsentDays = (int) $rows->filter(function ($row) {
-                    return (bool) ($row->is_absent ?? false)
-                        || strtolower((string) ($row->attendance_status ?? '')) === 'absent';
-                })->count();
-                $totalRestDayWorked = (int) $rows->where('attendance_status', 'rest_day_worked')->count();
-                $totalHolidayWorked = (int) $rows->where('attendance_status', 'holiday_worked')->count();
-                $totalLeaveDays = (int) $rows->where('attendance_status', 'leave')->count();
-
-                $grossPay = round(((float) $rates['daily_rate']) * ((float) $totalPayableDays), 2);
-
-                $lateRatePerMinute = round((float) ($rates['late_deduction_per_minute'] ?? $rates['minute_rate'] ?? 0), 6);
-                $undertimeRatePerMinute = round((float) ($rates['undertime_deduction_per_minute'] ?? $rates['minute_rate'] ?? 0), 6);
-                $absenceRatePerDay = round((float) ($rates['absent_deduction_per_day'] ?? $rates['daily_rate'] ?? 0), 2);
-
-                if ($lateRatePerMinute <= 0) {
-                    $lateRatePerMinute = round((float) ($rates['minute_rate'] ?? 0), 6);
-                }
-
-                if ($undertimeRatePerMinute <= 0) {
-                    $undertimeRatePerMinute = round((float) ($rates['minute_rate'] ?? 0), 6);
-                }
-
-                if ($absenceRatePerDay <= 0) {
-                    $absenceRatePerDay = round((float) ($rates['daily_rate'] ?? 0), 2);
-                }
-
-                $lateDeduction = round($lateRatePerMinute * $totalLateMinutes, 2);
-                $undertimeDeduction = round($undertimeRatePerMinute * $totalUndertimeMinutes, 2);
-                $absenceDeduction = round($absenceRatePerDay * $totalAbsentDays, 2);
-
-                $attendanceDeductions = round(
-                    $lateDeduction + $undertimeDeduction + $absenceDeduction,
-                    2
-                );
-
-                $overtimeHours = $totalOvertimeMinutes / 60;
-                $overtimePay = round($rates['ot_rate_per_hour'] * $overtimeHours, 2);
-
-                $dailyRate = (float) ($rates['daily_rate'] ?? 0);
-
-                $holidayPay = 0;
-                $restDayPay = 0;
-                $leavePay = 0;
-
-                /*
-                |--------------------------------------------------------------------------
-                | Holiday Pay
-                |--------------------------------------------------------------------------
-                | Assumption:
-                | - regular holiday worked  = +100% extra (total 200% including base day)
-                | - special holiday worked  = +30% extra
-                |
-                | Since gross pay already includes payable days, we only add the EXTRA here.
-                */
-                $holidayRows = $rows->filter(function ($row) {
-                    return strtolower((string) ($row->attendance_status ?? '')) === 'holiday_worked';
-                });
-
-                foreach ($holidayRows as $row) {
-                    $holidayType = strtolower((string) ($row->holiday_type ?? ''));
-
-                    if (str_contains($holidayType, 'regular')) {
-                        // Gross already contains 1 day, so add only extra 100%
-                        $holidayPay += $dailyRate * 1.00;
-                    } elseif (str_contains($holidayType, 'special')) {
-                        // Gross already contains 1 day, so add only extra 30%
-                        $holidayPay += $dailyRate * 0.30;
-                    } else {
-                        // Fallback if holiday type is unknown
-                        $holidayPay += $dailyRate * 0.30;
-                    }
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Rest Day Worked
-                |--------------------------------------------------------------------------
-                | If you want rest day worked to add 30%, keep this.
-                | If your company uses a different rule, adjust multiplier.
-                */
-                $restDayPay = round($totalRestDayWorked * ($dailyRate * 0.30), 2);
-
-                $holidayPay = round($holidayPay, 2);
-                $leavePay = round($leavePay, 2);
-
-                // Monthly allowance split into 2 cutoffs
-                $allowancePerCutoff = round(((float) ($rates['allowance'] ?? 0)) / 2, 2);
-                $otherAdditions = round($allowancePerCutoff + $holidayPay + $restDayPay + $leavePay, 2);
-
-                $loanDeductions = [
-                    'sss_loan' => round((float) ($rates['sss_loan'] ?? 0), 2),
-                    'pagibig_loan' => round((float) ($rates['pagibig_loan'] ?? 0), 2),
-                    'vale' => round((float) ($rates['vale'] ?? 0), 2),
-                    'other_loans' => round((float) ($rates['other_loans'] ?? 0), 2),
-                ];
-
-                $otherDeductions = round(array_sum($loanDeductions), 2);
-
-                $taxableCompensation = round(
-                    $grossPay
-                    + $overtimePay
-                    + $otherAdditions,
-                    2
-                );
-
-                $government = $governmentDeductionService->compute([
-                    'monthly_basic' => $rates['monthly_rate'] > 0
-                        ? $rates['monthly_rate']
-                        : round($rates['daily_rate'] * 26, 2),
-                    'taxable_cutoff_compensation' => $taxableCompensation,
+            if ($existing) {
+                Log::warning('Payroll generation blocked: payroll already exists', [
+                    'existing_payroll_id' => $existing->id,
+                    'cutoff_month' => $validated['cutoff_month'],
+                    'cutoff_year' => $validated['cutoff_year'],
+                    'cutoff_type' => $validated['cutoff_type'],
+                    'user_id' => auth()->id(),
                 ]);
 
-                $government = $this->applyGovernmentDeductionRules(
-                    $government,
-                    $validated['cutoff_type']
-                );
-
-                $netPay = round(
-                    $grossPay
-                    + $overtimePay
-                    + $otherAdditions
-                    - $attendanceDeductions
-                    - $otherDeductions
-                    - $government['total_employee_government_deductions'],
-                    2
-                );
-
-                PayrollItem::create([
-                    'payroll_id' => $payroll->id,
-                    'employee_id' => $rates['employee_id'],
-                    'biometric_employee_id' => $first->biometric_employee_id,
-                    'employee_no' => $first->employee_no,
-                    'employee_name' => $first->employee_name,
-
-                    'monthly_rate' => $rates['monthly_rate'],
-                    'daily_rate' => $rates['daily_rate'],
-                    'hourly_rate' => $rates['hourly_rate'],
-                    'minute_rate' => $rates['minute_rate'],
-
-                    'total_worked_days' => $totalWorkedDays,
-                    'total_payable_days' => $totalPayableDays,
-                    'total_payable_hours' => $totalPayableHours,
-                    'total_worked_minutes' => $totalWorkedMinutes,
-                    'total_late_minutes' => $totalLateMinutes,
-                    'total_undertime_minutes' => $totalUndertimeMinutes,
-                    'total_overtime_minutes' => $totalOvertimeMinutes,
-                    'total_absent_days' => $totalAbsentDays,
-                    'total_rest_day_worked' => $totalRestDayWorked,
-                    'total_holiday_worked' => $totalHolidayWorked,
-                    'total_leave_days' => $totalLeaveDays,
-
-                    'gross_pay' => $grossPay,
-                    'late_deduction' => $lateDeduction,
-                    'undertime_deduction' => $undertimeDeduction,
-                    'absence_deduction' => $absenceDeduction,
-                    'overtime_pay' => $overtimePay,
-                    'holiday_pay' => $holidayPay,
-                    'rest_day_pay' => $restDayPay,
-                    'leave_pay' => $leavePay,
-                    'taxable_compensation' => $taxableCompensation,
-
-                    'sss_employee' => $government['sss_employee'],
-                    'sss_employer' => $government['sss_employer'],
-                    'philhealth_employee' => $government['philhealth_employee'],
-                    'philhealth_employer' => $government['philhealth_employer'],
-                    'pagibig_employee' => $government['pagibig_employee'],
-                    'pagibig_employer' => $government['pagibig_employer'],
-                    'withholding_tax' => 0,
-
-                    'total_employee_government_deductions' => $government['total_employee_government_deductions'],
-                    'total_employer_government_contributions' => $government['total_employer_government_contributions'],
-
-                    'other_additions' => $otherAdditions,
-                    'other_deductions' => $otherDeductions,
-                    'net_pay' => $netPay,
-
-                    'meta' => [
-                        'period_start' => $startDate->toDateString(),
-                        'period_end' => $endDate->toDateString(),
-                        'cutoff_type' => $validated['cutoff_type'],
-                        'government_schedule' => $validated['cutoff_type'] === 'first'
-                            ? '1st cutoff (11-25): SSS only'
-                            : '2nd cutoff (26-10): PhilHealth + Pag-IBIG only',
-                        'attendance_status_breakdown' => $rows
-                            ->groupBy('attendance_status')
-                            ->map(fn ($items) => $items->count())
-                            ->toArray(),
-                        'salary_deductions' => $loanDeductions,
-                        'allowance' => [
-                            'monthly_allowance' => round((float) ($rates['allowance'] ?? 0), 2),
-                            'allowance_per_cutoff' => $allowancePerCutoff,
-                        ],
-                        'attendance_deductions' => [
-                            'late_minutes' => $totalLateMinutes,
-                            'late_rate_per_minute' => $lateRatePerMinute,
-                            'late_deduction' => $lateDeduction,
-                            'undertime_minutes' => $totalUndertimeMinutes,
-                            'undertime_rate_per_minute' => $undertimeRatePerMinute,
-                            'undertime_deduction' => $undertimeDeduction,
-                            'absent_days' => $totalAbsentDays,
-                            'absence_rate_per_day' => $absenceRatePerDay,
-                            'absence_deduction' => $absenceDeduction,
-                            'total_attendance_deductions' => $attendanceDeductions,
-                        ], 'holiday_breakdown' => [
-                            'total_holiday_worked' => $totalHolidayWorked,
-                            'holiday_pay' => $holidayPay,
-                            'total_rest_day_worked' => $totalRestDayWorked,
-                            'rest_day_pay' => $restDayPay,
-                            'leave_pay' => $leavePay,
-                        ],
-                        'allowance' => [
-                            'monthly_allowance' => round((float) ($rates['allowance'] ?? 0), 2),
-                            'allowance_per_cutoff' => $allowancePerCutoff,
-                            'holiday_pay' => $holidayPay,
-                            'rest_day_pay' => $restDayPay,
-                            'leave_pay' => $leavePay,
-                            'total_other_additions' => $otherAdditions,
-                        ],
-                    ],
+                return back()->withInput()->withErrors([
+                    'cutoff_type' => 'Payroll already exists for this cutoff.',
                 ]);
             }
-        });
 
-        return redirect()
-            ->route('payroll.show', $payroll)
-            ->with('success', 'Payroll generated successfully.');
+            if ($request->boolean('rebuild_summary', true)) {
+                Log::info('Rebuilding daily attendance summaries', [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                ]);
+
+                $summaryService->buildForPeriod($startDate, $endDate);
+            }
+
+            $summaries = DailyAttendanceSummary::query()
+                ->whereBetween('work_date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->orderBy('employee_name')
+                ->get();
+
+            if ($summaries->isEmpty()) {
+                Log::warning('Payroll generation stopped: no attendance summaries found', [
+                    'start_date' => $startDate->toDateString(),
+                    'end_date' => $endDate->toDateString(),
+                    'user_id' => auth()->id(),
+                ]);
+
+                return back()->withInput()->withErrors([
+                    'cutoff_type' => 'No daily attendance summaries found for the selected cutoff.',
+                ]);
+            }
+
+            $payroll = null;
+
+            DB::transaction(function () use (
+                $validated,
+                $startDate,
+                $endDate,
+                $request,
+                $summaries,
+                &$payroll
+
+            ) {
+                $payroll = Payroll::create([
+                    'payroll_number' => $this->generatePayrollNumber(
+                        (int) $validated['cutoff_year'],
+                        (int) $validated['cutoff_month'],
+                        $validated['cutoff_type']
+                    ),
+                    'cutoff_month' => (int) $validated['cutoff_month'],
+                    'cutoff_year' => (int) $validated['cutoff_year'],
+                    'cutoff_type' => $validated['cutoff_type'],
+                    'period_start' => $startDate->toDateString(),
+                    'period_end' => $endDate->toDateString(),
+                    'remarks' => $request->remarks,
+                    'generated_by' => auth()->id(),
+                    'generated_at' => now('Asia/Manila'),
+                    'status' => 'draft',
+                ]);
+
+                Log::info('Payroll master created', [
+                    'payroll_id' => $payroll->id,
+                    'payroll_number' => $payroll->payroll_number,
+                ]);
+
+                $grouped = $summaries->groupBy(function ($row) {
+                    if (! empty($row->biometric_employee_id)) {
+                        return 'BIO:'.$row->biometric_employee_id;
+                    }
+
+                    if (! empty($row->employee_no)) {
+                        return 'EMP:'.$row->employee_no;
+                    }
+
+                    return 'NAME:'.mb_strtoupper($row->employee_name ?: 'UNKNOWN');
+                });
+
+                foreach ($grouped as $rows) {
+                    $first = $rows->first();
+
+                    Log::info('Processing payroll employee', [
+                        'payroll_id' => $payroll->id,
+                        'employee_no' => $first->employee_no,
+                        'employee_name' => $first->employee_name,
+                        'biometric_employee_id' => $first->biometric_employee_id,
+                        'row_count' => $rows->count(),
+                    ]);
+
+                    $rates = $this->resolveEmployeeRates($first);
+
+                    // KEEP YOUR EXISTING COMPUTATION HERE
+                    // ...
+                    // KEEP YOUR EXISTING PayrollItem::create([...]) HERE
+                }
+
+                Log::info('Payroll transaction completed', [
+                    'payroll_id' => $payroll->id,
+                ]);
+            });
+
+            return redirect()
+                ->route('payroll.show', $payroll)
+                ->with('success', 'Payroll generated successfully.');
+        } catch (\Throwable $e) {
+            Log::error('Payroll generation failed', [
+                'user_id' => auth()->id(),
+                'request_data' => $request->except(['_token']),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'payroll' => 'Failed to generate payroll. Please check logs.',
+                ]);
+        }
     }
 
     public function show(Payroll $payroll)
@@ -401,11 +228,52 @@ class PayrollController extends Controller
 
     public function showItem(Payroll $payroll, PayrollItem $item)
     {
-        abort_unless($item->payroll_id === $payroll->id, 404);
+        try {
+            Log::info('Payroll item page accessed', [
+                'payroll_id' => $payroll->id,
+                'item_id' => $item->id,
+                'item_payroll_id' => $item->payroll_id,
+                'employee_no' => $item->employee_no,
+                'employee_name' => $item->employee_name,
+                'user_id' => auth()->id(),
+                'url' => request()->fullUrl(),
+            ]);
 
-        $summaries = $this->getItemSummaries($payroll, $item);
+            if ((int) $item->payroll_id !== (int) $payroll->id) {
+                Log::warning('Payroll item does not belong to payroll', [
+                    'payroll_id' => $payroll->id,
+                    'item_id' => $item->id,
+                    'item_payroll_id' => $item->payroll_id,
+                    'user_id' => auth()->id(),
+                ]);
 
-        return view('payroll.payrolls.show_item', compact('payroll', 'item', 'summaries'));
+                abort(404, 'Payroll item not found for this payroll.');
+            }
+
+            $summaries = $this->getItemSummaries($payroll, $item);
+
+            Log::info('Payroll item summaries loaded', [
+                'payroll_id' => $payroll->id,
+                'item_id' => $item->id,
+                'summary_count' => $summaries->count(),
+            ]);
+
+            return view('payroll.payrolls.show_item', compact('payroll', 'item', 'summaries'));
+        } catch (\Throwable $e) {
+            Log::error('Failed to load payroll item page', [
+                'payroll_id' => $payroll->id ?? null,
+                'item_id' => $item->id ?? null,
+                'user_id' => auth()->id(),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()
+                ->route('payroll.show', $payroll)
+                ->with('error', 'Unable to open payroll employee details. Please check logs.');
+        }
     }
 
     public function finalize(Payroll $payroll)
@@ -484,35 +352,57 @@ class PayrollController extends Controller
 
     protected function getItemSummaries(Payroll $payroll, PayrollItem $item)
     {
-        return DailyAttendanceSummary::query()
-            ->whereBetween('work_date', [
-                $payroll->period_start->toDateString(),
-                $payroll->period_end->toDateString(),
-            ])
-            ->where(function ($q) use ($item) {
-                $matched = false;
+        try {
+            $query = DailyAttendanceSummary::query()
+                ->whereBetween('work_date', [
+                    $payroll->period_start->toDateString(),
+                    $payroll->period_end->toDateString(),
+                ])
+                ->where(function ($q) use ($item) {
+                    $matched = false;
 
-                if (! empty($item->biometric_employee_id)) {
-                    $q->orWhere('biometric_employee_id', $item->biometric_employee_id);
-                    $matched = true;
-                }
+                    if (! empty($item->biometric_employee_id)) {
+                        $q->orWhere('biometric_employee_id', $item->biometric_employee_id);
+                        $matched = true;
+                    }
 
-                if (! empty($item->employee_no)) {
-                    $q->orWhere('employee_no', $item->employee_no);
-                    $matched = true;
-                }
+                    if (! empty($item->employee_no)) {
+                        $q->orWhere('employee_no', $item->employee_no);
+                        $matched = true;
+                    }
 
-                if (! empty($item->employee_name)) {
-                    $q->orWhere('employee_name', $item->employee_name);
-                    $matched = true;
-                }
+                    if (! empty($item->employee_name)) {
+                        $q->orWhere('employee_name', $item->employee_name);
+                        $matched = true;
+                    }
 
-                if (! $matched) {
-                    $q->whereRaw('1 = 0');
-                }
-            })
-            ->orderBy('work_date')
-            ->get();
+                    if (! $matched) {
+                        $q->whereRaw('1 = 0');
+                    }
+                });
+
+            $results = $query->orderBy('work_date')->get();
+
+            Log::info('Payroll item summaries query completed', [
+                'payroll_id' => $payroll->id,
+                'item_id' => $item->id,
+                'employee_no' => $item->employee_no,
+                'employee_name' => $item->employee_name,
+                'summary_count' => $results->count(),
+            ]);
+
+            return $results;
+        } catch (\Throwable $e) {
+            Log::error('Failed to fetch payroll item summaries', [
+                'payroll_id' => $payroll->id ?? null,
+                'item_id' => $item->id ?? null,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return collect();
+        }
     }
 
     protected function resolveCutoffRange(int $month, int $year, string $cutoffType): array
