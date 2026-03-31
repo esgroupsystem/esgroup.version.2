@@ -13,6 +13,7 @@ use App\Http\Controllers\HR_Department\EmployeeLeaveController;
 use App\Http\Controllers\HR_Department\HRDashboardController;
 use App\Http\Controllers\HR_Department\HrOffenseController;
 use App\Http\Controllers\HR_Department\MirasolBiometricsLogController;
+use App\Http\Controllers\IT\ItInventoryItemController;
 use App\Http\Controllers\IT_Department\CctvController;
 use App\Http\Controllers\IT_Department\TicketController;
 use App\Http\Controllers\Maintenance\CategoryController;
@@ -120,6 +121,17 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/joborder/{id}/disapprove', 'disapprove')->name('disapprove');
         });
 
+    Route::middleware(['role:Developer,IT Officer,IT Head,Safety Officer,Head Inspector,Operation Manager'])
+        ->prefix('it-inventory')->name('it-inventory.')
+        ->controller(ItInventoryItemController::class)->group(function () {
+            Route::get('/', 'index')->name('index');
+            Route::get('/create', 'create')->name('create');
+            Route::post('/', 'store')->name('store');
+            Route::get('/{id}/edit', 'edit')->name('edit');
+            Route::put('/{id}', 'update')->name('update');
+            Route::delete('/it-inventory/{id}', 'destroy')->name('destroy');
+        });
+
     /*
     |--------------------------------------------------------------------------
     | CCTV (Job Orders)
@@ -142,6 +154,8 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
             Route::get('/export/{type}', 'export')->name('export');
         });
+
+    Route::resource('cctv-parts', CctvPartController::class);
 
     /*
     |--------------------------------------------------------------------------
@@ -251,7 +265,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Holiday Management
     |-------------------------------------------------------------------------- */
 
-    Route::middleware(['auth', 'role:Developer,IT Head'])->group(function () {
+    Route::middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head'])->group(function () {
         Route::resource('holidays', HolidayController::class);
     });
 
@@ -260,7 +274,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Plotting Schedule
     |-------------------------------------------------------------------------- */
 
-    Route::prefix('payroll-plotting')->middleware(['auth', 'role:Developer,IT Head'])
+    Route::prefix('payroll-plotting')->middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head'])
         ->name('payroll-plotting.')->controller(EmployeePlottingScheduleController::class)->group(function () {
             Route::get('/', 'index')->name('index');
             Route::post('/save-monthly', 'saveMonthly')->name('save-monthly');
@@ -301,7 +315,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/create', 'rebuild')->name('rebuild');
         });
 
-    Route::middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
+    Route::middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head'])
         ->prefix('payroll')
         ->group(function () {
             Route::get('employee-salaries/sync', [PayrollEmployeeSalaryController::class, 'syncFromBiometrics'])
@@ -313,7 +327,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->names('payroll-employee-salaries');
         });
 
-    Route::prefix('payroll')->middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
+    Route::prefix('payroll')->middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head'])
         ->name('payroll.')->controller(PayrollController::class)->group(function () {
             Route::get('/', 'index')->name('index');
             Route::get('/create', 'create')->name('create');
@@ -364,7 +378,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Mirasol Biometrics Management
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Officer'])
+    Route::middleware(['role:Developer,IT Officer,IT Head,HR Officer,HR Head'])
         ->prefix('mirasol-logs')->name('mirasol-logs.')
         ->controller(MirasolBiometricsLogController::class)->group(function () {
 

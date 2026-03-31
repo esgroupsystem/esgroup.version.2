@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class CctvConcern extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'cctv_job_orders';
 
     protected $fillable = [
@@ -37,5 +37,10 @@ class CctvConcern extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function usedItems()
+    {
+        return $this->hasMany(CctvConcernItem::class, 'cctv_concern_id');
     }
 }

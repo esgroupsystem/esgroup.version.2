@@ -5,21 +5,21 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Jell Group of Company')</title>
+    <meta name="csrf-token" content="<?php echo e(csrf_token()); ?>">
+    <title><?php echo $__env->yieldContent('title', 'Jell Group of Company'); ?></title>
 
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/img/favicons/esgroup-logo180x180.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?php echo e(asset('assets/img/favicons/esgroup-logo180x180.png')); ?>">
     <link rel="icon" type="image/png" sizes="32x32"
-        href="{{ asset('assets/img/favicons/esgroup-logo32x32.png') }}">
+        href="<?php echo e(asset('assets/img/favicons/esgroup-logo32x32.png')); ?>">
     <link rel="icon" type="image/png" sizes="16x16"
-        href="{{ asset('assets/img/favicons/esgroup-logo16x16.png') }}">
-    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/img/favicons/favicon.ico') }}">
-    <link rel="manifest" href="{{ asset('assets/img/favicons/manifest.json') }}">
-    <meta name="msapplication-TileImage" content="{{ asset('assets/img/favicons/esgroup-logo180x180.png') }}">
+        href="<?php echo e(asset('assets/img/favicons/esgroup-logo16x16.png')); ?>">
+    <link rel="shortcut icon" type="image/x-icon" href="<?php echo e(asset('assets/img/favicons/favicon.ico')); ?>">
+    <link rel="manifest" href="<?php echo e(asset('assets/img/favicons/manifest.json')); ?>">
+    <meta name="msapplication-TileImage" content="<?php echo e(asset('assets/img/favicons/esgroup-logo180x180.png')); ?>">
     <meta name="theme-color" content="#ffffff">
 
-    <script src="{{ asset('assets/js/config.js') }}"></script>
-    <script src="{{ asset('vendors/simplebar/simplebar.min.js') }}"></script>
+    <script src="<?php echo e(asset('assets/js/config.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/simplebar/simplebar.min.js')); ?>"></script>
 
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link
@@ -27,22 +27,22 @@
         rel="stylesheet">
 
     <link rel="stylesheet" href="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.css">
-    <link href="{{ asset('vendors/simplebar/simplebar.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('vendors/swiper/swiper-bundle.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('vendors/leaflet/leaflet.css') }}" rel="stylesheet">
-    <link href="{{ asset('vendors/leaflet.markercluster/MarkerCluster.css') }}" rel="stylesheet">
-    <link href="{{ asset('vendors/leaflet.markercluster/MarkerCluster.Default.css') }}" rel="stylesheet">
-    <link href="{{ asset('vendors/flatpickr/flatpickr.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('vendors/dropzone/dropzone.css') }}" rel="stylesheet">
-    <link href="{{ asset('vendors/choices/choices.min.css') }}" rel="stylesheet">
+    <link href="<?php echo e(asset('vendors/simplebar/simplebar.min.css')); ?>" rel="stylesheet">
+    <link href="<?php echo e(asset('vendors/swiper/swiper-bundle.min.css')); ?>" rel="stylesheet">
+    <link href="<?php echo e(asset('vendors/leaflet/leaflet.css')); ?>" rel="stylesheet">
+    <link href="<?php echo e(asset('vendors/leaflet.markercluster/MarkerCluster.css')); ?>" rel="stylesheet">
+    <link href="<?php echo e(asset('vendors/leaflet.markercluster/MarkerCluster.Default.css')); ?>" rel="stylesheet">
+    <link href="<?php echo e(asset('vendors/flatpickr/flatpickr.min.css')); ?>" rel="stylesheet">
+    <link href="<?php echo e(asset('vendors/dropzone/dropzone.css')); ?>" rel="stylesheet">
+    <link href="<?php echo e(asset('vendors/choices/choices.min.css')); ?>" rel="stylesheet">
 
-    {{-- ADDED: Select2 CSS --}}
+    
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-    <link href="{{ asset('assets/css/theme-rtl.css') }}" rel="stylesheet" id="style-rtl">
-    <link href="{{ asset('assets/css/theme.css') }}" rel="stylesheet" id="style-default">
-    <link href="{{ asset('assets/css/user-rtl.css') }}" rel="stylesheet" id="user-style-rtl">
-    <link href="{{ asset('assets/css/user.css') }}" rel="stylesheet" id="user-style-default">
+    <link href="<?php echo e(asset('assets/css/theme-rtl.css')); ?>" rel="stylesheet" id="style-rtl">
+    <link href="<?php echo e(asset('assets/css/theme.css')); ?>" rel="stylesheet" id="style-default">
+    <link href="<?php echo e(asset('assets/css/user-rtl.css')); ?>" rel="stylesheet" id="user-style-rtl">
+    <link href="<?php echo e(asset('assets/css/user.css')); ?>" rel="stylesheet" id="user-style-default">
 
     <script>
         const isRTL = JSON.parse(localStorage.getItem('isRTL'));
@@ -56,52 +56,52 @@
         }
     </script>
 
-    @stack('styles')
+    <?php echo $__env->yieldPushContent('styles'); ?>
 </head>
 
 <body class="nav-vertical" data-layout="vertical">
 
     <main class="main" id="top" data-navbar="vertical">
-        @include('layouts.sidebar')
+        <?php echo $__env->make('layouts.sidebar', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
         <div class="content">
 
             <div class="flash-toast-container position-fixed top-0 end-0 p-3" style="z-index:99999;"></div>
 
-            @include('flash::message')
+            <?php echo $__env->make('flash::message', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 
             <div class="container-fluid px-4 px-lg-7">
-                @include('layouts.header')
-                @yield('content')
+                <?php echo $__env->make('layouts.header', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+                <?php echo $__env->yieldContent('content'); ?>
             </div>
         </div>
     </main>
 
-    {{-- Scripts --}}
+    
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    <script src="{{ asset('vendors/popper/popper.min.js') }}"></script>
-    <script src="{{ asset('vendors/bootstrap/bootstrap.min.js') }}"></script>
-    <script src="{{ asset('vendors/anchorjs/anchor.min.js') }}"></script>
-    <script src="{{ asset('vendors/is/is.min.js') }}"></script>
-    <script src="{{ asset('vendors/chart/chart.umd.js') }}"></script>
-    <script src="{{ asset('vendors/leaflet/leaflet.js') }}"></script>
-    <script src="{{ asset('vendors/leaflet.markercluster/leaflet.markercluster.js') }}"></script>
-    <script src="{{ asset('vendors/leaflet.tilelayer.colorfilter/leaflet-tilelayer-colorfilter.min.js') }}"></script>
-    <script src="{{ asset('vendors/countup/countUp.umd.js') }}"></script>
-    <script src="{{ asset('vendors/echarts/echarts.min.js') }}"></script>
-    <script src="{{ asset('assets/data/world.js') }}"></script>
-    <script src="{{ asset('vendors/dayjs/dayjs.min.js') }}"></script>
-    <script src="{{ asset('vendors/flatpickr/flatpickr.min.js') }}"></script>
-    <script src="{{ asset('vendors/fontawesome/all.min.js') }}"></script>
-    <script src="{{ asset('vendors/lodash/lodash.min.js') }}"></script>
-    <script src="{{ asset('vendors/list.js/list.min.js') }}"></script>
-    <script src="{{ asset('vendors/swiper/swiper-bundle.min.js') }}"></script>
-    <script src="{{ asset('vendors/typed.js/typed.umd.js') }}"></script>
-    <script src="{{ asset('vendors/dropzone/dropzone-min.js') }}"></script>
-    <script src="{{ asset('vendors/choices/choices.min.js') }}"></script>
+    <script src="<?php echo e(asset('vendors/popper/popper.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/bootstrap/bootstrap.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/anchorjs/anchor.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/is/is.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/chart/chart.umd.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/leaflet/leaflet.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/leaflet.markercluster/leaflet.markercluster.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/leaflet.tilelayer.colorfilter/leaflet-tilelayer-colorfilter.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/countup/countUp.umd.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/echarts/echarts.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('assets/data/world.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/dayjs/dayjs.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/flatpickr/flatpickr.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/fontawesome/all.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/lodash/lodash.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/list.js/list.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/swiper/swiper-bundle.min.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/typed.js/typed.umd.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/dropzone/dropzone-min.js')); ?>"></script>
+    <script src="<?php echo e(asset('vendors/choices/choices.min.js')); ?>"></script>
     <script src="https://unpkg.com/cropperjs@1.6.2/dist/cropper.min.js"></script>
 
-    {{-- ADDED: jQuery + Select2 JS --}}
+    
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
@@ -110,9 +110,9 @@
         window.__dropzone_initialized = false;
     </script>
 
-    <script src="{{ asset('assets/js/theme.js') }}"></script>
-    <script src="{{ asset('assets/js/theme-control.js') }}"></script>
-    <script src="{{ asset('assets/js/theme-dashboard-fixed.js') }}"></script>
+    <script src="<?php echo e(asset('assets/js/theme.js')); ?>"></script>
+    <script src="<?php echo e(asset('assets/js/theme-control.js')); ?>"></script>
+    <script src="<?php echo e(asset('assets/js/theme-dashboard-fixed.js')); ?>"></script>
 
     <script>
         window.CONFIG = {
@@ -122,7 +122,7 @@
         };
     </script>
 
-    {{-- Flash messages as toast --}}
+    
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const flashMessages = document.querySelectorAll('.alert');
@@ -148,7 +148,7 @@
         });
     </script>
 
-    {{-- Choices.js initialization --}}
+    
     <script>
         window.choicesInit = function() {};
         (function() {
@@ -180,7 +180,7 @@
         });
     </script>
 
-    {{-- SweetAlert2 confirmation --}}
+    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
@@ -278,7 +278,8 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    @stack('scripts')
+    <?php echo $__env->yieldPushContent('scripts'); ?>
 </body>
 
 </html>
+<?php /**PATH C:\xampp\htdocs\esgroup.version.2\resources\views/layouts/app.blade.php ENDPATH**/ ?>
