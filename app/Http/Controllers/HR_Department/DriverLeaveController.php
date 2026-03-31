@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
-use App\Mail\LeaveNoticeail;
+use App\Mail\LeaveNoticeMail;
 use App\Models\DriverLeave;
 use App\Models\Employee;
 use Carbon\Carbon;
