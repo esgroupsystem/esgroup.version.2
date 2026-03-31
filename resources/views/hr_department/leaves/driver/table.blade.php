@@ -53,20 +53,18 @@
                     <td class="to">{{ \Carbon\Carbon::parse($leave->end_date)->format('d M Y') }}</td>
                     <td class="days">{{ $leave->days }} Days</td>
 
-                    {{-- ✅ Record Status (DB status) --}}
                     <td>{!! $leave->record_status_badge ?? '<span class="badge bg-primary">Active</span>' !!}</td>
 
-                    {{-- ✅ Status of Leave (computed / override if cancelled/completed/terminated) --}}
                     <td class="remaining">{!! $leave->remaining_status !!}</td>
 
                     <td class="text-center">
                         <div class="btn-group">
-                            <button class="btn btn-sm btn-primary dropdown-toggle">
+                            <button class="btn btn-sm btn-primary dropdown-toggle" type="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
                                 Actions
                             </button>
 
                             <ul class="dropdown-menu dropdown-menu-end">
-                                {{-- ✅ Edit Leave (allowed unless locked) --}}
                                 <li>
                                     <a class="dropdown-item {{ $isLocked ? 'disabled' : '' }}"
                                         href="{{ $isLocked ? '#' : route('driver-leave.driver.edit', $leave) }}">
@@ -74,7 +72,6 @@
                                     </a>
                                 </li>
 
-                                {{-- ✅ Ready for Duty (ONLY after leave ends) --}}
                                 @if ($canShowReady)
                                     <li>
                                         <a class="dropdown-item action-open-modal" href="#"
@@ -90,9 +87,7 @@
                                     </li>
                                 @endif
 
-                                {{-- ✅ Notices (ONLY after leave ends) --}}
                                 @if ($canShowNotices)
-                                    {{-- 1st Notice --}}
                                     <li>
                                         @if ($leave->first_notice_sent_at)
                                             <a class="dropdown-item disabled text-primary">
@@ -114,7 +109,6 @@
                                         @endif
                                     </li>
 
-                                    {{-- 2nd Notice --}}
                                     <li>
                                         @if ($leave->second_notice_sent_at)
                                             <a class="dropdown-item disabled text-warning">
@@ -136,7 +130,6 @@
                                         @endif
                                     </li>
 
-                                    {{-- Final Notice --}}
                                     <li>
                                         @if ($leave->final_notice_sent_at)
                                             <a class="dropdown-item disabled text-danger">
@@ -163,7 +156,6 @@
                                     </li>
                                 @endif
 
-                                {{-- ✅ Cancel Leave (allowed unless locked) --}}
                                 <li>
                                     <a class="dropdown-item action-open-modal {{ $isLocked ? 'disabled' : '' }}"
                                         href="#" data-id="{{ $leave->id }}" data-action="cancel"

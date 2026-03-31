@@ -3,12 +3,10 @@
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
-use App\Mail\LeaveNoticeMail;
 use App\Models\DriverLeave;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 
 class DriverLeaveController extends Controller
@@ -19,7 +17,7 @@ class DriverLeaveController extends Controller
 
         $today = Carbon::now('Asia/Manila')->startOfDay();
         $search = $request->get('search');
-        $baseQuery = DriverLeave::with('employee');
+        $baseQuery = DriverLeave::with('employee.position');
 
         if (! empty($search)) {
             $baseQuery->where(function ($q) use ($search) {
@@ -237,7 +235,9 @@ class DriverLeaveController extends Controller
 
         } elseif ($action === 'ready') {
 
+            // Ready for Duty can be clicked anytime
             $leave->status = 'completed';
+            $leave->offense_level = 0;
             $leave->last_action_note = $note;
             $leave->save();
 
@@ -274,7 +274,7 @@ class DriverLeaveController extends Controller
 
         $days = Carbon::parse($request->start_date)->diffInDays(Carbon::parse($request->end_date)) + 1;
 
-        $leave = DriverLeave::create([
+        DriverLeave::create([
             'employee_id' => $request->employee_id,
             'leave_type' => $request->leave_type,
             'start_date' => $request->start_date,
