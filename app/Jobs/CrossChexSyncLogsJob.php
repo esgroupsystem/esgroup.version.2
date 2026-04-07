@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Models\MirasolBiometricsLog;
 use App\Services\CrossChexService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -11,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class CrossChexSyncLogsJob implements ShouldQueue
@@ -18,16 +18,22 @@ class CrossChexSyncLogsJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public string $jobId;
+
     public string $from;
+
     public string $to;
 
     public int $timeout = 1200;
 
+    public int $tries = 3;
+
+    public int $backoff = 60;
+
     public function __construct(string $jobId, string $from, string $to)
     {
         $this->jobId = $jobId;
-        $this->from  = $from;
-        $this->to    = $to;
+        $this->from = $from;
+        $this->to = $to;
     }
 
     private function statusKey(): string
@@ -40,53 +46,58 @@ class CrossChexSyncLogsJob implements ShouldQueue
         Cache::put($this->statusKey(), $data, now()->addMinutes(60));
     }
 
-private function normalizeCheckTime(mixed $raw): ?string
-{
-    if ($raw === null || $raw === '') return null;
+    private function normalizeCheckTime(mixed $raw): ?string
+    {
+        if ($raw === null || $raw === '') {
+            return null;
+        }
 
-    $tz = config('app.timezone', 'Asia/Manila');
+        $tz = config('app.timezone', 'Asia/Manila');
 
-    // Numeric timestamp (seconds/ms) -> assume UTC then convert
-    if (is_numeric($raw)) {
-        $num = (int) $raw;
+        if (is_numeric($raw)) {
+            $num = (int) $raw;
 
-        if ($num > 9999999999) {
-            return Carbon::createFromTimestampMs($num, 'UTC')
+            if ($num > 9999999999) {
+                return Carbon::createFromTimestampMs($num, 'UTC')
+                    ->setTimezone($tz)
+                    ->format('Y-m-d H:i:s');
+            }
+
+            return Carbon::createFromTimestamp($num, 'UTC')
                 ->setTimezone($tz)
                 ->format('Y-m-d H:i:s');
         }
 
-        return Carbon::createFromTimestamp($num, 'UTC')
-            ->setTimezone($tz)
-            ->format('Y-m-d H:i:s');
-    }
+        $str = trim((string) $raw);
 
-    $str = trim((string) $raw);
+        try {
+            if (preg_match('/[zZ]|[+\-]\d{2}:\d{2}$/', $str)) {
+                return Carbon::parse($str)
+                    ->setTimezone($tz)
+                    ->format('Y-m-d H:i:s');
+            }
 
-    try {
-        // If the string includes timezone info (Z or +hh:mm), Carbon will respect it.
-        if (preg_match('/[zZ]|[+\-]\d{2}:\d{2}$/', $str)) {
-            return Carbon::parse($str)->setTimezone($tz)->format('Y-m-d H:i:s');
+            if (str_contains($str, 'T')) {
+                return Carbon::parse($str, 'UTC')
+                    ->setTimezone($tz)
+                    ->format('Y-m-d H:i:s');
+            }
+
+            return Carbon::parse($str, 'UTC')
+                ->setTimezone($tz)
+                ->format('Y-m-d H:i:s');
+        } catch (\Throwable) {
+            return null;
         }
-
-        // If ISO "T" format but no explicit timezone, still assume UTC (common API behavior)
-        if (str_contains($str, 'T')) {
-            return Carbon::parse($str, 'UTC')->setTimezone($tz)->format('Y-m-d H:i:s');
-        }
-
-        // Plain datetime without timezone -> assume UTC then convert to Manila
-        return Carbon::parse($str, 'UTC')->setTimezone($tz)->format('Y-m-d H:i:s');
-    } catch (\Throwable) {
-        return null;
     }
-}
-
 
     public function handle(CrossChexService $api): void
     {
         $page = 1;
-        $perPage = 1000;
+        $perPage = 500; // safer than 1000 if server is small
         $saved = 0;
+        $updated = 0;
+        $startedAt = microtime(true);
 
         $this->setStatus([
             'state' => 'running',
@@ -96,6 +107,7 @@ private function normalizeCheckTime(mixed $raw): ?string
             'page' => 0,
             'pageCount' => null,
             'saved' => 0,
+            'updated' => 0,
             'percent' => 0,
             'done' => false,
             'error' => null,
@@ -109,23 +121,19 @@ private function normalizeCheckTime(mixed $raw): ?string
 
                 if (data_get($json, 'header.name') === 'Exception') {
                     $type = (string) data_get($json, 'payload.type');
-                    $msg  = (string) data_get($json, 'payload.message');
+                    $msg = (string) data_get($json, 'payload.message');
 
                     if ($type === 'FREQUENT_REQUEST') {
-                        $this->setStatus([
-                            'state' => 'running',
-                            'message' => "Rate limit hit. Waiting 31s then retry page {$page}...",
+                        Log::warning('CrossChex rate limit hit', [
+                            'jobId' => $this->jobId,
+                            'page' => $page,
                             'from' => $this->from,
                             'to' => $this->to,
-                            'page' => $page,
-                            'pageCount' => data_get($json, 'payload.pageCount'),
-                            'saved' => $saved,
-                            'percent' => null,
-                            'done' => false,
-                            'error' => null,
                         ]);
-                        sleep(31);
-                        continue;
+
+                        $this->release($this->backoff);
+
+                        return;
                     }
 
                     $this->setStatus([
@@ -136,44 +144,50 @@ private function normalizeCheckTime(mixed $raw): ?string
                         'page' => $page,
                         'pageCount' => null,
                         'saved' => $saved,
+                        'updated' => $updated,
                         'percent' => 0,
                         'done' => true,
                         'error' => "{$type} - {$msg}",
                     ]);
+
+                    Log::error('CrossChex API error', [
+                        'jobId' => $this->jobId,
+                        'type' => $type,
+                        'message' => $msg,
+                        'page' => $page,
+                    ]);
+
                     return;
                 }
 
                 $list = data_get($json, 'payload.list', []);
                 $pageCount = (int) data_get($json, 'payload.pageCount', 1);
                 $currentPage = (int) data_get($json, 'payload.page', $page);
-
                 $percent = $pageCount > 0 ? (int) round(($currentPage / $pageCount) * 100) : 0;
 
-                $this->setStatus([
-                    'state' => 'running',
-                    'message' => "Syncing page {$currentPage} of {$pageCount}...",
-                    'from' => $this->from,
-                    'to' => $this->to,
-                    'page' => $currentPage,
-                    'pageCount' => $pageCount,
-                    'saved' => $saved,
-                    'percent' => $percent,
-                    'done' => false,
-                    'error' => null,
-                ]);
+                if (! is_array($list) || empty($list)) {
+                    break;
+                }
 
-                if (!is_array($list) || empty($list)) break;
+                $rows = [];
+                $crossIds = [];
+                $now = now();
 
                 foreach ($list as $r) {
                     $crossId = data_get($r, 'uuid') ?? data_get($r, 'id');
-                    if (!$crossId) continue;
+                    if (! $crossId) {
+                        continue;
+                    }
 
                     $employeeNo = data_get($r, 'employee.workno')
                         ?? data_get($r, 'workno')
                         ?? data_get($r, 'employee_no');
 
                     $employeeName = data_get($r, 'employee_name')
-                        ?? trim((data_get($r, 'employee.first_name') ?? '') . ' ' . (data_get($r, 'employee.last_name') ?? ''));
+                        ?? trim(
+                            (data_get($r, 'employee.first_name') ?? '').' '.
+                            (data_get($r, 'employee.last_name') ?? '')
+                        );
 
                     $checkTimeRaw = data_get($r, 'checktime')
                         ?? data_get($r, 'check_time')
@@ -186,57 +200,134 @@ private function normalizeCheckTime(mixed $raw): ?string
                         ?? data_get($r, 'sn');
 
                     $deviceName = data_get($r, 'device.name') ?? null;
-                    $state      = data_get($r, 'state') ?? data_get($r, 'type') ?? null;
+                    $state = data_get($r, 'state') ?? data_get($r, 'type') ?? null;
 
-                    if (!$employeeNo || !$checkTime) continue;
+                    if (! $employeeNo || ! $checkTime) {
+                        continue;
+                    }
 
-                    MirasolBiometricsLog::updateOrCreate(
-                        ['crosschex_id' => (string) $crossId],
-                        [
-                            'employee_id'   => null,
-                            'employee_no'   => (string) $employeeNo,
-                            'employee_name' => $employeeName ?: null,
-                            'device_sn'     => $deviceSn ? (string) $deviceSn : null,
-                            'device_name'   => $deviceName,
-                            'state'         => $state,
-                            'check_time'    => $checkTime,
-                            'raw'           => $r,
-                        ]
-                    );
+                    $crossId = (string) $crossId;
+                    $crossIds[] = $crossId;
 
-                    $saved++;
+                    $rows[] = [
+                        'crosschex_id' => $crossId,
+                        'employee_id' => null,
+                        'employee_no' => (string) $employeeNo,
+                        'employee_name' => $employeeName ?: null,
+                        'device_sn' => $deviceSn ? (string) $deviceSn : null,
+                        'device_name' => $deviceName,
+                        'state' => $state,
+                        'check_time' => $checkTime,
+                        'raw' => json_encode($r, JSON_UNESCAPED_UNICODE),
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ];
                 }
 
-                if ($currentPage >= $pageCount) break;
+                if (! empty($rows)) {
+                    $existingIds = DB::table('mirasol_biometrics_logs')
+                        ->whereIn('crosschex_id', $crossIds)
+                        ->pluck('crosschex_id')
+                        ->map(fn ($id) => (string) $id)
+                        ->all();
+
+                    $existingMap = array_flip($existingIds);
+
+                    foreach ($crossIds as $id) {
+                        if (isset($existingMap[$id])) {
+                            $updated++;
+                        } else {
+                            $saved++;
+                        }
+                    }
+
+                    DB::table('mirasol_biometrics_logs')->upsert(
+                        $rows,
+                        ['crosschex_id'],
+                        [
+                            'employee_no',
+                            'employee_name',
+                            'device_sn',
+                            'device_name',
+                            'state',
+                            'check_time',
+                            'raw',
+                            'updated_at',
+                        ]
+                    );
+                }
+
+                $this->setStatus([
+                    'state' => 'running',
+                    'message' => "Syncing page {$currentPage} of {$pageCount}...",
+                    'from' => $this->from,
+                    'to' => $this->to,
+                    'page' => $currentPage,
+                    'pageCount' => $pageCount,
+                    'saved' => $saved,
+                    'updated' => $updated,
+                    'percent' => $percent,
+                    'done' => false,
+                    'error' => null,
+                ]);
+
+                if ($currentPage >= $pageCount) {
+                    break;
+                }
+
                 $page++;
             }
 
+            $duration = round(microtime(true) - $startedAt, 2);
+
             $this->setStatus([
                 'state' => 'done',
-                'message' => "Sync finished. Saved/Updated: {$saved}",
+                'message' => "Sync finished. Inserted: {$saved}, Updated: {$updated}",
                 'from' => $this->from,
                 'to' => $this->to,
                 'page' => $page,
                 'pageCount' => $pageCount ?? null,
                 'saved' => $saved,
+                'updated' => $updated,
                 'percent' => 100,
                 'done' => true,
                 'error' => null,
             ]);
+
+            Log::info('CrossChexSyncLogsJob finished', [
+                'jobId' => $this->jobId,
+                'from' => $this->from,
+                'to' => $this->to,
+                'inserted' => $saved,
+                'updated' => $updated,
+                'duration_seconds' => $duration,
+            ]);
         } catch (\Throwable $e) {
-            Log::error('CrossChexSyncLogsJob failed', ['jobId' => $this->jobId, 'error' => $e->getMessage()]);
+            Log::error('CrossChexSyncLogsJob failed', [
+                'jobId' => $this->jobId,
+                'from' => $this->from,
+                'to' => $this->to,
+                'page' => $page,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
             $this->setStatus([
                 'state' => 'failed',
-                'message' => 'Sync failed. Check laravel.log.',
+                'message' => 'Sync failed. Check logs.',
                 'from' => $this->from,
                 'to' => $this->to,
                 'page' => $page,
                 'pageCount' => null,
                 'saved' => $saved,
+                'updated' => $updated,
                 'percent' => 0,
                 'done' => true,
-                'error' => 'Sync failed. Check laravel.log.',
+                'error' => $e->getMessage(),
             ]);
+
+            throw $e;
         }
     }
 }
