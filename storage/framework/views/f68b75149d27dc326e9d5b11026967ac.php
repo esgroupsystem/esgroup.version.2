@@ -12,8 +12,6 @@
         <tbody>
             <?php $__empty_1 = true; $__currentLoopData = $items; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $item): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                 <tr class="align-middle">
-
-                    
                     <td>
                         <div class="fw-semibold text-110">
                             <?php echo e($item->product_name); ?>
@@ -25,7 +23,6 @@
                         <div class="text-500 fs-12"><?php echo e($item->details ?? 'N/A'); ?></div>
                     </td>
 
-                    
                     <td>
                         <div class="fw-semibold text-110"><?php echo e($item->category->name ?? 'N/A'); ?></div>
                         <?php if($item->part_number): ?>
@@ -33,7 +30,6 @@
                         <?php endif; ?>
                     </td>
 
-                    
                     <td>
                         <div class="fw-semibold text-110">
                             <?php echo e($item->supplier_name ?: 'N/A'); ?>
@@ -41,7 +37,6 @@
                         </div>
                     </td>
 
-                    
                     <td class="text-center">
                         <div class="dropdown font-sans-serif position-static">
                             <button type="button" class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal"
@@ -51,22 +46,12 @@
 
                             <div class="dropdown-menu dropdown-menu-end border py-0 shadow-sm">
                                 <div class="py-2">
-
-                                    
                                     <button type="button" class="dropdown-item"
-                                        onclick="openEditItem(
-                                            <?php echo e($item->id); ?>,
-                                            '<?php echo e($item->category_id); ?>',
-                                            <?php echo json_encode($item->product_name, 15, 512) ?>,
-                                            <?php echo json_encode($item->supplier_name, 15, 512) ?>,
-                                            <?php echo json_encode($item->unit, 15, 512) ?>,
-                                            <?php echo json_encode($item->part_number, 15, 512) ?>,
-                                            <?php echo json_encode($item->details, 15, 512) ?>
-                                        )">
+                                        data-item='<?php echo json_encode($item, 15, 512) ?>'
+                                        onclick="openEditItem(JSON.parse(this.dataset.item))">
                                         <i class="fas fa-edit me-2"></i> Edit
                                     </button>
 
-                                    
                                     <form action="<?php echo e(route('items.destroy', $item->id)); ?>" method="POST"
                                         class="confirm-delete m-0"
                                         onsubmit="return confirm('Are you sure you want to delete this item?')">
@@ -76,12 +61,10 @@
                                             <i class="fas fa-trash me-2"></i> Delete
                                         </button>
                                     </form>
-
                                 </div>
                             </div>
                         </div>
                     </td>
-
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                 <tr>
@@ -91,7 +74,6 @@
         </tbody>
     </table>
 </div>
-
 
 <div class="my-3 d-flex justify-content-end px-3">
     <?php echo e($items->appends(request()->except('page'))->links('pagination.custom')); ?>

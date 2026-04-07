@@ -46,10 +46,16 @@
                 </div>
 
                 
-                <div class="p-3">
+                <div class="p-3 border-bottom">
                     <div class="row g-3 align-items-center">
-                        <div class="col-md-4">
-                            <input class="form-control form-control-sm search" placeholder="Search item...">
+                        <div class="col-md-6 col-lg-4">
+                            <input id="itemSearch" class="form-control form-control-sm"
+                                placeholder="Search item, category, supplier, part number..." value="<?php echo e($search ?? ''); ?>">
+                        </div>
+                        <div class="col-md-6 col-lg-8 text-md-end">
+                            <small class="text-muted">
+                                Search by item name, category, supplier, unit, part number, or details
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -160,45 +166,79 @@
             </div>
         </div>
     </div>
-
 <?php $__env->stopSection(); ?>
 
 <?php $__env->startPush('scripts'); ?>
     <script>
-        /* ------------------------------
-                       AJAX PAGINATION INSIDE MODAL
-                    ------------------------------ */
         document.addEventListener("DOMContentLoaded", function() {
+            let searchTimer = null;
+            const itemSearch = document.getElementById("itemSearch");
+            const itemTable = document.getElementById("itemTable");
+            const stockTableContainer = document.getElementById("stockTableContainer");
 
-            function loadStockTable(url) {
-                fetch(url, {
+            function currentSearchValue() {
+                return itemSearch ? itemSearch.value.trim() : '';
+            }
+
+            function loadItemsTable(url = null) {
+                const search = encodeURIComponent(currentSearchValue());
+                const fetchUrl = url || `<?php echo e(route('items.index')); ?>?target=items&search=${search}`;
+
+                fetch(fetchUrl, {
                         headers: {
                             "X-Requested-With": "XMLHttpRequest"
                         }
                     })
                     .then(res => res.text())
                     .then(html => {
-                        document.getElementById("stockTableContainer").innerHTML = html;
-                        bindPaginationLinks();
-                    });
+                        itemTable.innerHTML = html;
+                    })
+                    .catch(err => console.error('Error loading items table:', err));
             }
 
-            function bindPaginationLinks() {
-                document.querySelectorAll("#stockTableContainer .pagination a")
-                    .forEach(link => {
-                        link.addEventListener("click", function(e) {
-                            e.preventDefault();
-                            loadStockTable(this.href);
-                        });
-                    });
+            function loadStockTable(url = null) {
+                const search = encodeURIComponent(currentSearchValue());
+                const fetchUrl = url || `<?php echo e(route('items.index')); ?>?target=stock&search=${search}`;
+
+                fetch(fetchUrl, {
+                        headers: {
+                            "X-Requested-With": "XMLHttpRequest"
+                        }
+                    })
+                    .then(res => res.text())
+                    .then(html => {
+                        stockTableContainer.innerHTML = html;
+                    })
+                    .catch(err => console.error('Error loading stock table:', err));
             }
 
-            bindPaginationLinks();
+            if (itemSearch) {
+                itemSearch.addEventListener("keyup", function() {
+                    clearTimeout(searchTimer);
+                    searchTimer = setTimeout(() => {
+                        loadItemsTable();
+                        loadStockTable();
+                    }, 300);
+                });
+            }
+
+            document.addEventListener("click", function(e) {
+                const itemPageLink = e.target.closest("#itemTable .pagination a");
+                if (itemPageLink) {
+                    e.preventDefault();
+                    loadItemsTable(itemPageLink.getAttribute("href") + '&target=items&search=' +
+                        encodeURIComponent(currentSearchValue()));
+                }
+
+                const stockPageLink = e.target.closest("#stockTableContainer .pagination a");
+                if (stockPageLink) {
+                    e.preventDefault();
+                    loadStockTable(stockPageLink.getAttribute("href") + '&target=stock&search=' +
+                        encodeURIComponent(currentSearchValue()));
+                }
+            });
         });
 
-        /* ------------------------------
-           ITEM MODAL HELPERS
-        ------------------------------ */
         function openCreateItem() {
             document.getElementById("itemModalTitle").innerText = "Add Item";
             document.getElementById("itemForm").action = "<?php echo e(route('items.store')); ?>";
@@ -211,28 +251,26 @@
             document.getElementById("itemForm").reset();
             document.getElementById("itemCategory").selectedIndex = 0;
             document.getElementById("itemSupplier").value = '';
+            document.getElementById("itemUnit").value = '';
+            document.getElementById("itemPartNumber").value = '';
             document.getElementById("itemDetails").value = '';
         }
 
-        function openEditItem(id, categoryId, productName, supplierName, unit, partNumber, details) {
+        function openEditItem(item) {
             document.getElementById('itemModalTitle').innerText = 'Edit Item';
-            document.getElementById('itemForm').action = '/maintenance/items/' + id;
+            document.getElementById('itemForm').action = "<?php echo e(url('items/update/__ID__')); ?>".replace('__ID__', item.id);
 
-            let methodInput = document.querySelector('#itemForm input[name="_method"]');
-            if (!methodInput) {
-                methodInput = document.createElement('input');
-                methodInput.type = 'hidden';
-                methodInput.name = '_method';
-                document.getElementById('itemForm').appendChild(methodInput);
+            const methodInput = document.querySelector('#itemForm input[name="_method"]');
+            if (methodInput) {
+                methodInput.remove();
             }
-            methodInput.value = 'PUT';
 
-            document.getElementById('itemCategory').value = categoryId ?? '';
-            document.getElementById('itemName').value = productName ?? '';
-            document.getElementById('itemSupplier').value = supplierName ?? '';
-            document.getElementById('itemUnit').value = unit ?? '';
-            document.getElementById('itemPartNumber').value = partNumber ?? '';
-            document.getElementById('itemDetails').value = details ?? '';
+            document.getElementById('itemCategory').value = item.category_id ?? '';
+            document.getElementById('itemName').value = item.product_name ?? '';
+            document.getElementById('itemSupplier').value = item.supplier_name ?? '';
+            document.getElementById('itemUnit').value = item.unit ?? '';
+            document.getElementById('itemPartNumber').value = item.part_number ?? '';
+            document.getElementById('itemDetails').value = item.details ?? '';
 
             new bootstrap.Modal(document.getElementById('itemModal')).show();
         }

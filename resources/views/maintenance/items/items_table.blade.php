@@ -12,8 +12,6 @@
         <tbody>
             @forelse ($items as $item)
                 <tr class="align-middle">
-
-                    {{-- ITEM NAME --}}
                     <td>
                         <div class="fw-semibold text-110">
                             {{ $item->product_name }}
@@ -24,7 +22,6 @@
                         <div class="text-500 fs-12">{{ $item->details ?? 'N/A' }}</div>
                     </td>
 
-                    {{-- CATEGORY --}}
                     <td>
                         <div class="fw-semibold text-110">{{ $item->category->name ?? 'N/A' }}</div>
                         @if ($item->part_number)
@@ -32,14 +29,12 @@
                         @endif
                     </td>
 
-                    {{-- SUPPLIER --}}
                     <td>
                         <div class="fw-semibold text-110">
                             {{ $item->supplier_name ?: 'N/A' }}
                         </div>
                     </td>
 
-                    {{-- ACTIONS --}}
                     <td class="text-center">
                         <div class="dropdown font-sans-serif position-static">
                             <button type="button" class="btn btn-link text-600 btn-sm dropdown-toggle btn-reveal"
@@ -49,22 +44,12 @@
 
                             <div class="dropdown-menu dropdown-menu-end border py-0 shadow-sm">
                                 <div class="py-2">
-
-                                    {{-- EDIT --}}
                                     <button type="button" class="dropdown-item"
-                                        onclick="openEditItem(
-                                            {{ $item->id }},
-                                            '{{ $item->category_id }}',
-                                            @json($item->product_name),
-                                            @json($item->supplier_name),
-                                            @json($item->unit),
-                                            @json($item->part_number),
-                                            @json($item->details)
-                                        )">
+                                        data-item='@json($item)'
+                                        onclick="openEditItem(JSON.parse(this.dataset.item))">
                                         <i class="fas fa-edit me-2"></i> Edit
                                     </button>
 
-                                    {{-- DELETE --}}
                                     <form action="{{ route('items.destroy', $item->id) }}" method="POST"
                                         class="confirm-delete m-0"
                                         onsubmit="return confirm('Are you sure you want to delete this item?')">
@@ -74,12 +59,10 @@
                                             <i class="fas fa-trash me-2"></i> Delete
                                         </button>
                                     </form>
-
                                 </div>
                             </div>
                         </div>
                     </td>
-
                 </tr>
             @empty
                 <tr>
@@ -90,7 +73,6 @@
     </table>
 </div>
 
-{{-- PAGINATION --}}
 <div class="my-3 d-flex justify-content-end px-3">
     {{ $items->appends(request()->except('page'))->links('pagination.custom') }}
 </div>

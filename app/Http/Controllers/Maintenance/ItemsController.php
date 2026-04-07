@@ -20,19 +20,67 @@ class ItemsController extends Controller
         try {
             $categories = Category::orderBy('name')->get();
 
-            $items = Product::with('category')
-                ->orderBy('product_name')
-                ->paginate(10, ['*'], 'items_page');
+            $search = trim((string) $request->get('search', ''));
+            $target = trim((string) $request->get('target', ''));
 
-            $stock = Product::with('category')
-                ->orderBy('product_name')
-                ->paginate(10, ['*'], 'stock_page');
+            $itemsQuery = Product::with('category')
+                ->when($search !== '', function ($query) use ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('product_name', 'like', "%{$search}%")
+                            ->orWhere('supplier_name', 'like', "%{$search}%")
+                            ->orWhere('unit', 'like', "%{$search}%")
+                            ->orWhere('part_number', 'like', "%{$search}%")
+                            ->orWhere('details', 'like', "%{$search}%")
+                            ->orWhereHas('category', function ($categoryQuery) use ($search) {
+                                $categoryQuery->where('name', 'like', "%{$search}%");
+                            });
+                    });
+                })
+                ->orderBy('product_name');
+
+            $stockQuery = Product::with('category')
+                ->when($search !== '', function ($query) use ($search) {
+                    $query->where(function ($q) use ($search) {
+                        $q->where('product_name', 'like', "%{$search}%")
+                            ->orWhere('supplier_name', 'like', "%{$search}%")
+                            ->orWhere('unit', 'like', "%{$search}%")
+                            ->orWhere('part_number', 'like', "%{$search}%")
+                            ->orWhere('details', 'like', "%{$search}%")
+                            ->orWhereHas('category', function ($categoryQuery) use ($search) {
+                                $categoryQuery->where('name', 'like', "%{$search}%");
+                            });
+                    });
+                })
+                ->orderBy('product_name');
+
+            $items = $itemsQuery
+                ->paginate(10, ['*'], 'items_page')
+                ->appends([
+                    'search' => $search,
+                ]);
+
+            $stock = $stockQuery
+                ->paginate(10, ['*'], 'stock_page')
+                ->appends([
+                    'search' => $search,
+                ]);
 
             if ($request->ajax()) {
-                return view('maintenance.items.stock_table', ['products' => $stock])->render();
+                if ($target === 'items') {
+                    return view('maintenance.items.items_table', compact('items'))->render();
+                }
+
+                if ($target === 'stock') {
+                    return view('maintenance.items.stock_table', ['products' => $stock])->render();
+                }
+
+                return response(
+                    '<div class="alert alert-danger m-3">Invalid AJAX target.</div>',
+                    400
+                );
             }
 
-            return view('maintenance.items.index', compact('categories', 'items', 'stock'));
+            return view('maintenance.items.index', compact('categories', 'items', 'stock', 'search'));
         } catch (Throwable $e) {
             Log::error('ItemsController@index failed', [
                 'message' => $e->getMessage(),
@@ -43,7 +91,7 @@ class ItemsController extends Controller
 
             if ($request->ajax()) {
                 return response(
-                    '<div class="alert alert-danger m-3">Failed to load stock list.</div>',
+                    '<div class="alert alert-danger m-3">Failed to load items list.</div>',
                     500
                 );
             }

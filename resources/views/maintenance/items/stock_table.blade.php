@@ -12,10 +12,10 @@
         </thead>
 
         <tbody>
-            @foreach ($products  as $p)
+            @forelse ($products as $p)
                 @php
-                    $qty = $p->stock_qty ?? 0;
-                    $percent = min(100, ($qty / 10) * 100);
+                    $qty = (int) ($p->stock_qty ?? 0);
+                    $percent = $qty <= 0 ? 0 : min(100, ($qty / 10) * 100);
                 @endphp
 
                 <tr>
@@ -23,11 +23,13 @@
 
                     <td>
                         <div class="fw-semibold">{{ $p->product_name }}</div>
-                        <div class="text-500 fs-11">{{ $p->details }}</div>
+                        <div class="text-500 fs-11">{{ $p->details ?: 'N/A' }}</div>
                     </td>
 
                     <td class="text-center">
-                        <span class="badge badge-subtle-secondary px-2">{{ $p->unit }}</span>
+                        <span class="badge badge-subtle-secondary px-2">
+                            {{ $p->unit ?: '—' }}
+                        </span>
                     </td>
 
                     <td class="text-center">
@@ -47,18 +49,21 @@
                             <div class="progress-bar
                                 @if ($qty <= 0) bg-danger
                                 @elseif($qty <= 5) bg-warning
-                                @else bg-success
-                                @endif"
+                                @else bg-success @endif"
                                 style="width: {{ $percent }}%">
                             </div>
                         </div>
                     </td>
                 </tr>
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-3">No stock items found.</td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
 </div>
 
 <div class="my-3 d-flex justify-content-end px-3">
-    {{ $products ->appends(request()->except('page'))->links('pagination.custom') }}
+    {{ $products->appends(request()->except('page'))->links('pagination.custom') }}
 </div>
