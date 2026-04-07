@@ -46,7 +46,7 @@
                         </td>
 
                         <td>
-                            <div class="fw-semibold">{{ $receiving->user->name ?? 'System' }}</div>
+                            <div class="fw-semibold">{{ $receiving->user->full_name ?? 'System' }}</div>
                         </td>
 
                         <td>
