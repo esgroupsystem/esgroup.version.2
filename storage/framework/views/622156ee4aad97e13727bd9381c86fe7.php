@@ -14,58 +14,62 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse($receivings as $receiving)
+                <?php $__empty_1 = true; $__currentLoopData = $receivings; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $receiving): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
                     <tr>
                         <td class="ps-3">
-                            <div class="fw-semibold text-primary">{{ $receiving->receiving_number }}</div>
+                            <div class="fw-semibold text-primary"><?php echo e($receiving->receiving_number); ?></div>
                             <div class="text-500 fs-11">
                                 Ref. record
                             </div>
                         </td>
 
                         <td>
-                            <div class="fw-semibold">{{ $receiving->delivered_by ?: '—' }}</div>
+                            <div class="fw-semibold"><?php echo e($receiving->delivered_by ?: '—'); ?></div>
                         </td>
 
                         <td>
                             <div class="fw-semibold">
-                                {{ $receiving->delivery_date ? \Carbon\Carbon::parse($receiving->delivery_date)->format('M d, Y') : '—' }}
+                                <?php echo e($receiving->delivery_date ? \Carbon\Carbon::parse($receiving->delivery_date)->format('M d, Y') : '—'); ?>
+
                             </div>
                         </td>
 
                         <td class="text-center">
                             <span class="badge badge-subtle-secondary px-3 py-2">
-                                {{ $receiving->items_count ?? ($receiving->items->count() ?? 0) }} item(s)
+                                <?php echo e($receiving->items_count ?? ($receiving->items->count() ?? 0)); ?> item(s)
                             </span>
                         </td>
 
                         <td style="min-width: 220px;">
                             <div class="text-700">
-                                {{ $receiving->remarks ?: 'No remarks provided.' }}
+                                <?php echo e($receiving->remarks ?: 'No remarks provided.'); ?>
+
                             </div>
                         </td>
 
                         <td>
-                            <div class="fw-semibold">{{ $receiving->receiver->full_name ?? 'System' }}</div>
+                            <div class="fw-semibold"><?php echo e($receiving->receiver->full_name ?? 'System'); ?></div>
                         </td>
 
                         <td>
                             <div class="fw-semibold">
-                                {{ optional($receiving->created_at)->format('M d, Y') }}
+                                <?php echo e(optional($receiving->created_at)->format('M d, Y')); ?>
+
                             </div>
                             <div class="text-500 fs-11">
-                                {{ optional($receiving->created_at)->format('h:i A') }}
+                                <?php echo e(optional($receiving->created_at)->format('h:i A')); ?>
+
                             </div>
                         </td>
 
                         <td class="text-center pe-3">
-                            <a href="{{ route('receivings.show', $receiving->id) }}"
+                            <a href="<?php echo e(route('receivings.show', $receiving->id)); ?>"
                                 class="btn btn-falcon-default btn-sm">
                                 <span class="fas fa-eye me-1"></span> View
                             </a>
                         </td>
                     </tr>
-                @empty
+                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
                     <tr>
                         <td colspan="8" class="text-center py-5">
                             <div class="d-flex flex-column align-items-center justify-content-center text-muted">
@@ -77,16 +81,18 @@
                             </div>
                         </td>
                     </tr>
-                @endforelse
+                <?php endif; ?>
             </tbody>
         </table>
     </div>
 </div>
 
-@if ($receivings->hasPages())
+<?php if($receivings->hasPages()): ?>
     <div class="card-footer bg-body-tertiary py-2">
         <div class="d-flex justify-content-end">
-            {{ $receivings->links('pagination.custom') }}
+            <?php echo e($receivings->links('pagination.custom')); ?>
+
         </div>
     </div>
-@endif
+<?php endif; ?>
+<?php /**PATH C:\xampp\htdocs\esgroup.version.2\resources\views/maintenance/receive/table.blade.php ENDPATH**/ ?>
