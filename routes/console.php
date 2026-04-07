@@ -12,79 +12,109 @@ Artisan::command('inspire', function () {
 
 /*
 |--------------------------------------------------------------------------
-| CROSSCHEX SYNC (every 5 minutes)
+| SHARED SCHEDULE LOGGER
 |--------------------------------------------------------------------------
 */
-Schedule::command('crosschex:sync')
-    ->everyFiveMinutes()
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/crosschex-sync.log'))
-    ->onSuccess(function (Stringable $output) {
-        Log::info('crosschex:sync success', [
-            'time' => now()->toDateTimeString(),
-            'output' => (string) $output,
-        ]);
-    })
-    ->onFailure(function (Stringable $output) {
-        Log::error('crosschex:sync failed', [
-            'time' => now()->toDateTimeString(),
-            'output' => (string) $output,
-        ]);
-    });
+$logScheduledCommand = function (
+    string $commandName,
+    string $successLabel,
+    string $failureLabel
+) {
+    return [
+        'success' => function (Stringable $output) use ($commandName, $successLabel) {
+            $text = trim((string) $output);
+
+            Log::info($successLabel, [
+                'command' => $commandName,
+                'time' => now()->toDateTimeString(),
+                'has_output' => $text !== '',
+                'output_preview' => $text !== '' ? mb_substr($text, 0, 1000) : null,
+            ]);
+        },
+        'failure' => function (Stringable $output) use ($commandName, $failureLabel) {
+            $text = trim((string) $output);
+
+            Log::error($failureLabel, [
+                'command' => $commandName,
+                'time' => now()->toDateTimeString(),
+                'has_output' => $text !== '',
+                'output_preview' => $text !== '' ? mb_substr($text, 0, 2000) : null,
+            ]);
+        },
+    ];
+};
 
 /*
 |--------------------------------------------------------------------------
-| READY FOR DUTY (EVERY 5 MINUTES - ACTIVE MONITORING)
+| CROSSCHEX SYNC
+|--------------------------------------------------------------------------
+| Keep every 5 minutes if really needed.
+| Added:
+| - runInBackground()
+| - lock timeout
+| - lighter logging
 |--------------------------------------------------------------------------
 */
+$crosschexLogger = $logScheduledCommand(
+    'crosschex:sync',
+    'crosschex:sync success',
+    'crosschex:sync failed'
+);
+
+Schedule::command('crosschex:sync')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(10)
+    ->runInBackground()
+    ->sendOutputTo(storage_path('logs/crosschex-sync.log'))
+    ->onSuccess($crosschexLogger['success'])
+    ->onFailure($crosschexLogger['failure']);
+
+/*
+|--------------------------------------------------------------------------
+| READY FOR DUTY
+|--------------------------------------------------------------------------
+| Changed to every 10 minutes to reduce load.
+| If you truly need 5 minutes, change back.
+|--------------------------------------------------------------------------
+*/
+$employeeLogger = $logScheduledCommand(
+    'leaves:employee-ready-for-duty',
+    'employee ready-for-duty success',
+    'employee ready-for-duty failed'
+);
 
 Schedule::command('leaves:employee-ready-for-duty')
-    ->everyFiveMinutes()
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/ready-duty-employee.log'))
-    ->onSuccess(function (Stringable $output) {
-        Log::info('employee ready-for-duty success', [
-            'time' => now()->toDateTimeString(),
-            'output' => (string) $output,
-        ]);
-    })
-    ->onFailure(function (Stringable $output) {
-        Log::error('employee ready-for-duty failed', [
-            'time' => now()->toDateTimeString(),
-            'output' => (string) $output,
-        ]);
-    });
+    ->everyTenMinutes()
+    ->withoutOverlapping(10)
+    ->runInBackground()
+    ->sendOutputTo(storage_path('logs/ready-duty-employee.log'))
+    ->onSuccess($employeeLogger['success'])
+    ->onFailure($employeeLogger['failure']);
+
+$driverLogger = $logScheduledCommand(
+    'leaves:driver-ready-for-duty',
+    'driver ready-for-duty success',
+    'driver ready-for-duty failed'
+);
 
 Schedule::command('leaves:driver-ready-for-duty')
-    ->everyFiveMinutes()
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/ready-duty-driver.log'))
-    ->onSuccess(function (Stringable $output) {
-        Log::info('driver ready-for-duty success', [
-            'time' => now()->toDateTimeString(),
-            'output' => (string) $output,
-        ]);
-    })
-    ->onFailure(function (Stringable $output) {
-        Log::error('driver ready-for-duty failed', [
-            'time' => now()->toDateTimeString(),
-            'output' => (string) $output,
-        ]);
-    });
+    ->everyTenMinutes()
+    ->withoutOverlapping(10)
+    ->runInBackground()
+    ->sendOutputTo(storage_path('logs/ready-duty-driver.log'))
+    ->onSuccess($driverLogger['success'])
+    ->onFailure($driverLogger['failure']);
+
+$conductorLogger = $logScheduledCommand(
+    'leaves:conductor-ready-for-duty',
+    'conductor ready-for-duty success',
+    'conductor ready-for-duty failed'
+);
 
 Schedule::command('leaves:conductor-ready-for-duty')
-    ->everyFiveMinutes()
-    ->withoutOverlapping()
-    ->appendOutputTo(storage_path('logs/ready-duty-conductor.log'))
-    ->onSuccess(function (Stringable $output) {
-        Log::info('conductor ready-for-duty success', [
-            'time' => now()->toDateTimeString(),
-            'output' => (string) $output,
-        ]);
-    })
-    ->onFailure(function (Stringable $output) {
-        Log::error('conductor ready-for-duty failed', [
-            'time' => now()->toDateTimeString(),
-            'output' => (string) $output,
-        ]);
-    });
+    ->everyTenMinutes()
+    ->withoutOverlapping(10)
+    ->runInBackground()
+    ->sendOutputTo(storage_path('logs/ready-duty-conductor.log'))
+    ->onSuccess($conductorLogger['success'])
+    ->onFailure($conductorLogger['failure']);
