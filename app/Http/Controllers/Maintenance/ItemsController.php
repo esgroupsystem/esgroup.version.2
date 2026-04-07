@@ -29,10 +29,7 @@ class ItemsController extends Controller
                 ->paginate(10, ['*'], 'stock_page');
 
             if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'html' => view('maintenance.items.stock_table', ['products' => $stock])->render(),
-                ]);
+                return view('maintenance.items.stock_table', ['products' => $stock])->render();
             }
 
             return view('maintenance.items.index', compact('categories', 'items', 'stock'));
@@ -45,11 +42,10 @@ class ItemsController extends Controller
             ]);
 
             if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to load items list. Please check the logs.',
-                    'error' => $e->getMessage(),
-                ], 500);
+                return response(
+                    '<div class="alert alert-danger m-3">Failed to load stock list.</div>',
+                    500
+                );
             }
 
             flash('Failed to load items. Please try again or check the system logs.')->error();

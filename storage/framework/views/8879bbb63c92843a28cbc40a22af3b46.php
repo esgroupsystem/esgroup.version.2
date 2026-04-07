@@ -117,15 +117,15 @@
                         </a>
                     </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link <?php echo e(request()->routeIs('it-inventory.*') ? 'active' : ''); ?>"
-                                href="<?php echo e(route('it-inventory.index')); ?>">
-                                <div class="d-flex align-items-center">
-                                    <span class="nav-link-icon"><i class="fas fa-laptop-house"></i></span>
-                                    <span class="nav-link-text ps-1">IT Inventory</span>
-                                </div>
-                            </a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link <?php echo e(request()->routeIs('it-inventory.*') ? 'active' : ''); ?>"
+                            href="<?php echo e(route('it-inventory.index')); ?>">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon"><i class="fas fa-laptop-house"></i></span>
+                                <span class="nav-link-text ps-1">IT Inventory</span>
+                            </div>
+                        </a>
+                    </li>
                 <?php endif; ?>
 
 
@@ -295,9 +295,9 @@
                             </div>
                         </a>
                     </li>
-                    <?php endif; ?>
+                <?php endif; ?>
 
-                    <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head')): ?>
+                <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head', 'HR Head', 'HR Officer')): ?>
                     <li class="nav-item">
                         <a class="nav-link <?php echo e(request()->routeIs('manual-biometrics.*') ? 'active' : ''); ?>"
                             href="<?php echo e(route('manual-biometrics.index')); ?>">
@@ -309,282 +309,287 @@
                             </div>
                         </a>
                     </li>
-
-                    
-                    <li class="nav-item">
-                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                            <div class="col-auto navbar-vertical-label">
-                                Employee Schedule / Rates
-                            </div>
-                            <div class="col ps-0">
-                                <hr class="mb-0 navbar-vertical-divider">
-                            </div>
-                        </div>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->is('payroll-plotting*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('payroll-plotting.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-calendar-alt"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Work Schedule</span>
-                            </div>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->routeIs('payroll-employee-salaries.*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('payroll-employee-salaries.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-money-bill-wave"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Employee Rates</span>
-                            </div>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->routeIs('holidays.*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('holidays.index')); ?>">
-
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </span>
-                                <span class="nav-link-text ms-2">Holiday Calendar</span>
-                            </div>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                            <div class="col-auto navbar-vertical-label">
-                                Payroll Process
-                            </div>
-                            <div class="col ps-0">
-                                <hr class="mb-0 navbar-vertical-divider">
-                            </div>
-                        </div>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->routeIs('payroll-attendance-adjustments.*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('payroll-attendance-adjustments.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-edit"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Adjustment</span>
-                            </div>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->routeIs('attendance-summary.*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('attendance-summary.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-clipboard-list"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Attendance Summary</span>
-                            </div>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->routeIs('payroll.*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('payroll.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-money-check-alt"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Payroll</span>
-                            </div>
-                        </a>
-                    </li>
                 <?php endif; ?>
-
-
-                
-                
-                
-                <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer')): ?>
-                    <li class="nav-item">
-                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                            <div class="col-auto navbar-vertical-label">
-                                Stock Movements
-                            </div>
-                            <div class="col ps-0">
-                                <hr class="mb-0 navbar-vertical-divider">
-                            </div>
-                        </div>
-                    </li>
-
-                    
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->is('parts-out*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('parts-out.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-tools"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Parts Issuance</span>
-                            </div>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->is('buses*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('buses.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-bus"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Vehicle History</span>
-                            </div>
-                        </a>
-                    </li>
-                    
-                    
-                    
-
-                    <li class="nav-item">
-                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                            <div class="col-auto navbar-vertical-label">
-                                Inventory Management
-                            </div>
-                            <div class="col ps-0">
-                                <hr class="mb-0 navbar-vertical-divider">
-                            </div>
-                        </div>
-                    </li>
-
-                    
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->is('receivings*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('receivings.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-truck-loading"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Receiving Area</span>
-                            </div>
-                        </a>
-                    </li>
-
-                    
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->is('stock-transfers*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('stock-transfers.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-exchange-alt"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Stock Transfer</span>
-                            </div>
-                        </a>
-                    </li>
-                <?php endif; ?>
-
-                
-                
-                
-
-                <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer')): ?>
-                    <li class="nav-item">
-                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                            <div class="col-auto navbar-vertical-label">
-                                Products Management
-                            </div>
-                            <div class="col ps-0">
-                                <hr class="mb-0 navbar-vertical-divider">
-                            </div>
-                        </div>
-                    </li>
-
-                    
-
-                    
-                    
-                    
-
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->is('category*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('category.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="far fa-list-alt"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Categories</span>
-                            </div>
-                        </a>
-                    </li>
-
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->is('items*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('items.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-toolbox"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Products</span>
-                            </div>
-                        </a>
-                    </li>
-                    
-                    
-                    
-
-                    
-                <?php endif; ?>
-
-
-                
-                
-                
-
                 <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head')): ?>
-                    <li class="nav-item">
-                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                            <div class="col-auto navbar-vertical-label">
-                                Authentication
-                            </div>
-                            <div class="col ps-0">
-                                <hr class="mb-0 navbar-vertical-divider">
-                            </div>
+                
+                <li class="nav-item">
+                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                        <div class="col-auto navbar-vertical-label">
+                            Employee Schedule / Rates
                         </div>
-                    </li>
+                        <div class="col ps-0">
+                            <hr class="mb-0 navbar-vertical-divider">
+                        </div>
+                    </div>
+                </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->is('authentication/users*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('authentication.users.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-user-shield"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Users</span>
-                            </div>
-                        </a>
-                    </li>
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->is('payroll-plotting*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('payroll-plotting.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-calendar-alt"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Work Schedule</span>
+                        </div>
+                    </a>
+                </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link <?php echo e(request()->is('authentication/roles*') ? 'active' : ''); ?>"
-                            href="<?php echo e(route('roles.index')); ?>">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-user-secret"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Roles</span>
-                            </div>
-                        </a>
-                    </li>
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->routeIs('payroll-employee-salaries.*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('payroll-employee-salaries.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-money-bill-wave"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Employee Rates</span>
+                        </div>
+                    </a>
+                </li>
                 <?php endif; ?>
-            </ul>
-        </div>
+
+                <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head', 'HR Head', 'HR Officer')): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->routeIs('holidays.*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('holidays.index')); ?>">
+
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <i class="fas fa-calendar-alt"></i>
+                            </span>
+                            <span class="nav-link-text ms-2">Holiday Calendar</span>
+                        </div>
+                    </a>
+                </li>
+                <?php endif; ?>
+                
+                <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head')): ?>
+                <li class="nav-item">
+                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                        <div class="col-auto navbar-vertical-label">
+                            Payroll Process
+                        </div>
+                        <div class="col ps-0">
+                            <hr class="mb-0 navbar-vertical-divider">
+                        </div>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->routeIs('payroll-attendance-adjustments.*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('payroll-attendance-adjustments.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-edit"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Adjustment</span>
+                        </div>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->routeIs('attendance-summary.*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('attendance-summary.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-clipboard-list"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Attendance Summary</span>
+                        </div>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->routeIs('payroll.*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('payroll.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-money-check-alt"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Payroll</span>
+                        </div>
+                    </a>
+                </li>
+            <?php endif; ?>
+
+
+            
+            
+            
+            <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer')): ?>
+                <li class="nav-item">
+                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                        <div class="col-auto navbar-vertical-label">
+                            Stock Movements
+                        </div>
+                        <div class="col ps-0">
+                            <hr class="mb-0 navbar-vertical-divider">
+                        </div>
+                    </div>
+                </li>
+
+                
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->is('parts-out*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('parts-out.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-tools"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Parts Issuance</span>
+                        </div>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->is('buses*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('buses.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-bus"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Vehicle History</span>
+                        </div>
+                    </a>
+                </li>
+                
+                
+                
+
+                <li class="nav-item">
+                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                        <div class="col-auto navbar-vertical-label">
+                            Inventory Management
+                        </div>
+                        <div class="col ps-0">
+                            <hr class="mb-0 navbar-vertical-divider">
+                        </div>
+                    </div>
+                </li>
+
+                
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->is('receivings*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('receivings.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-truck-loading"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Receiving Area</span>
+                        </div>
+                    </a>
+                </li>
+
+                
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->is('stock-transfers*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('stock-transfers.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-exchange-alt"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Stock Transfer</span>
+                        </div>
+                    </a>
+                </li>
+            <?php endif; ?>
+
+            
+            
+            
+
+            <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer')): ?>
+                <li class="nav-item">
+                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                        <div class="col-auto navbar-vertical-label">
+                            Products Management
+                        </div>
+                        <div class="col ps-0">
+                            <hr class="mb-0 navbar-vertical-divider">
+                        </div>
+                    </div>
+                </li>
+
+                
+
+                
+                
+                
+
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->is('category*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('category.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="far fa-list-alt"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Categories</span>
+                        </div>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->is('items*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('items.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-toolbox"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Products</span>
+                        </div>
+                    </a>
+                </li>
+                
+                
+                
+
+                
+            <?php endif; ?>
+
+
+            
+            
+            
+
+            <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head')): ?>
+                <li class="nav-item">
+                    <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
+                        <div class="col-auto navbar-vertical-label">
+                            Authentication
+                        </div>
+                        <div class="col ps-0">
+                            <hr class="mb-0 navbar-vertical-divider">
+                        </div>
+                    </div>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->is('authentication/users*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('authentication.users.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-user-shield"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Users</span>
+                        </div>
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link <?php echo e(request()->is('authentication/roles*') ? 'active' : ''); ?>"
+                        href="<?php echo e(route('roles.index')); ?>">
+                        <div class="d-flex align-items-center">
+                            <span class="nav-link-icon">
+                                <span class="fas fa-user-secret"></span>
+                            </span>
+                            <span class="nav-link-text ps-1">Roles</span>
+                        </div>
+                    </a>
+                </li>
+            <?php endif; ?>
+        </ul>
     </div>
+</div>
 
 </nav>
 <?php /**PATH C:\xampp\htdocs\esgroup.version.2\resources\views/layouts/sidebar.blade.php ENDPATH**/ ?>

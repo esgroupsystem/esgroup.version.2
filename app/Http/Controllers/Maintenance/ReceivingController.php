@@ -28,7 +28,8 @@ class ReceivingController extends Controller
                 ->when($search, function ($query) use ($search) {
                     $query->where(function ($q) use ($search) {
                         $q->where('receiving_number', 'like', "%{$search}%")
-                            ->orWhere('delivered_by', 'like', "%{$search}%");
+                            ->orWhere('delivered_by', 'like', "%{$search}%")
+                            ->orWhere('remarks', 'like', "%{$search}%");
                     });
                 })
                 ->latest()
@@ -36,10 +37,7 @@ class ReceivingController extends Controller
                 ->withQueryString();
 
             if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'html' => view('maintenance.receive.table', compact('receivings'))->render(),
-                ]);
+                return view('maintenance.receive.table', compact('receivings'))->render();
             }
 
             return view('maintenance.receive.index', compact('receivings', 'search'));
@@ -52,16 +50,13 @@ class ReceivingController extends Controller
             ]);
 
             if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to load receiving records.',
-                    'error' => $e->getMessage(),
-                ], 500);
+                return response(
+                    '<div class="alert alert-danger m-3">Failed to load receiving records.</div>',
+                    500
+                );
             }
 
-            flash('Failed to load receiving records. Please check the logs.')->error();
-
-            return back();
+            return back()->with('error', 'Failed to load receiving records. Please check the logs.');
         }
     }
 
