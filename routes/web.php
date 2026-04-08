@@ -155,7 +155,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/export/{type}', 'export')->name('export');
         });
 
-    Route::resource('cctv-parts', CctvPartController::class);
+    Route::resource('cctv-parts', CctvController::class);
 
     /*
     |--------------------------------------------------------------------------
