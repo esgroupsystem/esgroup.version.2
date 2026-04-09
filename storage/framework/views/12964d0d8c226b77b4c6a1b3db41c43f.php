@@ -1,7 +1,6 @@
-@extends('layouts.app')
-@section('title', 'Parts Out')
+<?php $__env->startSection('title', 'Parts Out'); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
     <div class="container" data-layout="container">
 
         <script>
@@ -15,21 +14,21 @@
 
         <div class="content">
 
-            @if (session('success'))
+            <?php if(session('success')): ?>
                 <div class="alert alert-success border-0 shadow-sm d-flex align-items-center" role="alert">
                     <span class="fas fa-check-circle me-2"></span>
-                    <div>{{ session('success') }}</div>
+                    <div><?php echo e(session('success')); ?></div>
                 </div>
-            @endif
+            <?php endif; ?>
 
-            @if (session('error'))
+            <?php if(session('error')): ?>
                 <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center" role="alert">
                     <span class="fas fa-exclamation-circle me-2"></span>
-                    <div>{{ session('error') }}</div>
+                    <div><?php echo e(session('error')); ?></div>
                 </div>
-            @endif
+            <?php endif; ?>
 
-            {{-- HEADER CARD --}}
+            
             <div class="card border-0 shadow-sm mb-3 overflow-hidden">
                 <div class="card-body bg-body-tertiary">
                     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
@@ -45,10 +44,10 @@
                         </div>
 
                         <div class="d-flex gap-2">
-                            <a href="{{ route('items.dashboard') }}" class="btn btn-falcon-default btn-sm">
+                            <a href="<?php echo e(route('items.dashboard')); ?>" class="btn btn-falcon-default btn-sm">
                                 <span class="fas fa-chart-bar me-1"></span> Stock Dashboard
                             </a>
-                            <a href="{{ route('parts-out.create') }}" class="btn btn-primary btn-sm">
+                            <a href="<?php echo e(route('parts-out.create')); ?>" class="btn btn-primary btn-sm">
                                 <span class="fas fa-plus me-1"></span> New Parts Out
                             </a>
                         </div>
@@ -56,7 +55,7 @@
                 </div>
             </div>
 
-            {{-- MAIN CARD --}}
+            
             <div class="card border-0 shadow-sm">
                 <div class="card-header bg-white border-bottom">
                     <div class="row g-3 align-items-end">
@@ -68,7 +67,7 @@
                                 </span>
                                 <input type="text" id="searchInput" class="form-control border-start-0"
                                     placeholder="Search parts out no., mechanic, requester, JO no., date..."
-                                    value="{{ request('search') }}">
+                                    value="<?php echo e(request('search')); ?>">
                             </div>
                             <div class="form-text fs-11">
                                 Search by parts out number, mechanic, requester, job order number, or date.
@@ -76,17 +75,18 @@
                         </div>
 
                         <div class="col-md-4 col-lg-6 text-md-end">
-                            @isset($partsOuts)
+                            <?php if(isset($partsOuts)): ?>
                                 <span class="badge badge-subtle-primary px-3 py-2 fs-10">
-                                    Total Records: {{ $partsOuts->total() }}
+                                    Total Records: <?php echo e($partsOuts->total()); ?>
+
                                 </span>
-                            @endisset
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
 
                 <div id="partsOutTable">
-                    @include('maintenance.parts_out.table', ['partsOuts' => $partsOuts])
+                    <?php echo $__env->make('maintenance.parts_out.table', ['partsOuts' => $partsOuts], array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
                 </div>
             </div>
         </div>
@@ -100,7 +100,7 @@
 
             function loadTable(url = null) {
                 const search = searchInput.value || '';
-                const requestUrl = url || `{{ route('parts-out.index') }}?search=${encodeURIComponent(search)}`;
+                const requestUrl = url || `<?php echo e(route('parts-out.index')); ?>?search=${encodeURIComponent(search)}`;
 
                 fetch(requestUrl, {
                         headers: {
@@ -140,4 +140,6 @@
             bindPagination();
         });
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\esgroup.version.2\resources\views/maintenance/parts_out/index.blade.php ENDPATH**/ ?>
