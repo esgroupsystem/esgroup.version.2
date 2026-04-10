@@ -24,7 +24,7 @@ class ReceivingController extends Controller
         try {
             $search = trim((string) $request->search);
 
-            $receivings = Receiving::with(['receiver', 'items.product'])
+            $receivings = Receiving::with(['receiver', 'items.product', 'location'])
                 ->when($search, function ($query) use ($search) {
                     $query->where(function ($q) use ($search) {
                         $q->where('receiving_number', 'like', "%{$search}%")
@@ -77,7 +77,9 @@ class ReceivingController extends Controller
                 ->orderBy('product_name')
                 ->get();
 
-            return view('maintenance.receive.create', compact('products'));
+            $locations = Location::orderBy('name')->get();
+
+            return view('maintenance.receive.create', compact('products', 'locations'));
         } catch (Throwable $e) {
             Log::error('ReceivingController@create failed', [
                 'message' => $e->getMessage(),
@@ -94,6 +96,7 @@ class ReceivingController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'location_id' => 'required|exists:locations,id',
             'delivered_by' => 'required|string|max:255',
             'delivery_date' => 'required|date',
             'remarks' => 'nullable|string',
@@ -142,14 +145,10 @@ class ReceivingController extends Controller
                 }
             }
 
-            $defaultLocation = Location::where('name', 'Main Office')->first();
-
-            if (! $defaultLocation) {
-                throw new \Exception('Default receiving location "Main Office" was not found. Please create it first or update the controller location name.');
-            }
 
             $receiving = Receiving::create([
                 'receiving_number' => 'TEMP',
+                'location_id' => $validated['location_id'],
                 'delivered_by' => $validated['delivered_by'],
                 'delivery_date' => $validated['delivery_date'],
                 'remarks' => $validated['remarks'] ?? null,
@@ -185,7 +184,7 @@ class ReceivingController extends Controller
                 $productStock = ProductStock::lockForUpdate()->firstOrCreate(
                     [
                         'product_id' => $product->id,
-                        'location_id' => $defaultLocation->id,
+                        'location_id' => $validated['location_id'],
                     ],
                     [
                         'qty' => 0,

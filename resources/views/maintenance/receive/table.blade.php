@@ -4,6 +4,7 @@
             <thead class="bg-200 text-900">
                 <tr>
                     <th class="ps-3">Receiving No.</th>
+                    <th>Garage</th>
                     <th>Delivered By</th>
                     <th>Delivery Date</th>
                     <th class="text-center">Items</th>
@@ -22,6 +23,8 @@
                                 Ref. record
                             </div>
                         </td>
+
+                        <td>{{ $receiving->location->name ?? 'N/A' }}</td>
 
                         <td>
                             <div class="fw-semibold">{{ $receiving->delivered_by ?: '—' }}</div>

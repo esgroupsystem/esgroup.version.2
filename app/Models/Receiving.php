@@ -8,6 +8,7 @@ class Receiving extends Model
 {
     protected $fillable = [
         'receiving_number',
+        'location_id',
         'delivered_by',
         'delivery_date',
         'remarks',
@@ -23,5 +24,10 @@ class Receiving extends Model
     public function receiver()
     {
         return $this->belongsTo(User::class, 'received_by');
+    }
+
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
     }
 }

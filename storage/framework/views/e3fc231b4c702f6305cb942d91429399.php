@@ -1,7 +1,6 @@
-@extends('layouts.app')
-@section('title', 'New Receiving')
+<?php $__env->startSection('title', 'New Receiving'); ?>
 
-@section('content')
+<?php $__env->startSection('content'); ?>
     <div class="container" data-layout="container">
 
         <script>
@@ -26,34 +25,34 @@
                         </p>
                     </div>
 
-                    <a href="{{ route('receivings.index') }}" class="btn btn-falcon-default btn-sm">
+                    <a href="<?php echo e(route('receivings.index')); ?>" class="btn btn-falcon-default btn-sm">
                         <span class="fas fa-arrow-left me-1"></span> Back
                     </a>
                 </div>
 
-                <form action="{{ route('receivings.store') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
+                <form action="<?php echo e(route('receivings.store')); ?>" method="POST" enctype="multipart/form-data">
+                    <?php echo csrf_field(); ?>
 
                     <div class="card-body">
 
-                        @if ($errors->any())
+                        <?php if($errors->any()): ?>
                             <div class="alert alert-danger border-0">
                                 <div class="fw-bold mb-1">Please fix the following:</div>
                                 <ul class="mb-0 ps-3">
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
+                                    <?php $__currentLoopData = $errors->all(); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $error): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                        <li><?php echo e($error); ?></li>
+                                    <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                                 </ul>
                             </div>
-                        @endif
+                        <?php endif; ?>
 
                         <div class="col-md-4">
                             <label class="form-label">Garage / Location <span class="text-danger">*</span></label>
                             <select name="location_id" class="form-select" required>
                                 <option value="">Select Garage</option>
-                                @foreach ($locations as $loc)
-                                    <option value="{{ $loc->id }}">{{ $loc->name }}</option>
-                                @endforeach
+                                <?php $__currentLoopData = $locations; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $loc): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                    <option value="<?php echo e($loc->id); ?>"><?php echo e($loc->name); ?></option>
+                                <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                             </select>
                         </div>
 
@@ -61,41 +60,97 @@
                             <div class="col-md-6">
                                 <label class="form-label">Delivered By <span class="text-danger">*</span></label>
                                 <input type="text" name="delivered_by"
-                                    class="form-control @error('delivered_by') is-invalid @enderror" required
-                                    value="{{ old('delivered_by') }}" placeholder="Enter supplier, driver, or person name">
-                                @error('delivered_by')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                    class="form-control <?php $__errorArgs = ['delivered_by'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" required
+                                    value="<?php echo e(old('delivered_by')); ?>" placeholder="Enter supplier, driver, or person name">
+                                <?php $__errorArgs = ['delivered_by'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <div class="invalid-feedback"><?php echo e($message); ?></div>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
 
                             <div class="col-md-3">
                                 <label class="form-label">Delivery Date <span class="text-danger">*</span></label>
                                 <input type="date" name="delivery_date"
-                                    class="form-control @error('delivery_date') is-invalid @enderror" required
-                                    value="{{ old('delivery_date', date('Y-m-d')) }}">
-                                @error('delivery_date')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                    class="form-control <?php $__errorArgs = ['delivery_date'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" required
+                                    value="<?php echo e(old('delivery_date', date('Y-m-d'))); ?>">
+                                <?php $__errorArgs = ['delivery_date'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <div class="invalid-feedback"><?php echo e($message); ?></div>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
 
                             <div class="col-md-3">
                                 <label class="form-label">Proof of Delivery</label>
                                 <input type="file" name="proof_image" id="proofImageInput"
-                                    class="form-control @error('proof_image') is-invalid @enderror"
+                                    class="form-control <?php $__errorArgs = ['proof_image'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>"
                                     accept="image/png,image/jpeg,image/jpg">
-                                @error('proof_image')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <?php $__errorArgs = ['proof_image'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <div class="invalid-feedback"><?php echo e($message); ?></div>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                                 <small class="text-muted">Upload receipt, DR, or delivery proof.</small>
                             </div>
 
                             <div class="col-md-12">
                                 <label class="form-label">Remarks</label>
-                                <textarea name="remarks" class="form-control @error('remarks') is-invalid @enderror" rows="2"
-                                    placeholder="Optional remarks...">{{ old('remarks') }}</textarea>
-                                @error('remarks')
-                                    <div class="invalid-feedback">{{ $message }}</div>
-                                @enderror
+                                <textarea name="remarks" class="form-control <?php $__errorArgs = ['remarks'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?> is-invalid <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>" rows="2"
+                                    placeholder="Optional remarks..."><?php echo e(old('remarks')); ?></textarea>
+                                <?php $__errorArgs = ['remarks'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?>
+                                    <div class="invalid-feedback"><?php echo e($message); ?></div>
+                                <?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
                             </div>
 
                             <div class="col-md-12" id="proofPreviewWrapper" style="display: none;">
@@ -156,7 +211,7 @@
                         </div>
 
                         <div class="d-flex gap-2">
-                            <a href="{{ route('receivings.index') }}" class="btn btn-outline-secondary">
+                            <a href="<?php echo e(route('receivings.index')); ?>" class="btn btn-outline-secondary">
                                 Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">
@@ -256,7 +311,7 @@
                     const selectedIds = getSelectedProductIds()
                         .filter(id => id !== row.querySelector('.product-id').value);
 
-                    fetch(`{{ route('receivings.search-products') }}?search=${encodeURIComponent(keyword)}&exclude_ids=${encodeURIComponent(selectedIds.join(','))}`, {
+                    fetch(`<?php echo e(route('receivings.search-products')); ?>?search=${encodeURIComponent(keyword)}&exclude_ids=${encodeURIComponent(selectedIds.join(','))}`, {
                             headers: {
                                 'X-Requested-With': 'XMLHttpRequest'
                             }
@@ -365,4 +420,6 @@
             previewWrapper.style.display = 'none';
         }
     </script>
-@endsection
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\esgroup.version.2\resources\views/maintenance/receive/create.blade.php ENDPATH**/ ?>
