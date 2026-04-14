@@ -64,7 +64,7 @@
                             </li>
                         <?php endif; ?>
 
-                        <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head', 'Operation Manager', 'Maintenance Head', 'Maintenance Engineer')): ?>
+                        <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head', 'Operation Manager', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')): ?>
                             <li class="nav-item">
                                 <a class="nav-link <?php echo e(request()->is('maintenance/items/dashboard') ? 'active' : ''); ?>"
                                     href="<?php echo e(route('items.dashboard')); ?>">
@@ -362,7 +362,7 @@
                     </a>
                 </li>
                 <?php endif; ?>
-                
+
                 <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head')): ?>
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
@@ -416,7 +416,7 @@
             
             
             
-            <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer')): ?>
+            <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')): ?>
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">
@@ -498,7 +498,7 @@
             
             
 
-            <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer')): ?>
+            <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')): ?>
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">

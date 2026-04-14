@@ -27,15 +27,17 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        @if ($partsOut->status === 'posted')
-                            <form action="{{ route('parts-out.rollback', $partsOut->id) }}" method="POST"
-                                onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock.');">
-                                @csrf
-                                <button type="submit" class="btn btn-falcon-warning btn-sm">
-                                    <span class="fas fa-undo me-1"></span> Rollback
-                                </button>
-                            </form>
-                        @endif
+                        @role('Developer', 'Maintenace Engineer')
+                            @if ($partsOut->status === 'posted')
+                                <form action="{{ route('parts-out.rollback', $partsOut->id) }}" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock.');">
+                                    @csrf
+                                    <button type="submit" class="btn btn-falcon-warning btn-sm">
+                                        <span class="fas fa-undo me-1"></span> Rollback
+                                    </button>
+                                </form>
+                            @endif
+                        @endrole
 
                         <a href="{{ route('parts-out.index') }}" class="btn btn-falcon-default btn-sm">
                             <span class="fas fa-arrow-left me-1"></span> Back

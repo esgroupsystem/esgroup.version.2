@@ -64,7 +64,7 @@
                             </li>
                         @endrole
 
-                        @role('Developer', 'IT Head', 'Operation Manager', 'Maintenance Head', 'Maintenance Engineer')
+                        @role('Developer', 'IT Head', 'Operation Manager', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->is('maintenance/items/dashboard') ? 'active' : '' }}"
                                     href="{{ route('items.dashboard') }}">
@@ -362,7 +362,7 @@
                     </a>
                 </li>
                 @endrole
-                
+
                 @role('Developer', 'IT Head')
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
@@ -416,7 +416,7 @@
             {{-- ======================================================= --}}
             {{-- ================= LABEL Maintenance ================= --}}
             {{-- ======================================================= --}}
-            @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer')
+            @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">
@@ -498,7 +498,7 @@
             {{-- ================= LABEL Inventory ================= --}}
             {{-- ===================================================== --}}
 
-            @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer')
+            @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
                 <li class="nav-item">
                     <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                         <div class="col-auto navbar-vertical-label">

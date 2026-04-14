@@ -426,7 +426,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Maintenance (Request, Category, Items)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Head,Operation Manager,Maintenance Engineer'])->group(function () {
+    Route::middleware(['role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder'])->group(function () {
 
         Route::prefix('request')->name('request.')->controller(RequestController::class)->group(function () {
             Route::get('/index', 'index')->name('index');
@@ -489,7 +489,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         });
     });
 
-    Route::middleware(['auth', 'role:Developer,IT Head,Maintenance Head,Maintenance Engineer'])->group(function () {
+    Route::middleware(['auth', 'role:Developer,IT Head,Maintenance Head,Maintenance Engineer,Maintenance Encoder'])->group(function () {
         Route::get('stock-transfers/search-products', [StockTransferController::class, 'searchProducts'])
             ->name('stock-transfers.search-products');
 
@@ -504,7 +504,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     */
     Route::model('order', App\Models\PurchaseOrder::class);
 
-    Route::middleware(['role:Developer,IT Head,Operation Manager,Maintenance Engineer'])
+    Route::middleware(['role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder'])
         ->prefix('purchase')->name('purchase.')
         ->controller(AccountingController::class)->group(function () {
             Route::get('/index', 'index')->name('index');

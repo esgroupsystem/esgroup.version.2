@@ -65,16 +65,18 @@
                                 <span class="fas fa-eye"></span>
                             </a>
 
-                            <?php if($row->status === 'posted'): ?>
-                                <form action="<?php echo e(route('parts-out.rollback', $row->id)); ?>" method="POST"
-                                    onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock.');"
-                                    class="d-inline">
-                                    <?php echo csrf_field(); ?>
-                                    <button type="submit" class="btn btn-falcon-warning btn-sm"
-                                        data-bs-toggle="tooltip" title="Rollback">
-                                        <span class="fas fa-undo"></span>
-                                    </button>
-                                </form>
+                            <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'Maintenance Engineer')): ?>
+                                <?php if($row->status === 'posted'): ?>
+                                    <form action="<?php echo e(route('parts-out.rollback', $row->id)); ?>" method="POST"
+                                        onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock.');"
+                                        class="d-inline">
+                                        <?php echo csrf_field(); ?>
+                                        <button type="submit" class="btn btn-falcon-warning btn-sm"
+                                            data-bs-toggle="tooltip" title="Rollback">
+                                            <span class="fas fa-undo"></span>
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </div>
                     </td>

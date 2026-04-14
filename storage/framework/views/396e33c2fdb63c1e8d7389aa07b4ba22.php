@@ -1,4 +1,3 @@
-
 <?php $__env->startSection('title', 'Parts Out Details'); ?>
 
 <?php $__env->startSection('content'); ?>
@@ -27,14 +26,16 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        <?php if($partsOut->status === 'posted'): ?>
-                            <form action="<?php echo e(route('parts-out.rollback', $partsOut->id)); ?>" method="POST"
-                                onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock.');">
-                                <?php echo csrf_field(); ?>
-                                <button type="submit" class="btn btn-falcon-warning btn-sm">
-                                    <span class="fas fa-undo me-1"></span> Rollback
-                                </button>
-                            </form>
+                        <?php if (\Illuminate\Support\Facades\Blade::check('role', 'Developer', 'Maintenace Engineer')): ?>
+                            <?php if($partsOut->status === 'posted'): ?>
+                                <form action="<?php echo e(route('parts-out.rollback', $partsOut->id)); ?>" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock.');">
+                                    <?php echo csrf_field(); ?>
+                                    <button type="submit" class="btn btn-falcon-warning btn-sm">
+                                        <span class="fas fa-undo me-1"></span> Rollback
+                                    </button>
+                                </form>
+                            <?php endif; ?>
                         <?php endif; ?>
 
                         <a href="<?php echo e(route('parts-out.index')); ?>" class="btn btn-falcon-default btn-sm">
