@@ -46,19 +46,37 @@
                             <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
                                 Cancelled
                             </span>
+                        <?php elseif($row->status === 'rolled_back'): ?>
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                                Rolled Back
+                            </span>
                         <?php else: ?>
                             <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
-                                <?php echo e(ucfirst($row->status)); ?>
+                                <?php echo e(ucfirst(str_replace('_', ' ', $row->status))); ?>
 
                             </span>
                         <?php endif; ?>
                     </td>
                     <td><?php echo e($row->creator->full_name ?? '—'); ?></td>
                     <td class="text-center">
-                        <a href="<?php echo e(route('parts-out.show', $row->id)); ?>" class="btn btn-falcon-info btn-sm"
-                            data-bs-toggle="tooltip" title="View Details">
-                            <span class="fas fa-eye"></span>
-                        </a>
+                        <div class="d-flex justify-content-center gap-1">
+                            <a href="<?php echo e(route('parts-out.show', $row->id)); ?>" class="btn btn-falcon-info btn-sm"
+                                data-bs-toggle="tooltip" title="View Details">
+                                <span class="fas fa-eye"></span>
+                            </a>
+
+                            <?php if($row->status === 'posted'): ?>
+                                <form action="<?php echo e(route('parts-out.rollback', $row->id)); ?>" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock.');"
+                                    class="d-inline">
+                                    <?php echo csrf_field(); ?>
+                                    <button type="submit" class="btn btn-falcon-warning btn-sm"
+                                        data-bs-toggle="tooltip" title="Rollback">
+                                        <span class="fas fa-undo"></span>
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
                     </td>
                 </tr>
             <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>

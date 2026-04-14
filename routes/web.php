@@ -479,6 +479,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::put('/{partsOut}', 'update')->name('update');
             Route::patch('/{partsOut}/cancel', 'cancel')->name('cancel');
             Route::get('/{partsOut}/print', 'print')->name('print');
+            Route::post('/parts-out/{partsOut}/rollback', 'rollback')->name('rollback');
         });
 
         Route::prefix('buses')->name('buses.')->controller(BusDetailController::class)->group(function () {

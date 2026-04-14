@@ -389,4 +389,109 @@ class PartsOutController extends Controller
             ], 500);
         }
     }
+
+    public function rollback(PartsOut $partsOut)
+    {
+        DB::beginTransaction();
+
+        try {
+            $partsOut->load(['items.product', 'location']);
+
+            if ($partsOut->status !== 'posted') {
+                return back()->with('error', 'Only posted Parts Out transactions can be rolled back.');
+            }
+
+            if (! $partsOut->location_id) {
+                throw new \Exception('Cannot rollback because source location is missing.');
+            }
+
+            foreach ($partsOut->items as $item) {
+                $product = Product::lockForUpdate()->find($item->product_id);
+
+                if (! $product) {
+                    throw new ModelNotFoundException("Product not found for item ID {$item->id}.");
+                }
+
+                $productStock = ProductStock::lockForUpdate()->firstOrCreate(
+                    [
+                        'product_id' => $item->product_id,
+                        'location_id' => $partsOut->location_id,
+                    ],
+                    [
+                        'qty' => 0,
+                    ]
+                );
+
+                $stockBefore = (int) $productStock->qty;
+                $qtyToReturn = (int) $item->qty_used;
+                $stockAfter = $stockBefore + $qtyToReturn;
+
+                $productStock->update([
+                    'qty' => $stockAfter,
+                ]);
+
+                $product->update([
+                    'stock_qty' => ProductStock::where('product_id', $item->product_id)->sum('qty'),
+                ]);
+
+                StockMovement::create([
+                    'product_id' => $item->product_id,
+                    'location_id' => $partsOut->location_id,
+                    'reference_type' => 'parts_out_rollback',
+                    'reference_id' => $partsOut->id,
+                    'movement_type' => 'in',
+                    'qty' => $qtyToReturn,
+                    'stock_before' => $stockBefore,
+                    'stock_after' => $stockAfter,
+                    'transaction_date' => now()->toDateString(),
+                    'remarks' => 'Rollback of Parts Out #'.$partsOut->parts_out_number,
+                    'created_by' => Auth::id(),
+                ]);
+            }
+
+            $partsOut->update([
+                'status' => 'rolled_back',
+            ]);
+
+            DB::commit();
+
+            return redirect()
+                ->route('parts-out.show', $partsOut->id)
+                ->with('success', 'Parts Out transaction rolled back successfully. Stock has been returned.');
+        } catch (ModelNotFoundException $e) {
+            DB::rollBack();
+
+            Log::warning('PartsOutController@rollback model not found', [
+                'parts_out_id' => $partsOut->id ?? null,
+                'message' => $e->getMessage(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return back()->with('error', 'One of the products could not be found during rollback.');
+        } catch (QueryException $e) {
+            DB::rollBack();
+
+            Log::error('PartsOutController@rollback database error', [
+                'parts_out_id' => $partsOut->id ?? null,
+                'message' => $e->getMessage(),
+                'sql' => $e->getSql(),
+                'bindings' => $e->getBindings(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return back()->with('error', 'Database error while rolling back Parts Out.');
+        } catch (Throwable $e) {
+            DB::rollBack();
+
+            Log::error('PartsOutController@rollback failed', [
+                'parts_out_id' => $partsOut->id ?? null,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return back()->with('error', $e->getMessage());
+        }
+    }
 }

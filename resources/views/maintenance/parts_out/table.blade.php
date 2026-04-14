@@ -43,18 +43,36 @@
                             <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
                                 Cancelled
                             </span>
+                        @elseif($row->status === 'rolled_back')
+                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle">
+                                Rolled Back
+                            </span>
                         @else
                             <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
-                                {{ ucfirst($row->status) }}
+                                {{ ucfirst(str_replace('_', ' ', $row->status)) }}
                             </span>
                         @endif
                     </td>
                     <td>{{ $row->creator->full_name ?? '—' }}</td>
                     <td class="text-center">
-                        <a href="{{ route('parts-out.show', $row->id) }}" class="btn btn-falcon-info btn-sm"
-                            data-bs-toggle="tooltip" title="View Details">
-                            <span class="fas fa-eye"></span>
-                        </a>
+                        <div class="d-flex justify-content-center gap-1">
+                            <a href="{{ route('parts-out.show', $row->id) }}" class="btn btn-falcon-info btn-sm"
+                                data-bs-toggle="tooltip" title="View Details">
+                                <span class="fas fa-eye"></span>
+                            </a>
+
+                            @if ($row->status === 'posted')
+                                <form action="{{ route('parts-out.rollback', $row->id) }}" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock.');"
+                                    class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-falcon-warning btn-sm"
+                                        data-bs-toggle="tooltip" title="Rollback">
+                                        <span class="fas fa-undo"></span>
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
                     </td>
                 </tr>
             @empty
