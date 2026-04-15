@@ -467,6 +467,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/search-products', 'searchProducts')->name('search-products');
             Route::post('/store', 'store')->name('store');
             Route::get('/{id}', 'show')->name('show');
+            Route::post('/{receiving}/items/{item}/rollback', 'rollbackItem')->name('rollback');
         });
 
         Route::prefix('parts-out')->name('parts-out.')->controller(PartsOutController::class)->group(function () {

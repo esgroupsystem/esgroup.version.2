@@ -145,7 +145,6 @@ class ReceivingController extends Controller
                 }
             }
 
-
             $receiving = Receiving::create([
                 'receiving_number' => 'TEMP',
                 'location_id' => $validated['location_id'],
@@ -261,7 +260,7 @@ class ReceivingController extends Controller
     public function show($id)
     {
         try {
-            $receiving = Receiving::with(['receiver', 'items.product'])->findOrFail($id);
+            $receiving = Receiving::with(['receiver', 'items.product', 'location'])->findOrFail($id);
 
             return view('maintenance.receive.show', compact('receiving'));
         } catch (ModelNotFoundException $e) {
@@ -363,6 +362,88 @@ class ReceivingController extends Controller
                 'message' => 'Failed to search products.',
                 'error' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function rollbackItem(Request $request, $receivingId, $itemId)
+    {
+        $userRole = Auth::user()->role ?? Auth::user()->user_role ?? null;
+
+        if (! in_array($userRole, ['Developer', 'Maintenance Engineer'])) {
+            return back()->with('error', 'You are not authorized to rollback receiving items.');
+        }
+
+        $validated = $request->validate([
+            'rollback_qty' => 'required|integer|min:1',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $receiving = Receiving::lockForUpdate()
+                ->with(['location'])
+                ->findOrFail($receivingId);
+
+            $item = ReceivingItem::lockForUpdate()
+                ->with(['product'])
+                ->where('receiving_id', $receiving->id)
+                ->findOrFail($itemId);
+
+            $rollbackQty = (int) $validated['rollback_qty'];
+            $alreadyRolledBack = (int) ($item->qty_rolled_back ?? 0);
+            $remainingQty = (int) $item->qty_delivered - $alreadyRolledBack;
+
+            if ($rollbackQty > $remainingQty) {
+                throw new \Exception('Rollback quantity exceeds remaining received quantity.');
+            }
+
+            if (! $item->product) {
+                throw new \Exception('Product not found for this receiving item.');
+            }
+
+            $productStock = ProductStock::lockForUpdate()
+                ->where('product_id', $item->product_id)
+                ->where('location_id', $receiving->location_id)
+                ->first();
+
+            if (! $productStock) {
+                throw new \Exception('Product stock record not found for this location.');
+            }
+
+            if ((int) $productStock->qty < $rollbackQty) {
+                throw new \Exception('Cannot rollback because current stock is lower than rollback quantity.');
+            }
+
+            $productStock->decrement('qty', $rollbackQty);
+
+            $item->update([
+                'qty_rolled_back' => $alreadyRolledBack + $rollbackQty,
+                'last_rolled_back_at' => now(),
+            ]);
+
+            $item->product->update([
+                'stock_qty' => ProductStock::where('product_id', $item->product_id)->sum('qty'),
+            ]);
+
+            DB::commit();
+
+            return redirect()
+                ->route('receivings.show', $receiving->id)
+                ->with('success', 'Receiving item rolled back successfully.');
+        } catch (Throwable $e) {
+            DB::rollBack();
+
+            Log::error('ReceivingController@rollbackItem failed', [
+                'receiving_id' => $receivingId,
+                'item_id' => $itemId,
+                'rollback_qty' => $request->rollback_qty,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return back()->with('error', $e->getMessage());
         }
     }
 }

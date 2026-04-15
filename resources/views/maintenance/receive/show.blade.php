@@ -141,51 +141,165 @@
                 </div>
 
                 <div class="table-responsive">
-                    <table class="table table-sm table-hover align-middle mb-0">
-                        <thead class="bg-200 text-900">
-                            <tr>
-                                <th style="width: 5%;">#</th>
-                                <th style="width: 30%;">Product</th>
-                                <th>Details</th>
-                                <th class="text-center" style="width: 15%;">Qty Delivered</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse ($receiving->items as $index => $item)
+                    @php
+                        $userRole = auth()->user()->role ?? (auth()->user()->user_role ?? null);
+                        $canRollback = in_array($userRole, ['Developer', 'Maintenance Engineer']);
+                    @endphp
+
+                    @if ($canRollback)
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="bg-200 text-900">
                                 <tr>
-                                    <td class="text-center text-muted">{{ $index + 1 }}</td>
-
-                                    <td>
-                                        <div class="fw-semi-bold text-900">
-                                            {{ optional($item->product)->product_name ?? 'N/A' }}
-                                        </div>
-                                    </td>
-
-                                    <td>
-                                        <span class="text-muted">
-                                            {{ optional($item->product)->details ?? 'No details available.' }}
-                                        </span>
-                                    </td>
-
-                                    <td class="text-center">
-                                        <span
-                                            class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
-                                            {{ $item->qty_delivered }}
-                                        </span>
-                                    </td>
+                                    <th style="width: 5%;">#</th>
+                                    <th style="width: 25%;">Product</th>
+                                    <th>Details</th>
+                                    <th class="text-center" style="width: 12%;">Qty Delivered</th>
+                                    <th class="text-center" style="width: 12%;">Rolled Back</th>
+                                    <th class="text-center" style="width: 12%;">Balance</th>
+                                    <th class="text-center" style="width: 18%;">Action</th>
                                 </tr>
-                            @empty
+                            </thead>
+                            <tbody>
+                                @forelse ($receiving->items as $index => $item)
+                                    @php
+                                        $rolledBack = (int) ($item->qty_rolled_back ?? 0);
+                                        $remaining = (int) $item->qty_delivered - $rolledBack;
+                                        $locationStock =
+                                            \App\Models\ProductStock::where('product_id', $item->product_id)
+                                                ->where('location_id', $receiving->location_id)
+                                                ->value('qty') ?? 0;
+                                    @endphp
+
+                                    <tr>
+                                        <td class="text-center text-muted">{{ $index + 1 }}</td>
+
+                                        <td>
+                                            <div class="fw-semi-bold text-900">
+                                                {{ optional($item->product)->product_name ?? 'N/A' }}
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <span class="text-muted">
+                                                {{ optional($item->product)->details ?? 'No details available.' }}
+                                            </span>
+                                        </td>
+
+                                        <td class="text-center">
+                                            <span
+                                                class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+                                                {{ $item->qty_delivered }}
+                                            </span>
+                                        </td>
+
+                                        <td class="text-center">
+                                            <span
+                                                class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2">
+                                                {{ $rolledBack }}
+                                            </span>
+                                        </td>
+
+                                        <td class="text-center">
+                                            <span
+                                                class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2">
+                                                {{ $remaining }}
+                                            </span>
+                                        </td>
+
+                                        <td class="text-center">
+                                            @if ($remaining > 0)
+                                                @if ($locationStock > 0)
+                                                    <form
+                                                        action="{{ route('receivings.rollback', [$receiving->id, $item->id]) }}"
+                                                        method="POST" class="d-inline-flex align-items-center gap-2"
+                                                        onsubmit="return confirm('Are you sure you want to rollback this item quantity?');">
+                                                        @csrf
+
+                                                        <input type="number" name="rollback_qty"
+                                                            class="form-control form-control-sm" min="1"
+                                                            max="{{ min($remaining, $locationStock) }}" value="1"
+                                                            style="width: 80px;">
+
+                                                        <button type="submit" class="btn btn-falcon-warning btn-sm">
+                                                            <span class="fas fa-undo me-1"></span> Rollback
+                                                        </button>
+                                                    </form>
+
+                                                    @if ($locationStock < $remaining)
+                                                        <div class="fs-10 text-warning mt-1">
+                                                            Only {{ $locationStock }} stock available in this location.
+                                                        </div>
+                                                    @endif
+                                                @else
+                                                    <span
+                                                        class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2">
+                                                        No stock to rollback
+                                                    </span>
+                                                @endif
+                                            @else
+                                                <span class="badge bg-secondary">Fully Rolled Back</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5">
+                                            <div class="text-muted">
+                                                <span class="fas fa-inbox fa-2x mb-3 d-block"></span>
+                                                No delivered products found.
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    @else
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead class="bg-200 text-900">
                                 <tr>
-                                    <td colspan="4" class="text-center py-5">
-                                        <div class="text-muted">
-                                            <span class="fas fa-inbox fa-2x mb-3 d-block"></span>
-                                            No delivered products found.
-                                        </div>
-                                    </td>
+                                    <th style="width: 5%;">#</th>
+                                    <th style="width: 30%;">Product</th>
+                                    <th>Details</th>
+                                    <th class="text-center" style="width: 15%;">Qty Delivered</th>
                                 </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @forelse ($receiving->items as $index => $item)
+                                    <tr>
+                                        <td class="text-center text-muted">{{ $index + 1 }}</td>
+
+                                        <td>
+                                            <div class="fw-semi-bold text-900">
+                                                {{ optional($item->product)->product_name ?? 'N/A' }}
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <span class="text-muted">
+                                                {{ optional($item->product)->details ?? 'No details available.' }}
+                                            </span>
+                                        </td>
+
+                                        <td class="text-center">
+                                            <span
+                                                class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2">
+                                                {{ $item->qty_delivered }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center py-5">
+                                            <div class="text-muted">
+                                                <span class="fas fa-inbox fa-2x mb-3 d-block"></span>
+                                                No delivered products found.
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    @endif
                 </div>
 
                 <div class="card-footer bg-light d-flex justify-content-between align-items-center">

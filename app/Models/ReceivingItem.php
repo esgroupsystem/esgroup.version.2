@@ -10,6 +10,12 @@ class ReceivingItem extends Model
         'receiving_id',
         'product_id',
         'qty_delivered',
+        'qty_rolled_back',
+        'last_rolled_back_at',
+    ];
+
+    protected $casts = [
+        'last_rolled_back_at' => 'datetime',
     ];
 
     public function receiving()
