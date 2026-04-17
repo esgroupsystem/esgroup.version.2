@@ -212,30 +212,61 @@ class MirasolBiometricsLogController extends Controller
             $from = Carbon::parse($v['from'])->startOfDay();
             $to = Carbon::parse($v['to'])->endOfDay();
 
-            $jobId = (string) Str::uuid();
-            $key = "crosschex_sync_status:{$jobId}";
+            $lock = Cache::lock('crosschex-sync-start-lock', 10);
 
-            Cache::put($key, [
-                'state' => 'queued',
-                'message' => 'Queued...',
-                'from' => $from->toDateTimeString(),
-                'to' => $to->toDateTimeString(),
-                'page' => 0,
-                'pageCount' => null,
-                'saved' => 0,
-                'percent' => 0,
-                'done' => false,
-                'error' => null,
-            ], now()->addMinutes(60));
+            if (! $lock->get()) {
+                return response()->json([
+                    'ok' => false,
+                    'message' => 'Another sync request is already being started. Please wait.',
+                ], 429);
+            }
 
-            CrossChexSyncLogsJob::dispatch($jobId, $from->toDateTimeString(), $to->toDateTimeString());
+            try {
+                // block if there is already an active running/queued sync
+                $activeJobId = Cache::get('crosschex_active_job_id');
+                if ($activeJobId) {
+                    $activeStatus = Cache::get("crosschex_sync_status:{$activeJobId}");
 
-            return response()->json([
-                'ok' => true,
-                'jobId' => $jobId,
-                'date_from' => $from->toDateString(),
-                'date_to' => $to->toDateString(),
-            ]);
+                    if ($activeStatus && in_array($activeStatus['state'] ?? null, ['queued', 'running'])) {
+                        return response()->json([
+                            'ok' => false,
+                            'message' => 'A CrossChex sync is already running.',
+                            'jobId' => $activeJobId,
+                            'status' => $activeStatus,
+                        ], 409);
+                    }
+                }
+
+                $jobId = (string) Str::uuid();
+                $key = "crosschex_sync_status:{$jobId}";
+
+                Cache::put($key, [
+                    'state' => 'queued',
+                    'message' => 'Queued...',
+                    'from' => $from->toDateTimeString(),
+                    'to' => $to->toDateTimeString(),
+                    'page' => 0,
+                    'pageCount' => null,
+                    'saved' => 0,
+                    'updated' => 0,
+                    'percent' => 0,
+                    'done' => false,
+                    'error' => null,
+                ], now()->addMinutes(60));
+
+                Cache::put('crosschex_active_job_id', $jobId, now()->addMinutes(60));
+
+                CrossChexSyncLogsJob::dispatch($jobId, $from->toDateTimeString(), $to->toDateTimeString());
+
+                return response()->json([
+                    'ok' => true,
+                    'jobId' => $jobId,
+                    'date_from' => $from->toDateString(),
+                    'date_to' => $to->toDateString(),
+                ]);
+            } finally {
+                optional($lock)->release();
+            }
         } catch (ValidationException $e) {
             return response()->json([
                 'ok' => false,

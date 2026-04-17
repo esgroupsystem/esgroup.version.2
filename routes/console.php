@@ -61,13 +61,13 @@ $crosschexLogger = $logScheduledCommand(
     'crosschex:sync failed'
 );
 
-Schedule::command('crosschex:sync')
-    ->everyFiveMinutes()
-    ->withoutOverlapping(10)
-    ->runInBackground()
-    ->sendOutputTo(storage_path('logs/crosschex-sync.log'))
-    ->onSuccess($crosschexLogger['success'])
-    ->onFailure($crosschexLogger['failure']);
+// Schedule::command('crosschex:sync')
+//     ->everyFiveMinutes()
+//     ->withoutOverlapping(10)
+//     ->runInBackground()
+//     ->sendOutputTo(storage_path('logs/crosschex-sync.log'))
+//     ->onSuccess($crosschexLogger['success'])
+//     ->onFailure($crosschexLogger['failure']);
 
 /*
 |--------------------------------------------------------------------------

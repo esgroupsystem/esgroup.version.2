@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -25,15 +26,25 @@ class CrossChexSyncLogsJob implements ShouldQueue
 
     public int $timeout = 1200;
 
-    public int $tries = 3;
+    public int $tries = 10;
 
-    public int $backoff = 60;
+    public int $maxExceptions = 3;
 
     public function __construct(string $jobId, string $from, string $to)
     {
         $this->jobId = $jobId;
         $this->from = $from;
         $this->to = $to;
+    }
+
+    public function middleware(): array
+    {
+        return [];
+    }
+
+    public function backoff(): array
+    {
+        return [60, 120, 300, 600];
     }
 
     private function statusKey(): string
@@ -44,6 +55,15 @@ class CrossChexSyncLogsJob implements ShouldQueue
     private function setStatus(array $data): void
     {
         Cache::put($this->statusKey(), $data, now()->addMinutes(60));
+    }
+
+    private function clearActiveJob(): void
+    {
+        $activeJobId = Cache::get('crosschex_active_job_id');
+
+        if ($activeJobId === $this->jobId) {
+            Cache::forget('crosschex_active_job_id');
+        }
     }
 
     private function normalizeCheckTime(mixed $raw): ?string
@@ -94,7 +114,7 @@ class CrossChexSyncLogsJob implements ShouldQueue
     public function handle(CrossChexService $api): void
     {
         $page = 1;
-        $perPage = 500; // safer than 1000 if server is small
+        $perPage = 200;
         $saved = 0;
         $updated = 0;
         $startedAt = microtime(true);
@@ -115,6 +135,7 @@ class CrossChexSyncLogsJob implements ShouldQueue
 
         try {
             $pageCount = 1;
+            $rateLimitHits = 0;
 
             while (true) {
                 $json = $api->getAttendanceRecords($this->from, $this->to, $page, $perPage);
@@ -123,17 +144,51 @@ class CrossChexSyncLogsJob implements ShouldQueue
                     $type = (string) data_get($json, 'payload.type');
                     $msg = (string) data_get($json, 'payload.message');
 
-                    if ($type === 'FREQUENT_REQUEST') {
+                    if (in_array($type, ['FREQUENT_REQUEST', 'TOO_MANY_REQUESTS'])) {
+                        $rateLimitHits++;
+                        $waitSeconds = min(30 * $rateLimitHits, 120);
+
                         Log::warning('CrossChex rate limit hit', [
                             'jobId' => $this->jobId,
                             'page' => $page,
                             'from' => $this->from,
                             'to' => $this->to,
+                            'wait_seconds' => $waitSeconds,
+                            'message' => $msg,
                         ]);
 
-                        $this->release($this->backoff);
+                        $this->setStatus([
+                            'state' => 'running',
+                            'message' => "Rate limited. Waiting {$waitSeconds}s before retrying page {$page}...",
+                            'from' => $this->from,
+                            'to' => $this->to,
+                            'page' => $page,
+                            'pageCount' => $pageCount,
+                            'saved' => $saved,
+                            'updated' => $updated,
+                            'percent' => $pageCount > 0 ? (int) round(($page / $pageCount) * 100) : 0,
+                            'done' => false,
+                            'error' => null,
+                        ]);
 
-                        return;
+                        sleep($waitSeconds);
+
+                        continue;
+                    }
+
+                    if (in_array($type, ['TOKEN_EXPIRED', 'INVALID_TOKEN', 'UNAUTHORIZED'])) {
+                        $api->clearToken();
+
+                        Log::warning('CrossChex token issue, refreshing token', [
+                            'jobId' => $this->jobId,
+                            'page' => $page,
+                            'type' => $type,
+                            'message' => $msg,
+                        ]);
+
+                        sleep(2);
+
+                        continue;
                     }
 
                     $this->setStatus([
@@ -150,6 +205,8 @@ class CrossChexSyncLogsJob implements ShouldQueue
                         'error' => "{$type} - {$msg}",
                     ]);
 
+                    $this->clearActiveJob();
+
                     Log::error('CrossChex API error', [
                         'jobId' => $this->jobId,
                         'type' => $type,
@@ -159,6 +216,8 @@ class CrossChexSyncLogsJob implements ShouldQueue
 
                     return;
                 }
+
+                $rateLimitHits = 0;
 
                 $list = data_get($json, 'payload.list', []);
                 $pageCount = (int) data_get($json, 'payload.pageCount', 1);
@@ -276,6 +335,7 @@ class CrossChexSyncLogsJob implements ShouldQueue
                 }
 
                 $page++;
+                sleep(2);
             }
 
             $duration = round(microtime(true) - $startedAt, 2);
@@ -293,6 +353,8 @@ class CrossChexSyncLogsJob implements ShouldQueue
                 'done' => true,
                 'error' => null,
             ]);
+
+            $this->clearActiveJob();
 
             Log::info('CrossChexSyncLogsJob finished', [
                 'jobId' => $this->jobId,
@@ -315,7 +377,7 @@ class CrossChexSyncLogsJob implements ShouldQueue
 
             $this->setStatus([
                 'state' => 'failed',
-                'message' => 'Sync failed. Check logs.',
+                'message' => $e->getMessage(),
                 'from' => $this->from,
                 'to' => $this->to,
                 'page' => $page,
@@ -327,7 +389,35 @@ class CrossChexSyncLogsJob implements ShouldQueue
                 'error' => $e->getMessage(),
             ]);
 
-            throw $e;
+            $this->clearActiveJob();
+
+            return;
         }
+    }
+
+    public function failed(\Throwable $e): void
+    {
+        Log::error('CrossChexSyncLogsJob permanently failed', [
+            'jobId' => $this->jobId,
+            'from' => $this->from,
+            'to' => $this->to,
+            'error' => $e->getMessage(),
+        ]);
+
+        $this->setStatus([
+            'state' => 'failed',
+            'message' => 'Job permanently failed: '.$e->getMessage(),
+            'from' => $this->from,
+            'to' => $this->to,
+            'page' => 0,
+            'pageCount' => null,
+            'saved' => 0,
+            'updated' => 0,
+            'percent' => 0,
+            'done' => true,
+            'error' => $e->getMessage(),
+        ]);
+
+        $this->clearActiveJob();
     }
 }
