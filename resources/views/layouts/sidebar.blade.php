@@ -272,7 +272,7 @@
                     </li>
                 @endrole
 
-                @role('Developer', 'IT Head', 'HR Head', 'HR Officer')
+                @role('Developer', 'IT Head', 'IT Officer', 'HR Head', 'HR Officer')
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
