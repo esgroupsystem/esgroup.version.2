@@ -49,12 +49,11 @@
                                         onclick="openEditItem(JSON.parse(this.dataset.item))">
                                         <i class="fas fa-edit me-2"></i> Edit
                                     </button>
-
                                     <form action="{{ route('items.destroy', $item->id) }}" method="POST"
-                                        class="confirm-delete m-0"
-                                        onsubmit="return confirm('Are you sure you want to delete this item?')">
+                                        class="confirm-delete m-0">
                                         @csrf
                                         @method('DELETE')
+
                                         <button type="submit" class="dropdown-item text-danger">
                                             <i class="fas fa-trash me-2"></i> Delete
                                         </button>

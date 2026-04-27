@@ -450,7 +450,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/store', 'store')->name('store');
             Route::get('/edit/{id}', 'edit')->name('edit');
             Route::post('/update/{id}', 'update')->name('update');
-            Route::get('/status/{id}', 'destroy')->name('destroy');
+            Route::delete('/destroy/{id}', 'destroy')->name('destroy');
             Route::get('/dashboard', 'dashboard')->name('dashboard');
 
         });

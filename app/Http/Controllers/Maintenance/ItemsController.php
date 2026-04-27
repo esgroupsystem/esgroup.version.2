@@ -389,43 +389,19 @@ class ItemsController extends Controller
 
     public function destroy($id)
     {
-        try {
-            $product = Product::findOrFail($id);
-            $product->delete();
+        $product = Product::findOrFail($id);
 
-            flash('Item deleted successfully!')->success();
+        $product->stocks()->delete();
 
-            return back();
-        } catch (ModelNotFoundException $e) {
-            Log::warning('ItemsController@destroy item not found', [
-                'product_id' => $id,
+        $product->delete();
+
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Item deleted successfully',
             ]);
-
-            flash('Item not found. It may have already been deleted.')->error();
-
-            return back();
-        } catch (QueryException $e) {
-            Log::error('ItemsController@destroy database error', [
-                'product_id' => $id,
-                'message' => $e->getMessage(),
-                'sql' => $e->getSql(),
-                'bindings' => $e->getBindings(),
-            ]);
-
-            flash('Cannot delete this item because it is already used in other records.')->error();
-
-            return back();
-        } catch (Throwable $e) {
-            Log::error('ItemsController@destroy failed', [
-                'product_id' => $id,
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-
-            flash('Unexpected error while deleting item: '.$e->getMessage())->error();
-
-            return back();
         }
+
+        return back()->with('success', 'Item deleted successfully');
     }
 }

@@ -275,6 +275,29 @@
 
             new bootstrap.Modal(document.getElementById('itemModal')).show();
         }
+
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+
+            if (!form.classList.contains('confirm-delete')) return;
+
+            e.preventDefault();
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, delete it!',
+                background: '#fff',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
+        });
     </script>
 @endpush
 

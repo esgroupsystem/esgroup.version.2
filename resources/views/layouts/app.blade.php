@@ -180,13 +180,16 @@
         });
     </script>
 
-    {{-- SweetAlert2 confirmation --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+
             document.querySelectorAll("form.confirm-delete").forEach(form => {
+
                 form.addEventListener("submit", function(e) {
                     e.preventDefault();
+
                     Swal.fire({
                         title: 'Are you sure?',
                         text: 'This action cannot be undone.',
@@ -197,10 +200,54 @@
                         confirmButtonText: 'Yes, delete it!',
                         background: '#fff',
                     }).then((result) => {
-                        if (result.isConfirmed) form.submit();
+
+                        if (result.isConfirmed) {
+
+                            fetch(form.action, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRF-TOKEN': form.querySelector(
+                                            'input[name="_token"]').value,
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'Accept': 'application/json'
+                                    },
+                                    body: new URLSearchParams({
+                                        _method: 'DELETE'
+                                    })
+                                })
+                                .then(async res => {
+                                    if (!res.ok) {
+                                        const text = await res.text();
+                                        console.error(text);
+                                        throw new Error('Delete failed');
+                                    }
+
+                                    // remove row instantly
+                                    form.closest('tr').remove();
+
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Deleted!',
+                                        text: 'Item has been deleted.',
+                                        timer: 1500,
+                                        showConfirmButton: false
+                                    });
+                                })
+                                .catch(err => {
+                                    console.error(err);
+
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: 'Failed to delete item'
+                                    });
+                                });
+                        }
                     });
                 });
+
             });
+
         });
     </script>
 
