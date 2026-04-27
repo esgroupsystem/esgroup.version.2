@@ -134,6 +134,7 @@
                                                                 username: @js($u->username),
                                                                 email: @js($u->email),
                                                                 role: @js($u->role),
+                                                                location_id: @js($u->location_id),
                                                                 status: @js($u->account_status)
                                                             })">
                                                             <i class="fas fa-edit me-2"></i> Edit
@@ -213,6 +214,16 @@
                             </div>
 
                             <div class="col-md-6">
+                                <label class="form-label">Assigned Garage / Location</label>
+                                <select name="location_id" id="location_id" class="form-select">
+                                    <option value="">All Locations / No Restriction</option>
+                                    @foreach ($locations as $loc)
+                                        <option value="{{ $loc->id }}">{{ $loc->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
                                 <label class="form-label">Role</label>
                                 <select name="role" id="role" class="form-select" required>
                                     @foreach ($roles as $r)
@@ -282,6 +293,7 @@
             document.getElementById("username").value = "";
             document.getElementById("email").value = "";
             document.getElementById("role").value = "";
+            document.getElementById("location_id").value = "";
             document.getElementById("account_status").value = "active";
         }
 
@@ -294,6 +306,7 @@
             document.getElementById("username").value = user.username;
             document.getElementById("email").value = user.email;
             document.getElementById("role").value = user.role;
+            document.getElementById("location_id").value = user.location_id ?? "";
             document.getElementById("account_status").value = user.status;
 
             new bootstrap.Modal(document.getElementById("userModal")).show();

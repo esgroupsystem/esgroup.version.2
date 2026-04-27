@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Location;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -28,8 +29,9 @@ class UserManagementController extends Controller
             ->withQueryString();
 
         $roles = Role::orderBy('name')->get();
+        $locations = Location::where('is_active', 1)->orderBy('name')->get();
 
-        return view('users.index', compact('users', 'roles', 'q'));
+        return view('users.index', compact('users', 'roles', 'locations', 'q'));
     }
 
     public function store(Request $request)
@@ -39,6 +41,7 @@ class UserManagementController extends Controller
             'username' => 'required|string|unique:users',
             'email' => 'required|email|unique:users',
             'role' => 'required|string',
+            'location_id' => 'nullable|exists:locations,id',
         ]);
 
         $autoPassword = $this->generatePassword($request->full_name);
@@ -48,6 +51,7 @@ class UserManagementController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'role' => $request->role,
+            'location_id' => $request->location_id,
             'password' => Hash::make($autoPassword),
             'account_status' => 'active',
             'must_change_password' => true,
@@ -67,6 +71,7 @@ class UserManagementController extends Controller
             'username' => 'required|string|unique:users,username,'.$user->id,
             'email' => 'required|email|unique:users,email,'.$user->id,
             'role' => 'required|string',
+            'location_id' => 'nullable|exists:locations,id',
             'account_status' => 'required|in:active,deactivated',
         ]);
 
@@ -75,6 +80,7 @@ class UserManagementController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'role' => $request->role,
+            'location_id' => $request->location_id,
             'account_status' => $request->account_status,
         ]);
 

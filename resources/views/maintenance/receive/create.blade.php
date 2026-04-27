@@ -50,9 +50,14 @@
                         <div class="col-md-4">
                             <label class="form-label">Garage / Location <span class="text-danger">*</span></label>
                             <select name="location_id" class="form-select" required>
-                                <option value="">Select Garage</option>
+                                @if ($locations->count() > 1)
+                                    <option value="">Select Garage</option>
+                                @endif
                                 @foreach ($locations as $loc)
-                                    <option value="{{ $loc->id }}">{{ $loc->name }}</option>
+                                    <option value="{{ $loc->id }}"
+                                        {{ old('location_id') == $loc->id ? 'selected' : '' }}>
+                                        {{ $loc->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>

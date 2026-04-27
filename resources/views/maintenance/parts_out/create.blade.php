@@ -73,15 +73,20 @@
                             <div class="col-md-4">
                                 <label class="form-label">Source Garage / Location <span
                                         class="text-danger">*</span></label>
+
                                 <select name="location_id" id="location_id" class="form-select" required>
-                                    <option value="">Select Location</option>
+                                    @if ($locations->count() > 1)
+                                        <option value="">Select Location</option>
+                                    @endif
+
                                     @foreach ($locations as $location)
                                         <option value="{{ $location->id }}"
-                                            {{ old('location_id') == $location->id ? 'selected' : '' }}>
+                                            {{ old('location_id', $locations->count() === 1 ? $location->id : null) == $location->id ? 'selected' : '' }}>
                                             {{ $location->name }}
                                         </option>
                                     @endforeach
                                 </select>
+
                                 <small class="text-muted">This is the stock source to deduct from.</small>
                             </div>
 

@@ -18,6 +18,7 @@ class User extends Authenticatable
         'full_name',
         'role',
         'status',
+        'location_id',
         'account_status',
         'last_online',
         'last_out',
@@ -43,5 +44,10 @@ class User extends Authenticatable
     public function jobOrdersCreated()
     {
         return $this->hasMany(JobOrder::class, 'created_by');
+    }
+
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
     }
 }
