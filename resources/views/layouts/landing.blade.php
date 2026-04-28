@@ -10,8 +10,10 @@
 
     <!-- Favicons -->
     <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('assets/img/favicons/esgroup-logo180x180.png') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('assets/img/favicons/esgroup-logo32x32.png') }}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('assets/img/favicons/esgroup-logo16x16.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32"
+        href="{{ asset('assets/img/favicons/esgroup-logo32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16"
+        href="{{ asset('assets/img/favicons/esgroup-logo16x16.png') }}">
     <link rel="shortcut icon" type="image/x-icon" href="{{ asset('assets/img/favicons/favicon.ico') }}">
     <link rel="manifest" href="{{ asset('assets/img/favicons/manifest.json') }}">
 
@@ -46,7 +48,7 @@
     <link href="{{ asset('assets/css/user.css') }}" rel="stylesheet" id="user-style-default">
 
     <!-- RTL Handling -->
-    <script>
+    <script nonce="{{ $cspNonce }}">
         const isRTL = JSON.parse(localStorage.getItem('isRTL'));
         if (isRTL) {
             document.getElementById('style-default').disabled = true;
@@ -73,7 +75,7 @@
     @yield('content')
 
     <!-- Vendor JS -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script nonce="{{ $cspNonce }}" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="{{ asset('vendors/popper/popper.min.js') }}"></script>
     <script src="{{ asset('vendors/bootstrap/bootstrap.min.js') }}"></script>
     <script src="{{ asset('vendors/anchorjs/anchor.min.js') }}"></script>
@@ -95,7 +97,7 @@
     <script src="{{ asset('vendors/dropzone/dropzone-min.js') }}"></script>
     <script src="{{ asset('vendors/choices/choices.min.js') }}"></script>
 
-    <script>
+    <script nonce="{{ $cspNonce }}">
         if (window.Dropzone) Dropzone.autoDiscover = false;
         window.__dropzone_initialized = false;
     </script>
@@ -106,14 +108,14 @@
     <script src="{{ asset('assets/js/theme-dashboard-fixed.js') }}"></script>
 
     <!-- SimpleBar Init -->
-    <script>
+    <script nonce="{{ $cspNonce }}">
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.my-scrollbar').forEach(el => new SimpleBar(el));
         });
     </script>
 
     <!-- ✅ Toast Messages -->
-    <script>
+    <script nonce="{{ $cspNonce }}">
         document.addEventListener("DOMContentLoaded", function() {
             const flashMessages = document.querySelectorAll('.alert');
             flashMessages.forEach(msg => {
@@ -139,7 +141,7 @@
     </script>
 
     <!-- ✅ Choices.js Initialization -->
-    <script>
+    <script nonce="{{ $cspNonce }}">
         window.choicesInit = function() {};
         (function() {
             if (!window.Choices) return;

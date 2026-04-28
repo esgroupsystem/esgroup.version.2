@@ -4,11 +4,17 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\View;
 
 class SecurityHeaders
 {
     public function handle(Request $request, Closure $next)
     {
+        $nonce = base64_encode(random_bytes(16));
+
+        app()->instance('csp_nonce', $nonce);
+        View::share('cspNonce', $nonce);
+
         $response = $next($request);
 
         $response->headers->set('X-Frame-Options', 'DENY');
@@ -25,12 +31,13 @@ class SecurityHeaders
             "base-uri 'self';",
             "form-action 'self';",
             "img-src 'self' data: blob: https:;",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://static.cloudflareinsights.com;",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;",
             "font-src 'self' data: https://fonts.gstatic.com;",
+            "script-src 'self' 'nonce-{$nonce}' https://challenges.cloudflare.com https://static.cloudflareinsights.com;",
             'frame-src https://challenges.cloudflare.com;',
             "connect-src 'self' https://challenges.cloudflare.com https://static.cloudflareinsights.com;",
         ]);
+
         $response->headers->remove('Require-Trusted-Types-For');
         $response->headers->remove('Trusted-Types');
         $response->headers->set('Content-Security-Policy', $csp);
