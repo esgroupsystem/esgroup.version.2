@@ -34,7 +34,7 @@ class SecurityHeaders
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;",
             "font-src 'self' data: https://fonts.gstatic.com;",
             "script-src 'self' 'nonce-{$nonce}' https://challenges.cloudflare.com https://static.cloudflareinsights.com;",
-            'frame-src https://challenges.cloudflare.com;',
+            "frame-src https://challenges.cloudflare.com;",
             "connect-src 'self' https://challenges.cloudflare.com https://static.cloudflareinsights.com;",
         ]);
 

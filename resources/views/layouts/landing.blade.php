@@ -1,3 +1,6 @@
+@php
+    $nonce = app()->bound('csp_nonce') ? app('csp_nonce') : '';
+@endphp
 <!DOCTYPE html>
 <html data-bs-theme="light" lang="en-US" dir="ltr">
 
@@ -48,7 +51,7 @@
     <link href="{{ asset('assets/css/user.css') }}" rel="stylesheet" id="user-style-default">
 
     <!-- RTL Handling -->
-    <script nonce="{{ $cspNonce }}">
+    <script nonce="{{ $nonce }}">
         const isRTL = JSON.parse(localStorage.getItem('isRTL'));
         if (isRTL) {
             document.getElementById('style-default').disabled = true;
@@ -75,7 +78,7 @@
     @yield('content')
 
     <!-- Vendor JS -->
-    <script nonce="{{ $cspNonce }}" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script nonce="{{ $nonce }}" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="{{ asset('vendors/popper/popper.min.js') }}"></script>
     <script src="{{ asset('vendors/bootstrap/bootstrap.min.js') }}"></script>
     <script src="{{ asset('vendors/anchorjs/anchor.min.js') }}"></script>
@@ -97,7 +100,7 @@
     <script src="{{ asset('vendors/dropzone/dropzone-min.js') }}"></script>
     <script src="{{ asset('vendors/choices/choices.min.js') }}"></script>
 
-    <script nonce="{{ $cspNonce }}">
+    <script nonce="{{ $nonce }}">
         if (window.Dropzone) Dropzone.autoDiscover = false;
         window.__dropzone_initialized = false;
     </script>
@@ -108,14 +111,14 @@
     <script src="{{ asset('assets/js/theme-dashboard-fixed.js') }}"></script>
 
     <!-- SimpleBar Init -->
-    <script nonce="{{ $cspNonce }}">
+    <script nonce="{{ $nonce }}">
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.my-scrollbar').forEach(el => new SimpleBar(el));
         });
     </script>
 
     <!-- ✅ Toast Messages -->
-    <script nonce="{{ $cspNonce }}">
+    <script nonce="{{ $nonce }}">
         document.addEventListener("DOMContentLoaded", function() {
             const flashMessages = document.querySelectorAll('.alert');
             flashMessages.forEach(msg => {
@@ -141,7 +144,7 @@
     </script>
 
     <!-- ✅ Choices.js Initialization -->
-    <script nonce="{{ $cspNonce }}">
+    <script nonce="{{ $nonce }}">
         window.choicesInit = function() {};
         (function() {
             if (!window.Choices) return;
