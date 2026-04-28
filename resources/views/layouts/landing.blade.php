@@ -29,6 +29,7 @@
         rel="stylesheet">
 
     <!-- Vendor CSS -->
+
     <link href="{{ asset('vendors/simplebar/simplebar.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/swiper/swiper-bundle.min.css') }}" rel="stylesheet">
     <link href="{{ asset('vendors/leaflet/leaflet.css') }}" rel="stylesheet">
@@ -72,6 +73,7 @@
     @yield('content')
 
     <!-- Vendor JS -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="{{ asset('vendors/popper/popper.min.js') }}"></script>
     <script src="{{ asset('vendors/bootstrap/bootstrap.min.js') }}"></script>
     <script src="{{ asset('vendors/anchorjs/anchor.min.js') }}"></script>

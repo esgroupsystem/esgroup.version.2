@@ -7,16 +7,12 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 
 class AuthController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Show Login Page
-    |--------------------------------------------------------------------------
-    */
     public function showLogin()
     {
         return view('landing.login');
@@ -33,18 +29,12 @@ class AuthController extends Controller
         return view('landing.lockscreen');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Unlock Screen
-    |--------------------------------------------------------------------------
-    */
     public function unlock(Request $request)
     {
         $request->validate([
             'password' => 'required',
         ]);
 
-        // Validate unlock password using the current logged user
         if (! Auth::attempt([
             'username' => Auth::user()->username,
             'password' => $request->password,
@@ -52,24 +42,33 @@ class AuthController extends Controller
             return back()->withErrors(['password' => 'Incorrect password']);
         }
 
-        // Unlock success
         Session::put('unlocked', true);
 
         return redirect()->route('dashboard.index');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Login
-    |--------------------------------------------------------------------------
-    */
     public function login(Request $request)
     {
         try {
             $request->validate([
                 'username' => 'required|string',
                 'password' => 'required|min:4',
+                'cf-turnstile-response' => 'required|string',
+            ], [
+                'cf-turnstile-response.required' => 'Please complete the security verification.',
             ]);
+
+            $turnstile = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                'secret' => config('services.turnstile.secret_key'),
+                'response' => $request->input('cf-turnstile-response'),
+                'remoteip' => $request->ip(),
+            ]);
+
+            if (! $turnstile->json('success')) {
+                return back()
+                    ->withErrors(['turnstile' => 'Security verification failed. Please try again.'])
+                    ->withInput($request->only('username', 'remember'));
+            }
 
             $remember = $request->has('remember');
 
@@ -77,13 +76,10 @@ class AuthController extends Controller
                 'username' => $request->username,
                 'password' => $request->password,
             ], $remember)) {
-
                 $user = Auth::user();
 
-                // 🔍 Check if account is ACTIVE
                 if (! in_array(strtolower($user->account_status), ['active'])) {
-
-                    Auth::logout(); // Force logout
+                    Auth::logout();
                     Session::flush();
 
                     flash('Your account is deactivated, please contact administrator.')->error();
@@ -91,14 +87,12 @@ class AuthController extends Controller
                     return back()->withInput();
                 }
 
-                // Save login activity
                 $user->update([
                     'status' => 'online',
                     'last_online' => now(),
-                    'account_status' => 'active', // keep active on login
+                    'account_status' => 'active',
                 ]);
 
-                // Unlock dashboard
                 Session::put('unlocked', true);
 
                 $request->session()->regenerate();
@@ -110,10 +104,9 @@ class AuthController extends Controller
 
             flash('Invalid username or password.')->error();
 
-            return back()->withInput();
+            return back()->withInput($request->only('username', 'remember'));
 
         } catch (\Exception $e) {
-
             Log::error('Login failed', [
                 'error' => $e->getMessage(),
                 'input' => $request->except('password'),
@@ -121,15 +114,10 @@ class AuthController extends Controller
 
             flash('Something went wrong while logging in.')->error();
 
-            return back()->withInput();
+            return back()->withInput($request->only('username', 'remember'));
         }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Register
-    |--------------------------------------------------------------------------
-    */
     public function register(Request $request)
     {
         try {
@@ -155,18 +143,12 @@ class AuthController extends Controller
             return redirect()->back();
 
         } catch (\Exception $e) {
-
             flash('Something went wrong while creating the account.')->error();
 
             return redirect()->back()->withInput();
         }
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Logout
-    |--------------------------------------------------------------------------
-    */
     public function logout(Request $request)
     {
         try {
@@ -212,7 +194,7 @@ class AuthController extends Controller
             'password' => ['required', 'string', 'min:6', 'confirmed'],
         ]);
 
-        $user = auth()->user();
+        $user = Auth::user();
 
         $user->update([
             'password' => Hash::make($request->password),
