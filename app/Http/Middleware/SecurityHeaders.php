@@ -14,15 +14,34 @@ class SecurityHeaders
         $response->headers->set('X-Frame-Options', 'DENY');
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
-        $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
-        // Enforce HSTS only on HTTPS/prod (prevents downgrade attacks)
+        $response->headers->set(
+            'Permissions-Policy',
+            'geolocation=(), microphone=(), camera=()'
+        );
+
         if ($request->isSecure()) {
-            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+            $response->headers->set(
+                'Strict-Transport-Security',
+                'max-age=31536000; includeSubDomains; preload'
+            );
         }
 
-        // Optional minimal CSP (tighten as you curate asset hosts)
-        $csp = "default-src 'self'; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; connect-src 'self'";
+        $csp = implode(' ', [
+            "default-src 'self' https:;",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com https://*.cloudflare.com;",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;",
+            "font-src 'self' data: https://fonts.gstatic.com;",
+            "img-src 'self' data: blob: https:;",
+            "frame-src 'self' https://challenges.cloudflare.com https://*.cloudflare.com;",
+            "connect-src 'self' https:;",
+            "worker-src 'self' blob:;",
+            "media-src 'self' data: blob:;",
+            "object-src 'none';",
+            "base-uri 'self';",
+            "form-action 'self';",
+        ]);
+
         $response->headers->set('Content-Security-Policy', $csp);
 
         return $response;

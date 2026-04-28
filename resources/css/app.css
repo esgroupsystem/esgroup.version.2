@@ -1,1 +1,8 @@
-@import "tailwindcss";
+@import "bootstrap/dist/css/bootstrap.min.css";
+@import "simplebar/dist/simplebar.min.css";
+@import "choices.js/public/assets/styles/choices.min.css";
+@import "flatpickr/dist/flatpickr.min.css";
+@import "dropzone/dist/dropzone.css";
+@import "swiper/swiper-bundle.css";
+
+/* keep your custom css here */
