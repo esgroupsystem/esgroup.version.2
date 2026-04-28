@@ -31,7 +31,8 @@ class SecurityHeaders
             'frame-src https://challenges.cloudflare.com;',
             "connect-src 'self' https://challenges.cloudflare.com https://static.cloudflareinsights.com;",
         ]);
-
+        $response->headers->remove('Require-Trusted-Types-For');
+        $response->headers->remove('Trusted-Types');
         $response->headers->set('Content-Security-Policy', $csp);
 
         return $response;
