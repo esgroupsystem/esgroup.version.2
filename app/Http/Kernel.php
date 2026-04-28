@@ -8,7 +8,6 @@ class Kernel extends HttpKernel
 {
     protected $middleware = [
         \Illuminate\Http\Middleware\TrustProxies::class,
-        \App\Http\Middleware\SecurityHeaders::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance::class,
         \Illuminate\Foundation\Http\Middleware\ValidatePostSize::class,
@@ -18,6 +17,7 @@ class Kernel extends HttpKernel
 
     protected $middlewareGroups = [
         'web' => [
+            \App\Http\Middleware\SecurityHeaders::class,
             \App\Http\Middleware\EncryptCookies::class,
             \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
             \Illuminate\Session\Middleware\StartSession::class,
