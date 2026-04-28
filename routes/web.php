@@ -153,6 +153,9 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/cctv/{id}/files', 'addFiles')->name('cctv.addfile');
 
             Route::get('/export/{type}', 'export')->name('export');
+            Route::get('/cctv/bus-status', 'busStatus')->name('bus-status');
+
+            Route::get('/cctv/bus-status/{bodyNumber}', 'busStatusShow')->name('bus-status.show');
         });
 
     Route::resource('cctv-parts', CctvController::class);
