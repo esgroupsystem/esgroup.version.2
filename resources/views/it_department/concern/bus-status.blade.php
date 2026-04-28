@@ -84,8 +84,12 @@
                                         <td class="ps-3">
                                             <a href="{{ route('concern.bus-status.show', $bus->body_number) }}"
                                                 class="text-decoration-none">
-                                                <div class="fw-bold text-primary">
-                                                    {{ $bus->body_number }}
+                                                <div class="fw-bold text-primary d-flex align-items-center gap-2">
+                                                    <span>{{ $bus->body_number }}</span>
+
+                                                    <span class="click-hint">
+                                                        &lt; Click Here
+                                                    </span>
 
                                                     @if ($bus->total_issues > 0)
                                                         <span class="badge rounded-pill badge-subtle-danger ms-1">
@@ -125,7 +129,7 @@
                                                 </span>
                                             @else
                                                 <span class="badge rounded-pill badge-subtle-success">
-                                                   Ready for Deployment
+                                                    Ready for Deployment
                                                 </span>
                                             @endif
                                         </td>
@@ -193,6 +197,37 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+        }
+
+        .click-hint {
+            font-size: .62rem;
+            font-weight: 700;
+            color: #e63757;
+            animation: clickHeartbeat 1.2s infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes clickHeartbeat {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: .65;
+            }
+
+            35% {
+                transform: scale(1.15);
+                opacity: 1;
+            }
+
+            65% {
+                transform: scale(1);
+                opacity: .85;
+            }
+        }
+
+        .bus-status-table a:hover .click-hint {
+            color: #2c7be5;
         }
     </style>
 @endpush
