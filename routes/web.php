@@ -54,11 +54,17 @@ Route::get('/', function () {
 */
 Route::controller(AuthController::class)->group(function () {
     Route::get('/login', 'showLogin')->name('login');
-    Route::post('/login', 'login')->middleware('throttle:5,1')->name('login.post');
-    Route::post('/register', 'register')->name('register.post');
+    Route::post('/login', 'login')
+        ->middleware('throttle:5,1')
+        ->name('login.post');
+    Route::post('/register', 'register')
+        ->middleware('throttle:3,1')
+        ->name('register.post');
     Route::post('/logout', 'logout')->name('logout');
     Route::get('/lockscreen', 'showLockscreen')->name('lockscreen.show');
-    Route::post('/unlock', 'unlock')->name('lockscreen.unlock');
+    Route::post('/unlock', 'unlock')
+        ->middleware('throttle:5,1')
+        ->name('lockscreen.unlock');
 });
 
 /*

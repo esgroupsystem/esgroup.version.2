@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
@@ -29,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Blade::if('role', function (...$roles) {
-            return auth()->check() && in_array(auth()->user()->role, $roles, true);
+            return Auth::check() && in_array(Auth::user()->role, $roles, true);
         });
     }
 }
