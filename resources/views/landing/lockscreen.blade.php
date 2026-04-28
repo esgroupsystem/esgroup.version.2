@@ -1,4 +1,5 @@
 @extends('layouts.landing')
+
 @section('content')
     <div class="container-fluid">
         <div class="row min-vh-100 flex-center g-0">
@@ -43,7 +44,7 @@
                                     <div class="row justify-content-center">
                                         <div class="col-auto">
                                             <div class="d-md-flex align-items-center text-center text-md-start">
-                                                
+
                                                 {{-- USER AVATAR --}}
                                                 <div class="avatar avatar-4xl me-4">
                                                     <img class="rounded-circle"
@@ -58,27 +59,41 @@
                                                 </div>
                                             </div>
 
-                                            {{-- PASSWORD FORM --}}
-                                            <form class="mt-4 row gx-2" method="POST"
-                                                action="{{ route('lockscreen.unlock') }}">
-                                                @csrf
-
-                                                <div class="col">
-                                                    <input class="form-control" type="password" name="password"
-                                                        placeholder="Password" required />
-                                                </div>
-
-                                                <div class="col-4">
-                                                    <button class="btn btn-primary d-block w-100" type="submit">
-                                                        Login
-                                                    </button>
-                                                </div>
-                                            </form>
-
                                             {{-- Error --}}
                                             @if ($errors->any())
-                                                <p class="text-danger small mt-2">{{ $errors->first() }}</p>
+                                                <div class="alert alert-danger small mt-3 mb-0">
+                                                    {{ $errors->first() }}
+                                                </div>
                                             @endif
+
+                                            {{-- PASSWORD FORM --}}
+                                            <form class="mt-4" method="POST" action="{{ route('lockscreen.unlock') }}">
+                                                @csrf
+
+                                                <div class="row gx-2">
+                                                    <div class="col">
+                                                        <input class="form-control" type="password" name="password"
+                                                            placeholder="Password" required />
+                                                    </div>
+
+                                                    <div class="col-4">
+                                                        <button class="btn btn-primary d-block w-100" type="submit">
+                                                            Login
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {{-- CLOUDFLARE TURNSTILE --}}
+                                                <div class="mt-3">
+                                                    <div class="cf-turnstile"
+                                                        data-sitekey="{{ config('services.turnstile.site_key') }}">
+                                                    </div>
+
+                                                    @error('turnstile')
+                                                        <div class="text-danger small mt-1">{{ $message }}</div>
+                                                    @enderror
+                                                </div>
+                                            </form>
 
                                         </div>
                                     </div>
