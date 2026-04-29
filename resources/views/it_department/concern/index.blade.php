@@ -32,7 +32,7 @@
             <div class="card mb-3">
                 <div class="card-body py-3">
                     <div class="row flex-between-center g-3">
-                        <div class="col-auto">
+                        <div class="col-12 col-lg-auto">
                             <div class="d-flex align-items-center">
                                 <span class="fas fa-video text-primary fs-5 me-3"></span>
                                 <div>
@@ -42,16 +42,29 @@
                             </div>
                         </div>
 
-                        <div class="col-auto">
-                            <button class="btn btn-falcon-default btn-sm d-lg-none me-2" type="button"
-                                data-bs-toggle="offcanvas" data-bs-target="#filterCanvas">
-                                <span class="fas fa-filter me-1"></span> Filter
-                            </button>
+                        <div class="col-12 col-lg-auto">
+                            <div class="d-flex flex-wrap justify-content-lg-end gap-2">
+                                <button class="btn btn-falcon-default btn-sm d-lg-none" type="button"
+                                    data-bs-toggle="offcanvas" data-bs-target="#filterCanvas">
+                                    <span class="fas fa-filter me-1"></span> Filter
+                                </button>
 
-                            <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal"
-                                data-bs-target="#createModal">
-                                <span class="fas fa-plus me-1"></span> New Job Order
-                            </button>
+                                <a class="btn btn-falcon-default btn-sm"
+                                    href="{{ route('concern.export', array_merge(request()->query(), ['type' => 'print'])) }}"
+                                    target="_blank">
+                                    <span class="fas fa-print me-1"></span> Print
+                                </a>
+
+                                <a class="btn btn-falcon-success btn-sm"
+                                    href="{{ route('concern.export', array_merge(request()->query(), ['type' => 'csv'])) }}">
+                                    <span class="fas fa-file-export me-1"></span> Export
+                                </a>
+
+                                <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal"
+                                    data-bs-target="#createModal">
+                                    <span class="fas fa-plus me-1"></span> New Job Order
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -169,8 +182,8 @@
                                     <span class="input-group-text bg-white">
                                         <span class="fa fa-search"></span>
                                     </span>
-                                    <input class="form-control" name="q" type="search" value="{{ request('q') }}"
-                                        placeholder="Search JO, bus, issue..." />
+                                    <input class="form-control" name="q" type="search"
+                                        value="{{ request('q') }}" placeholder="Search JO, bus, issue..." />
                                     <button class="btn btn-primary" type="submit">Search</button>
                                 </div>
                                 <input type="hidden" name="status" value="{{ request('status') }}">

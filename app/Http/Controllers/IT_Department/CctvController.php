@@ -33,15 +33,16 @@ class CctvController extends Controller
             'Closed' => 'badge-subtle-secondary',
         ];
 
-        $buses = BusDetail::orderBy('body_number')
+        $buses = BusDetail::query()
+            ->orderBy('body_number', 'asc')
             ->get(['id', 'garage', 'name', 'body_number', 'plate_number'])
             ->map(function ($bus) {
-                $bus->display_name = collect([
+                $bus->display_name = implode(' - ', array_filter([
                     $bus->body_number,
                     $bus->plate_number,
                     $bus->name,
                     $bus->garage,
-                ])->filter()->implode(' - ');
+                ]));
 
                 return $bus;
             });
@@ -103,13 +104,14 @@ class CctvController extends Controller
         $topAssignee = $assigneeCounts->keys()->first();
         $topAssigneeCount = $assigneeCounts->first() ?? 0;
 
-        $agents = User::where('role', 'IT Officer')
-            ->orderBy('full_name')
+        $agents = User::query()
+            ->where('role', '=', 'IT Officer', 'and')
+            ->orderBy('full_name', 'asc')
             ->get();
 
         $inventoryItems = ItInventoryItem::query()
-            ->where('is_active', true)
-            ->orderBy('item_name')
+            ->where('is_active', '=', true, 'and')
+            ->orderBy('item_name', 'asc')
             ->get([
                 'id',
                 'item_name',
@@ -168,9 +170,12 @@ class CctvController extends Controller
             $data['created_by'] = $user?->id;
 
             $year = now()->year;
-            $last = CctvConcern::where('jo_no', 'like', "JO-$year-%")->latest('id')->first();
+            $last = CctvConcern::query()
+                ->where('jo_no', 'like', "JO-$year-%", 'and')
+                ->latest('id')
+                ->first();
             $next = $last ? intval(substr($last->jo_no, -5)) + 1 : 1;
-            $data['jo_no'] = "JO-$year-".str_pad($next, 5, '0', STR_PAD_LEFT);
+            $data['jo_no'] = "JO-$year-".str_pad((string) $next, 5, '0', STR_PAD_LEFT);
 
             unset($data['items']);
 
@@ -229,7 +234,7 @@ class CctvController extends Controller
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, int $id)
     {
         $jobOrder = CctvConcern::with('usedItems')->findOrFail($id);
 
@@ -310,7 +315,7 @@ class CctvController extends Controller
         }
     }
 
-    public function destroy($id)
+    public function destroy(int $id)
     {
         DB::beginTransaction();
 
@@ -325,7 +330,7 @@ class CctvController extends Controller
                 }
             }
 
-            $jobOrder->delete();
+            CctvConcern::destroy($jobOrder->id);
 
             DB::commit();
 
@@ -341,7 +346,7 @@ class CctvController extends Controller
         }
     }
 
-    public function view($id)
+    public function view(int $id)
     {
         $jobOrder = CctvConcern::with([
             'assignee',
@@ -352,29 +357,109 @@ class CctvController extends Controller
         return view('it_department.concern.index', compact('jobOrder'));
     }
 
-    public function acceptTask($id)
+    public function acceptTask(int $id)
     {
         return back();
     }
 
-    public function markAsDone($id)
+    public function markAsDone(int $id)
     {
         return back();
     }
 
-    public function addNote(Request $request, $id)
+    public function addNote(Request $request, int $id)
     {
         return back();
     }
 
-    public function addFiles(Request $request, $id)
+    public function addFiles(Request $request, int $id)
     {
         return back();
     }
 
-    public function export($type)
+    public function export(Request $request, string $type)
     {
-        //
+        $q = trim((string) $request->get('q', ''));
+        $status = trim((string) $request->get('status', ''));
+
+        $jobOrders = CctvConcern::query()
+            ->with([
+                'assignee:id,full_name',
+                'usedItems.inventoryItem:id,item_name,unit,brand,model',
+            ])
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($x) use ($q) {
+                    $x->where('jo_no', 'like', "%{$q}%")
+                        ->orWhere('bus_no', 'like', "%{$q}%")
+                        ->orWhere('reported_by', 'like', "%{$q}%")
+                        ->orWhere('issue_type', 'like', "%{$q}%")
+                        ->orWhere('problem_details', 'like', "%{$q}%");
+                });
+            })
+            ->when($status !== '', function ($query) use ($status) {
+                $query->where('status', $status);
+            })
+            ->latest()
+            ->get();
+
+        if ($type === 'print') {
+            return view('it_department.concern.print', [
+                'jobOrders' => $jobOrders,
+                'status' => $status ?: 'All',
+                'q' => $q,
+            ]);
+        }
+
+        if ($type !== 'csv') {
+            abort(404);
+        }
+
+        $fileName = 'cctv-job-orders-'.strtolower(str_replace(' ', '-', $status ?: 'all')).'-'.now()->format('Y-m-d').'.csv';
+
+        return response()->streamDownload(function () use ($jobOrders) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'JO No',
+                'Bus No',
+                'Reporter',
+                'Issue Type',
+                'Problem Details',
+                'Action Taken',
+                'Status',
+                'Assignee',
+                'Items Used',
+                'Created Date',
+                'Fixed Date',
+            ]);
+
+            foreach ($jobOrders as $jo) {
+                $itemsUsed = $jo->usedItems->map(function ($used) {
+                    $itemName = $used->inventoryItem->item_name ?? 'Item';
+                    $unit = $used->inventoryItem->unit ?? '';
+
+                    return trim($itemName.' x'.$used->qty_used.' '.$unit);
+                })->implode(', ');
+
+                fputcsv($handle, [
+                    $jo->jo_no,
+                    $jo->bus_no,
+                    $jo->reported_by,
+                    $jo->issue_type,
+                    $jo->problem_details,
+                    $jo->action_taken,
+                    $jo->status,
+                    optional($jo->assignee)->full_name,
+                    $itemsUsed,
+                    optional($jo->created_at)->format('Y-m-d h:i A'),
+                    optional($jo->fixed_at)->format('Y-m-d h:i A'),
+                ]);
+            }
+
+            fclose($handle);
+        }, $fileName, [
+            'Content-Type' => 'text/csv',
+        ]);
     }
 
     public function busStatus(Request $request)
@@ -416,12 +501,12 @@ class CctvController extends Controller
                 $busConcerns = $concernsByBus->get($bus->body_number, collect());
                 $allBusConcerns = $allConcernsByBus->get($bus->body_number, collect());
 
-                $bus->display_name = collect([
+                $bus->display_name = implode(' - ', array_filter([
                     $bus->body_number,
                     $bus->plate_number,
                     $bus->name,
                     $bus->garage,
-                ])->filter()->implode(' - ');
+                ]));
 
                 $bus->status_summary = collect($issueColumns)->map(function ($types) use ($busConcerns) {
                     return $busConcerns->whereIn('issue_type', $types)->count();
@@ -457,14 +542,16 @@ class CctvController extends Controller
             'Other' => ['Other'],
         ];
 
-        $bus = BusDetail::where('body_number', $bodyNumber)->firstOrFail();
+        $bus = BusDetail::query()
+            ->where('body_number', '=', $bodyNumber, 'and')
+            ->firstOrFail();
 
-        $bus->display_name = collect([
+        $bus->display_name = implode(' - ', array_filter([
             $bus->body_number,
             $bus->plate_number,
             $bus->name,
             $bus->garage,
-        ])->filter()->implode(' - ');
+        ]));
 
         $allConcernsBase = CctvConcern::query()
             ->with(['assignee:id,full_name', 'usedItems.inventoryItem:id,item_name,unit,brand'])
