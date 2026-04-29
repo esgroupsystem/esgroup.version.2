@@ -79,6 +79,26 @@ Route::controller(AuthController::class)->group(function () {
 */
 Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
+    Route::get('/performance/dashboard', function () {
+        return response()->json(['module' => 'dashboard', 'status' => 'ok']);
+    });
+
+    Route::get('/performance/it', function () {
+        return response()->json(['module' => 'it', 'status' => 'ok']);
+    });
+
+    Route::get('/performance/hr', function () {
+        return response()->json(['module' => 'hr', 'status' => 'ok']);
+    });
+
+    Route::get('/performance/maintenance', function () {
+        return response()->json(['module' => 'maintenance', 'status' => 'ok']);
+    });
+
+    Route::get('/performance/payroll', function () {
+        return response()->json(['module' => 'payroll', 'status' => 'ok']);
+    });
+
     /*
     |--------------------------------------------------------------------------
     | Dashboard
@@ -411,7 +431,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | User Management & Roles
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth','role:Developer,IT Head'])->group(function () {
+    Route::middleware(['auth', 'role:Developer,IT Head'])->group(function () {
 
         // Authentication (User Management)
         Route::prefix('authentication')->name('authentication.')
@@ -519,7 +539,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     */
     Route::model('order', App\Models\PurchaseOrder::class);
 
-    Route::middleware(['auth','role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder'])
+    Route::middleware(['auth', 'role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder'])
         ->prefix('purchase')->name('purchase.')
         ->controller(AccountingController::class)->group(function () {
             Route::get('/index', 'index')->name('index');
