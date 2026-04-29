@@ -36,10 +36,10 @@
     @stack('styles')
 </head>
 
-<body>
+<body class="@yield('body_class')">
 
     <!-- Toast -->
-    <div class="flash-toast-container position-fixed top-0 end-0 p-3" style="z-index: 99999;"></div>
+    <div class="flash-toast-container position-fixed top-0 end-0 p-3"></div>
 
     @include('flash::message')
 

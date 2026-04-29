@@ -532,3 +532,315 @@
 .attendance-summary-page .empty-state-text {
     color: #667085;
 }
+
+.flash-toast-container {
+    z-index: 99999;
+}
+
+/*-------------------------------------------
+--------------------------------------------
+--------------------------------------------
+                LOGIN PAGE ONLY
+--------------------------------------------
+--------------------------------------------
+--------------------------------------------*/
+
+body {
+    height: 100%;
+}
+
+.auth-login-body {
+    height: 100dvh;
+    overflow: hidden;
+    background: #edf2f9;
+}
+
+.auth-login-body .main,
+.auth-login-page,
+.auth-login-page > .container-fluid,
+.auth-login-page .row.bg-100 {
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    overflow: hidden;
+}
+
+.auth-login-card {
+    width: 100%;
+    max-width: 420px;
+}
+
+.auth-login-card .card-body {
+    padding: 1.5rem !important;
+}
+
+/* PASSWORD EYE */
+.password-eye {
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #748194;
+    user-select: none;
+    transition:
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.password-eye:hover {
+    color: #2c7be5;
+    transform: translateY(-50%) scale(1.08);
+}
+
+/* RIGHT SIDE */
+.auth-transport-side {
+    height: 100dvh;
+    min-height: 100dvh;
+}
+
+.auth-transport-side::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(
+            90deg,
+            rgba(4, 20, 43, 0.78),
+            rgba(22, 89, 179, 0.34),
+            rgba(44, 123, 229, 0.14)
+        ),
+        radial-gradient(
+            circle at 72% 32%,
+            rgba(255, 255, 255, 0.2),
+            transparent 34%
+        );
+    z-index: 1;
+}
+
+.auth-transport-side::after {
+    content: "";
+    position: absolute;
+    width: 360px;
+    height: 360px;
+    right: -120px;
+    bottom: -120px;
+    border-radius: 50%;
+    border: 45px solid rgba(255, 255, 255, 0.16);
+    z-index: 1;
+    animation: authFloat 7s ease-in-out infinite;
+}
+
+.auth-transport-img {
+    opacity: 1;
+    filter: saturate(1.18) contrast(1.08) brightness(0.95);
+    transform: scale(1.02);
+    animation: authZoom 16s ease-in-out infinite alternate;
+}
+
+.auth-transport-content {
+    max-width: 720px;
+    margin-left: 1.5rem;
+}
+
+.transport-hero-copy {
+    margin-bottom: 1rem;
+}
+
+.transport-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    min-width: 250px;
+    padding: 0.7rem 1rem;
+    margin-bottom: 1rem;
+    border-radius: 999px;
+    color: #09203f;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+}
+
+.transport-bus {
+    display: inline-block;
+    animation: transportBusMove 2.8s ease-in-out infinite;
+}
+
+#transportWord {
+    display: inline-block;
+    font-weight: 800;
+    color: #2c7be5;
+    letter-spacing: -0.02em;
+}
+
+.transport-word-out {
+    animation: transportWordOut 0.42s ease forwards;
+}
+
+.transport-word-in {
+    animation: transportWordIn 0.65s cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+}
+
+.auth-title {
+    color: #fff;
+    font-size: clamp(2.2rem, 3.8vw, 4.2rem);
+    line-height: 0.98;
+    letter-spacing: -0.055em;
+    text-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+}
+
+.auth-title span {
+    color: #ffd166;
+    text-shadow: 0 8px 25px rgba(0, 0, 0, 0.35);
+}
+
+.auth-quote-card {
+    max-width: 600px;
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(12px);
+    border-left: 6px solid #ffd166 !important;
+}
+
+.auth-quote-text {
+    font-size: clamp(0.95rem, 1.15vw, 1.15rem);
+    line-height: 1.55;
+}
+
+.auth-fade-up {
+    animation: authFadeUp 0.85s ease both;
+}
+
+.auth-fade-up:nth-child(2) {
+    animation-delay: 0.12s;
+}
+
+.auth-fade-up:nth-child(3) {
+    animation-delay: 0.24s;
+}
+
+.auth-fade-up:nth-child(4) {
+    animation-delay: 0.36s;
+}
+
+@keyframes transportBusMove {
+    0%,
+    100% {
+        transform: translateX(0) rotate(0deg);
+    }
+
+    45% {
+        transform: translateX(7px) rotate(-2deg);
+    }
+
+    70% {
+        transform: translateX(3px) rotate(1deg);
+    }
+}
+
+@keyframes transportWordOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+        filter: blur(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(35px);
+        filter: blur(4px);
+    }
+}
+
+@keyframes transportWordIn {
+    from {
+        opacity: 0;
+        transform: translateX(-35px);
+        filter: blur(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+        filter: blur(0);
+    }
+}
+
+@keyframes authFadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(24px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes authZoom {
+    from {
+        transform: scale(1.02);
+    }
+
+    to {
+        transform: scale(1.07);
+    }
+}
+
+@keyframes authFloat {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-18px);
+    }
+}
+
+@media (max-height: 760px) {
+    .auth-login-card {
+        max-width: 390px;
+    }
+
+    .auth-login-card .card-body {
+        padding: 1.1rem !important;
+    }
+
+    .auth-title {
+        font-size: 2.6rem;
+    }
+
+    .auth-quote-text {
+        font-size: 0.95rem;
+    }
+
+    .auth-quote-card .card-body {
+        padding: 1rem !important;
+    }
+
+    .auth-transport-content .row.g-3 {
+        margin-top: 0.75rem !important;
+    }
+}
+/* clean eye inside input */
+.password-eye {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 1rem;
+    color: #6c757d;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.password-eye:hover {
+    color: #2c7be5;
+}
+
+/* spacing so text doesn't overlap */
+.form-control.pe-5 {
+    padding-right: 2.5rem !important;
+}
