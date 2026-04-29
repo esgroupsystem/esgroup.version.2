@@ -382,6 +382,18 @@ class CctvController extends Controller
         $q = trim((string) $request->get('q', ''));
         $status = trim((string) $request->get('status', ''));
 
+        $busDisplayMap = BusDetail::query()
+            ->get(['body_number', 'plate_number', 'name'])
+            ->mapWithKeys(function ($bus) {
+                return [
+                    $bus->body_number => implode(' - ', array_filter([
+                        $bus->body_number,
+                        $bus->plate_number,
+                        $bus->name,
+                    ])),
+                ];
+            });
+
         $jobOrders = CctvConcern::query()
             ->with([
                 'assignee:id,full_name',
@@ -399,12 +411,13 @@ class CctvController extends Controller
             ->when($status !== '', function ($query) use ($status) {
                 $query->where('status', $status);
             })
-            ->latest()
+            ->latest('created_at')
             ->get();
 
         if ($type === 'print') {
             return view('it_department.concern.print', [
                 'jobOrders' => $jobOrders,
+                'busDisplayMap' => $busDisplayMap,
                 'status' => $status ?: 'All',
                 'q' => $q,
             ]);
@@ -416,12 +429,12 @@ class CctvController extends Controller
 
         $fileName = 'cctv-job-orders-'.strtolower(str_replace(' ', '-', $status ?: 'all')).'-'.now()->format('Y-m-d').'.csv';
 
-        return response()->streamDownload(function () use ($jobOrders) {
+        return response()->streamDownload(function () use ($jobOrders, $busDisplayMap) {
             $handle = fopen('php://output', 'w');
 
             fputcsv($handle, [
                 'JO No',
-                'Bus No',
+                'Bus Details',
                 'Reporter',
                 'Issue Type',
                 'Problem Details',
@@ -431,7 +444,7 @@ class CctvController extends Controller
                 'Items Used',
                 'Created Date',
                 'Fixed Date',
-            ]);
+            ], ',', '"', '\\');
 
             foreach ($jobOrders as $jo) {
                 $itemsUsed = $jo->usedItems->map(function ($used) {
@@ -443,7 +456,7 @@ class CctvController extends Controller
 
                 fputcsv($handle, [
                     $jo->jo_no,
-                    $jo->bus_no,
+                    $busDisplayMap[$jo->bus_no] ?? $jo->bus_no,
                     $jo->reported_by,
                     $jo->issue_type,
                     $jo->problem_details,
@@ -453,7 +466,7 @@ class CctvController extends Controller
                     $itemsUsed,
                     optional($jo->created_at)->format('Y-m-d h:i A'),
                     optional($jo->fixed_at)->format('Y-m-d h:i A'),
-                ]);
+                ], ',', '"', '\\');
             }
 
             fclose($handle);

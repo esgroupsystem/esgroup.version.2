@@ -79,15 +79,11 @@
     <table>
         <thead>
             <tr>
-                <th>JO No</th>
                 <th>Bus</th>
                 <th>Reporter</th>
                 <th>Issue</th>
                 <th>Details</th>
-                <th>Action Taken</th>
                 <th>Status</th>
-                <th>Assignee</th>
-                <th>Items Used</th>
                 <th>Date</th>
             </tr>
         </thead>
@@ -95,25 +91,11 @@
         <tbody>
             @forelse ($jobOrders as $jo)
                 <tr>
-                    <td>{{ $jo->jo_no }}</td>
-                    <td>{{ $jo->bus_no }}</td>
+                    <td>{{ $busDisplayMap[$jo->bus_no] ?? $jo->bus_no }}</td>
                     <td>{{ $jo->reported_by ?: '—' }}</td>
                     <td>{{ $jo->issue_type }}</td>
                     <td>{{ $jo->problem_details ?: '—' }}</td>
-                    <td>{{ $jo->action_taken ?: '—' }}</td>
                     <td><span class="badge">{{ $jo->status }}</span></td>
-                    <td>{{ optional($jo->assignee)->full_name ?: '—' }}</td>
-                    <td>
-                        @forelse ($jo->usedItems as $used)
-                            <div>
-                                {{ $used->inventoryItem->item_name ?? 'Item' }}
-                                x{{ $used->qty_used }}
-                                {{ $used->inventoryItem->unit ?? '' }}
-                            </div>
-                        @empty
-                            —
-                        @endforelse
-                    </td>
                     <td>{{ optional($jo->created_at)->format('Y-m-d h:i A') }}</td>
                 </tr>
             @empty
