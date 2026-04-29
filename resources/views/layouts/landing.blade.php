@@ -23,7 +23,7 @@
     @vite('resources/css/app.css')
 
     <link href="{{ asset('assets/css/theme.css') }}" rel="stylesheet" id="style-default">
-    <link href="{{ asset('assets/css/user.css') }}" rel="stylesheet" id="user-style-default">
+    <link href="{{ asset('assets/css/user.css') }}?v={{ time() }}" rel="stylesheet" id="user-style-default">
 
     <!-- RTL -->
     <script nonce="{{ $nonce }}">
