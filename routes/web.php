@@ -47,6 +47,11 @@ Route::get('/', function () {
         : redirect()->route('login');
 })->name('landing');
 
+Route::get('/loaderio-8ae07cb33aeb9a3b6e150082fc966226.txt', function () {
+    return response('loaderio-8ae07cb33aeb9a3b6e150082fc966226', 200)
+        ->header('Content-Type', 'text/plain');
+});
+
 /*
 |--------------------------------------------------------------------------
 | Authentication (Public)
@@ -101,7 +106,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Tickets (Job Orders)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Officer,IT Head,Safety Officer,Head Inspector,Operation Manager'])
+    Route::middleware(['auth', 'role:Developer,IT Officer,IT Head,Safety Officer,Head Inspector,Operation Manager'])
         ->prefix('tickets')->name('tickets.')
         ->controller(TicketController::class)->group(function () {
 
@@ -127,7 +132,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/joborder/{id}/disapprove', 'disapprove')->name('disapprove');
         });
 
-    Route::middleware(['role:Developer,IT Officer,IT Head,Safety Officer,Head Inspector,Operation Manager'])
+    Route::middleware(['auth', 'role:Developer,IT Officer,IT Head,Safety Officer,Head Inspector,Operation Manager'])
         ->prefix('it-inventory')->name('it-inventory.')
         ->controller(ItInventoryItemController::class)->group(function () {
             Route::get('/', 'index')->name('index');
@@ -143,7 +148,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | CCTV (Job Orders)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Officer,IT Head,Safety Officer,Head Inspector,Operation Manager'])
+    Route::middleware(['auth', 'role:Developer,IT Officer,IT Head,Safety Officer,Head Inspector,Operation Manager'])
         ->prefix('concern')->name('concern.')
         ->controller(CctvController::class)->group(function () {
 
@@ -153,8 +158,8 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::put('/cctv/{id}', 'update')->name('cctv.update');
             Route::delete('/cctv/{id}', 'destroy')->name('cctv.destroy');
 
-            Route::post('/cctv/{id}', 'acceptTask')->name('cctv.accept');
-            Route::post('/cctv/{id}', 'markAsDone')->name('cctv.done');
+            Route::post('/cctv/{id}/accept', 'acceptTask')->name('cctv.accept');
+            Route::post('/cctv/{id}/done', 'markAsDone')->name('cctv.done');
             Route::post('/cctv/{id}/note', 'addNote')->name('cctv.addnote');
             Route::post('/cctv/{id}/files', 'addFiles')->name('cctv.addfile');
 
@@ -162,7 +167,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/cctv/bus-status', 'busStatus')->name('bus-status');
 
             Route::get('/cctv/bus-status/{bodyNumber}', 'busStatusShow')->name('bus-status.show');
-            Route::get('/cctv/export/{type}', 'export')->name('export');
         });
 
     Route::resource('cctv-parts', CctvController::class);
@@ -172,7 +176,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | HR Dashboard
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
+    Route::middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
         ->prefix('hr')->name('hr.')
         ->controller(HRDashboardController::class)->group(function () {
 
@@ -186,7 +190,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Employees
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
+    Route::middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
         ->prefix('employees')->name('employees.')->group(function () {
 
             // Employee Records
@@ -225,7 +229,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Policy Management
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Head,HR Officer,HR Head'])
+    Route::middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head'])
         ->prefix('violation')->name('violation.')->group(function () {
 
             Route::controller(HrOffenseController::class)->group(function () {
@@ -240,7 +244,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Leave Management
     |--------------------------------------------------------------------------
     */
-    Route::prefix('driver-leave')->middleware(['role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
+    Route::prefix('driver-leave')->middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
         ->name('driver-leave.')->controller(DriverLeaveController::class)->group(function () {
             Route::get('driver', 'index')->name('driver.index');
             Route::get('driver/create', 'create')->name('driver.create');
@@ -250,7 +254,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('{leave}/action', 'action')->name('driver.action');
         });
 
-    Route::prefix('conductor-leave')->middleware(['role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
+    Route::prefix('conductor-leave')->middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
         ->name('conductor-leave.')->controller(ConductorLeaveController::class)->group(function () {
             Route::get('conductor', 'index')->name('conductor.index');
             Route::get('conductor/create', 'create')->name('conductor.create');
@@ -260,7 +264,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/{leave}/action', 'action')->name('conductor.action');
         });
 
-    Route::prefix('employee-leave')->middleware(['role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
+    Route::prefix('employee-leave')->middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
         ->name('employee-leave.')->controller(EmployeeLeaveController::class)->group(function () {
             Route::get('employee', 'index')->name('employee.index');
             Route::get('employee/create', 'create')->name('employee.create');
@@ -373,7 +377,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Claims Management
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
+    Route::middleware(['auth', 'role:Developer,IT Head,HR Officer,HR Head,Operation Manager'])
         ->prefix('claims')->name('claims.')
         ->controller(ClaimController::class)
         ->group(function () {
@@ -388,7 +392,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Mirasol Biometrics Management
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Officer,IT Head,HR Officer,HR Head'])
+    Route::middleware(['auth', 'role:Developer,IT Officer,IT Head,HR Officer,HR Head'])
         ->prefix('mirasol-logs')->name('mirasol-logs.')
         ->controller(MirasolBiometricsLogController::class)->group(function () {
 
@@ -407,7 +411,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | User Management & Roles
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Head'])->group(function () {
+    Route::middleware(['auth','role:Developer,IT Head'])->group(function () {
 
         // Authentication (User Management)
         Route::prefix('authentication')->name('authentication.')
@@ -436,7 +440,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Maintenance (Request, Category, Items)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder'])->group(function () {
+    Route::middleware(['auth', 'role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder'])->group(function () {
 
         Route::prefix('request')->name('request.')->controller(RequestController::class)->group(function () {
             Route::get('/index', 'index')->name('index');
@@ -515,7 +519,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     */
     Route::model('order', App\Models\PurchaseOrder::class);
 
-    Route::middleware(['role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder'])
+    Route::middleware(['auth','role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder'])
         ->prefix('purchase')->name('purchase.')
         ->controller(AccountingController::class)->group(function () {
             Route::get('/index', 'index')->name('index');
