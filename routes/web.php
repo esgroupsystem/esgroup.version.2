@@ -47,11 +47,6 @@ Route::get('/', function () {
         : redirect()->route('login');
 })->name('landing');
 
-Route::get('/loaderio-8ae07cb33aeb9a3b6e150082fc966226.txt', function () {
-    return response('loaderio-8ae07cb33aeb9a3b6e150082fc966226', 200)
-        ->header('Content-Type', 'text/plain');
-});
-
 /*
 |--------------------------------------------------------------------------
 | Authentication (Public)
@@ -78,26 +73,6 @@ Route::controller(AuthController::class)->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', ForceLockscreen::class])->group(function () {
-
-    Route::get('/performance/dashboard', function () {
-        return response()->json(['module' => 'dashboard', 'status' => 'ok']);
-    });
-
-    Route::get('/performance/it', function () {
-        return response()->json(['module' => 'it', 'status' => 'ok']);
-    });
-
-    Route::get('/performance/hr', function () {
-        return response()->json(['module' => 'hr', 'status' => 'ok']);
-    });
-
-    Route::get('/performance/maintenance', function () {
-        return response()->json(['module' => 'maintenance', 'status' => 'ok']);
-    });
-
-    Route::get('/performance/payroll', function () {
-        return response()->json(['module' => 'payroll', 'status' => 'ok']);
-    });
 
     /*
     |--------------------------------------------------------------------------
