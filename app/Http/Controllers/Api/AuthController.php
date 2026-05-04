@@ -3,42 +3,31 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
     public function login(Request $request)
     {
         $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required',
         ]);
 
-        $user = User::where('username', $request->username)->first();
-
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (! Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
                 'message' => 'Invalid credentials',
             ], 401);
         }
 
-        $user->tokens()->delete();
-        $token = $user->createToken('pos')->plainTextToken;
+        $user = Auth::user();
 
-        $user->update([
-            'last_online' => now(),
-        ]);
+        $token = $user->createToken('mobile-token')->plainTextToken;
 
         return response()->json([
             'token' => $token,
-            'user' => [
-                'id' => $user->id,
-                'username' => $user->username,
-                'role' => strtolower($user->role),
-                'name' => $user->full_name,
-            ],
+            'user' => $user,
         ]);
     }
 

@@ -25,63 +25,66 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class TicketController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Index Routes
-    |--------------------------------------------------------------------------
-    */
     public function index(Request $request)
     {
-        $tab = $request->tab ?? 'pending';
+        $tab = $request->get('tab', 'pending');
+        $search = trim((string) $request->get('search', ''));
 
-        $query = JobOrder::with('bus')->orderBy('job_date_filled', 'desc');
+        $baseQuery = JobOrder::with('bus')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('job_creator', 'like', "%{$search}%")
+                        ->orWhere('job_type', 'like', "%{$search}%")
+                        ->orWhere('job_status', 'like', "%{$search}%")
+                        ->orWhere('driver_name', 'like', "%{$search}%")
+                        ->orWhere('conductor_name', 'like', "%{$search}%")
+                        ->orWhereHas('bus', function ($bus) use ($search) {
+                            $bus->where('body_number', 'like', "%{$search}%")
+                                ->orWhere('plate_number', 'like', "%{$search}%")
+                                ->orWhere('name', 'like', "%{$search}%");
+                        });
+                });
+            })
+            ->orderByDesc('job_date_filled');
 
         if ($request->ajax()) {
-
-            if ($request->search) {
-                $query->where(function ($q) use ($request) {
-                    $q->where('job_creator', 'like', "%{$request->search}%")
-                        ->orWhere('job_type', 'like', "%{$request->search}%")
-                        ->orWhere('job_status', 'like', "%{$request->search}%");
-                });
-            }
-
-            if ($tab == 'pending') {
-                $query->where(function ($q) {
-                    $q->where('job_status', 'Pending')
-                        ->orWhere('job_status', 'Approval');
-                });
-            } elseif ($tab == 'progress') {
-                $query->where('job_status', 'In Progress');
-            } elseif ($tab == 'completed') {
-                $query->where('job_status', 'Completed');
-            }
-
-            $list = $query->paginate(10);
+            $list = (clone $baseQuery)
+                ->when($tab === 'pending', fn ($q) => $q->whereIn('job_status', ['Pending', 'Approval']))
+                ->when($tab === 'progress', fn ($q) => $q->where('job_status', 'In Progress'))
+                ->when($tab === 'completed', fn ($q) => $q->where('job_status', 'Completed'))
+                ->paginate(10);
 
             return view('tickets.partials.table', compact('list'))->render();
         }
 
         $pending = JobOrder::with('bus')
             ->whereIn('job_status', ['Pending', 'Approval'])
-            ->orderBy('job_date_filled', 'desc')
-            ->paginate(10);
+            ->orderByDesc('job_date_filled')
+            ->paginate(10, ['*'], 'pending_page');
 
         $progress = JobOrder::with('bus')
             ->where('job_status', 'In Progress')
-            ->orderBy('job_date_filled', 'desc')
-            ->paginate(10);
+            ->orderByDesc('job_date_filled')
+            ->paginate(10, ['*'], 'progress_page');
 
         $completed = JobOrder::with('bus')
             ->where('job_status', 'Completed')
-            ->orderBy('job_date_filled', 'desc')
-            ->paginate(10);
+            ->orderByDesc('job_date_filled')
+            ->paginate(10, ['*'], 'completed_page');
+
+        $statusCounts = JobOrder::selectRaw("
+                SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as new_count,
+                SUM(CASE WHEN job_status IN ('Pending', 'Approval') THEN 1 ELSE 0 END) as pending_count,
+                SUM(CASE WHEN job_status = 'In Progress' THEN 1 ELSE 0 END) as progress_count,
+                SUM(CASE WHEN job_status = 'Completed' THEN 1 ELSE 0 END) as completed_count
+            ")
+            ->first();
 
         $stats = [
-            'new' => JobOrder::whereDate('created_at', today())->count(),
-            'pending' => JobOrder::whereIn('job_status', ['Pending', 'Approval'])->count(),
-            'progress' => JobOrder::where('job_status', 'In Progress')->count(),
-            'completed' => JobOrder::where('job_status', 'Completed')->count(),
+            'new' => (int) ($statusCounts->new_count ?? 0),
+            'pending' => (int) ($statusCounts->pending_count ?? 0),
+            'progress' => (int) ($statusCounts->progress_count ?? 0),
+            'completed' => (int) ($statusCounts->completed_count ?? 0),
         ];
 
         $categoryList = [
@@ -91,25 +94,32 @@ class TicketController extends Controller
             'WRONG CLOSING / OPEN', 'OTHERS',
         ];
 
-        $categoryCounts = JobOrder::select('job_type')
+        $categoryCounts = JobOrder::query()
+            ->select('job_type')
             ->selectRaw('COUNT(*) as total')
             ->groupBy('job_type')
             ->pluck('total', 'job_type');
 
-        $categories = [];
-        foreach ($categoryList as $cat) {
-            $categories[] = [
+        $categories = collect($categoryList)
+            ->map(fn ($cat) => [
                 'name' => $cat,
-                'total' => $categoryCounts[$cat] ?? 0,
-            ];
-        }
+                'total' => (int) ($categoryCounts[$cat] ?? 0),
+            ])
+            ->values()
+            ->all();
 
         $agents = User::whereIn('role', ['IT Head', 'IT Officer', 'IT Technician'])
-            ->withCount(['jobOrdersAssigned'])
+            ->withCount('jobOrdersAssigned')
+            ->orderBy('full_name')
             ->get();
 
         return view('it_department.ticket_job_order', compact(
-            'pending', 'progress', 'completed', 'stats', 'categories', 'agents'
+            'pending',
+            'progress',
+            'completed',
+            'stats',
+            'categories',
+            'agents'
         ));
     }
 
@@ -117,10 +127,8 @@ class TicketController extends Controller
     {
         $job = JobOrder::findOrFail($id);
 
-        // 🔐 ROLE CHECK
         abort_unless(in_array(Auth::user()->role, ['IT Head', 'Developer']), 403);
 
-        // 🔐 EXTRA SAFETY (STATUS CHECK)
         if ($job->job_status !== 'Approval' || $job->approval_status !== 'Approval') {
             return back();
         }
@@ -146,10 +154,8 @@ class TicketController extends Controller
     {
         $job = JobOrder::findOrFail($id);
 
-        // 🔐 ROLE CHECK
         abort_unless(in_array(Auth::user()->role, ['IT Head', 'Developer']), 403);
 
-        // 🔐 ONLY DISAPPROVE IF STILL FOR APPROVAL
         if ($job->job_status !== 'Approval' || $job->approval_status !== 'Approval') {
             return back();
         }
@@ -173,7 +179,7 @@ class TicketController extends Controller
 
     public function cctvindex()
     {
-        return view('it_department.cctv_concern');
+        return view('it_department.concern.index');
     }
 
     public function createjobordersIndex()
@@ -183,49 +189,33 @@ class TicketController extends Controller
         return view('it_department.create_joborder', compact('buses'));
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | View of details files Routes
-    |--------------------------------------------------------------------------
-    */
-
     public function view($id)
     {
-        $job = JobOrder::with('bus', 'files', 'logs.user', 'notes.user')->findOrFail($id);
+        $job = JobOrder::with([
+            'bus',
+            'files',
+            'logs.user',
+            'notes.user',
+        ])->findOrFail($id);
 
-        $existingViewLog = JobOrderLog::where('joborder_id', $job->id)
-            ->where('user_id', Auth::id())
-            ->where('action', 'viewed')
-            ->first();
-
-        if ($existingViewLog) {
-            $existingViewLog->update([
-                'meta' => [
-                    'message' => 'User viewed the job order details',
-                ],
-            ]);
-        } else {
-
-            JobOrderLog::create([
+        JobOrderLog::updateOrCreate(
+            [
                 'joborder_id' => $job->id,
                 'user_id' => Auth::id(),
                 'action' => 'viewed',
-                'meta' => [
-                    'message' => 'User viewed the job order details',
-                ],
-            ]);
-        }
+            ],
+            [
+                'meta' => ['message' => 'User viewed the job order details'],
+            ]
+        );
 
-        $logs = $job->logs()->orderBy('created_at', 'desc')->get();
+        $logs = JobOrderLog::with('user')
+            ->where('joborder_id', $job->id)
+            ->orderByDesc('created_at')
+            ->get();
 
         return view('it_department.view_joborder', compact('job', 'logs'));
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Saving/Create Routes
-    |--------------------------------------------------------------------------
-    */
 
     public function storeJoborders(Request $request)
     {
@@ -235,7 +225,6 @@ class TicketController extends Controller
                 'bus_name' => ['nullable'],
                 'body_number' => ['required', 'string', 'max:255'],
                 'plate_number' => ['nullable', 'string', 'max:255'],
-
                 'job_name' => ['nullable', 'string', 'max:255'],
                 'job_type' => ['required', 'string', 'max:255'],
                 'job_datestart' => ['required', 'string', 'max:255'],
@@ -248,31 +237,23 @@ class TicketController extends Controller
                 'direction' => ['nullable', 'string', 'max:255'],
                 'driver_name' => ['nullable', 'string', 'max:255'],
                 'conductor_name' => ['nullable', 'string', 'max:255'],
-
                 'files.*' => ['nullable', 'file', 'max:5120'],
             ]);
 
             $user = Auth::user();
 
             return DB::transaction(function () use ($validated, $request, $user) {
-
                 $bus = BusDetail::where('body_number', $validated['body_number'])->first();
 
                 if (! $bus) {
-                    Log::warning('Bus not found', ['body_number' => $validated['body_number']]);
                     flash('Selected bus does not exist.')->error();
 
                     return back()->withInput();
                 }
 
-                $validated['garage'] = $bus->garage;
-                $validated['bus_name'] = $bus->name;
-                $validated['plate_number'] = $bus->plate_number;
-
                 $job = JobOrder::create([
                     'bus_detail_id' => $bus->id,
                     'created_by' => optional($user)->id,
-
                     'job_name' => $validated['job_name'] ?? 'Job Order',
                     'job_type' => $validated['job_type'],
                     'job_datestart' => $validated['job_datestart'],
@@ -280,11 +261,8 @@ class TicketController extends Controller
                     'job_time_end' => $validated['job_time_end'],
                     'job_sitNumber' => $validated['job_sitNumber'] ?? null,
                     'job_remarks' => $validated['job_remarks'] ?? null,
-
-                    // 🔐 FORCE APPROVAL FLOW
                     'approval_status' => 'Approval',
                     'job_status' => 'Approval',
-
                     'job_assign_person' => null,
                     'job_date_filled' => now(),
                     'job_creator' => optional($user)->full_name,
@@ -293,18 +271,16 @@ class TicketController extends Controller
                     'direction' => $validated['direction'] ?? null,
                 ]);
 
-                if ($request->hasFile('files')) {
-                    foreach ($request->file('files') as $upload) {
-                        $stored = $upload->store("joborders/{$job->id}", 'public');
+                foreach ($request->file('files', []) as $upload) {
+                    $stored = $upload->store("joborders/{$job->id}", 'public');
 
-                        JobOrderFile::create([
-                            'job_id' => $job->id,
-                            'file_name' => $upload->getClientOriginalName(),
-                            'file_remarks' => null,
-                            'file_notes' => null,
-                            'file_path' => $stored,
-                        ]);
-                    }
+                    JobOrderFile::create([
+                        'job_id' => $job->id,
+                        'file_name' => $upload->getClientOriginalName(),
+                        'file_remarks' => null,
+                        'file_notes' => null,
+                        'file_path' => $stored,
+                    ]);
                 }
 
                 JobOrderLog::create([
@@ -318,7 +294,10 @@ class TicketController extends Controller
                     'user_id' => optional($user)->id,
                 ]);
 
-                event(new JobOrderCreated($job->load('bus')));
+                $job->load('bus');
+
+                event(new JobOrderCreated($job));
+
                 Notifier::notifyRoles(
                     ['IT Head', 'IT Officer'],
                     new JobOrderCreatedMail($job)
@@ -328,29 +307,22 @@ class TicketController extends Controller
 
                 return redirect()->route('tickets.joborder.index');
             });
-
         } catch (ValidationException $e) {
-
             Log::warning('Job Order Validation Failed', [
-                'route' => request()->route()->getName(),
+                'route' => optional(request()->route())->getName(),
                 'errors' => $e->validator->errors()->toArray(),
                 'input' => request()->except(['files']),
             ]);
 
             flash('Validation failed. Please check the fields.')->error();
 
-            return back()
-                ->withErrors($e->validator)
-                ->withInput();
-
-        } catch (\Exception $e) {
-
+            return back()->withErrors($e->validator)->withInput();
+        } catch (\Throwable $e) {
             Log::error('Job Order Creation Error', [
-                'route' => request()->route()->getName(),
+                'route' => optional(request()->route())->getName(),
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
                 'input' => request()->except(['files']),
             ]);
 
@@ -366,7 +338,7 @@ class TicketController extends Controller
     {
         abort_unless(in_array(Auth::user()->role, ['IT Head', 'Developer']), 403);
 
-        $job = JobOrder::with(['files'])->findOrFail($id);
+        $job = JobOrder::with('files')->findOrFail($id);
 
         if (in_array($job->job_status, ['In Progress', 'Completed'])) {
             flash('You cannot delete a job order that is In Progress or Completed.')->error();
@@ -375,10 +347,9 @@ class TicketController extends Controller
         }
 
         return DB::transaction(function () use ($job) {
-
-            foreach ($job->files as $f) {
-                if (! empty($f->file_path)) {
-                    Storage::disk('public')->delete($f->file_path);
+            foreach ($job->files as $file) {
+                if ($file->file_path) {
+                    Storage::disk('public')->delete($file->file_path);
                 }
             }
 
@@ -388,9 +359,10 @@ class TicketController extends Controller
             JobOrderNote::where('joborder_id', $job->id)->delete();
             JobOrderLog::where('joborder_id', $job->id)->delete();
 
+            $jobId = $job->id;
             $job->delete();
 
-            flash("Job Order #{$job->id} deleted successfully.")->success();
+            flash("Job Order #{$jobId} deleted successfully.")->success();
 
             return back();
         });
@@ -398,23 +370,25 @@ class TicketController extends Controller
 
     public function addNote(Request $request, $id)
     {
-        $request->validate([
-            'reason' => 'required|string',
-            'details' => 'nullable|string',
+        $validated = $request->validate([
+            'reason' => ['required', 'string'],
+            'details' => ['nullable', 'string'],
         ]);
+
+        JobOrder::findOrFail($id);
 
         JobOrderNote::create([
             'joborder_id' => $id,
             'user_id' => Auth::id(),
-            'reason' => $request->reason,
-            'details' => $request->details,
+            'reason' => $validated['reason'],
+            'details' => $validated['details'] ?? null,
         ]);
 
         JobOrderLog::create([
             'joborder_id' => $id,
             'user_id' => Auth::id(),
             'action' => 'added note',
-            'meta' => ['reason' => $request->reason],
+            'meta' => ['reason' => $validated['reason']],
         ]);
 
         return back();
@@ -428,27 +402,27 @@ class TicketController extends Controller
             'files.*' => ['required', 'file', 'max:1024000'],
         ]);
 
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $upload) {
+        $files = $request->file('files', []);
 
-                $stored = $upload->store("joborders/{$job->id}", 'public');
+        foreach ($files as $upload) {
+            $stored = $upload->store("joborders/{$job->id}", 'public');
 
-                JobOrderFile::create([
-                    'job_id' => $job->id,
-                    'file_name' => $upload->getClientOriginalName(),
-                    'file_path' => $stored,
-                ]);
-            }
+            JobOrderFile::create([
+                'job_id' => $job->id,
+                'file_name' => $upload->getClientOriginalName(),
+                'file_path' => $stored,
+            ]);
+        }
 
+        if (count($files) > 0) {
             JobOrderLog::create([
                 'joborder_id' => $job->id,
                 'user_id' => Auth::id(),
                 'action' => 'added file',
-                'meta' => [
-                    'file_count' => count($request->file('files')),
-                ],
+                'meta' => ['file_count' => count($files)],
             ]);
         }
+
         flash('Files uploaded successfully.')->info();
 
         return back();
@@ -456,14 +430,16 @@ class TicketController extends Controller
 
     public function export($type)
     {
-        $data = JobOrder::with('bus')->get();
-
         if ($type === 'excel') {
             return Excel::download(new JobOrdersExport, 'job_orders.xlsx');
         }
 
         if ($type === 'pdf') {
-            $pdf = PDF::loadView('it_department.export.pdf', compact('data'))
+            $data = JobOrder::with('bus')
+                ->orderByDesc('job_date_filled')
+                ->get();
+
+            $pdf = Pdf::loadView('it_department.export.pdf', compact('data'))
                 ->setPaper('a4', 'landscape');
 
             return $pdf->download('job_orders.pdf');
@@ -471,12 +447,6 @@ class TicketController extends Controller
 
         return back()->with('error', 'Invalid export type selected.');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | Update files Routes
-    |--------------------------------------------------------------------------
-    */
 
     public function acceptTask($id)
     {
@@ -527,34 +497,25 @@ class TicketController extends Controller
     {
         $job = JobOrder::findOrFail($id);
 
-        // Normalize date
-        if ($request->job_datestart) {
-            if (preg_match('/\d{4}-\d{2}-\d{2}/', $request->job_datestart)) {
-                $request->merge([
-                    'job_datestart' => Carbon::parse($request->job_datestart)->format('Y-m-d'),
-                ]);
-            } else {
-                $request->merge([
-                    'job_datestart' => Carbon::createFromFormat('d/m/y', $request->job_datestart)->format('Y-m-d'),
-                ]);
-            }
+        if ($request->filled('job_datestart')) {
+            $request->merge([
+                'job_datestart' => $this->normalizeDate($request->job_datestart),
+            ]);
         }
 
-        // Normalize time fields
-        if ($request->job_time_start) {
+        if ($request->filled('job_time_start')) {
             $request->merge([
                 'job_time_start' => Carbon::parse($request->job_time_start)->format('H:i'),
             ]);
         }
 
-        if ($request->job_time_end) {
+        if ($request->filled('job_time_end')) {
             $request->merge([
                 'job_time_end' => Carbon::parse($request->job_time_end)->format('H:i'),
             ]);
         }
 
-        // ⭐ INCLUDE NEW FIELDS HERE:
-        $original = $job->only([
+        $fields = [
             'job_type',
             'job_datestart',
             'job_time_start',
@@ -564,23 +525,14 @@ class TicketController extends Controller
             'job_remarks',
             'driver_name',
             'conductor_name',
-        ]);
+        ];
 
-        // Update database
-        $job->update($request->only([
-            'job_type',
-            'job_datestart',
-            'job_time_start',
-            'job_time_end',
-            'direction',
-            'job_sitNumber',
-            'job_remarks',
-            'driver_name',
-            'conductor_name',
-        ]));
+        $original = $job->only($fields);
 
-        // Detect changes for logs
+        $job->update($request->only($fields));
+
         $changes = [];
+
         foreach ($original as $field => $oldValue) {
             $newValue = $job->$field;
 
@@ -592,7 +544,6 @@ class TicketController extends Controller
             }
         }
 
-        // Create log if changed
         if (! empty($changes)) {
             JobOrderLog::create([
                 'joborder_id' => $job->id,
@@ -612,5 +563,14 @@ class TicketController extends Controller
         $job = JobOrder::with('bus')->findOrFail($id);
 
         return view('it_department.print.joborder', compact('job'));
+    }
+
+    private function normalizeDate(string $date): string
+    {
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+            return Carbon::parse($date)->format('Y-m-d');
+        }
+
+        return Carbon::createFromFormat('d/m/y', $date)->format('Y-m-d');
     }
 }

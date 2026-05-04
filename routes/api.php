@@ -1,38 +1,15 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController as ApiAuthController;
+use App\Http\Controllers\Api\BusController;
+use App\Http\Controllers\Api\OdometerController;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
 
-use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\FareController;
-use App\Http\Controllers\Api\TicketController;
-use App\Http\Controllers\Api\CashierRemittanceController;
-use App\Http\Controllers\Api\TripController;
+Route::post('/login', [ApiAuthController::class, 'login'])->middleware('throttle:5,1');
 
-Route::prefix('v1')->group(function () {
-
-    /* ================= AUTH ================= */
-    Route::post('/login', [AuthController::class, 'login']);
-
-    Route::middleware('auth:sanctum')->group(function () {
-
-        // Logged-in user
-        Route::get('/me', function (Request $request) {
-            return response()->json($request->user());
-        });
-
-        // Logout
-        Route::post('/logout', [AuthController::class, 'logout']);
-
-        /* ================= POS DATA ================= */
-
-        Route::get('/fares', [FareController::class, 'index']);
-        Route::post('/fares', [FareController::class, 'store']);
-
-        Route::post('/trips', [TripController::class, 'store']);
-
-        Route::post('/tickets', [TicketController::class, 'store']);
-
-        Route::post('/remittance', [CashierRemittanceController::class, 'store']);
-    });
+Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
+    Route::get('/buses', [BusController::class, 'index']);
+    Route::get('/bus/{busDetail}/last-odometer', [OdometerController::class, 'lastOdometer']);
+    Route::post('/odometer-submit', [OdometerController::class, 'store']);
+    Route::post('/logout', [ApiAuthController::class, 'logout']);
 });
