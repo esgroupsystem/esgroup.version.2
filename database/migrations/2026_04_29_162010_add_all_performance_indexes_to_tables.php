@@ -175,7 +175,8 @@ return new class extends Migration
             $table->index('status');
             $table->index('created_at');
 
-            $table->index(['garage', 'status']);
+            $table->index('status');
+            $table->index('garage');
             $table->index(['status', 'created_at']);
         });
 
