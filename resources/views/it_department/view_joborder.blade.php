@@ -46,7 +46,8 @@
 
                             <div class="dropdown-menu">
                                 <a class="dropdown-item" href="{{ route('tickets.joborder.index') }}">Back</a>
-                                <a class="dropdown-item" href="{{ route('tickets.joborder.print', $job->id) }}" target="_blank" class="btn btn-outline-dark btn-sm">Print</a>
+                                <a class="dropdown-item" href="{{ route('tickets.joborder.print', $job->id) }}"
+                                    target="_blank" class="btn btn-outline-dark btn-sm">Print</a>
                                 {{-- <a class="dropdown-item" href="#">Report</a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item text-danger" href="#">Delete</a> --}}
@@ -130,7 +131,7 @@
                                 </small>
                             </div>
                         @endforeach
-                    </div> 
+                    </div>
                 </div>
             @endif
 
@@ -378,13 +379,48 @@
                     <div class="row">
                         @if ($job->files->count() > 0)
                             @foreach ($job->files as $file)
+                                @php
+                                    $ext = strtolower(pathinfo($file->file_name, PATHINFO_EXTENSION));
+                                    $url = asset('storage/' . $file->file_path);
+                                @endphp
+
                                 <div class="col-md-4 mb-3">
-                                    <a href="{{ asset('storage/' . $file->file_path) }}" target="_blank">
-                                        <div class="border rounded p-2 text-center bg-light">
-                                            <i class="fas fa-file-image fa-2x text-primary mb-2"></i>
-                                            <p class="mb-0">{{ $file->file_name }}</p>
-                                        </div>
-                                    </a>
+                                    <div class="border rounded p-2 text-center bg-light">
+
+                                        {{-- ✅ VIDEO (MP4 works in browser) --}}
+                                        @if (in_array($ext, ['mp4', 'webm', 'ogg']))
+                                            <video width="100%" controls>
+                                                <source src="{{ $url }}" type="video/{{ $ext }}">
+                                            </video>
+
+                                            {{-- ⚠️ AVI (not supported in browser) --}}
+                                        @elseif($ext === 'avi')
+                                            <i class="fas fa-file-video fa-2x text-warning mb-2"></i>
+                                            <p>{{ $file->file_name }}</p>
+                                            <a href="{{ $url }}" target="_blank"
+                                                class="btn btn-sm btn-primary">
+                                                Open / Download
+                                            </a>
+                                            <small class="d-block text-muted mt-1">
+                                                AVI not supported in browser
+                                            </small>
+
+                                            {{-- 🖼️ IMAGE --}}
+                                        @elseif(in_array($ext, ['jpg', 'jpeg', 'png', 'gif']))
+                                            <a href="{{ $url }}" target="_blank">
+                                                <img src="{{ $url }}" class="img-fluid rounded mb-2">
+                                                <p class="mb-0">{{ $file->file_name }}</p>
+                                            </a>
+
+                                            {{-- 📄 OTHER FILES --}}
+                                        @else
+                                            <a href="{{ $url }}" target="_blank">
+                                                <i class="fas fa-file fa-2x text-primary mb-2"></i>
+                                                <p class="mb-0">{{ $file->file_name }}</p>
+                                            </a>
+                                        @endif
+
+                                    </div>
                                 </div>
                             @endforeach
                         @else
