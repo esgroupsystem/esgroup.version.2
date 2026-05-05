@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class BusDetail extends Model
 {
-    protected $fillable = ['garage','name','body_number','plate_number'];
+    protected $fillable = ['garage', 'name', 'body_number', 'plate_number'];
 
     public function joborders(): HasMany
     {
@@ -17,5 +17,10 @@ class BusDetail extends Model
     public function partsOuts()
     {
         return $this->hasMany(PartsOut::class, 'vehicle_id');
+    }
+
+    public function cctvConcerns()
+    {
+        return $this->hasMany(CctvConcern::class, 'bus_no');
     }
 }

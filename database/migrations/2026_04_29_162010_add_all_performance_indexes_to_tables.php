@@ -431,4 +431,17 @@ return new class extends Migration
         //
         // If rollback is required, drop indexes manually only if they exist.
     }
+
+    private function indexExists($table, $index)
+    {
+        $result = DB::selectOne('
+        SELECT COUNT(1) as count
+        FROM information_schema.statistics
+        WHERE table_schema = DATABASE()
+        AND table_name = ?
+        AND index_name = ?
+    ', [$table, $index]);
+
+        return $result->count > 0;
+    }
 };

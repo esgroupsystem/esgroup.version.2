@@ -38,11 +38,12 @@
                             <div class="row g-3">
                                 <div class="col-lg-5">
                                     <label class="form-label fw-semibold">Bus</label>
-                                    <select class="form-select form-select-sm bus-select" name="bus_no" required>
+                                    <select name="bus_no" class="form-select bus-select" required>
                                         <option value="">Select Bus</option>
                                         @foreach ($buses as $bus)
-                                            <option value="{{ $bus->body_number }}">
-                                                {{ $bus->display_name }}
+                                            <option value="{{ $bus->id }}">
+                                                {{ $bus->body_number }} - {{ $bus->plate_number }} - {{ $bus->name }}
+                                                - {{ $bus->garage }}
                                             </option>
                                         @endforeach
                                     </select>

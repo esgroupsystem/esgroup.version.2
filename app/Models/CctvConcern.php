@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class CctvConcern extends Model
 {
@@ -42,5 +43,10 @@ class CctvConcern extends Model
     public function usedItems()
     {
         return $this->hasMany(CctvConcernItem::class, 'cctv_concern_id');
+    }
+
+    public function bus(): BelongsTo
+    {
+        return $this->belongsTo(BusDetail::class, 'bus_no');
     }
 }

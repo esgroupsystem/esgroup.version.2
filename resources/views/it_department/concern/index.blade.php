@@ -217,7 +217,11 @@
 
                                         <td>
                                             <div class="text-primary fw-semi-bold bus-text">
-                                                {{ $busDisplayMap[$jo->bus_no] ?? $jo->bus_no }}
+                                                {{ $jo->bus?->body_number ?? '—' }}
+                                                <div class="fs-11 text-600">
+                                                    {{ $jo->bus?->plate_number ?? 'No plate' }} -
+                                                    {{ $jo->bus?->name ?? 'No name' }}
+                                                </div>
                                             </div>
                                         </td>
 

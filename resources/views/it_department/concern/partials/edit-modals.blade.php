@@ -56,7 +56,8 @@
                                         <label class="form-label fw-semibold">Bus</label>
                                         <input type="text"
                                             class="form-control form-control-sm bg-200 text-700 border-0"
-                                            value="{{ $busDisplayMap[$jo->bus_no] ?? $jo->bus_no }}" readonly>
+                                            value="{{ $jo->bus?->body_number }} - {{ $jo->bus?->plate_number }} - {{ $jo->bus?->name }} - {{ $jo->bus?->garage }}"
+                                            readonly>
                                     </div>
 
                                     <div class="col-lg-4">

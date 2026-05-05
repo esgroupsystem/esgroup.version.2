@@ -47,17 +47,23 @@ class CctvController extends Controller
                 return $bus;
             });
 
-        $busDisplayMap = $buses->pluck('display_name', 'body_number');
+        $busDisplayMap = $buses->pluck('display_name', 'id');
 
         $baseQuery = CctvConcern::query()
             ->with([
+                'bus:id,garage,name,body_number,plate_number',
                 'assignee:id,full_name',
                 'usedItems.inventoryItem:id,item_name,unit',
             ])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($x) use ($q) {
                     $x->where('jo_no', 'like', "%{$q}%")
-                        ->orWhere('bus_no', 'like', "%{$q}%")
+                        ->orWhereHas('bus', function ($bus) use ($q) {
+                            $bus->where('body_number', 'like', "%{$q}%")
+                                ->orWhere('plate_number', 'like', "%{$q}%")
+                                ->orWhere('name', 'like', "%{$q}%")
+                                ->orWhere('garage', 'like', "%{$q}%");
+                        })
                         ->orWhere('reported_by', 'like', "%{$q}%")
                         ->orWhere('issue_type', 'like', "%{$q}%")
                         ->orWhere('problem_details', 'like', "%{$q}%");
@@ -149,7 +155,7 @@ class CctvController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'bus_no' => 'required|string|max:50',
+            'bus_no' => 'required|exists:bus_details,id',
             'issue_type' => 'required|string|max:80',
             'problem_details' => 'required|string',
             'status' => 'required|string|max:30',
@@ -383,10 +389,10 @@ class CctvController extends Controller
         $status = trim((string) $request->get('status', ''));
 
         $busDisplayMap = BusDetail::query()
-            ->get(['body_number', 'plate_number', 'name'])
+            ->get(['id', 'body_number', 'plate_number', 'name'])
             ->mapWithKeys(function ($bus) {
                 return [
-                    $bus->body_number => implode(' - ', array_filter([
+                    $bus->id => implode(' - ', array_filter([
                         $bus->body_number,
                         $bus->plate_number,
                         $bus->name,
@@ -396,13 +402,19 @@ class CctvController extends Controller
 
         $jobOrders = CctvConcern::query()
             ->with([
+                'bus:id,garage,name,body_number,plate_number',
                 'assignee:id,full_name',
                 'usedItems.inventoryItem:id,item_name,unit,brand,model',
             ])
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($x) use ($q) {
                     $x->where('jo_no', 'like', "%{$q}%")
-                        ->orWhere('bus_no', 'like', "%{$q}%")
+                        ->orWhereHas('bus', function ($bus) use ($q) {
+                            $bus->where('body_number', 'like', "%{$q}%")
+                                ->orWhere('plate_number', 'like', "%{$q}%")
+                                ->orWhere('name', 'like', "%{$q}%")
+                                ->orWhere('garage', 'like', "%{$q}%");
+                        })
                         ->orWhere('reported_by', 'like', "%{$q}%")
                         ->orWhere('issue_type', 'like', "%{$q}%")
                         ->orWhere('problem_details', 'like', "%{$q}%");
@@ -501,7 +513,11 @@ class CctvController extends Controller
             ->withQueryString();
 
         $allConcerns = CctvConcern::query()
-            ->with(['assignee:id,full_name', 'usedItems.inventoryItem:id,item_name,unit,brand'])
+            ->with([
+                'bus:id,garage,name,body_number,plate_number',
+                'assignee:id,full_name',
+                'usedItems.inventoryItem:id,item_name,unit,brand',
+            ])
             ->whereIn('status', ['Open', 'In Progress', 'Fixed', 'Closed'])
             ->get();
 
@@ -511,8 +527,8 @@ class CctvController extends Controller
 
         $collection = $buses->getCollection()
             ->map(function ($bus) use ($concernsByBus, $allConcernsByBus, $issueColumns) {
-                $busConcerns = $concernsByBus->get($bus->body_number, collect());
-                $allBusConcerns = $allConcernsByBus->get($bus->body_number, collect());
+                $busConcerns = $concernsByBus->get($bus->id, collect());
+                $allBusConcerns = $allConcernsByBus->get($bus->id, collect());
 
                 $bus->display_name = implode(' - ', array_filter([
                     $bus->body_number,
@@ -567,8 +583,12 @@ class CctvController extends Controller
         ]));
 
         $allConcernsBase = CctvConcern::query()
-            ->with(['assignee:id,full_name', 'usedItems.inventoryItem:id,item_name,unit,brand'])
-            ->where('bus_no', $bus->body_number)
+            ->with([
+                'bus:id,garage,name,body_number,plate_number',
+                'assignee:id,full_name',
+                'usedItems.inventoryItem:id,item_name,unit,brand',
+            ])
+            ->where('bus_no', $bus->id)
             ->whereIn('status', ['Open', 'In Progress', 'Fixed', 'Closed']);
 
         $allConcerns = (clone $allConcernsBase)->latest()->get();
