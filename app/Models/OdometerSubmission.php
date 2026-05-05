@@ -12,6 +12,7 @@ class OdometerSubmission extends Model
         'new_odometer',
         'driver_name',
         'diesel_consumption',
+        'date_bus_deployed',
         'date',
         'time',
     ];

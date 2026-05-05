@@ -15,6 +15,7 @@ class OdometerController extends Controller
             'new_odometer' => 'required|numeric',
             'diesel_consumption' => 'required|numeric|min:0',
             'driver_name' => 'required|string',
+            'date_bus_deployed' => 'required|date',
             'date' => 'required|date',
             'time' => 'required',
         ]);
@@ -25,6 +26,7 @@ class OdometerController extends Controller
             'new_odometer' => $request->new_odometer,
             'diesel_consumption' => $request->diesel_consumption,
             'driver_name' => $request->driver_name,
+            'date_bus_deployed' => $request->date_bus_deployed,
             'date' => $request->date,
             'time' => $request->time,
         ]);
