@@ -237,7 +237,7 @@ class TicketController extends Controller
                 'direction' => ['nullable', 'string', 'max:255'],
                 'driver_name' => ['nullable', 'string', 'max:255'],
                 'conductor_name' => ['nullable', 'string', 'max:255'],
-                'files.*' => ['nullable', 'file', 'max:5120'],
+                'files.*' => ['required', 'file', 'max:1024000'],
             ]);
 
             $user = Auth::user();
@@ -272,7 +272,15 @@ class TicketController extends Controller
                 ]);
 
                 foreach ($request->file('files', []) as $upload) {
+                    if (! $upload->isValid()) {
+                        continue;
+                    }
+
                     $stored = $upload->store("joborders/{$job->id}", 'public');
+
+                    if (! $stored || ! Storage::disk('public')->exists($stored)) {
+                        continue;
+                    }
 
                     JobOrderFile::create([
                         'job_id' => $job->id,
@@ -405,7 +413,15 @@ class TicketController extends Controller
         $files = $request->file('files', []);
 
         foreach ($files as $upload) {
+            if (! $upload->isValid()) {
+                continue;
+            }
+
             $stored = $upload->store("joborders/{$job->id}", 'public');
+
+            if (! $stored || ! Storage::disk('public')->exists($stored)) {
+                continue;
+            }
 
             JobOrderFile::create([
                 'job_id' => $job->id,
