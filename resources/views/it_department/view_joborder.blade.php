@@ -387,36 +387,50 @@
                                 <div class="col-md-4 mb-3">
                                     <div class="border rounded p-2 text-center bg-light">
 
-                                        {{-- ✅ VIDEO (MP4 works in browser) --}}
+                                        {{-- VIDEO --}}
                                         @if (in_array($ext, ['mp4', 'webm', 'ogg']))
                                             <video width="100%" controls>
                                                 <source src="{{ $url }}" type="video/{{ $ext }}">
                                             </video>
 
-                                            {{-- ⚠️ AVI (not supported in browser) --}}
+                                            <a href="{{ $url }}" download="{{ $file->file_name }}"
+                                                class="btn btn-sm btn-primary mt-2">
+                                                Download
+                                            </a>
+
+                                            {{-- AVI --}}
                                         @elseif($ext === 'avi')
                                             <i class="fas fa-file-video fa-2x text-warning mb-2"></i>
                                             <p>{{ $file->file_name }}</p>
-                                            <a href="{{ $url }}" target="_blank"
+
+                                            <a href="{{ $url }}" download="{{ $file->file_name }}"
                                                 class="btn btn-sm btn-primary">
-                                                Open / Download
+                                                Download
                                             </a>
+
                                             <small class="d-block text-muted mt-1">
-                                                AVI not supported in browser
+                                                Not supported in browser
                                             </small>
 
-                                            {{-- 🖼️ IMAGE --}}
+                                            {{-- IMAGE --}}
                                         @elseif(in_array($ext, ['jpg', 'jpeg', 'png', 'gif']))
-                                            <a href="{{ $url }}" target="_blank">
-                                                <img src="{{ $url }}" class="img-fluid rounded mb-2">
-                                                <p class="mb-0">{{ $file->file_name }}</p>
+                                            <img src="{{ $url }}" class="img-fluid rounded mb-2">
+
+                                            <p class="mb-0">{{ $file->file_name }}</p>
+
+                                            <a href="{{ $url }}" download="{{ $file->file_name }}"
+                                                class="btn btn-sm btn-success mt-2">
+                                                Download
                                             </a>
 
-                                            {{-- 📄 OTHER FILES --}}
+                                            {{-- OTHER --}}
                                         @else
-                                            <a href="{{ $url }}" target="_blank">
-                                                <i class="fas fa-file fa-2x text-primary mb-2"></i>
-                                                <p class="mb-0">{{ $file->file_name }}</p>
+                                            <i class="fas fa-file fa-2x text-primary mb-2"></i>
+                                            <p class="mb-0">{{ $file->file_name }}</p>
+
+                                            <a href="{{ $url }}" download="{{ $file->file_name }}"
+                                                class="btn btn-sm btn-secondary mt-2">
+                                                Download
                                             </a>
                                         @endif
 
