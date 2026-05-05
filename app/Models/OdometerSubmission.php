@@ -16,4 +16,9 @@ class OdometerSubmission extends Model
         'date',
         'time',
     ];
+
+    public function busDetail()
+    {
+        return $this->belongsTo(BusDetail::class);
+    }
 }

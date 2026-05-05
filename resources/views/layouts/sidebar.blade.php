@@ -74,6 +74,15 @@
                             </li>
                         @endrole
 
+                        @role('Developer', 'IT Head', 'Maintenance Engineer')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('odometer-index*') ? 'active' : '' }}"
+                                href="{{ route('odometer.index') }}">
+                                    Odometer Monitoring
+                            </a>
+                        </li>
+                        @endrole
+
                     </ul>
                 </li>
 
@@ -427,7 +436,7 @@
 
 
                 {{-- ======================================================= --}}
-                {{-- ================= LABEL Maintenance ================= --}}
+                {{-- ================= MAINTENANCE ================= --}}
                 {{-- ======================================================= --}}
                 @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
                     <li class="nav-item">

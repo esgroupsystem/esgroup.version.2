@@ -18,6 +18,7 @@ use App\Http\Controllers\IT_Department\CctvController;
 use App\Http\Controllers\IT_Department\TicketController;
 use App\Http\Controllers\Maintenance\CategoryController;
 use App\Http\Controllers\Maintenance\ItemsController;
+use App\Http\Controllers\Maintenance\OdometerReportController;
 use App\Http\Controllers\Maintenance\PartsOutController;
 use App\Http\Controllers\Maintenance\PurchaseReceiveController;
 use App\Http\Controllers\Maintenance\ReceivingController;
@@ -505,6 +506,17 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
         Route::resource('stock-transfers', StockTransferController::class)
             ->only(['index', 'create', 'store', 'show']);
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Maintenance - Odometer Reports
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth', 'role:Developer,IT Head,Maintenance Engineer'])->group(function () {
+        Route::prefix('odometer')->name('odometer.')->controller(OdometerReportController::class)->group(function () {
+            Route::get('/index', 'index')->name('index');
+        });
     });
 
     /*
