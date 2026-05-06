@@ -53,8 +53,7 @@ class OdometerReportController extends Controller
                     'bus_details.garage',
                     'bus_details.name as bus_name',
                     'bus_details.body_number',
-                    'bus_details.plate_number',
-                    'bus_details.date_deployed'
+                    'bus_details.plate_number'
                 )
                 ->where('odometer_submissions.bus_detail_id', $busId)
                 ->whereBetween('odometer_submissions.date', [
@@ -93,7 +92,6 @@ class OdometerReportController extends Controller
                     'bus_name' => $row->bus_name,
                     'body_number' => $row->body_number,
                     'plate_number' => $row->plate_number,
-                    'date_deployed' => $row->date_deployed,
                     'date' => $row->date,
                     'time' => $row->time,
                     'driver_name' => $row->driver_name,
