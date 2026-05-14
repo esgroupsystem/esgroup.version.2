@@ -102,13 +102,16 @@
 
                 fetch(requestUrl, {
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
                         }
                     })
-                    .then(response => response.text())
-                    .then(html => {
-                        wrapper.innerHTML = html;
-                        bindPagination();
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            wrapper.innerHTML = data.html;
+                            bindPagination();
+                        }
                     })
                     .catch(error => console.error('Error loading transfers:', error));
             }
@@ -117,7 +120,11 @@
                 wrapper.querySelectorAll('.pagination a').forEach(link => {
                     link.addEventListener('click', function(e) {
                         e.preventDefault();
-                        loadTransfers(this.href);
+
+                        const url = new URL(this.href, window.location.origin);
+                        url.searchParams.set('search', input.value || '');
+
+                        loadTransfers(url.toString());
                     });
                 });
             }

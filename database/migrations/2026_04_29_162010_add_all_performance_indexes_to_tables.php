@@ -174,10 +174,6 @@ return new class extends Migration
             $table->index('garage');
             $table->index('status');
             $table->index('created_at');
-
-            $table->index('status');
-            $table->index('garage');
-            $table->index(['status', 'created_at']);
         });
 
         Schema::table('purchase_order_items', function (Blueprint $table) {

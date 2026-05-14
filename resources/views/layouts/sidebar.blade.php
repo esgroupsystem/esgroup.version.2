@@ -75,12 +75,12 @@
                         @endrole
 
                         @role('Developer', 'IT Head', 'Maintenance Engineer')
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('odometer-index*') ? 'active' : '' }}"
-                                href="{{ route('odometer.index') }}">
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('odometer-index*') ? 'active' : '' }}"
+                                    href="{{ route('odometer.index') }}">
                                     Odometer Monitoring
-                            </a>
-                        </li>
+                                </a>
+                            </li>
                         @endrole
 
                     </ul>
@@ -438,7 +438,7 @@
                 {{-- ======================================================= --}}
                 {{-- ================= MAINTENANCE ================= --}}
                 {{-- ======================================================= --}}
-                @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
+                @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder', 'Maintenance Viewer')
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -462,7 +462,10 @@
                             </div>
                         </a>
                     </li>
+                @endrole
 
+
+                @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('buses*') ? 'active' : '' }}"
                             href="{{ route('buses.index') }}">
@@ -474,10 +477,22 @@
                             </div>
                         </a>
                     </li>
-                    {{-- ===================================================== --}}
-                    {{-- ================= LABEL Inventory ================= --}}
-                    {{-- ===================================================== --}}
 
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->is('allbus*') ? 'active' : '' }}"
+                            href="{{ route('allbus.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-bus"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Bus List</span>
+                            </div>
+                        </a>
+                    </li>
+                @endrole
+
+
+                @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder', 'Maintenance Viewer')
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -501,7 +516,10 @@
                             </div>
                         </a>
                     </li>
+                @endrole
 
+
+                @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
                     {{-- Stock Transfer --}}
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('stock-transfers*') ? 'active' : '' }}"

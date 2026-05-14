@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Accounting\AccountingController;
+use App\Http\Controllers\AllBusController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\BusDetailController;
 use App\Http\Controllers\ClaimController;
@@ -436,7 +437,9 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Maintenance (Request, Category, Items)
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth', 'role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder'])->group(function () {
+    Route::middleware(['auth', 'role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder,Maintenance Viewer'])->group(function () {
+
+        Route::resource('allbus', AllBusController::class);
 
         Route::prefix('request')->name('request.')->controller(RequestController::class)->group(function () {
             Route::get('/index', 'index')->name('index');
@@ -500,7 +503,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         });
     });
 
-    Route::middleware(['auth', 'role:Developer,IT Head,Maintenance Head,Maintenance Engineer,Maintenance Encoder'])->group(function () {
+    Route::middleware(['auth', 'role:Developer,IT Head,Maintenance Head,Maintenance Engineer,Maintenance Encoder,Maintenance Viewer'])->group(function () {
         Route::get('stock-transfers/search-products', [StockTransferController::class, 'searchProducts'])
             ->name('stock-transfers.search-products');
 
@@ -513,7 +516,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Maintenance - Odometer Reports
     |--------------------------------------------------------------------------
     */
-    Route::middleware(['auth', 'role:Developer,IT Head,Maintenance Engineer'])->group(function () {
+    Route::middleware(['auth', 'role:Developer,IT Head,Maintenance Engineer,Maintenance Viewer'])->group(function () {
         Route::prefix('odometer')->name('odometer.')->controller(OdometerReportController::class)->group(function () {
             Route::get('/index', 'index')->name('index');
         });
@@ -526,7 +529,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     */
     Route::model('order', App\Models\PurchaseOrder::class);
 
-    Route::middleware(['auth', 'role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder'])
+    Route::middleware(['auth', 'role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder,Maintenance Viewer'])
         ->prefix('purchase')->name('purchase.')
         ->controller(AccountingController::class)->group(function () {
             Route::get('/index', 'index')->name('index');

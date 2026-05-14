@@ -53,18 +53,30 @@
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">Vehicle</label>
-                                <select name="vehicle_id" class="form-select">
+
+                                <select name="vehicle_id" class="form-select js-choice"
+                                    data-options='{
+            "searchEnabled": true,
+            "itemSelectText": "",
+            "placeholder": true
+        }'>
+
                                     <option value="">Select Vehicle</option>
+
                                     @foreach ($vehicles as $vehicle)
                                         <option value="{{ $vehicle->id }}"
                                             {{ old('vehicle_id') == $vehicle->id ? 'selected' : '' }}>
+
                                             {{ $vehicle->plate_number ?? 'N/A' }}
+
                                             @if (!empty($vehicle->body_number))
                                                 | {{ $vehicle->body_number }}
                                             @endif
+
                                             @if (!empty($vehicle->name))
                                                 | {{ $vehicle->name }}
                                             @endif
+
                                         </option>
                                     @endforeach
                                 </select>

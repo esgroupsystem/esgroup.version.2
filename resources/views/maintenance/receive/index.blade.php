@@ -45,12 +45,17 @@
                         </div>
 
                         <div class="d-flex gap-2">
+
                             <a href="{{ route('items.dashboard') }}" class="btn btn-falcon-default btn-sm">
                                 <span class="fas fa-chart-bar me-1"></span> Stock Dashboard
                             </a>
-                            <a href="{{ route('receivings.create') }}" class="btn btn-primary btn-sm">
-                                <span class="fas fa-plus me-1"></span> New Receiving
-                            </a>
+
+                            @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
+                                <a href="{{ route('receivings.create') }}" class="btn btn-primary btn-sm">
+                                    <span class="fas fa-plus me-1"></span> New Receiving
+                                </a>
+                            @endrole
+
                         </div>
                     </div>
                 </div>
