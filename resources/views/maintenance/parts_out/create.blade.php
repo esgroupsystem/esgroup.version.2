@@ -54,29 +54,19 @@
                             <div class="col-md-4">
                                 <label class="form-label">Vehicle</label>
 
-                                <select name="vehicle_id" class="form-select js-choice"
-                                    data-options='{
-            "searchEnabled": true,
-            "itemSelectText": "",
-            "placeholder": true
-        }'>
-
+                                <select name="vehicle_id" id="vehicle_id" class="form-select">
                                     <option value="">Select Vehicle</option>
 
                                     @foreach ($vehicles as $vehicle)
                                         <option value="{{ $vehicle->id }}"
                                             {{ old('vehicle_id') == $vehicle->id ? 'selected' : '' }}>
-
                                             {{ $vehicle->plate_number ?? 'N/A' }}
-
                                             @if (!empty($vehicle->body_number))
                                                 | {{ $vehicle->body_number }}
                                             @endif
-
                                             @if (!empty($vehicle->name))
                                                 | {{ $vehicle->name }}
                                             @endif
-
                                         </option>
                                     @endforeach
                                 </select>
@@ -245,6 +235,7 @@
             padding: 8px 10px;
             min-height: 38px;
         }
+
     </style>
 
     <script>
@@ -522,3 +513,50 @@
         });
     </script>
 @endsection
+
+@push('scripts')
+    <script>
+        window.addEventListener('load', function() {
+
+            if (typeof jQuery === 'undefined' || typeof jQuery.fn.select2 === 'undefined') {
+                console.error('Select2 not loaded');
+                return;
+            }
+
+            const vehicleSelect = $('#vehicle_id');
+
+            if (vehicleSelect.hasClass('select2-hidden-accessible')) {
+                vehicleSelect.select2('destroy');
+            }
+
+            vehicleSelect.select2({
+                width: '100%',
+                placeholder: 'Select Vehicle',
+                allowClear: false,
+                dropdownParent: vehicleSelect.closest('.col-md-4'),
+
+                matcher: function(params, data) {
+
+                    if ($.trim(params.term) === '') {
+                        return data;
+                    }
+
+                    if (!data.text) {
+                        return null;
+                    }
+
+                    const term = params.term
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]/g, '');
+
+                    const text = data.text
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]/g, '');
+
+                    return text.includes(term) ? data : null;
+                }
+            });
+
+        });
+    </script>
+@endpush
