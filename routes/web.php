@@ -439,7 +439,8 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     */
     Route::middleware(['auth', 'role:Developer,IT Head,Operation Manager,Maintenance Engineer,Maintenance Encoder,Maintenance Viewer'])->group(function () {
 
-        Route::resource('allbus', AllBusController::class);
+        Route::resource('allbus', AllBusController::class)
+            ->parameters(['allbus' => 'bus']);
 
         Route::prefix('request')->name('request.')->controller(RequestController::class)->group(function () {
             Route::get('/index', 'index')->name('index');

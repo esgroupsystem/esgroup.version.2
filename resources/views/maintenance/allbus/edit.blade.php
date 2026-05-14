@@ -13,8 +13,10 @@
                 </div>
 
                 <div class="card-body">
-                    <form action="{{ route('allbus.update', $bus->id) }}" method="POST">
+                    <form action="{{ route('allbus.update', ['bus' => $bus->id]) }}" method="POST">
+                        @csrf
                         @method('PUT')
+
                         @include('maintenance.allbus._form', ['bus' => $bus])
                     </form>
                 </div>

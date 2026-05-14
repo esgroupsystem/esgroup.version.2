@@ -21,13 +21,13 @@
                     <td class="text-end">
                         <div class="d-flex justify-content-end gap-2">
 
-                            <a href="{{ route('allbus.edit', $bus->id) }}" class="btn btn-falcon-primary btn-sm">
+                            <a href="{{ route('allbus.edit', ['bus' => $bus->id]) }}"
+                                class="btn btn-falcon-primary btn-sm">
                                 <span class="fas fa-edit"></span>
                             </a>
 
-                            <form action="{{ route('allbus.destroy', $bus->id) }}" method="POST" class="d-inline"
-                                onsubmit="return confirm('Delete this bus?')">
-
+                            <form action="{{ route('allbus.destroy', ['bus' => $bus->id]) }}" method="POST"
+                                class="d-inline" onsubmit="return confirm('Delete this bus?')">
                                 @csrf
                                 @method('DELETE')
 
@@ -53,4 +53,3 @@
 <div class="my-3 d-flex justify-content-end px-3">
     {{ $buses->links('pagination.custom') }}
 </div>
-

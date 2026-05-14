@@ -58,40 +58,34 @@ class AllBusController extends Controller
             ->with('success', 'Bus added successfully.');
     }
 
-    public function edit(BusDetail $allbus)
+    public function edit(BusDetail $bus)
     {
-        return view('maintenance.allbus.edit', [
-            'bus' => $allbus,
-        ]);
+        return view('maintenance.allbus.edit', compact('bus'));
     }
 
-    public function update(Request $request, BusDetail $allbus)
+    public function update(Request $request, BusDetail $bus)
     {
         $request->validate([
             'garage' => 'required|string|max:255',
             'name' => 'required|string|max:255',
-            'body_number' => 'required|string|max:255|unique:bus_details,body_number,'.$allbus->id,
-            'plate_number' => 'required|string|max:255|unique:bus_details,plate_number,'.$allbus->id,
+            'body_number' => 'required|string|max:255|unique:bus_details,body_number,'.$bus->id,
+            'plate_number' => 'required|string|max:255|unique:bus_details,plate_number,'.$bus->id,
         ]);
 
-        $allbus->update($request->only([
+        $bus->update($request->only([
             'garage',
             'name',
             'body_number',
             'plate_number',
         ]));
 
-        return redirect()
-            ->route('allbus.index')
-            ->with('success', 'Bus updated successfully.');
+        return redirect()->route('allbus.index')->with('success', 'Bus updated successfully.');
     }
 
-    public function destroy(BusDetail $allbus)
+    public function destroy(BusDetail $bus)
     {
-        $allbus->delete();
+        $bus->delete();
 
-        return redirect()
-            ->route('allbus.index')
-            ->with('success', 'Bus deleted successfully.');
+        return redirect()->route('allbus.index')->with('success', 'Bus deleted successfully.');
     }
 }
