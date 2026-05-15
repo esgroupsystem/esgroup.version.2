@@ -60,9 +60,24 @@
 
                     {{-- Actions --}}
                     <td class="text-center">
-                        <a href="{{ route('employees.staff.show', $employee->id) }}" class="btn btn-sm btn-info me-1">
+                        {{-- View --}}
+                        <a href="{{ route('employees.staff.show', $employee->id) }}" class="btn btn-sm btn-info me-1"
+                            data-bs-toggle="tooltip" title="View Employee">
                             <i class="fas fa-eye"></i>
                         </a>
+
+                        {{-- Delete --}}
+                        <form action="{{ route('employees.staff.destroy', $employee->id) }}" method="POST"
+                            class="d-inline"
+                            onsubmit="return confirm('Are you sure you want to delete this employee?')">
+                            @csrf
+                            @method('DELETE')
+
+                            <button type="submit" class="btn btn-sm btn-danger" data-bs-toggle="tooltip"
+                                title="Delete Employee">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </form>
                     </td>
                 </tr>
             @empty

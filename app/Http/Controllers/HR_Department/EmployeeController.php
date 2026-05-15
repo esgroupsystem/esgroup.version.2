@@ -771,24 +771,16 @@ class EmployeeController extends Controller
     /* ==========================================================
         DELETE EMPLOYEE
     ========================================================== */
-    public function destroy(Employee $employee)
+    public function destroy($id)
     {
         try {
-            $this->logEmployee($employee, 'deleted_employee', [
-                'employee_id' => $employee->employee_id,
-                'full_name' => $employee->full_name,
-            ]);
+            $employee = Employee::findOrFail($id);
 
             $employee->delete();
 
-            flash('Employee deleted!')->success();
-
-            return redirect()->route('employees.staff.show', $employee->id);
-
+            return back()->with('success', 'Employee deleted successfully.');
         } catch (\Throwable $e) {
-            flash('Unable to delete employee.')->error();
-
-            return redirect()->route('employees.staff.show', $employee->id);
+            return back()->with('error', 'Unable to delete employee.');
         }
     }
 

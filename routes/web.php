@@ -196,7 +196,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::post('/store', 'store')->name('staff.store');
                 Route::get('/employee/check-permanent-id', 'checkPermanentId')->name('staff.checkPermanentId');
 
-                Route::delete('/{employee}', 'destroy')->name('staff.destroy');
+                Route::delete('/{id}', 'destroy')->name('staff.destroy');
                 Route::get('/employee/{employee}', 'show')->name('staff.show');
                 Route::put('/employee/{employee}', 'update')->name('update');
                 Route::post('/employee/{employee}/201', 'updateAssets')->name('assets.update');
