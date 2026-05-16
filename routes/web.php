@@ -520,6 +520,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     Route::middleware(['auth', 'role:Developer,IT Head,Maintenance Engineer,Maintenance Viewer'])->group(function () {
         Route::prefix('odometer')->name('odometer.')->controller(OdometerReportController::class)->group(function () {
             Route::get('/index', 'index')->name('index');
+            Route::post('/maintenance/diesel-stock', 'storeDieselStock')->name('diesel-stock.store');
         });
     });
 

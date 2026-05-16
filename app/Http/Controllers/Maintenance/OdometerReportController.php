@@ -4,22 +4,41 @@ namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
 use App\Models\BusDetail;
+use App\Models\DieselStock;
 use App\Models\OdometerSubmission;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class OdometerReportController extends Controller
 {
     public function index(Request $request)
     {
         $busId = $request->filled('bus_detail_id') ? (int) $request->bus_detail_id : null;
+
+        $filterType = $request->get('filter_type', 'month'); // month, day, range
         $month = $request->month ?: now()->format('Y-m');
+        $selectedDate = $request->date ?: now()->toDateString();
+        $dateFrom = $request->date_from ?: now()->startOfMonth()->toDateString();
+        $dateTo = $request->date_to ?: now()->endOfMonth()->toDateString();
+
+        if ($filterType === 'day') {
+            $startDate = Carbon::parse($selectedDate)->startOfDay();
+            $endDate = Carbon::parse($selectedDate)->endOfDay();
+            $periodLabel = $startDate->format('F d, Y');
+        } elseif ($filterType === 'range') {
+            $startDate = Carbon::parse($dateFrom)->startOfDay();
+            $endDate = Carbon::parse($dateTo)->endOfDay();
+            $periodLabel = $startDate->format('M d, Y').' - '.$endDate->format('M d, Y');
+        } else {
+            $monthDate = Carbon::createFromFormat('Y-m-d', $month.'-01');
+            $startDate = $monthDate->copy()->startOfMonth();
+            $endDate = $monthDate->copy()->endOfMonth();
+            $periodLabel = $monthDate->format('F Y');
+        }
+
         $lastChangeOilKm = $request->filled('last_change_oil') ? (int) $request->last_change_oil : null;
         $changeOilEvery = 10000;
-
-        $monthDate = Carbon::createFromFormat('Y-m-d', $month.'-01');
-        $startOfMonth = $monthDate->copy()->startOfMonth();
-        $endOfMonth = $monthDate->copy()->endOfMonth();
 
         $buses = BusDetail::query()
             ->select('id', 'garage', 'name', 'body_number', 'plate_number')
@@ -34,7 +53,7 @@ class OdometerReportController extends Controller
             $selectedBus = BusDetail::find($busId);
 
             $lastOdometer = OdometerSubmission::where('bus_detail_id', $busId)
-                ->whereDate('date', '<', $startOfMonth->toDateString())
+                ->whereDate('date', '<', $startDate->toDateString())
                 ->orderByDesc('date')
                 ->orderByDesc('time')
                 ->orderByDesc('id')
@@ -57,8 +76,8 @@ class OdometerReportController extends Controller
                 )
                 ->where('odometer_submissions.bus_detail_id', $busId)
                 ->whereBetween('odometer_submissions.date', [
-                    $startOfMonth->toDateString(),
-                    $endOfMonth->toDateString(),
+                    $startDate->toDateString(),
+                    $endDate->toDateString(),
                 ])
                 ->orderBy('odometer_submissions.date')
                 ->orderBy('odometer_submissions.time')
@@ -105,13 +124,82 @@ class OdometerReportController extends Controller
             });
         }
 
+        $totalKm = $records->sum('total_km_run');
+        $totalLiters = $records->sum('diesel_consumption');
+        $averageKmPerLiter = $totalLiters > 0 ? $totalKm / $totalLiters : 0;
+
+        $overallDieselIn = DieselStock::where('type', 'in')->sum('liters');
+        $overallDieselOut = DieselStock::where('type', 'out')->sum('liters');
+        $overallDieselAdjustment = DieselStock::where('type', 'adjustment')->sum('liters');
+        $currentDieselStock = $overallDieselIn - $overallDieselOut + $overallDieselAdjustment;
+
+        $periodDieselIn = DieselStock::where('type', 'in')
+            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->sum('liters');
+
+        $periodDieselOut = DieselStock::where('type', 'out')
+            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->sum('liters');
+
+        $periodDieselAdjustment = DieselStock::where('type', 'adjustment')
+            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->sum('liters');
+
+        $dieselStockMovements = DieselStock::with(['bus:id,garage,name,body_number,plate_number', 'encoder:id,full_name'])
+            ->when($busId, function ($query) use ($busId) {
+                $query->where(function ($q) use ($busId) {
+                    $q->where('bus_detail_id', $busId)
+                        ->orWhereNull('bus_detail_id');
+                });
+            })
+            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->get();
+
         return view('maintenance.odometer.report', compact(
             'records',
             'buses',
             'busId',
-            'month',
             'selectedBus',
-            'lastChangeOilKm'
+            'lastChangeOilKm',
+            'filterType',
+            'month',
+            'selectedDate',
+            'dateFrom',
+            'dateTo',
+            'periodLabel',
+            'totalKm',
+            'totalLiters',
+            'averageKmPerLiter',
+            'currentDieselStock',
+            'periodDieselIn',
+            'periodDieselOut',
+            'periodDieselAdjustment',
+            'dieselStockMovements'
         ));
+    }
+
+    public function storeDieselStock(Request $request)
+    {
+        $validated = $request->validate([
+            'date' => ['required', 'date'],
+            'type' => ['required', 'in:in,out,adjustment'],
+            'liters' => ['required', 'numeric', 'min:0.01'],
+            'unit_cost' => ['nullable', 'numeric', 'min:0'],
+            'bus_detail_id' => ['nullable', 'exists:bus_details,id'],
+            'reference_no' => ['nullable', 'string', 'max:255'],
+            'remarks' => ['nullable', 'string'],
+        ]);
+
+        $validated['total_cost'] = ! empty($validated['unit_cost'])
+            ? $validated['liters'] * $validated['unit_cost']
+            : null;
+
+        $validated['encoded_by'] = Auth::id();
+
+        DieselStock::create($validated);
+
+        return back()->with('success', 'Diesel stock record saved successfully.');
     }
 }
