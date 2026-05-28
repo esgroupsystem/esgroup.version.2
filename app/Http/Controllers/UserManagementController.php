@@ -44,26 +44,37 @@ class UserManagementController extends Controller
             'location_id' => 'nullable|exists:locations,id',
         ]);
 
-        $autoPassword = $this->generatePassword($request->full_name);
+        $autoPassword = $this->generatePassword(
+            $request->full_name
+        );
 
-        User::create([
+        $user = User::create([
             'full_name' => $request->full_name,
             'username' => $request->username,
             'email' => $request->email,
-            'role' => $request->role,
             'location_id' => $request->location_id,
             'password' => Hash::make($autoPassword),
             'account_status' => 'active',
             'must_change_password' => true,
         ]);
 
-        flash('User created successfully!')->success();
+        $user->assignRole(
+            $request->role
+        );
 
-        return redirect()->route('authentication.users.index');
+        flash('User created successfully!')
+            ->success();
+
+        return redirect()
+            ->route(
+                'authentication.users.index'
+            );
     }
 
-    public function update(Request $request, $id)
-    {
+    public function update(
+        Request $request,
+        $id
+    ) {
         $user = User::findOrFail($id);
 
         $request->validate([
@@ -76,17 +87,26 @@ class UserManagementController extends Controller
         ]);
 
         $user->update([
+
             'full_name' => $request->full_name,
             'username' => $request->username,
             'email' => $request->email,
-            'role' => $request->role,
             'location_id' => $request->location_id,
             'account_status' => $request->account_status,
+
         ]);
 
-        flash('User updated successfully!')->success();
+        $user->syncRoles([
+            $request->role,
+        ]);
 
-        return redirect()->route('authentication.users.index');
+        flash('User updated successfully!')
+            ->success();
+
+        return redirect()
+            ->route(
+                'authentication.users.index'
+            );
     }
 
     public function resetPassword(Request $request, $id)

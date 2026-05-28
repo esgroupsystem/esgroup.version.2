@@ -6,10 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens,
+        HasFactory,
+        HasRoles,
+        Notifiable;
 
     protected $fillable = [
         'username',
@@ -25,6 +29,20 @@ class User extends Authenticatable
         'must_change_password',
     ];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saved(function ($user) {
+
+            // Sync role column from Spatie role
+            $user->role =
+                $user->getRoleNames()->first();
+
+            $user->saveQuietly();
+        });
+    }
+
     protected $hidden = [
         'password',
         'remember_token',
@@ -36,23 +54,30 @@ class User extends Authenticatable
         'last_out' => 'datetime',
     ];
 
-    public function jobOrdersAssigned()
-    {
-        return $this->hasMany(JobOrder::class, 'job_assign_person');
-    }
-
-    public function jobOrdersCreated()
-    {
-        return $this->hasMany(JobOrder::class, 'created_by');
-    }
-
     public function location()
     {
         return $this->belongsTo(Location::class);
     }
 
-    public function role()
+    public function jobOrdersAssigned()
     {
-        return $this->belongsTo(Role::class);
+        return $this->hasMany(
+            JobOrder::class,
+            'job_assign_person'
+        );
+    }
+
+    public function jobOrdersCreated()
+    {
+        return $this->hasMany(
+            JobOrder::class,
+            'created_by'
+        );
+    }
+
+    // accessor
+    public function getRoleNameAttribute()
+    {
+        return $this->getRoleNames()->first();
     }
 }

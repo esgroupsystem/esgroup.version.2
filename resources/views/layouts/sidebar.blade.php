@@ -40,48 +40,55 @@
 
                     <ul class="nav collapse {{ request()->is('dashboard*') ? 'show' : '' }}" id="dashboardMenu">
 
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}"
-                                href="{{ route('dashboard.index') }}">
-                                Default
-                            </a>
-                        </li>
-                        @role('Developer', 'IT Head', 'Operation Manager')
+                        {{-- Default Dashboard --}}
+                        @can('dashboard.view')
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}"
+                                    href="{{ route('dashboard.index') }}">
+                                    Default
+                                </a>
+                            </li>
+                        @endcan
+
+                        {{-- HR Dashboard --}}
+                        @can('hr-dashboard.view')
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->is('dashboard/hr') ? 'active' : '' }}"
                                     href="{{ route('hr.dashboard') }}">
                                     Employees
                                 </a>
                             </li>
-                        @endrole
+                        @endcan
 
-                        @role('Developer', 'IT Head')
+                        {{-- IT Dashboard --}}
+                        @can('dashboard.it')
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->is('dashboard/it-department') ? 'active' : '' }}"
                                     href="{{ route('dashboard.itindex') }}">
                                     IT Department
                                 </a>
                             </li>
-                        @endrole
+                        @endcan
 
-                        @role('Developer', 'IT Head', 'Operation Manager', 'Maintenance Head', 'Maintenance Engineer',
-                            'Maintenance Encoder')
+                        {{-- Maintenance Dashboard --}}
+                        @can('items.view')
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->is('maintenance/items/dashboard') ? 'active' : '' }}"
                                     href="{{ route('items.dashboard') }}">
                                     Maintenance Stock
                                 </a>
                             </li>
-                        @endrole
+                        @endcan
 
-                        @role('Developer', 'IT Head', 'Maintenance Engineer')
+                        {{-- Odometer --}}
+                        @can('odometer.view')
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->is('odometer-index*') ? 'active' : '' }}"
                                     href="{{ route('odometer.index') }}">
                                     Odometer Monitoring
                                 </a>
                             </li>
-                        @endrole
+                        @endcan
 
                     </ul>
                 </li>
@@ -91,7 +98,8 @@
                 {{-- ================= IT Department ================= --}}
                 {{-- ========================================================= --}}
 
-                @role('Developer', 'IT Head', 'IT Officer', 'Operation Manager')
+                @canany(['tickets.view', 'cctv.view', 'it-inventory.view'])
+
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -103,59 +111,72 @@
                         </div>
                     </li>
 
-                    {{-- ✅ NEW BUS DASHBOARD --}}
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('concern.cctv.bus-status') ? 'active' : '' }}"
-                            href="{{ route('concern.bus-status') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-bus"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Bus Dashboard</span>
-                            </div>
-                        </a>
-                    </li>
+                    {{-- Bus Dashboard --}}
+                    @can('cctv.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('concern.bus-status') ? 'active' : '' }}"
+                                href="{{ route('concern.bus-status') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-bus"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">Bus Dashboard</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('tickets/job-order') ? 'active' : '' }}"
-                            href="{{ route('tickets.joborder.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-ticket-alt"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Tickets Job Order</span>
-                            </div>
-                        </a>
-                    </li>
+                    @can('tickets.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('tickets/job-order') ? 'active' : '' }}"
+                                href="{{ route('tickets.joborder.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-ticket-alt"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">Tickets Job Order</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
-                            href="{{ route('concern.cctv.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-video"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">CCTV Concern</span>
-                            </div>
-                        </a>
-                    </li>
+                    @can('cctv.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
+                                href="{{ route('concern.cctv.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-video"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">CCTV Concern</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('it-inventory.*') ? 'active' : '' }}"
-                            href="{{ route('it-inventory.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon"><i class="fas fa-laptop-house"></i></span>
-                                <span class="nav-link-text ps-1">IT Inventory</span>
-                            </div>
-                        </a>
-                    </li>
-                @endrole
+                    @can('it-inventory.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('it-inventory.*') ? 'active' : '' }}"
+                                href="{{ route('it-inventory.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <i class="fas fa-laptop-house"></i>
+                                    </span>
+                                    <span class="nav-link-text ps-1">IT Inventory</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
+
+                @endcanany
+
 
                 {{-- =============================================== --}}
                 {{-- ================= EMPLOYEES ================= --}}
                 {{-- =============================================== --}}
 
-                @role('Developer', 'IT Head', 'HR Head', 'HR Officer')
+                @canany(['employees.view', 'departments.view', 'violations.view'])
+
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -166,10 +187,12 @@
                             </div>
                         </div>
                     </li>
+
                     <li class="nav-item">
                         <a class="nav-link dropdown-indicator {{ request()->is('employees*') ? 'active' : '' }}"
                             href="#employeesMenu" role="button" data-bs-toggle="collapse"
                             aria-expanded="{{ request()->is('employees*') ? 'true' : 'false' }}">
+
                             <div class="d-flex align-items-center">
                                 <span class="nav-link-icon">
                                     <span class="fas fa-users"></span>
@@ -180,37 +203,53 @@
 
                         <ul class="nav collapse {{ request()->is('employees*') ? 'show' : '' }}" id="employeesMenu">
 
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('employees') ? 'active' : '' }}"
-                                    href="{{ route('employees.staff.index') }}">
-                                    <span class="nav-link-text">Employee List</span>
-                                </a>
-                            </li>
+                            @can('employees.view')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('employees') ? 'active' : '' }}"
+                                        href="{{ route('employees.staff.index') }}">
+                                        <span class="nav-link-text">
+                                            Employee List
+                                        </span>
+                                    </a>
+                                </li>
+                            @endcan
 
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('employees/departments*') || request()->is('employees/positions*') ? 'active' : '' }}"
-                                    href="{{ route('employees.departments.index') }}">
-                                    <span class="nav-link-text">Department & Position</span>
-                                </a>
-                            </li>
+                            @can('departments.view')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('employees/departments*') || request()->is('employees/positions*') ? 'active' : '' }}"
+                                        href="{{ route('employees.departments.index') }}">
+                                        <span class="nav-link-text">
+                                            Department & Position
+                                        </span>
+                                    </a>
+                                </li>
+                            @endcan
 
-                            <li class="nav-item">
-                                <a class="nav-link {{ request()->is('employees/offenses*') ? 'active' : '' }}"
-                                    href="{{ route('violation.offenses.index') }}">
-                                    <span class="nav-link-text">HR Offenses</span>
-                                </a>
-                            </li>
+                            @can('violations.view')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->is('employees/offenses*') ? 'active' : '' }}"
+                                        href="{{ route('violation.offenses.index') }}">
+                                        <span class="nav-link-text">
+                                            HR Offenses
+                                        </span>
+                                    </a>
+                                </li>
+                            @endcan
 
                         </ul>
                     </li>
-                    {{-- ============================================== --}}
-                    {{-- ================= BENEFITS ================= --}}
-                    {{-- ============================================== --}}
 
+                @endcanany
+                {{-- ============================================== --}}
+                {{-- ================= BENEFITS ================= --}}
+                {{-- ============================================== --}}
+
+                @can('claims.view')
                     <li class="nav-item">
                         <a class="nav-link dropdown-indicator {{ request()->is('claims*') ? 'active' : '' }}"
                             href="#benefitsMenu" role="button" data-bs-toggle="collapse"
                             aria-expanded="{{ request()->is('claims*') ? 'true' : 'false' }}">
+
                             <div class="d-flex align-items-center">
                                 <span class="nav-link-icon">
                                     <span class="fas fa-hand-holding-heart"></span>
@@ -224,26 +263,31 @@
                             <li class="nav-item">
                                 <a class="nav-link {{ request()->is('claims*') ? 'active' : '' }}"
                                     href="{{ route('claims.index') }}">
-                                    <span class="nav-link-text">SSS / Maternity / Paternity</span>
+                                    <span class="nav-link-text">
+                                        SSS / Maternity / Paternity
+                                    </span>
                                 </a>
                             </li>
 
                             <li class="nav-item">
                                 <a class="nav-link disabled text-muted" href="#">
-                                    <span class="nav-link-text">Cash Advance (Coming Soon)</span>
+                                    <span class="nav-link-text">
+                                        Cash Advance (Coming Soon)
+                                    </span>
                                 </a>
                             </li>
 
                         </ul>
                     </li>
-                @endrole
+                @endcan
 
 
                 {{-- ======================================================= --}}
                 {{-- ================= Attendance Parent ================= --}}
                 {{-- ======================================================= --}}
 
-                @role('Developer', 'IT Head', 'IT Officer', 'HR Head', 'HR Officer')
+                @canany(['employee-leave.view', 'driver-leave.view', 'conductor-leave.view'])
+
                     <li class="nav-item">
                         <a class="nav-link dropdown-indicator {{ request()->is('attendance*') || request()->is('leave*') ? 'active' : '' }}"
                             href="#attendanceMenu" role="button" data-bs-toggle="collapse"
@@ -259,42 +303,55 @@
 
                         <ul class="nav collapse {{ request()->is('attendance*') || request()->is('leave*') ? 'show' : '' }}"
                             id="attendanceMenu">
+
                             <li class="nav-item">
+
                                 <a class="nav-link dropdown-indicator {{ request()->is('leave*') ? 'active' : '' }}"
-                                    href="#leaveMenu" role="button" data-bs-toggle="collapse"
-                                    aria-expanded="{{ request()->is('leave*') ? 'true' : 'false' }}">
-                                    <span class="nav-link-text">Leaves</span>
+                                    href="#leaveMenu" role="button" data-bs-toggle="collapse">
+
+                                    <span class="nav-link-text">
+                                        Leaves
+                                    </span>
                                 </a>
 
                                 <ul class="nav collapse {{ request()->is('leave*') ? 'show' : '' }}" id="leaveMenu">
 
-                                    <li class="nav-item">
-                                        <a class="nav-link {{ request()->is('leave/employee') ? 'active' : '' }}"
-                                            href="{{ route('employee-leave.employee.index') }}">
-                                            <span class="nav-link-text">Employee</span>
-                                        </a>
-                                    </li>
+                                    @can('employee-leave.view')
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="{{ route('employee-leave.employee.index') }}">
+                                                <span class="nav-link-text">Employee</span>
+                                            </a>
+                                        </li>
+                                    @endcan
 
-                                    <li class="nav-item">
-                                        <a class="nav-link {{ request()->is('leave/driver') ? 'active' : '' }}"
-                                            href="{{ route('driver-leave.driver.index') }}">
-                                            <span class="nav-link-text">Driver</span>
-                                        </a>
-                                    </li>
+                                    @can('driver-leave.view')
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="{{ route('driver-leave.driver.index') }}">
+                                                <span class="nav-link-text">Driver</span>
+                                            </a>
+                                        </li>
+                                    @endcan
 
-                                    <li class="nav-item">
-                                        <a class="nav-link {{ request()->is('leave/conductor') ? 'active' : '' }}"
-                                            href="{{ route('conductor-leave.conductor.index') }}">
-                                            <span class="nav-link-text">Conductor</span>
-                                        </a>
-                                    </li>
+                                    @can('conductor-leave.view')
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="{{ route('conductor-leave.conductor.index') }}">
+                                                <span class="nav-link-text">Conductor</span>
+                                            </a>
+                                        </li>
+                                    @endcan
+
                                 </ul>
                             </li>
+
                         </ul>
                     </li>
-                @endrole
 
-                @role('Developer', 'IT Head', 'IT Officer', 'HR Head', 'HR Officer')
+                @endcanany
+
+
+                {{-- ================= BIOMETRIC ================= --}}
+
+                @can('mirasol-logs.view')
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -309,31 +366,41 @@
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('mirasol-logs.*') ? 'active' : '' }}"
                             href="{{ route('mirasol-logs.index') }}">
+
                             <div class="d-flex align-items-center">
                                 <span class="nav-link-icon">
                                     <span class="fas fa-fingerprint"></span>
                                 </span>
-                                <span class="nav-link-text ps-1">Mirasol Biometrics</span>
+                                <span class="nav-link-text ps-1">
+                                    Mirasol Biometrics
+                                </span>
                             </div>
                         </a>
                     </li>
-                @endrole
+                @endcan
 
-                @role('Developer', 'IT Head', 'HR Head', 'HR Officer')
+
+                @can('manual-biometrics.view')
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('manual-biometrics.*') ? 'active' : '' }}"
                             href="{{ route('manual-biometrics.index') }}">
+
                             <div class="d-flex align-items-center">
                                 <span class="nav-link-icon">
                                     <span class="fas fa-keyboard"></span>
                                 </span>
-                                <span class="nav-link-text ps-1">Manual Biometrics</span>
+                                <span class="nav-link-text ps-1">
+                                    Manual Biometrics
+                                </span>
                             </div>
                         </a>
                     </li>
-                @endrole
-                @role('Developer', 'IT Head')
-                    {{-- Employee Schedule --}}
+                @endcan
+
+
+                {{-- Employee Schedule / Rates --}}
+
+                @canany(['payroll-plotting.view', 'employee-salaries.view'])
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -345,47 +412,60 @@
                         </div>
                     </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('payroll-plotting*') ? 'active' : '' }}"
-                            href="{{ route('payroll-plotting.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-calendar-alt"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Work Schedule</span>
-                            </div>
-                        </a>
-                    </li>
+                    @can('payroll-plotting.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('payroll-plotting*') ? 'active' : '' }}"
+                                href="{{ route('payroll-plotting.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-calendar-alt"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">
+                                        Work Schedule
+                                    </span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('payroll-employee-salaries.*') ? 'active' : '' }}"
-                            href="{{ route('payroll-employee-salaries.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-money-bill-wave"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Employee Rates</span>
-                            </div>
-                        </a>
-                    </li>
-                @endrole
+                    @can('employee-salaries.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('payroll-employee-salaries.*') ? 'active' : '' }}"
+                                href="{{ route('payroll-employee-salaries.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-money-bill-wave"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">
+                                        Employee Rates
+                                    </span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
+                @endcanany
 
-                @role('Developer', 'IT Head', 'HR Head', 'HR Officer')
+
+                @can('holidays.view')
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('holidays.*') ? 'active' : '' }}"
                             href="{{ route('holidays.index') }}">
-
                             <div class="d-flex align-items-center">
                                 <span class="nav-link-icon">
                                     <i class="fas fa-calendar-alt"></i>
                                 </span>
-                                <span class="nav-link-text ms-2">Holiday Calendar</span>
+                                <span class="nav-link-text ms-2">
+                                    Holiday Calendar
+                                </span>
                             </div>
                         </a>
                     </li>
-                @endrole
+                @endcan
 
-                @role('Developer', 'IT Head')
+
+                {{-- Payroll Process --}}
+
+                @canany(['payroll-attendance-adjustments.view', 'attendance-summary.view', 'payroll.view'])
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -397,48 +477,58 @@
                         </div>
                     </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('payroll-attendance-adjustments.*') ? 'active' : '' }}"
-                            href="{{ route('payroll-attendance-adjustments.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-edit"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Adjustment</span>
-                            </div>
-                        </a>
-                    </li>
+                    @can('payroll-attendance-adjustments.view')
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('payroll-attendance-adjustments.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-edit"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">
+                                        Adjustment
+                                    </span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('attendance-summary.*') ? 'active' : '' }}"
-                            href="{{ route('attendance-summary.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-clipboard-list"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Attendance Summary</span>
-                            </div>
-                        </a>
-                    </li>
+                    @can('attendance-summary.view')
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('attendance-summary.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-clipboard-list"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">
+                                        Attendance Summary
+                                    </span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('payroll.*') ? 'active' : '' }}"
-                            href="{{ route('payroll.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-money-check-alt"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Payroll</span>
-                            </div>
-                        </a>
-                    </li>
-                @endrole
+                    @can('payroll.view')
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('payroll.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-money-check-alt"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">
+                                        Payroll
+                                    </span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
+                @endcanany
 
 
                 {{-- ======================================================= --}}
                 {{-- ================= MAINTENANCE ================= --}}
                 {{-- ======================================================= --}}
-                @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder', 'Maintenance Viewer')
+
+                @can('parts-out.view')
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -450,7 +540,6 @@
                         </div>
                     </li>
 
-                    {{-- Parts Out --}}
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('parts-out*') ? 'active' : '' }}"
                             href="{{ route('parts-out.index') }}">
@@ -458,14 +547,16 @@
                                 <span class="nav-link-icon">
                                     <span class="fas fa-tools"></span>
                                 </span>
-                                <span class="nav-link-text ps-1">Parts Issuance</span>
+                                <span class="nav-link-text ps-1">
+                                    Parts Issuance
+                                </span>
                             </div>
                         </a>
                     </li>
-                @endrole
+                @endcan
 
 
-                @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
+                @can('buses.view')
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('buses*') ? 'active' : '' }}"
                             href="{{ route('buses.index') }}">
@@ -473,11 +564,16 @@
                                 <span class="nav-link-icon">
                                     <span class="fas fa-bus"></span>
                                 </span>
-                                <span class="nav-link-text ps-1">Vehicle History</span>
+                                <span class="nav-link-text ps-1">
+                                    Vehicle History
+                                </span>
                             </div>
                         </a>
                     </li>
+                @endcan
 
+
+                @can('allbus.view')
                     <li class="nav-item">
                         <a class="nav-link {{ request()->is('allbus*') ? 'active' : '' }}"
                             href="{{ route('allbus.index') }}">
@@ -485,14 +581,17 @@
                                 <span class="nav-link-icon">
                                     <span class="fas fa-bus"></span>
                                 </span>
-                                <span class="nav-link-text ps-1">Bus List</span>
+                                <span class="nav-link-text ps-1">
+                                    Bus List
+                                </span>
                             </div>
                         </a>
                     </li>
-                @endrole
+                @endcan
 
 
-                @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder', 'Maintenance Viewer')
+
+                @canany(['receivings.view', 'stock-transfers.view'])
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -504,41 +603,47 @@
                         </div>
                     </li>
 
-                    {{-- Receiving --}}
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('receivings*') ? 'active' : '' }}"
-                            href="{{ route('receivings.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-truck-loading"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Receiving Area</span>
-                            </div>
-                        </a>
-                    </li>
-                @endrole
+                    @can('receivings.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('receivings*') ? 'active' : '' }}"
+                                href="{{ route('receivings.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-truck-loading"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">
+                                        Receiving Area
+                                    </span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
 
 
-                @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
-                    {{-- Stock Transfer --}}
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('stock-transfers*') ? 'active' : '' }}"
-                            href="{{ route('stock-transfers.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-exchange-alt"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Stock Transfer</span>
-                            </div>
-                        </a>
-                    </li>
-                @endrole
+                    @can('stock-transfers.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('stock-transfers*') ? 'active' : '' }}"
+                                href="{{ route('stock-transfers.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-exchange-alt"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">
+                                        Stock Transfer
+                                    </span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
+                @endcanany
+
+
 
                 {{-- ===================================================== --}}
-                {{-- ================= LABEL Inventory ================= --}}
+                {{-- ================= Products ================= --}}
                 {{-- ===================================================== --}}
 
-                @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
+                @canany(['category.view', 'items.view'])
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -550,79 +655,50 @@
                         </div>
                     </li>
 
-                    {{-- <li class="nav-item">
-                        <a class="nav-link {{ request()->is('request*') ? 'active' : '' }}"
-                            href="{{ route('request.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-inbox"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Request Items</span>
-                            </div>
-                        </a>
-                    </li> --}}
 
-                    {{-- ===================================================== --}}
-                    {{-- ================= LABEL Inventory ================= --}}
-                    {{-- ===================================================== --}}
+                    @can('category.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('category*') ? 'active' : '' }}"
+                                href="{{ route('category.index') }}">
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('category*') ? 'active' : '' }}"
-                            href="{{ route('category.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="far fa-list-alt"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Categories</span>
-                            </div>
-                        </a>
-                    </li>
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="far fa-list-alt"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">
+                                        Categories
+                                    </span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('items*') ? 'active' : '' }}"
-                            href="{{ route('items.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-toolbox"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Products</span>
-                            </div>
-                        </a>
-                    </li>
-                    {{-- ===================================================== --}}
-                    {{-- ================= LABEL Purchaser ================= --}}
-                    {{-- ===================================================== --}}
 
-                    {{-- <li class="nav-item">
-                        <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
-                            <div class="col-auto navbar-vertical-label">
-                                Accounting
-                            </div>
-                            <div class="col ps-0">
-                                <hr class="mb-0 navbar-vertical-divider">
-                            </div>
-                        </div>
-                    </li>
+                    @can('items.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('items*') ? 'active' : '' }}"
+                                href="{{ route('items.index') }}">
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('purchase*') ? 'active' : '' }}"
-                            href="{{ route('purchase.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-dolly"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Purchase Order</span>
-                            </div>
-                        </a>
-                    </li> --}}
-                @endrole
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-toolbox"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">
+                                        Products
+                                    </span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
+                @endcanany
+
 
 
                 {{-- ========================================================== --}}
-                {{-- ================= LABEL Authentication ================= --}}
+                {{-- ================= Authentication ================= --}}
                 {{-- ========================================================== --}}
 
-                @role('Developer', 'IT Head')
+                @canany(['users.view', 'roles.view'])
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -634,30 +710,42 @@
                         </div>
                     </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('authentication/users*') ? 'active' : '' }}"
-                            href="{{ route('authentication.users.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-user-shield"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Users</span>
-                            </div>
-                        </a>
-                    </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('authentication/roles*') ? 'active' : '' }}"
-                            href="{{ route('roles.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-user-secret"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Roles</span>
-                            </div>
-                        </a>
-                    </li>
-                @endrole
+                    @can('users.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('authentication/users*') ? 'active' : '' }}"
+                                href="{{ route('authentication.users.index') }}">
+
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-user-shield"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">
+                                        Users
+                                    </span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
+
+
+                    @can('roles.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->is('authentication/roles*') ? 'active' : '' }}"
+                                href="{{ route('roles.index') }}">
+
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-user-secret"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">
+                                        Roles
+                                    </span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
+                @endcanany
             </ul>
         </div>
     </div>

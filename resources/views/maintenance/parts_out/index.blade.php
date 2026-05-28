@@ -50,11 +50,9 @@
                                 <span class="fas fa-chart-bar me-1"></span> Stock Dashboard
                             </a>
 
-                            @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
-                                <a href="{{ route('parts-out.create') }}" class="btn btn-primary btn-sm">
-                                    <span class="fas fa-plus me-1"></span> New Parts Out
-                                </a>
-                            @endrole
+                            <a href="{{ route('parts-out.create') }}" class="btn btn-primary btn-sm">
+                                <span class="fas fa-plus me-1"></span> New Parts Out
+                            </a>
 
                         </div>
                     </div>

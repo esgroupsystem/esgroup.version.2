@@ -6,17 +6,34 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        User::updateOrCreate(
+        // Create permissions first
+        $this->call([
+            PhilippineHolidaySeeder::class,
+            PermissionSeeder::class,
+        ]);
+
+        // Create Developer role
+        $developerRole = Role::firstOrCreate([
+            'name' => 'Developer',
+            'guard_name' => 'web',
+        ]);
+
+        // Give ALL permissions to Developer
+        $developerRole->syncPermissions(
+            Permission::all()
+        );
+
+        // Create Developer user
+        $user = User::updateOrCreate(
             ['email' => 'developer@esgroup.com.ph'],
             [
                 'username' => 'developer',
@@ -29,8 +46,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        $this->call([
-            PhilippineHolidaySeeder::class,
-        ]);
+        // Assign role to user
+        $user->assignRole('Developer');
     }
 }

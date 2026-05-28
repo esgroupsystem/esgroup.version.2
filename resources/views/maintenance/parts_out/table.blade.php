@@ -61,19 +61,17 @@
                                 <span class="fas fa-eye"></span>
                             </a>
 
-                            @role('Developer', 'Maintenance Engineer')
-                                @if ($row->status === 'posted')
-                                    <form action="{{ route('parts-out.rollback', $row->id) }}" method="POST"
-                                        onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock.');"
-                                        class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-falcon-warning btn-sm"
-                                            data-bs-toggle="tooltip" title="Rollback">
-                                            <span class="fas fa-undo"></span>
-                                        </button>
-                                    </form>
-                                @endif
-                            @endrole
+                            @if ($row->status === 'posted')
+                                <form action="{{ route('parts-out.rollback', $row->id) }}" method="POST"
+                                    onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock.');"
+                                    class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-falcon-warning btn-sm"
+                                        data-bs-toggle="tooltip" title="Rollback">
+                                        <span class="fas fa-undo"></span>
+                                    </button>
+                                </form>
+                            @endif
                         </div>
                     </td>
                 </tr>
