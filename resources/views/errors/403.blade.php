@@ -1,44 +1,110 @@
 @extends('layouts.landing')
+
 @section('title', '403 Forbidden')
 
 @section('content')
-<main class="main" id="top">
-    <div class="container" data-layout="container">
-        <script>
-            const isFluid = JSON.parse(localStorage.getItem('isFluid'));
-            if (isFluid) {
-                document.querySelector('[data-layout]').classList.replace('container', 'container-fluid');
-            }
-        </script>
 
-        <div class="row flex-center min-vh-100 py-6 text-center">
-            <div class="col-sm-10 col-md-8 col-lg-6 col-xxl-5">
+    <main class="main bg-body-tertiary min-vh-100 d-flex align-items-center">
 
-                <a class="d-flex flex-center mb-4" href="/">
-                    <img class="me-2" src="{{ asset('assets/img/icons/spot-illustrations/falcon.png') }}" width="58">
-                    <span class="font-sans-serif text-primary fw-bolder fs-4">falcon</span>
-                </a>
+        <div class="container">
 
-                <div class="card">
-                    <div class="card-body p-4 p-sm-5">
-                        <div class="fw-black lh-1 text-300 fs-error">403</div>
-                        <p class="lead mt-4 text-800 font-sans-serif fw-semi-bold">
-                            You do not have permission to access this page.
-                        </p>
+            <div class="row justify-content-center">
 
-                        <hr>
-                        <p>
-                            If you believe this is an error, <a href="mailto:support@esgroup.com.ph">contact support</a>.
-                        </p>
+                <div class="col-lg-5 col-md-7">
 
-                        <a href="{{ route('dashboard.index') }}" class="btn btn-primary btn-sm mt-3">
-                            <span class="fas fa-home me-2"></span> Go home
-                        </a>
+                    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+
+                        {{-- HEADER --}}
+                        <div class="bg-danger-subtle text-center py-5">
+
+                            <div class="display-1 fw-black text-danger mb-2">
+                                403
+                            </div>
+
+                            <h3 class="fw-bold text-dark mb-1">
+                                Access Forbidden
+                            </h3>
+
+                            <p class="text-secondary mb-0 px-4">
+                                You do not have permission to access this page or module.
+                            </p>
+
+                        </div>
+
+                        {{-- BODY --}}
+                        <div class="card-body p-4 p-lg-5 text-center">
+
+                            <div class="mb-4">
+
+                                <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger-subtle"
+                                    style="width:80px;height:80px;">
+
+                                    <span class="fas fa-ban text-danger fs-1"></span>
+
+                                </div>
+
+                            </div>
+
+                            <h5 class="fw-semibold mb-2">
+                                Permission Denied
+                            </h5>
+
+                            <p class="text-600 mb-4">
+                                Your account currently does not have sufficient privileges
+                                to access this resource.
+                            </p>
+
+                            <div class="alert alert-light border rounded-3 text-start small mb-4">
+
+                                <div class="fw-semibold mb-2">
+                                    Possible reasons:
+                                </div>
+
+                                <ul class="mb-0 ps-3">
+                                    <li>Your role permissions are restricted.</li>
+                                    <li>You are accessing another department's data.</li>
+                                    <li>Your session or access level has changed.</li>
+                                </ul>
+
+                            </div>
+
+                            <div class="d-grid gap-2">
+
+                                <a href="{{ url()->previous() }}" class="btn btn-outline-secondary rounded-pill">
+
+                                    <span class="fas fa-arrow-left me-2"></span>
+                                    Go Back
+
+                                </a>
+
+                                <a href="{{ route('dashboard.index') }}" class="btn btn-danger rounded-pill">
+
+                                    <span class="fas fa-home me-2"></span>
+                                    Return Dashboard
+
+                                </a>
+
+                            </div>
+
+                        </div>
+
                     </div>
+
+                    {{-- FOOTER --}}
+                    <div class="text-center mt-4">
+
+                        <small class="text-500">
+                            © {{ date('Y') }} Jell Group of Company
+                        </small>
+
+                    </div>
+
                 </div>
 
             </div>
+
         </div>
-    </div>
-</main>
+
+    </main>
+
 @endsection

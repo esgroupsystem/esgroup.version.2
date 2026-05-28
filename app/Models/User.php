@@ -29,20 +29,6 @@ class User extends Authenticatable
         'must_change_password',
     ];
 
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::saved(function ($user) {
-
-            // Sync role column from Spatie role
-            $user->role =
-                $user->getRoleNames()->first();
-
-            $user->saveQuietly();
-        });
-    }
-
     protected $hidden = [
         'password',
         'remember_token',
@@ -75,7 +61,6 @@ class User extends Authenticatable
         );
     }
 
-    // accessor
     public function getRoleNameAttribute()
     {
         return $this->getRoleNames()->first();

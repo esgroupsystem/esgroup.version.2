@@ -27,7 +27,6 @@
                     </div>
 
                     <div class="d-flex gap-2">
-                        @role('Developer', 'Maintenace Engineer')
                             @if ($partsOut->status === 'posted')
                                 <form action="{{ route('parts-out.rollback', $partsOut->id) }}" method="POST"
                                     onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock.');">
@@ -37,8 +36,6 @@
                                     </button>
                                 </form>
                             @endif
-                        @endrole
-
                         <a href="{{ route('parts-out.index') }}" class="btn btn-falcon-default btn-sm">
                             <span class="fas fa-arrow-left me-1"></span> Back
                         </a>

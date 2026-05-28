@@ -102,7 +102,9 @@
                                         </td>
 
                                         <td>{{ $u->username }}</td>
-                                        <td class="text-capitalize">{{ $u->role }}</td>
+                                        <td class="text-capitalize">
+                                            {{ $u->role ?? 'N/A' }}
+                                        </td>
 
                                         <td>
                                             @if ($u->account_status == 'active')
@@ -133,9 +135,9 @@
                                                                 full_name: @js($u->full_name),
                                                                 username: @js($u->username),
                                                                 email: @js($u->email),
-                                                                role: @js($u->role),
+                                                                role: @js($u->roles->pluck('name')->join(', ')),
                                                                 location_id: @js($u->location_id),
-                                                                status: @js($u->account_status)
+                                                                account_status: @js($u->account_status)
                                                             })">
                                                             <i class="fas fa-edit me-2"></i> Edit
                                                         </button>
@@ -292,7 +294,7 @@
             document.getElementById("full_name").value = "";
             document.getElementById("username").value = "";
             document.getElementById("email").value = "";
-            document.getElementById("role").value = "";
+            document.getElementById("role").selectedIndex = 0;
             document.getElementById("location_id").value = "";
             document.getElementById("account_status").value = "active";
         }
@@ -307,7 +309,7 @@
             document.getElementById("email").value = user.email;
             document.getElementById("role").value = user.role;
             document.getElementById("location_id").value = user.location_id ?? "";
-            document.getElementById("account_status").value = user.status;
+            document.getElementById("account_status").value = user.account_status;
 
             new bootstrap.Modal(document.getElementById("userModal")).show();
         }

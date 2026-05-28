@@ -14,21 +14,6 @@
         </script>
 
         <div class="content">
-
-            @if (session('success'))
-                <div class="alert alert-success border-0 shadow-sm d-flex align-items-center" role="alert">
-                    <span class="fas fa-check-circle me-2"></span>
-                    <div>{{ session('success') }}</div>
-                </div>
-            @endif
-
-            @if (session('error'))
-                <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center" role="alert">
-                    <span class="fas fa-exclamation-circle me-2"></span>
-                    <div>{{ session('error') }}</div>
-                </div>
-            @endif
-
             {{-- HEADER CARD --}}
             <div class="card border-0 shadow-sm mb-3 overflow-hidden">
                 <div class="card-body bg-body-tertiary">
@@ -50,11 +35,9 @@
                                 <span class="fas fa-chart-bar me-1"></span> Stock Dashboard
                             </a>
 
-                            @role('Developer', 'IT Head', 'Maintenance Head', 'Maintenance Engineer', 'Maintenance Encoder')
-                                <a href="{{ route('receivings.create') }}" class="btn btn-primary btn-sm">
-                                    <span class="fas fa-plus me-1"></span> New Receiving
-                                </a>
-                            @endrole
+                            <a href="{{ route('receivings.create') }}" class="btn btn-primary btn-sm">
+                                <span class="fas fa-plus me-1"></span> New Receiving
+                            </a>
 
                         </div>
                     </div>

@@ -1,48 +1,111 @@
 @extends('layouts.landing')
+
 @section('title', '404 Not Found')
 
 @section('content')
-<main class="main" id="top">
-    <div class="container" data-layout="container">
-        <script>
-            const isFluid = JSON.parse(localStorage.getItem('isFluid'));
-            if (isFluid) {
-                const container = document.querySelector('[data-layout]');
-                container.classList.replace('container', 'container-fluid');
-            }
-        </script>
 
-        <div class="row flex-center min-vh-100 py-6 text-center">
-            <div class="col-sm-10 col-md-8 col-lg-6 col-xxl-5">
+    <main class="main bg-body-tertiary min-vh-100 d-flex align-items-center">
 
-                <a class="d-flex flex-center mb-4" href="/">
-                    <img class="me-2" src="{{ asset('assets/img/icons/spot-illustrations/falcon.png') }}" width="58" alt="">
-                    <span class="font-sans-serif text-primary fw-bolder fs-4">falcon</span>
-                </a>
+        <div class="container">
 
-                <div class="card">
-                    <div class="card-body p-4 p-sm-5">
-                        <div class="fw-black lh-1 text-300 fs-error">404</div>
-                        <p class="lead mt-4 text-800 font-sans-serif fw-semi-bold">
-                            The page you're looking for cannot be found.
-                        </p>
+            <div class="row justify-content-center">
 
-                        <hr>
+                <div class="col-lg-5 col-md-7">
 
-                        <p>
-                            Ensure the URL is correct or the page hasn't been moved.
-                            If you believe this is an error, <a href="mailto:support@esgroup.com.ph">contact us</a>.
-                        </p>
+                    <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
 
-                        <a class="btn btn-primary btn-sm mt-3" href="{{ route('dashboard.index') }}">
-                            <span class="fas fa-home me-2"></span>
-                            Take me home
-                        </a>
+                        {{-- HEADER --}}
+                        <div class="bg-primary-subtle text-center py-5">
+
+                            <div class="display-1 fw-black text-primary mb-2">
+                                404
+                            </div>
+
+                            <h3 class="fw-bold text-dark mb-1">
+                                Page Not Found
+                            </h3>
+
+                            <p class="text-secondary mb-0 px-4">
+                                The page or module you are trying to access does not exist.
+                            </p>
+
+                        </div>
+
+                        {{-- BODY --}}
+                        <div class="card-body p-4 p-lg-5 text-center">
+
+                            <div class="mb-4">
+
+                                <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-primary-subtle"
+                                    style="width:80px;height:80px;">
+
+                                    <span class="fas fa-search text-primary fs-1"></span>
+
+                                </div>
+
+                            </div>
+
+                            <h5 class="fw-semibold mb-2">
+                                We couldn't find that page
+                            </h5>
+
+                            <p class="text-600 mb-4">
+                                The requested URL may have been removed, renamed,
+                                or temporarily unavailable.
+                            </p>
+
+                            <div class="alert alert-light border rounded-3 text-start small mb-4">
+
+                                <div class="fw-semibold mb-2">
+                                    Possible reasons:
+                                </div>
+
+                                <ul class="mb-0 ps-3">
+                                    <li>The page URL is incorrect.</li>
+                                    <li>The module was moved or deleted.</li>
+                                    <li>You do not have access permission.</li>
+                                    <li>The route has not been created yet.</li>
+                                </ul>
+
+                            </div>
+
+                            <div class="d-grid gap-2">
+
+                                <a href="{{ url()->previous() }}" class="btn btn-outline-secondary rounded-pill">
+
+                                    <span class="fas fa-arrow-left me-2"></span>
+                                    Go Back
+
+                                </a>
+
+                                <a href="{{ route('dashboard.index') }}" class="btn btn-warning rounded-pill text-dark">
+
+                                    <span class="fas fa-home me-2"></span>
+                                    Return Dashboard
+
+                                </a>
+
+                            </div>
+
+                        </div>
+
                     </div>
+
+                    {{-- FOOTER --}}
+                    <div class="text-center mt-4">
+
+                        <small class="text-500">
+                            © {{ date('Y') }} Jell Group of Company
+                        </small>
+
+                    </div>
+
                 </div>
 
             </div>
+
         </div>
-    </div>
-</main>
+
+    </main>
+
 @endsection

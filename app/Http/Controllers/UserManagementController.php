@@ -3,35 +3,51 @@
 namespace App\Http\Controllers;
 
 use App\Models\Location;
-use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class UserManagementController extends Controller
 {
     public function index(Request $request)
     {
         $q = trim((string) $request->get('q', ''));
-
         $users = User::query()
-            ->where('role', '!=', 'Developer')
+            ->whereDoesntHave('roles', function ($r) {
+                $r->where('name', 'Developer');
+            })
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
+
                     $sub->where('full_name', 'like', "%{$q}%")
                         ->orWhere('username', 'like', "%{$q}%")
                         ->orWhere('email', 'like', "%{$q}%")
-                        ->orWhere('role', 'like', "%{$q}%");
+
+                        // Search role name
+                        ->orWhereHas('roles', function ($role) use ($q) {
+                            $role->where('name', 'like', "%{$q}%");
+                        });
                 });
             })
-            ->orderByDesc('id')
+            ->latest()
             ->paginate(10)
             ->withQueryString();
 
         $roles = Role::orderBy('name')->get();
-        $locations = Location::where('is_active', 1)->orderBy('name')->get();
+        $locations = Location::where('is_active', 1)
+            ->orderBy('name')
+            ->get();
 
-        return view('users.index', compact('users', 'roles', 'locations', 'q'));
+        return view(
+            'users.index',
+            compact(
+                'users',
+                'roles',
+                'locations',
+                'q'
+            )
+        );
     }
 
     public function store(Request $request)
@@ -52,15 +68,18 @@ class UserManagementController extends Controller
             'full_name' => $request->full_name,
             'username' => $request->username,
             'email' => $request->email,
+            'role' => $request->role,
             'location_id' => $request->location_id,
             'password' => Hash::make($autoPassword),
             'account_status' => 'active',
             'must_change_password' => true,
         ]);
 
-        $user->assignRole(
-            $request->role
-        );
+        $user->assignRole($request->role);
+
+        $user->updateQuietly([
+            'role' => $request->role,
+        ]);
 
         flash('User created successfully!')
             ->success();
@@ -87,17 +106,20 @@ class UserManagementController extends Controller
         ]);
 
         $user->update([
-
             'full_name' => $request->full_name,
             'username' => $request->username,
             'email' => $request->email,
+            'role' => $request->role,
             'location_id' => $request->location_id,
             'account_status' => $request->account_status,
-
         ]);
 
         $user->syncRoles([
             $request->role,
+        ]);
+
+        $user->updateQuietly([
+            'role' => $request->role,
         ]);
 
         flash('User updated successfully!')
