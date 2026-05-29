@@ -68,8 +68,8 @@
                                 <div class="card bg-light border border-300 mb-2">
                                     <div class="card-body py-2 d-flex justify-content-center align-items-center">
                                         <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}"
-                                            data-callback="turnstileSuccess" data-expired-callback="turnstileExpired"
-                                            data-error-callback="turnstileExpired">
+                                            data-theme="light" data-callback="turnstileSuccess"
+                                            data-expired-callback="turnstileExpired" data-error-callback="turnstileExpired">
                                         </div>
                                     </div>
                                 </div>
@@ -83,34 +83,8 @@
                                 @enderror
 
                                 <button id="loginBtn" class="btn btn-primary d-block w-100 mt-2" type="submit" disabled>
-                                    Log in
-                                </button>
+                                    <span id="loginBtnText"> Log in </span> </button>
                             </form>
-
-                            <div class="position-relative mt-3">
-                                <hr class="bg-300">
-                                <div class="divider-content-center">or log in with</div>
-                            </div>
-
-                            <div class="row g-2 mt-2">
-                                <div class="col-sm-6">
-                                    <a class="btn btn-outline-google-plus btn-sm d-block w-100" href="#">Google</a>
-                                </div>
-                                <div class="col-sm-6">
-                                    <a class="btn btn-outline-facebook btn-sm d-block w-100" href="#">Facebook</a>
-                                </div>
-                            </div>
-
-                            <div class="text-center mt-3 fs-10 text-600">
-                                <span class="fw-semi-bold">Don’t have an account?</span>
-                                <a href="#">Register now</a>
-                            </div>
-
-                            <p class="text-center fs-10 text-600 mt-2 mb-0">
-                                By logging in, you agree to our
-                                <a href="#">Terms</a> &
-                                <a href="#">Privacy Policy</a>.
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -256,6 +230,84 @@
                     password.type = isHidden ? 'text' : 'password';
                     this.textContent = isHidden ? '🙈' : '👁';
                 });
+            });
+        </script>
+
+        <script nonce="{{ $nonce }}">
+            document.addEventListener('DOMContentLoaded', function() {
+
+                @if (($seconds ?? 0) > 0)
+
+                    let seconds = {{ $seconds ?? 0 }};
+
+                    const loginBtn = document.getElementById('loginBtn');
+                    const loginBtnText = document.getElementById('loginBtnText');
+
+                    const loginForm = document.getElementById('loginForm');
+
+                    const username = document.getElementById('username');
+                    const password = document.getElementById('password');
+                    const remember = document.getElementById('remember');
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | LOCK ENTIRE FORM
+                    |--------------------------------------------------------------------------
+                    */
+
+                    loginBtn.disabled = true;
+
+                    username.disabled = true;
+                    password.disabled = true;
+
+                    if (remember) {
+                        remember.disabled = true;
+                    }
+
+                    loginBtn.classList.add('disabled');
+
+                    loginBtn.style.pointerEvents = 'none';
+                    loginBtn.style.opacity = '0.8';
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | PREVENT FORM SUBMIT
+                    |--------------------------------------------------------------------------
+                    */
+
+                    loginForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | COUNTDOWN
+                    |--------------------------------------------------------------------------
+                    */
+
+                    loginBtnText.innerHTML =
+                        `Please wait (${seconds}s)`;
+
+                    const timer = setInterval(() => {
+
+                        seconds--;
+
+                        if (seconds <= 0) {
+
+                            clearInterval(timer);
+
+                            location.reload();
+
+                            return;
+                        }
+
+                        loginBtnText.innerHTML =
+                            `Please wait (${seconds}s)`;
+
+                    }, 1000);
+                @endif
+
             });
         </script>
     @endpush

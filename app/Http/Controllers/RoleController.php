@@ -28,14 +28,20 @@ class RoleController extends Controller
             $permissionGroups = $permissions
                 ->groupBy(function ($permission) {
 
-                    return explode('.', $permission->name)[0];
+                    return explode(
+                        '.',
+                        $permission->name
+                    )[0];
                 })
 
                 ->map(function ($group) {
 
                     return $group->groupBy(function ($permission) {
 
-                        $parts = explode('.', $permission->name);
+                        $parts = explode(
+                            '.',
+                            $permission->name
+                        );
 
                         return $parts[1] ?? 'other';
                     });

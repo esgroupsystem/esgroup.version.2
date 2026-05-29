@@ -9,13 +9,23 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
 
 class AuthController extends Controller
 {
-    public function showLogin()
+    public function showLogin(Request $request)
     {
-        return view('landing.login');
+        $throttleKey = 'login-attempt:'.$request->ip();
+
+        $seconds = 0;
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+
+            $seconds = RateLimiter::availableIn($throttleKey);
+        }
+
+        return view('landing.login', compact('seconds'));
     }
 
     public function showLockscreen()
@@ -50,6 +60,7 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         try {
+
             $request->validate([
                 'username' => 'required|string',
                 'password' => 'required|min:4',
@@ -58,15 +69,32 @@ class AuthController extends Controller
                 'cf-turnstile-response.required' => 'Please complete the security verification.',
             ]);
 
-            $turnstile = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-                'secret' => config('services.turnstile.secret_key'),
-                'response' => $request->input('cf-turnstile-response'),
-                'remoteip' => $request->ip(),
-            ]);
+            $throttleKey = 'login-attempt:'.$request->ip();
+
+            if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+
+                $seconds = RateLimiter::availableIn($throttleKey);
+
+                return back()
+                    ->with('throttle', $seconds)
+                    ->withInput($request->only('username', 'remember'));
+            }
+
+            $turnstile = Http::asForm()->post(
+                'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+                [
+                    'secret' => config('services.turnstile.secret_key'),
+                    'response' => $request->input('cf-turnstile-response'),
+                    'remoteip' => $request->ip(),
+                ]
+            );
 
             if (! $turnstile->json('success')) {
+
                 return back()
-                    ->withErrors(['turnstile' => 'Security verification failed. Please try again.'])
+                    ->withErrors([
+                        'turnstile' => 'Security verification failed. Please try again.',
+                    ])
                     ->withInput($request->only('username', 'remember'));
             }
 
@@ -76,13 +104,18 @@ class AuthController extends Controller
                 'username' => $request->username,
                 'password' => $request->password,
             ], $remember)) {
+
+                RateLimiter::clear($throttleKey);
+
                 $user = Auth::user();
 
                 if (! in_array(strtolower($user->account_status), ['active'])) {
+
                     Auth::logout();
                     Session::flush();
 
-                    flash('Your account is deactivated, please contact administrator.')->error();
+                    flash('Your account is deactivated, please contact administrator.')
+                        ->error();
 
                     return back()->withInput();
                 }
@@ -102,11 +135,18 @@ class AuthController extends Controller
                 return redirect()->route('dashboard.index');
             }
 
+            RateLimiter::hit($throttleKey, 120);
+            $attempts = RateLimiter::attempts($throttleKey);
+            if ($attempts >= 5) {
+                return back()->withInput($request->only('username', 'remember'));
+            }
+
             flash('Invalid username or password.')->error();
 
             return back()->withInput($request->only('username', 'remember'));
 
         } catch (\Exception $e) {
+
             Log::error('Login failed', [
                 'error' => $e->getMessage(),
                 'input' => $request->except('password'),

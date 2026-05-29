@@ -56,8 +56,9 @@
                                 {{-- CLOUDFLARE TURNSTILE --}}
                                 <div class="card bg-light border border-300 mb-2">
                                     <div class="card-body py-2 d-flex justify-content-center align-items-center">
-                                        <div class="cf-turnstile"
-                                            data-sitekey="{{ config('services.turnstile.site_key') }}">
+                                        <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}"
+                                            data-theme="light" data-callback="turnstileSuccess"
+                                            data-expired-callback="turnstileExpired" data-error-callback="turnstileExpired">
                                         </div>
                                     </div>
                                 </div>
