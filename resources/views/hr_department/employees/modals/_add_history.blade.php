@@ -4,37 +4,61 @@
             @csrf
 
             <div class="modal-header">
-                <h5 class="modal-title">Add Employment History</h5>
+                <h5 class="modal-title">Add Violation</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Type of Movement</label>
-                    <select name="title" id="historyTitle" class="form-select" required>
-                        <option value="">-- Select Type --</option>
-                        <option value="Lateral Transfer">Lateral Transfer</option>
-                        <option value="Change Position">Change Position</option>
-                        <option value="Promotion">Promotion</option>
-                        <option value="Assignment">Assignment</option>
-                        <option value="Training">Training</option>
-                        <option value="Violations">Violations</option>
-                    </select>
+                <input type="hidden" name="title" value="Violations">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">IR Number</label>
+                    <input type="text" name="ir_number" class="form-control" placeholder="IR-2026-0001" required>
                 </div>
-
                 {{-- ✅ Only show when Violations --}}
-                <div id="violationFields" class="d-none">
+                <div id="violationFields">
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Offense (Section)</label>
-                        <select name="offense_id" id="offenseSelect" class="form-select">
-                            <option value="">-- Select Offense Section --</option>
-                            @foreach ($offenses ?? [] as $o)
-                                <option value="{{ $o->id }}" data-description="{{ e($o->offense_description) }}">
-                                    {{ $o->section }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <div id="violationsContainer">
+
+                            <div class="violation-row border rounded p-3 mb-3">
+
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">Violation #1</h6>
+
+                                    <button type="button" class="btn btn-sm btn-danger removeViolation d-none">
+                                        Remove
+                                    </button>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Offense Section</label>
+
+                                    <select name="offense_id[]" class="form-select offenseSelect">
+                                        <option value="">-- Select Offense Section --</option>
+
+                                        @foreach ($offenses ?? [] as $o)
+                                            <option value="{{ $o->id }}"
+                                                data-description="{{ e($o->offense_description) }}">
+                                                {{ $o->section }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Description</label>
+
+                                    <textarea name="description[]" class="form-control offenseDescription" rows="3"></textarea>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <button type="button" id="addViolationBtn" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-plus"></i> Add Another Violation
+                        </button>
                         <small class="text-muted">Selecting a section will auto-fill the description.</small>
                     </div>
 
@@ -94,36 +118,11 @@
                     </div>
                 </div>
 
-                {{-- ✅ Description (will become readonly when Violations + section selected) --}}
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Description</label>
-                    <textarea name="description" id="historyDescription" class="form-control" rows="3"
-                        placeholder="Describe what happened..."></textarea>
-                    <small class="text-muted" id="descLockHint" style="display:none;">
-                        Description is locked when an Offense section is selected.
-                    </small>
-                </div>
-
-                {{-- ✅ General Start/End Date (disabled when Suspension checked) --}}
-                <div class="row g-2" id="generalDatesWrapper">
-                    <div class="col">
-                        <label class="form-label fw-semibold">Start Date</label>
-                        <input type="date" name="start_date" class="form-control" id="generalStartDate">
-                    </div>
-
-                    <div class="col">
-                        <label class="form-label fw-semibold">End Date</label>
-                        <input type="date" name="end_date" class="form-control" id="generalEndDate">
-                        <small class="text-muted">Leave blank if current</small>
-                    </div>
-                </div>
-
-                {{-- ✅ Suspension Dates (show only when Suspension checked) --}}
                 <div class="row g-2 d-none mt-2" id="suspensionDatesWrapper">
                     <div class="col">
                         <label class="form-label fw-semibold">Suspension Start Date</label>
                         <input type="date" name="suspension_start_date" class="form-control"
-                            id="suspensionStartDate">
+                            id="suspensionStartDate" required>
                     </div>
 
                     <div class="col">
@@ -139,7 +138,7 @@
             <div class="modal-footer">
                 <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                 <button class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i> Save History
+                    <i class="fas fa-save me-1"></i> Save Violation
                 </button>
             </div>
         </form>

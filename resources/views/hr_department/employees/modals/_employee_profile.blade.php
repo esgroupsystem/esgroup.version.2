@@ -23,7 +23,7 @@
             {{-- Status Details Card --}}
             @include('hr_department.employees.partials._card_status_details', compact('employee'))
 
-            {{-- History Timeline Card --}}
+            {{-- Violation Histories Card --}}
             @include('hr_department.employees.partials._card_history', compact('employee'))
 
             {{-- Logs Card --}}

@@ -211,117 +211,137 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const titleEl = document.getElementById('historyTitle');
+
         const violationFields = document.getElementById('violationFields');
-        const offenseSelect = document.getElementById('offenseSelect');
-        const descEl = document.getElementById('historyDescription');
-        const descLockHint = document.getElementById('descLockHint');
 
         const sdaCheckbox = document.getElementById('actionSDA');
         const suspensionCheckbox = document.getElementById('actionSuspension');
 
         const sdaFieldsWrapper = document.getElementById('sdaFieldsWrapper');
 
-        const generalDatesWrapper = document.getElementById('generalDatesWrapper');
         const suspensionDatesWrapper = document.getElementById('suspensionDatesWrapper');
 
-        const generalStartDate = document.getElementById('generalStartDate');
-        const generalEndDate = document.getElementById('generalEndDate');
         const suspensionStartDate = document.getElementById('suspensionStartDate');
         const suspensionEndDate = document.getElementById('suspensionEndDate');
 
-        function toggleViolationFields() {
-            const isViolation = titleEl.value === 'Violations';
-            violationFields.classList.toggle('d-none', !isViolation);
-
-            if (!isViolation) {
-                if (offenseSelect) offenseSelect.value = '';
-                unlockDescription();
-            } else {
-                handleDescriptionLock();
-            }
-        }
-
-        function fillDescriptionFromOffense() {
-            if (!offenseSelect) return;
-            const opt = offenseSelect.options[offenseSelect.selectedIndex];
-            const offenseDesc = opt ? (opt.getAttribute('data-description') || '') : '';
-            if (offenseDesc) descEl.value = offenseDesc;
-
-            handleDescriptionLock();
-        }
-
-        function lockDescription() {
-            // readonly (still submits) + disabled look
-            descEl.readOnly = true;
-            descEl.classList.add('bg-body-tertiary');
-            if (descLockHint) descLockHint.style.display = 'block';
-        }
-
-        function unlockDescription() {
-            descEl.readOnly = false;
-            descEl.classList.remove('bg-body-tertiary');
-            if (descLockHint) descLockHint.style.display = 'none';
-        }
-
-        // ✅ Lock description when Violations + offense selected
-        function handleDescriptionLock() {
-            const isViolation = titleEl.value === 'Violations';
-            const hasOffense = offenseSelect && offenseSelect.value;
-
-            if (isViolation && hasOffense) lockDescription();
-            else unlockDescription();
+        // Always show violation fields
+        if (violationFields) {
+            violationFields.classList.remove('d-none');
         }
 
         function toggleSDAFields() {
-            const show = sdaCheckbox && sdaCheckbox.checked;
-            sdaFieldsWrapper.classList.toggle('d-none', !show);
 
-            if (!show) {
-                const amount = document.querySelector('[name="sda_amount"]');
-                const terms = document.querySelector('[name="sda_terms"]');
-                const sd = document.querySelector('[name="sda_start_date"]');
-                const ed = document.querySelector('[name="sda_end_date"]'); // optional
+            if (!sdaFieldsWrapper) return;
 
-                if (amount) amount.value = '';
-                if (terms) terms.value = '';
-                if (sd) sd.value = '';
-                if (ed) ed.value = '';
-            }
-        }
-
-        // ✅ Suspension checked -> show suspension dates + disable general dates
-        function toggleSuspensionDates() {
-            const show = suspensionCheckbox && suspensionCheckbox.checked;
-
-            suspensionDatesWrapper.classList.toggle('d-none', !show);
-
-            if (show) {
-                generalDatesWrapper.classList.add('opacity-50');
-                generalStartDate.disabled = true;
-                generalEndDate.disabled = true;
-
-                suspensionStartDate.disabled = false;
-                suspensionEndDate.disabled = false;
+            if (sdaCheckbox && sdaCheckbox.checked) {
+                sdaFieldsWrapper.classList.remove('d-none');
             } else {
-                generalDatesWrapper.classList.remove('opacity-50');
-                generalStartDate.disabled = false;
-                generalEndDate.disabled = false;
+                sdaFieldsWrapper.classList.add('d-none');
 
-                suspensionStartDate.disabled = true;
-                suspensionEndDate.disabled = true;
-                suspensionStartDate.value = '';
-                suspensionEndDate.value = '';
+                document.querySelectorAll(
+                    '[name="sda_amount"], [name="sda_terms"], [name="sda_start_date"], [name="sda_end_date"]'
+                ).forEach(el => el.value = '');
             }
         }
 
-        titleEl.addEventListener('change', toggleViolationFields);
-        if (offenseSelect) offenseSelect.addEventListener('change', fillDescriptionFromOffense);
-        if (sdaCheckbox) sdaCheckbox.addEventListener('change', toggleSDAFields);
-        if (suspensionCheckbox) suspensionCheckbox.addEventListener('change', toggleSuspensionDates);
+        function toggleSuspensionDates() {
 
-        // init
-        toggleViolationFields();
+            if (!suspensionDatesWrapper) return;
+
+            if (suspensionCheckbox && suspensionCheckbox.checked) {
+
+                suspensionDatesWrapper.classList.remove('d-none');
+
+                if (suspensionStartDate) {
+                    suspensionStartDate.disabled = false;
+                }
+
+                if (suspensionEndDate) {
+                    suspensionEndDate.disabled = false;
+                }
+
+            } else {
+
+                suspensionDatesWrapper.classList.add('d-none');
+
+                if (suspensionStartDate) {
+                    suspensionStartDate.disabled = true;
+                    suspensionStartDate.value = '';
+                }
+
+                if (suspensionEndDate) {
+                    suspensionEndDate.disabled = true;
+                    suspensionEndDate.value = '';
+                }
+            }
+        }
+
+        const container =
+            document.getElementById('violationsContainer');
+
+        const addBtn =
+            document.getElementById('addViolationBtn');
+
+        addBtn?.addEventListener('click', function() {
+
+            const first =
+                document.querySelector('.violation-row');
+
+            const clone =
+                first.cloneNode(true);
+
+            clone.querySelector('.offenseSelect').value = '';
+            clone.querySelector('.offenseDescription').value = '';
+
+            clone.querySelector('.removeViolation')
+                .classList.remove('d-none');
+
+            container.appendChild(clone);
+
+            updateViolationNumbers();
+        });
+
+        document.addEventListener('click', function(e) {
+
+            if (!e.target.classList.contains('removeViolation')) {
+                return;
+            }
+
+            e.target.closest('.violation-row').remove();
+
+            updateViolationNumbers();
+        });
+
+        function updateViolationNumbers() {
+
+            document.querySelectorAll('.violation-row')
+                .forEach((row, index) => {
+
+                    row.querySelector('h6').innerText =
+                        `Violation #${index + 1}`;
+                });
+        }
+
+        document.addEventListener('change', function(e) {
+
+            if (!e.target.classList.contains('offenseSelect')) {
+                return;
+            }
+
+            const option =
+                e.target.options[e.target.selectedIndex];
+
+            const textarea =
+                e.target.closest('.violation-row')
+                .querySelector('.offenseDescription');
+
+            textarea.value =
+                option.dataset.description || '';
+        });
+
+        sdaCheckbox?.addEventListener('change', toggleSDAFields);
+        suspensionCheckbox?.addEventListener('change', toggleSuspensionDates);
+
         toggleSDAFields();
         toggleSuspensionDates();
     });

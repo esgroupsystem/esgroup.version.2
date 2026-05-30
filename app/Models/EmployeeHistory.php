@@ -8,6 +8,7 @@ class EmployeeHistory extends Model
 {
     protected $fillable = [
         'employee_id',
+        'ir_number',
         'title',
         'offense_id',
         'disciplinary_action',

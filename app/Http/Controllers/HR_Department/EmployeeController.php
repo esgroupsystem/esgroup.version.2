@@ -180,6 +180,34 @@ class EmployeeController extends Controller
             ];
         });
 
+        $groupedIrHistories = $employee->histories
+            ->where('title', 'Violations')
+            ->groupBy(function ($item) {
+                return $item->ir_number ?: 'NO-IR';
+            })
+            ->map(function ($records, $irNumber) {
+
+                $first = $records->first();
+
+                $actions = $first->disciplinary_action;
+
+                if (is_string($actions)) {
+                    $actions = $actions ? [$actions] : [];
+                }
+
+                if (! is_array($actions)) {
+                    $actions = [];
+                }
+
+                return [
+                    'ir_number' => $irNumber,
+                    'records' => $records,
+                    'count' => $records->count(),
+                    'actions' => $actions,
+                    'first_record' => $first,
+                ];
+            });
+
         return view('hr_department.employees.modals._employee_profile', compact(
             'employee',
             'departments',
@@ -189,7 +217,8 @@ class EmployeeController extends Controller
             'posMap',
             'logs',
             'offenses',
-            'historyItems'
+            'historyItems',
+            'groupedIrHistories'
         ));
     }
 
@@ -569,11 +598,8 @@ class EmployeeController extends Controller
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
 
-                'offense_id' => [
-                    'nullable',
-                    'required_if:title,Violations',
-                    'exists:hr_offenses,id',
-                ],
+                'offense_id' => 'required|array|min:1',
+                'offense_id.*' => 'exists:hr_offenses,id',
 
                 'disciplinary_action' => 'nullable|array',
                 'disciplinary_action.*' => 'in:Salary Deduction Authorization,Suspension',
@@ -588,21 +614,11 @@ class EmployeeController extends Controller
                 'suspension_start_date' => 'nullable|date',
                 'suspension_end_date' => 'nullable|date|after_or_equal:suspension_start_date',
 
-                'description' => 'nullable|string',
-                'start_date' => 'nullable|date',
-                'end_date' => 'nullable|date|after_or_equal:start_date',
-            ]);
+                'description' => 'nullable|array',
+                'description.*' => 'nullable|string',
+                'ir_number' => 'nullable|string|max:255',
 
-            // auto-fill description
-            if (($validated['title'] ?? '') === 'Violations'
-                && ! empty($validated['offense_id'])
-                && empty(trim($validated['description'] ?? ''))
-            ) {
-                $offense = HrOffense::find($validated['offense_id']);
-                if ($offense) {
-                    $validated['description'] = $offense->offense_description;
-                }
-            }
+            ]);
 
             $actions = $validated['disciplinary_action'] ?? [];
             $hasSda = in_array('Salary Deduction Authorization', $actions, true);
@@ -648,7 +664,33 @@ class EmployeeController extends Controller
                 $validated['suspension_end_date'] = null;
             }
 
-            $employee->histories()->create($validated);
+            foreach ($request->offense_id as $index => $offenseId) {
+
+                $employee->histories()->create([
+
+                    'title' => 'Violations',
+
+                    'ir_number' => $request->ir_number,
+
+                    'offense_id' => $offenseId,
+
+                    'description' => $request->description[$index] ?? null,
+
+                    'disciplinary_action' => $validated['disciplinary_action'] ?? [],
+
+                    'sda_amount' => $validated['sda_amount'] ?? null,
+
+                    'sda_terms' => $validated['sda_terms'] ?? null,
+
+                    'sda_start_date' => $validated['sda_start_date'] ?? null,
+
+                    'sda_end_date' => $validated['sda_end_date'] ?? null,
+
+                    'suspension_start_date' => $validated['suspension_start_date'] ?? null,
+
+                    'suspension_end_date' => $validated['suspension_end_date'] ?? null,
+                ]);
+            }
 
             flash('History added!')->success();
 

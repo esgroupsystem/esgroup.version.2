@@ -21,18 +21,28 @@
 
                     <div class="row g-3">
 
-                        {{-- Employee --}}
                         <div class="col-md-6">
-                            <label class="form-label">Employee</label>
-                            <select name="employee_id" class="form-select js-choice" required
-                                data-placeholder="Type employee name...">
+                            <label class="form-label">
+                                Employee <span class="text-danger">*</span>
+                            </label>
+
+                            <select name="employee_id" id="employee_id" class="form-select" required>
+
                                 <option value="">Select Employee</option>
 
                                 @foreach ($employees as $emp)
-                                    <option value="{{ $emp->id }}">
-                                        {{ $emp->full_name }} ({{ $emp->position?->title ?? '-' }})
+                                    <option value="{{ $emp->id }}"
+                                        {{ old('employee_id') == $emp->id ? 'selected' : '' }}>
+
+                                        {{ $emp->full_name }}
+
+                                        @if ($emp->position)
+                                            | {{ $emp->position->title }}
+                                        @endif
+
                                     </option>
                                 @endforeach
+
                             </select>
                         </div>
 
@@ -78,3 +88,49 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        window.addEventListener('load', function() {
+
+            if (typeof jQuery === 'undefined' || typeof jQuery.fn.select2 === 'undefined') {
+                console.error('Select2 not loaded');
+                return;
+            }
+
+            const employeeSelect = $('#employee_id');
+
+            if (employeeSelect.hasClass('select2-hidden-accessible')) {
+                employeeSelect.select2('destroy');
+            }
+
+            employeeSelect.select2({
+                width: '100%',
+                placeholder: 'Search Employee...',
+                allowClear: true,
+
+                matcher: function(params, data) {
+
+                    if ($.trim(params.term) === '') {
+                        return data;
+                    }
+
+                    if (!data.text) {
+                        return null;
+                    }
+
+                    const term = params.term
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]/g, '');
+
+                    const text = data.text
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]/g, '');
+
+                    return text.includes(term) ? data : null;
+                }
+            });
+
+        });
+    </script>
+@endpush

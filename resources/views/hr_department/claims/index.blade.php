@@ -270,7 +270,7 @@
                                                                         <label class="form-label">Claim Type</label>
                                                                         <select class="form-select" name="claim_type"
                                                                             required>
-                                                                            @foreach (['SSS', 'MATERNITY', 'PATERNITY'] as $t)
+                                                                            @foreach (['SSS', 'MATERNITY', 'PATERNITY', 'SICKNESS', 'RETIREMENT'] as $t)
                                                                                 <option value="{{ $t }}"
                                                                                     @selected($c->claim_type === $t)>
                                                                                     {{ $t }}</option>
@@ -412,7 +412,7 @@
                                     <label class="form-label mb-1">Claim Type</label>
                                     <select class="form-select form-select-sm" name="claim_type">
                                         <option value="">All</option>
-                                        @foreach (['SSS', 'MATERNITY', 'PATERNITY'] as $t)
+                                        @foreach (['SSS', 'MATERNITY', 'PATERNITY', 'SICKNESS', 'RETIREMENT'] as $t)
                                             <option value="{{ $t }}" @selected(request('claim_type') === $t)>
                                                 {{ $t }}</option>
                                         @endforeach
@@ -465,7 +465,7 @@
                             <label class="form-label mb-1">Claim Type</label>
                             <select class="form-select" name="claim_type">
                                 <option value="">All</option>
-                                @foreach (['SSS', 'MATERNITY', 'PATERNITY'] as $t)
+                                @foreach (['SSS', 'MATERNITY', 'PATERNITY', 'SICKNESS', 'RETIREMENT'] as $t)
                                     <option value="{{ $t }}" @selected(request('claim_type') === $t)>{{ $t }}
                                     </option>
                                 @endforeach
@@ -535,7 +535,7 @@
                                     <div class="col-md-3">
                                         <label class="form-label">Claim Type</label>
                                         <select class="form-select" name="claim_type" required>
-                                            @foreach (['SSS', 'MATERNITY', 'PATERNITY'] as $t)
+                                            @foreach (['SSS', 'MATERNITY', 'PATERNITY', 'SICKNESS', 'RETIREMENT'] as $t)
                                                 <option value="{{ $t }}">{{ $t }}</option>
                                             @endforeach
                                         </select>
