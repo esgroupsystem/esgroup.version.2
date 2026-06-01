@@ -3,18 +3,21 @@
     $badge = $lp === 'Released' ? 'badge-subtle-success' : 'badge-subtle-warning';
 @endphp
 
-<div class="card mb-3 shadow-sm">
+<div class="card mb-3 shadow-sm border-0">
     <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold">
-            <i class="fas fa-clipboard-list mono-icon me-2"></i> Employee Status Details
+        <h5 class="mb-0 fw-bold text-900">
+            <i class="fas fa-clipboard-list text-primary me-2"></i>
+            Employee Status Details
         </h5>
         <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#editStatusDetailsModal">
-            <i class="fas fa-edit me-1"></i> Edit
+            <i class="fas fa-edit me-1"></i>
+            Edit
         </button>
     </div>
 
     <div class="card-body">
         <div class="row g-3">
+
             <div class="col-md-6">
                 <div class="small text-muted fw-bold">Last Pay Status</div>
                 <span class="badge rounded-pill {{ $lp ? $badge : 'badge-subtle-secondary' }}">
@@ -43,6 +46,7 @@
                 <div class="small text-muted fw-bold">Clearance Date</div>
                 <div>{{ $employee->clearance_date?->format('M d, Y') ?? '—' }}</div>
             </div>
+
         </div>
     </div>
 </div>

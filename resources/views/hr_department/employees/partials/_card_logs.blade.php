@@ -1,12 +1,18 @@
-<div class="card mb-3 shadow-sm">
+<div class="card mb-3 shadow-sm border-0">
+
     <div class="card-header bg-body-tertiary d-flex justify-content-between align-items-center">
-        <h6 class="mb-0 fw-bold">
-            <i class="fas fa-history mono-icon me-2"></i> Employee Logs
+        <h6 class="mb-0 fw-semibold text-900">
+            <span class="fas fa-history text-primary me-2"></span>
+            Employee Logs
         </h6>
-        <span class="small-muted">{{ $logs->total() }} total</span>
+
+        <span class="badge badge-subtle-primary rounded-pill">
+            {{ $logs->total() }} total
+        </span>
     </div>
 
     <div class="card-body p-0">
+
         @php
             $actionMap = [
                 'created' => 'Created Employee',
@@ -32,55 +38,78 @@
                 'deleted_employee' => 'badge-subtle-danger',
             ];
 
+            $iconMap = [
+                'created' => 'fa-user-plus',
+                'updated_201_file' => 'fa-folder-open',
+                'updated_profile' => 'fa-user-edit',
+                'updated_status_details' => 'fa-clipboard-list',
+                'uploaded_attachment' => 'fa-upload',
+                'deleted_attachment' => 'fa-trash-alt',
+                'added_history' => 'fa-plus-circle',
+                'removed_history' => 'fa-minus-circle',
+                'deleted_employee' => 'fa-user-times',
+            ];
+
             $summaryFromMeta = function ($meta) use ($deptMap, $posMap) {
                 $meta = is_array($meta) ? $meta : (json_decode($meta ?? '[]', true) ?: []);
 
-                $labelize = function ($f) {
-                    $f = str_replace('_id', '', $f);
-                    return ucwords(str_replace('_', ' ', $f));
+                $labelize = function ($field) {
+                    $field = str_replace('_id', '', $field);
+                    return ucwords(str_replace('_', ' ', $field));
                 };
 
-                $fmt = function ($v) {
-                    if ($v === null || $v === '') return '—';
-
-                    if (is_string($v) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $v)) {
-                        try { return \Carbon\Carbon::parse($v)->format('M d, Y'); } catch (\Throwable $e) {}
+                $formatValue = function ($value) {
+                    if ($value === null || $value === '') {
+                        return '—';
                     }
 
-                    return is_bool($v) ? ($v ? 'Yes' : 'No') : (string) $v;
+                    if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) {
+                        try {
+                            return \Carbon\Carbon::parse($value)->format('M d, Y');
+                        } catch (\Throwable $e) {
+                            return $value;
+                        }
+                    }
+
+                    if (is_bool($value)) {
+                        return $value ? 'Yes' : 'No';
+                    }
+
+                    return (string) $value;
                 };
 
-                if (!empty($meta['changed']) && is_array($meta['changed'])) {
-                    $items = [];
-
-                    foreach ($meta['changed'] as $field => $c) {
-                        $fromVal = $c['from'] ?? null;
-                        $toVal   = $c['to'] ?? null;
-
-                        if ($field === 'department_id') {
-                            $fromVal = $deptMap->get((int) $fromVal) ?? ($fromVal ?: '—');
-                            $toVal   = $deptMap->get((int) $toVal) ?? ($toVal ?: '—');
-                        }
-
-                        if ($field === 'position_id') {
-                            $fromVal = $posMap->get((int) $fromVal) ?? ($fromVal ?: '—');
-                            $toVal   = $posMap->get((int) $toVal) ?? ($toVal ?: '—');
-                        }
-
-                        $items[] = [
-                            'field' => $labelize($field),
-                            'from'  => $fmt($fromVal),
-                            'to'    => $fmt($toVal),
-                        ];
-                    }
-
-                    if (!$items) return null;
-
-                    // You already use this partial in your system:
-                    return view('tickets.partials.log_changed_details', compact('items'))->render();
+                if (empty($meta['changed']) || !is_array($meta['changed'])) {
+                    return null;
                 }
 
-                return null;
+                $items = [];
+
+                foreach ($meta['changed'] as $field => $change) {
+                    $fromValue = $change['from'] ?? null;
+                    $toValue = $change['to'] ?? null;
+
+                    if ($field === 'department_id') {
+                        $fromValue = $deptMap->get((int) $fromValue) ?? ($fromValue ?: '—');
+                        $toValue = $deptMap->get((int) $toValue) ?? ($toValue ?: '—');
+                    }
+
+                    if ($field === 'position_id') {
+                        $fromValue = $posMap->get((int) $fromValue) ?? ($fromValue ?: '—');
+                        $toValue = $posMap->get((int) $toValue) ?? ($toValue ?: '—');
+                    }
+
+                    $items[] = [
+                        'field' => $labelize($field),
+                        'from' => $formatValue($fromValue),
+                        'to' => $formatValue($toValue),
+                    ];
+                }
+
+                if (empty($items)) {
+                    return null;
+                }
+
+                return view('tickets.partials.log_changed_details', compact('items'))->render();
             };
         @endphp
 
@@ -88,38 +117,76 @@
             @php
                 $actor = $log->user->full_name ?? ($log->user->name ?? 'System');
                 $actionLabel = $actionMap[$log->action] ?? ucwords(str_replace('_', ' ', $log->action));
-                $badge = $badgeMap[$log->action] ?? 'badge-subtle-secondary';
+                $badgeClass = $badgeMap[$log->action] ?? 'badge-subtle-secondary';
+                $iconClass = $iconMap[$log->action] ?? 'fa-info-circle';
                 $summary = $summaryFromMeta($log->meta);
             @endphp
 
-            <div class="px-3 py-2 border-bottom">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div class="pe-3">
-                        <div class="d-flex align-items-center gap-2 flex-wrap">
-                            <span class="badge rounded-pill {{ $badge }}">{{ $actionLabel }}</span>
-                            <span class="small-muted">By: <strong>{{ $actor }}</strong></span>
+            <div class="border-bottom px-3 py-3">
+                <div class="row g-3 align-items-start">
+
+                    <div class="col-auto">
+                        <div class="avatar avatar-xl">
+                            <div class="avatar-name rounded-circle bg-primary-subtle text-primary">
+                                <span class="fas {{ $iconClass }}"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                            <span class="badge rounded-pill {{ $badgeClass }}">
+                                {{ $actionLabel }}
+                            </span>
+
+                            <span class="fs--1 text-600">
+                                by <strong class="text-800">{{ $actor }}</strong>
+                            </span>
                         </div>
 
                         @if ($summary)
-                            <div class="mt-1">{!! $summary !!}</div>
+                            <div class="mt-2">
+                                {!! $summary !!}
+                            </div>
+                        @else
+                            <p class="mb-0 fs--1 text-500">
+                                No additional changes recorded.
+                            </p>
                         @endif
                     </div>
 
-                    <div class="small-muted text-end">
-                        <div>{{ $log->created_at->format('M d, Y') }}</div>
-                        <div>{{ $log->created_at->format('h:i A') }}</div>
+                    <div class="col-auto text-end">
+                        <div class="fs--2 text-600">
+                            {{ $log->created_at->format('M d, Y') }}
+                        </div>
+                        <div class="fs--2 text-500">
+                            {{ $log->created_at->format('h:i A') }}
+                        </div>
                     </div>
+
                 </div>
             </div>
 
         @empty
-            <div class="p-3 text-muted">No logs available.</div>
+            <div class="text-center py-5">
+                <div class="avatar avatar-4xl mx-auto mb-3">
+                    <div class="avatar-name rounded-circle bg-body-tertiary text-500">
+                        <span class="fas fa-clipboard-list"></span>
+                    </div>
+                </div>
+
+                <h6 class="text-700 mb-1">No logs available.</h6>
+                <p class="fs--1 text-500 mb-0">
+                    Employee activity history will appear here once changes are recorded.
+                </p>
+            </div>
         @endforelse
 
         @if ($logs->hasPages())
-            <div class="p-3 border-top">
+            <div class="px-3 py-3 bg-body-tertiary border-top">
                 {{ $logs->links('pagination.custom') }}
             </div>
         @endif
+
     </div>
 </div>

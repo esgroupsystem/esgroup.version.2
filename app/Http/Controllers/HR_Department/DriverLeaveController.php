@@ -257,7 +257,7 @@ class DriverLeaveController extends Controller
         $drivers = Employee::whereHas('position', function ($q) {
             $q->where('title', 'Driver');
         })
-            ->where('status', 'Active')
+            ->whereIn('status', ['Active', 'Active(Re-Entry)'])
             ->get();
 
         return view('hr_department.leaves.driver.create', compact('drivers'));

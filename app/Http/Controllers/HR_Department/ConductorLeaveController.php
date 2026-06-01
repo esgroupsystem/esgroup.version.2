@@ -256,7 +256,7 @@ class ConductorLeaveController extends Controller
         $conductors = Employee::whereHas('position', function ($q) {
             $q->where('title', 'Conductor');
         })
-        ->where('status', 'Active')
+        ->whereIn('status', ['Active', 'Active(Re-Entry)'])
         ->get();
 
         return view('hr_department.leaves.conductor.create', compact('conductors'));

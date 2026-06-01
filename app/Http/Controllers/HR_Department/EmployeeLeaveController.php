@@ -226,7 +226,7 @@ class EmployeeLeaveController extends Controller
 
     public function create()
     {
-        // ✅ Exclude Driver & Conductor
+
         $employees = Employee::where('status', 'Active')
             ->whereHas('position', function ($q) {
                 $q->whereNotIn('title', ['Driver', 'Conductor']);
@@ -250,7 +250,7 @@ class EmployeeLeaveController extends Controller
         EmployeeLeave::create([
             'employee_id' => $request->employee_id,
             'leave_type' => $request->leave_type,
-            'status'   => 'Active',
+            'status' => 'Active',
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'days' => $days,
