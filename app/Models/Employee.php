@@ -27,6 +27,7 @@ class Employee extends Model
         'emergency_name',
         'emergency_contact',
         'date_resigned',
+        'type_of_status',
         'last_duty',
         'clearance_date',
         'last_pay_status',

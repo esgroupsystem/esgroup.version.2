@@ -377,6 +377,14 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::get('/departments/{id}/positions', 'getPositions')
                     ->middleware('permission:employees.view')
                     ->name('positions');
+
+                Route::get('/{employee}/history/{history}/edit', 'editHistory')
+                    ->middleware('permission:employees.update')
+                    ->name('staff.history.edit');
+
+                Route::put('/{employee}/history/{history}', 'updateHistory')
+                    ->middleware('permission:employees.update')
+                    ->name('staff.history.update');
             });
 
             /*

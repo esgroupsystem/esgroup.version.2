@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class EmployeeController extends Controller
@@ -449,6 +450,16 @@ class EmployeeController extends Controller
     {
         $validated = $request->validate([
             'date_resigned' => 'nullable|date',
+
+            'type_of_status' => [
+                'nullable',
+                Rule::in([
+                    'Terminated',
+                    'Terminated due to AWOL',
+                    'Retrenched',
+                ]),
+            ],
+
             'last_duty' => 'nullable|date',
             'clearance_date' => 'nullable|date',
             'last_pay_status' => 'nullable|in:Not released,Released',
@@ -457,7 +468,7 @@ class EmployeeController extends Controller
 
         $before = $employee->only(array_keys($validated));
 
-        // normalize dates for clean diff
+        // Normalize dates for clean diff
         foreach (['date_resigned', 'last_duty', 'clearance_date', 'last_pay_date'] as $df) {
             if (array_key_exists($df, $validated)) {
                 $validated[$df] = $this->normalizeDate($validated[$df]);
@@ -704,6 +715,98 @@ class EmployeeController extends Controller
             }
 
             return back()->withErrors($e->validator)->withInput();
+        }
+    }
+
+    public function updateHistory(Request $request, Employee $employee, $historyId)
+    {
+        try {
+            $originalHistory = $employee->histories()->findOrFail($historyId);
+
+            // Validation
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'offense_id' => 'required|array|min:1',
+                'offense_id.*' => 'exists:hr_offenses,id',
+                'description' => 'nullable|array',
+                'description.*' => 'nullable|string',
+                'disciplinary_action' => 'nullable|array',
+                'disciplinary_action.*' => 'in:Salary Deduction Authorization,Suspension',
+                'sda_amount' => 'nullable|numeric|min:0',
+                'sda_terms' => 'nullable|integer|min:1',
+                'sda_start_date' => 'nullable|date',
+                'sda_end_date' => 'nullable|date|after_or_equal:sda_start_date',
+                'suspension_start_date' => 'nullable|date',
+                'suspension_end_date' => 'nullable|date|after_or_equal:suspension_start_date',
+                'ir_number' => 'nullable|string|max:255',
+            ]);
+
+            $actions = $validated['disciplinary_action'] ?? [];
+            $hasSda = in_array('Salary Deduction Authorization', $actions, true);
+            $hasSuspension = in_array('Suspension', $actions, true);
+
+            // SDA validation
+            if ($hasSda) {
+                $errors = [];
+                if (empty($validated['sda_amount'])) {
+                    $errors['sda_amount'] = 'SDA total amount is required.';
+                }
+                if (empty($validated['sda_terms'])) {
+                    $errors['sda_terms'] = 'Deduction terms are required.';
+                }
+                if (empty($validated['sda_start_date'])) {
+                    $errors['sda_start_date'] = 'SDA start date is required.';
+                }
+                if (! empty($errors)) {
+                    return back()->withErrors($errors)->withInput();
+                }
+            } else {
+                $validated['sda_amount'] = null;
+                $validated['sda_terms'] = null;
+                $validated['sda_start_date'] = null;
+                $validated['sda_end_date'] = null;
+            }
+
+            // Suspension validation
+            if ($hasSuspension && empty($validated['suspension_start_date'])) {
+                return back()->withErrors(['suspension_start_date' => 'Suspension start date is required.'])->withInput();
+            } elseif (! $hasSuspension) {
+                $validated['suspension_start_date'] = null;
+                $validated['suspension_end_date'] = null;
+            }
+
+            // Delete old violations for this IR
+            $employee->histories()->where('ir_number', $originalHistory->ir_number)->delete();
+
+            // Create new records for each offense
+            $offenseIds = $validated['offense_id'];
+            $descriptions = $validated['description'] ?? [];
+
+            foreach ($offenseIds as $index => $offenseId) {
+                $employee->histories()->create([
+                    'title' => $validated['title'],
+                    'ir_number' => $validated['ir_number'] ?? $originalHistory->ir_number,
+                    'offense_id' => $offenseId,
+                    'description' => $descriptions[$index] ?? null,
+                    'disciplinary_action' => $actions,
+                    'sda_amount' => $validated['sda_amount'],
+                    'sda_terms' => $validated['sda_terms'],
+                    'sda_start_date' => $validated['sda_start_date'] ? \Illuminate\Support\Carbon::parse($validated['sda_start_date']) : null,
+                    'sda_end_date' => $validated['sda_end_date'] ? \Illuminate\Support\Carbon::parse($validated['sda_end_date']) : null,
+                    'suspension_start_date' => $validated['suspension_start_date'] ? \Illuminate\Support\Carbon::parse($validated['suspension_start_date']) : null,
+                    'suspension_end_date' => $validated['suspension_end_date'] ? \Illuminate\Support\Carbon::parse($validated['suspension_end_date']) : null,
+                ]);
+            }
+
+            flash('History updated successfully!')->success();
+
+            return redirect()->route('employees.staff.show', $employee->id);
+
+        } catch (\Throwable $e) {
+            dd($e->getMessage(), $e->getFile(), $e->getLine()); // Debug exact error
+            flash('Unable to update history.')->error();
+
+            return back()->withInput();
         }
     }
 

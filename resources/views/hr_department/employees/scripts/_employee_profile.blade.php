@@ -211,138 +211,235 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        function initModal(modalEl) {
+            const container = modalEl.querySelector('.violation-fields');
+            const addBtn = modalEl.querySelector('.addViolationBtn');
+            const sdaCheckbox = modalEl.querySelector('.js-action-sda');
+            const sdaWrapper = modalEl.querySelector('.sda-fields-wrapper');
+            const suspCheckbox = modalEl.querySelector('.js-action-suspension');
+            const suspWrapper = modalEl.querySelector('.suspension-dates-wrapper');
 
-        const violationFields = document.getElementById('violationFields');
+            // Add new violation row
+            addBtn?.addEventListener('click', function() {
+                const firstRow = container.querySelector('.violation-row');
+                const clone = firstRow.cloneNode(true);
+                clone.querySelectorAll('select, textarea, input').forEach(i => i.value = '');
+                clone.querySelector('.removeViolation').classList.remove('d-none');
+                container.appendChild(clone);
+                updateNumbers();
+            });
 
-        const sdaCheckbox = document.getElementById('actionSDA');
-        const suspensionCheckbox = document.getElementById('actionSuspension');
+            // Remove violation row
+            modalEl.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('removeViolation')) return;
+                if (container.querySelectorAll('.violation-row').length <= 1) return;
+                e.target.closest('.violation-row').remove();
+                updateNumbers();
+            });
 
-        const sdaFieldsWrapper = document.getElementById('sdaFieldsWrapper');
-
-        const suspensionDatesWrapper = document.getElementById('suspensionDatesWrapper');
-
-        const suspensionStartDate = document.getElementById('suspensionStartDate');
-        const suspensionEndDate = document.getElementById('suspensionEndDate');
-
-        // Always show violation fields
-        if (violationFields) {
-            violationFields.classList.remove('d-none');
-        }
-
-        function toggleSDAFields() {
-
-            if (!sdaFieldsWrapper) return;
-
-            if (sdaCheckbox && sdaCheckbox.checked) {
-                sdaFieldsWrapper.classList.remove('d-none');
-            } else {
-                sdaFieldsWrapper.classList.add('d-none');
-
-                document.querySelectorAll(
-                    '[name="sda_amount"], [name="sda_terms"], [name="sda_start_date"], [name="sda_end_date"]'
-                ).forEach(el => el.value = '');
-            }
-        }
-
-        function toggleSuspensionDates() {
-
-            if (!suspensionDatesWrapper) return;
-
-            if (suspensionCheckbox && suspensionCheckbox.checked) {
-
-                suspensionDatesWrapper.classList.remove('d-none');
-
-                if (suspensionStartDate) {
-                    suspensionStartDate.disabled = false;
-                }
-
-                if (suspensionEndDate) {
-                    suspensionEndDate.disabled = false;
-                }
-
-            } else {
-
-                suspensionDatesWrapper.classList.add('d-none');
-
-                if (suspensionStartDate) {
-                    suspensionStartDate.disabled = true;
-                    suspensionStartDate.value = '';
-                }
-
-                if (suspensionEndDate) {
-                    suspensionEndDate.disabled = true;
-                    suspensionEndDate.value = '';
-                }
-            }
-        }
-
-        const container =
-            document.getElementById('violationsContainer');
-
-        const addBtn =
-            document.getElementById('addViolationBtn');
-
-        addBtn?.addEventListener('click', function() {
-
-            const first =
-                document.querySelector('.violation-row');
-
-            const clone =
-                first.cloneNode(true);
-
-            clone.querySelector('.offenseSelect').value = '';
-            clone.querySelector('.offenseDescription').value = '';
-
-            clone.querySelector('.removeViolation')
-                .classList.remove('d-none');
-
-            container.appendChild(clone);
-
-            updateViolationNumbers();
-        });
-
-        document.addEventListener('click', function(e) {
-
-            if (!e.target.classList.contains('removeViolation')) {
-                return;
-            }
-
-            e.target.closest('.violation-row').remove();
-
-            updateViolationNumbers();
-        });
-
-        function updateViolationNumbers() {
-
-            document.querySelectorAll('.violation-row')
-                .forEach((row, index) => {
-
-                    row.querySelector('h6').innerText =
-                        `Violation #${index + 1}`;
+            function updateNumbers() {
+                container.querySelectorAll('.violation-row').forEach((row, i) => {
+                    row.querySelector('.violation-number').textContent = 'Violation #' + (i + 1);
+                    row.querySelector('.removeViolation').classList.toggle('d-none', i === 0);
                 });
+            }
+
+            // SDA toggle
+            sdaCheckbox?.addEventListener('change', () => {
+                if (!sdaWrapper) return;
+                sdaWrapper.classList.toggle('d-none', !sdaCheckbox.checked);
+            });
+
+            // Suspension toggle
+            suspCheckbox?.addEventListener('change', () => {
+                if (!suspWrapper) return;
+                suspWrapper.classList.toggle('d-none', !suspCheckbox.checked);
+            });
+
+            // Auto-fill description from offense select
+            modalEl.addEventListener('change', e => {
+                if (!e.target.classList.contains('offenseSelect')) return;
+                const desc = e.target.options[e.target.selectedIndex].dataset.description || '';
+                const textarea = e.target.closest('.violation-row').querySelector(
+                    '.offenseDescription');
+                if (textarea) textarea.value = desc;
+            });
         }
 
-        document.addEventListener('change', function(e) {
+        document.querySelectorAll('.violation-edit-modal').forEach(initModal);
+    });
 
-            if (!e.target.classList.contains('offenseSelect')) {
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('[data-bs-toggle="modal"][data-bs-target]').forEach(function(button) {
+            const targetSelector = button.getAttribute('data-bs-target');
+
+            if (!targetSelector || !document.querySelector(targetSelector)) {
+                console.warn('Missing Bootstrap modal target:', targetSelector, button);
+            }
+        });
+
+        document.querySelectorAll('.violation-edit-modal').forEach(function(modalEl) {
+            initializeViolationModal(modalEl);
+        });
+
+        document.addEventListener('change', function(event) {
+            if (!event.target.classList.contains('offenseSelect')) {
                 return;
             }
 
-            const option =
-                e.target.options[e.target.selectedIndex];
+            const option = event.target.options[event.target.selectedIndex];
+            const row = event.target.closest('.violation-row');
 
-            const textarea =
-                e.target.closest('.violation-row')
-                .querySelector('.offenseDescription');
+            if (!row) {
+                return;
+            }
 
-            textarea.value =
-                option.dataset.description || '';
+            const textarea = row.querySelector('.offenseDescription');
+
+            if (textarea) {
+                textarea.value = option.dataset.description || '';
+            }
         });
 
-        sdaCheckbox?.addEventListener('change', toggleSDAFields);
-        suspensionCheckbox?.addEventListener('change', toggleSuspensionDates);
+        function initializeViolationModal(modalEl) {
+            const sdaCheckbox = modalEl.querySelector('.js-action-sda');
+            const suspensionCheckbox = modalEl.querySelector('.js-action-suspension');
 
-        toggleSDAFields();
-        toggleSuspensionDates();
+            const sdaWrapper = modalEl.querySelector('.sda-fields-wrapper');
+            const suspensionWrapper = modalEl.querySelector('.suspension-dates-wrapper');
+
+            const addButton = modalEl.querySelector('.addViolationBtn');
+
+            function toggleSdaFields() {
+                if (!sdaCheckbox || !sdaWrapper) {
+                    return;
+                }
+
+                if (sdaCheckbox.checked) {
+                    sdaWrapper.classList.remove('d-none');
+                    sdaWrapper.querySelectorAll('input').forEach(function(input) {
+                        input.disabled = false;
+                    });
+                    return;
+                }
+
+                sdaWrapper.classList.add('d-none');
+
+                sdaWrapper.querySelectorAll('input').forEach(function(input) {
+                    input.value = '';
+                    input.disabled = true;
+                });
+            }
+
+            function toggleSuspensionFields() {
+                if (!suspensionCheckbox || !suspensionWrapper) {
+                    return;
+                }
+
+                if (suspensionCheckbox.checked) {
+                    suspensionWrapper.classList.remove('d-none');
+                    suspensionWrapper.querySelectorAll('input').forEach(function(input) {
+                        input.disabled = false;
+                    });
+                    return;
+                }
+
+                suspensionWrapper.classList.add('d-none');
+
+                suspensionWrapper.querySelectorAll('input').forEach(function(input) {
+                    input.value = '';
+                    input.disabled = true;
+                });
+            }
+
+            function updateViolationNumbers(container) {
+                const rows = container.querySelectorAll('.violation-row');
+
+                rows.forEach(function(row, index) {
+                    const title = row.querySelector('.violation-number');
+                    const removeButton = row.querySelector('.removeViolation');
+
+                    if (title) {
+                        title.textContent = 'Violation #' + (index + 1);
+                    }
+
+                    if (removeButton) {
+                        removeButton.classList.toggle('d-none', index === 0);
+                    }
+                });
+            }
+
+            addButton?.addEventListener('click', function() {
+                const targetSelector = addButton.dataset.target;
+                const container = modalEl.querySelector(targetSelector);
+
+                if (!container) {
+                    console.warn('Violation container not found:', targetSelector);
+                    return;
+                }
+
+                const firstRow = container.querySelector('.violation-row');
+
+                if (!firstRow) {
+                    return;
+                }
+
+                const clone = firstRow.cloneNode(true);
+
+                clone.querySelectorAll('select').forEach(function(select) {
+                    select.value = '';
+                });
+
+                clone.querySelectorAll('textarea').forEach(function(textarea) {
+                    textarea.value = '';
+                });
+
+                clone.querySelectorAll('input').forEach(function(input) {
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        input.checked = false;
+                    } else {
+                        input.value = '';
+                    }
+                });
+
+                container.appendChild(clone);
+                updateViolationNumbers(container);
+            });
+
+            modalEl.addEventListener('click', function(event) {
+                const removeButton = event.target.closest('.removeViolation');
+
+                if (!removeButton) {
+                    return;
+                }
+
+                const container = removeButton.closest('.violation-fields');
+
+                if (!container) {
+                    return;
+                }
+
+                const rows = container.querySelectorAll('.violation-row');
+
+                if (rows.length <= 1) {
+                    return;
+                }
+
+                removeButton.closest('.violation-row').remove();
+                updateViolationNumbers(container);
+            });
+
+            sdaCheckbox?.addEventListener('change', toggleSdaFields);
+            suspensionCheckbox?.addEventListener('change', toggleSuspensionFields);
+
+            toggleSdaFields();
+            toggleSuspensionFields();
+
+            const container = modalEl.querySelector('.violation-fields');
+
+            if (container) {
+                updateViolationNumbers(container);
+            }
+        }
     });
 </script>
