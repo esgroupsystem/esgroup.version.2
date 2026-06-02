@@ -3,7 +3,6 @@
 use App\Http\Controllers\Accounting\AccountingController;
 use App\Http\Controllers\AllBusController;
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\BiometricsViewController;
 use App\Http\Controllers\BusDetailController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\DashboardController;
@@ -37,7 +36,6 @@ use App\Http\Controllers\UserManagementController;
 use App\Http\Middleware\ForceLockscreen;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Maintenance\PurchaseReceiveController;
 
 /*
 |--------------------------------------------------------------------------
@@ -635,11 +633,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->name('store');
         });
 
-        Route::get('/biometrics/logs', [BiometricsViewController::class, 'index'])
-            ->name('biometrics.logs');
-
-        Route::get('/biometrics/latest', [BiometricsViewController::class, 'latest'])
-            ->name('biometrics.latest');
     /*
     |--------------------------------------------------------------------------
     | Payroll Attendance Adjustments

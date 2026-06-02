@@ -90,13 +90,6 @@
                             </li>
                         @endcan
 
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->is('biometrics/logs') ? 'active' : '' }}"
-                                href="{{ route('biometrics.logs') }}">
-                                Biometrics Logs
-                            </a>
-                        </li>
-
                     </ul>
                 </li>
 

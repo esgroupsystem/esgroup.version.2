@@ -39,7 +39,6 @@ return [
         'url' => env('CROSSCHEX_URL', 'https://api.us.crosschexcloud.com/'),
         'key' => env('CROSSCHEX_API_KEY'),
         'secret' => env('CROSSCHEX_API_SECRET'),
-        'webhook_password' => env('CROSSCHEX_WEBHOOK_PASSWORD'),
     ],
 
     'turnstile' => [
