@@ -7,8 +7,10 @@
             (function() {
                 const isFluid = JSON.parse(localStorage.getItem('isFluid') || 'false');
                 if (!isFluid) return;
+
                 const container = document.querySelector('[data-layout]');
                 if (!container) return;
+
                 container.classList.remove('container');
                 container.classList.add('container-fluid');
             })();
@@ -23,7 +25,7 @@
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="text-700 mb-1">Total Logs</h6>
-                                <h3 class="text-900" id="total-logs">{{ \App\Models\MirasolBiometricsLog::count() }}</h3>
+                                <h3 class="text-900" id="total-logs">{{ number_format($totalLogs ?? 0) }}</h3>
                             </div>
                             <div class="icon icon-shape icon-sm rounded-circle bg-primary text-white">
                                 <i class="fas fa-list-check"></i>
@@ -37,8 +39,7 @@
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="text-700 mb-1">Today</h6>
-                                <h3 class="text-900" id="today-logs">
-                                    {{ \App\Models\MirasolBiometricsLog::whereDate('check_time', now())->count() }}</h3>
+                                <h3 class="text-900" id="today-logs">{{ number_format($todayLogs ?? 0) }}</h3>
                             </div>
                             <div class="icon icon-shape icon-sm rounded-circle bg-success text-white">
                                 <i class="fas fa-calendar-day"></i>
@@ -52,8 +53,7 @@
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="text-700 mb-1">Devices</h6>
-                                <h3 class="text-900" id="device-count">
-                                    {{ \App\Models\MirasolBiometricsLog::distinct('device_sn')->count('device_sn') }}</h3>
+                                <h3 class="text-900" id="device-count">{{ number_format($deviceCount ?? 0) }}</h3>
                             </div>
                             <div class="icon icon-shape icon-sm rounded-circle bg-warning text-white">
                                 <i class="fas fa-microchip"></i>
@@ -67,9 +67,7 @@
                         <div class="card-body d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="text-700 mb-1">Unique Employees</h6>
-                                <h3 class="text-900" id="unique-employees">
-                                    {{ \App\Models\MirasolBiometricsLog::distinct('employee_no')->count('employee_no') }}
-                                </h3>
+                                <h3 class="text-900" id="unique-employees">{{ number_format($uniqueEmployees ?? 0) }}</h3>
                             </div>
                             <div class="icon icon-shape icon-sm rounded-circle bg-info text-white">
                                 <i class="fas fa-users"></i>
@@ -84,9 +82,9 @@
                 <div class="card-header bg-body-tertiary border-bottom border-200">
                     <h6 class="mb-0">Search / Filter Logs</h6>
                 </div>
+
                 <div class="card-body">
                     <form method="GET" action="{{ route('mirasol-logs.index') }}" class="row g-2 align-items-end">
-                        @csrf
                         <div class="col-md-3">
                             <label class="form-label">Employee Name / No</label>
                             <input type="text" name="q" class="form-control form-control-sm"
@@ -96,19 +94,23 @@
                         <div class="col-md-3">
                             <label class="form-label">Start Date</label>
                             <input type="date" name="from" class="form-control form-control-sm"
-                                value="{{ request('from', now()->toDateString()) }}">
+                                value="{{ request('from') }}">
                         </div>
 
                         <div class="col-md-3">
                             <label class="form-label">End Date</label>
                             <input type="date" name="to" class="form-control form-control-sm"
-                                value="{{ request('to', now()->toDateString()) }}">
+                                value="{{ request('to') }}">
                         </div>
 
                         <div class="col-md-3 d-flex gap-2">
-                            <button class="btn btn-primary btn-sm flex-grow-1" type="submit"><i
-                                    class="fas fa-search me-1"></i> Search</button>
-                            <a href="{{ route('mirasol-logs.index') }}" class="btn btn-outline-secondary btn-sm">Reset</a>
+                            <button class="btn btn-primary btn-sm flex-grow-1" type="submit">
+                                <i class="fas fa-search me-1"></i> Search
+                            </button>
+
+                            <a href="{{ route('mirasol-logs.index') }}" class="btn btn-outline-secondary btn-sm">
+                                Reset
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -117,13 +119,17 @@
             {{-- Logs Table --}}
             <div class="card shadow-sm">
                 <div class="card-header bg-body-tertiary border-bottom border-200">
-                    <h6 class="mb-0"><i class="fas fa-clock text-primary me-2"></i>Recent Biometric Logs</h6>
+                    <h6 class="mb-0">
+                        <i class="fas fa-clock text-primary me-2"></i>
+                        Recent Biometric Logs
+                    </h6>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-hover table-sm mb-0" id="biometrics-table">
+
+                <div class="table-responsive mb-0">
+                    <table class="table table-hover table-sm mb-0 align-middle" id="biometrics-table">
                         <thead class="bg-light text-900 small text-uppercase">
                             <tr>
-                                <th>#</th>
+                                <th class="ps-3" style="width: 70px;">#</th>
                                 <th>Employee Name</th>
                                 <th>Employee No</th>
                                 <th>Check Time</th>
@@ -131,24 +137,58 @@
                                 <th>State</th>
                             </tr>
                         </thead>
+
                         <tbody>
-                            @forelse($logs as $log)
+                            @forelse($logs as $i => $log)
                                 <tr>
-                                    <td>{{ $loop->iteration + ($logs->currentPage() - 1) * $logs->perPage() }}</td>
-                                    <td>{{ $log->employee_name }}</td>
-                                    <td>{{ $log->employee_no }}</td>
-                                    <td>{{ $log->check_time->format('F d, Y (l) h:i A') }}</td>
-                                    <td>{{ $log->device_name }} ({{ $log->device_sn }})</td>
+                                    <td class="ps-3 text-muted">
+                                        {{ ($logs->firstItem() ?? 0) + $i }}
+                                    </td>
+
+                                    <td class="fw-semibold">
+                                        {{ $log->employee_name ?? '—' }}
+                                    </td>
+
+                                    <td class="text-muted">
+                                        {{ $log->employee_no ?? '—' }}
+                                    </td>
+
                                     <td>
-                                        <span class="badge {{ $log->state == 'checkin' ? 'bg-success' : 'bg-warning' }}">
-                                            {{ ucfirst($log->state ?? 'Unknown') }}
+                                        {{ $log->check_time ? $log->check_time->format('F d, Y (l) h:i A') : '—' }}
+                                    </td>
+
+                                    <td>
+                                        {{ $log->device_name ?? '—' }}
+
+                                        @if (!empty($log->device_sn))
+                                            <div class="text-muted fs-11">
+                                                {{ $log->device_sn }}
+                                            </div>
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        @php
+                                            $state = strtolower($log->state ?? '');
+                                        @endphp
+
+                                        <span class="badge {{ $state === 'checkin' ? 'bg-success' : 'bg-warning' }}">
+                                            {{ $log->state ? ucfirst($log->state) : 'Unknown' }}
                                         </span>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted py-3">
-                                        No logs found
+                                    <td colspan="6" class="text-center">
+                                        <div class="py-4">
+                                            <div class="mb-2">
+                                                <span class="fas fa-fingerprint fa-2x text-muted"></span>
+                                            </div>
+                                            <div class="fw-bold">No Logs Found</div>
+                                            <div class="text-muted fs-11">
+                                                No biometric logs matched your selected filters.
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforelse
@@ -160,10 +200,13 @@
                 <div class="card-footer bg-body-tertiary border-top border-200">
                     <div class="d-flex flex-column flex-md-row gap-2 justify-content-between align-items-md-center">
                         <small class="text-muted">
-                            Showing {{ $rows->firstItem() ?? 0 }} to {{ $rows->lastItem() ?? 0 }} of
-                            {{ $rows->total() }}
+                            Showing {{ $logs->firstItem() ?? 0 }} to {{ $logs->lastItem() ?? 0 }} of
+                            {{ $logs->total() }}
                         </small>
-                        <div class="ms-md-auto">{{ $rows->links('pagination.custom') }}</div>
+
+                        <div class="ms-md-auto">
+                            {{ $logs->links('pagination.custom') }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -171,38 +214,3 @@
         </div>
     </div>
 @endsection
-
-@push('scripts')
-    <script>
-        // Polling for latest 10 logs
-        function fetchLatestLogs() {
-            fetch('{{ route('biometrics.latest') }}')
-                .then(res => res.json())
-                .then(data => {
-                    const tbody = document.querySelector('#biometrics-table tbody');
-                    tbody.innerHTML = '';
-                    data.logs.forEach((log, index) => {
-                        tbody.innerHTML += `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${log.employee_name}</td>
-                            <td>${log.employee_no}</td>
-                            <td>${log.check_time}</td>
-                            <td>${log.device_name} (${log.device_sn})</td>
-                            <td>
-                                <span class="badge ${log.state === 'checkin' ? 'bg-success' : 'bg-warning'}">
-                                    ${log.state ? log.state.charAt(0).toUpperCase() + log.state.slice(1) : 'Unknown'}
-                                </span>
-                            </td>
-                        </tr>
-                    `;
-                    });
-
-                    // Optionally update summary counts
-                    document.getElementById('total-logs').textContent = data.logs.length;
-                });
-        }
-
-        setInterval(fetchLatestLogs, 5000);
-    </script>
-@endpush
