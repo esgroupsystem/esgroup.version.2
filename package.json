@@ -22,10 +22,10 @@
         "dayjs": "^1.11.20",
         "dropzone": "^6.0.0-beta.2",
         "flatpickr": "^4.6.13",
-        "laravel-echo": "^2.2.6",
+        "laravel-echo": "^2.3.4",
         "leaflet": "^1.9.4",
         "lodash": "^4.18.1",
-        "pusher-js": "^8.4.0",
+        "pusher-js": "^8.5.0",
         "simplebar": "^6.3.3",
         "swiper": "^12.1.3"
     }
