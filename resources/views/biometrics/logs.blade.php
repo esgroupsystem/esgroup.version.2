@@ -186,9 +186,11 @@
                             <td>${log.employee_no}</td>
                             <td>${log.check_time}</td>
                             <td>${log.device_name} (${log.device_sn})</td>
-                            <td><span class="badge ${log.state === 'checkin' ? 'bg-success' : 'bg-warning'}">
-                                ${log.state.charAt(0).toUpperCase() + log.state.slice(1)}
-                            </span></td>
+                            <td>
+                                <span class="badge ${log.state === 'checkin' ? 'bg-success' : 'bg-warning'}">
+                                    ${log.state ? log.state.charAt(0).toUpperCase() + log.state.slice(1) : 'Unknown'}
+                                </span>
+                            </td>
                         </tr>
                     `;
                     });
