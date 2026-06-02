@@ -168,17 +168,54 @@
     </div>
 @endsection
 
-@push('scripts')
-    <script>
-        // Polling for latest 10 logs
-        function fetchLatestLogs() {
-            fetch('{{ route('biometrics.latest') }}')
-                .then(res => res.json())
-                .then(data => {
-                    const tbody = document.querySelector('#biometrics-table tbody');
-                    tbody.innerHTML = '';
-                    data.logs.forEach((log, index) => {
-                        tbody.innerHTML += `
+@section('styles')
+    <style>
+        /* pagination (your style) */
+        .pagination {
+            font-size: 14px !important;
+        }
+
+        .pagination .page-link {
+            padding: 4px 10px !important;
+            font-size: 14px !important;
+            border-radius: 4px !important;
+            color: #4a4a4a !important;
+            border: 1px solid #d0d5dd !important;
+            background: #f8f9fa !important;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #0d6efd !important;
+            border-color: #0d6efd !important;
+            color: #fff !important;
+            font-weight: 600 !important;
+        }
+
+        .pagination .page-link:hover {
+            background: #e2e6ea !important;
+            border-color: #c4c9cf !important;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            opacity: 0.5 !important;
+        }
+
+        .pagination .page-item {
+            margin: 0 2px !important;
+        }
+    </style>
+
+    @push('scripts')
+        <script>
+            // Polling for latest 10 logs
+            function fetchLatestLogs() {
+                fetch('{{ route('biometrics.latest') }}')
+                    .then(res => res.json())
+                    .then(data => {
+                        const tbody = document.querySelector('#biometrics-table tbody');
+                        tbody.innerHTML = '';
+                        data.logs.forEach((log, index) => {
+                            tbody.innerHTML += `
                         <tr>
                             <td>${index + 1}</td>
                             <td>${log.employee_name}</td>
@@ -192,13 +229,13 @@
                             </td>
                         </tr>
                     `;
+                        });
+
+                        // Optionally update summary counts
+                        document.getElementById('total-logs').textContent = data.logs.length;
                     });
+            }
 
-                    // Optionally update summary counts
-                    document.getElementById('total-logs').textContent = data.logs.length;
-                });
-        }
-
-        setInterval(fetchLatestLogs, 5000);
-    </script>
-@endpush
+            setInterval(fetchLatestLogs, 5000);
+        </script>
+    @endpush
