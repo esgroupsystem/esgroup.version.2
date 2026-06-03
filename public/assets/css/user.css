@@ -722,6 +722,24 @@ body {
     animation-delay: 0.36s;
 }
 
+.app-content-wrapper {
+    width: 100%;
+    max-width: 1820px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (min-width: 1200px) {
+    .container,
+    .container-sm,
+    .container-md,
+    .container-lg,
+    .container-xl,
+    .container-xxl {
+        max-width: 1820px !important;
+    }
+}
+
 @keyframes transportBusMove {
     0%,
     100% {

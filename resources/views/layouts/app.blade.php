@@ -39,10 +39,15 @@
     {{-- ADDED: Select2 CSS --}}
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
-    <link href="{{ asset('assets/css/theme-rtl.css') }}" rel="stylesheet" id="style-rtl">
-    <link href="{{ asset('assets/css/theme.css') }}" rel="stylesheet" id="style-default">
-    <link href="{{ asset('assets/css/user-rtl.css') }}" rel="stylesheet" id="user-style-rtl">
-    <link href="{{ asset('assets/css/user.css') }}" rel="stylesheet" id="user-style-default">
+    <link href="{{ asset('assets/css/theme-rtl.css') }}?v={{ filemtime(public_path('assets/css/theme-rtl.css')) }}"
+        rel="stylesheet" id="style-rtl">
+    <link href="{{ asset('assets/css/theme.css') }}?v={{ filemtime(public_path('assets/css/theme.css')) }}"
+        rel="stylesheet" id="style-default">
+
+    <link href="{{ asset('assets/css/user-rtl.css') }}?v={{ filemtime(public_path('assets/css/user-rtl.css')) }}"
+        rel="stylesheet" id="user-style-rtl">
+    <link href="{{ asset('assets/css/user.css') }}?v={{ filemtime(public_path('assets/css/user.css')) }}"
+        rel="stylesheet" id="user-style-default">
 
     <script>
         const isRTL = JSON.parse(localStorage.getItem('isRTL'));
@@ -70,7 +75,7 @@
 
             @include('flash::message')
 
-            <div class="container-fluid px-4 px-lg-0">
+            <div class="container-fluid app-content-wrapper px-4 px-lg-0">
                 @include('layouts.header')
                 @yield('content')
             </div>
