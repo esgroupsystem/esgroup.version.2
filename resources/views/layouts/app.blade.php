@@ -70,7 +70,7 @@
 
             @include('flash::message')
 
-            <div class="container-fluid px-4 px-lg-7">
+            <div class="container-fluid px-4 px-lg-0">
                 @include('layouts.header')
                 @yield('content')
             </div>
@@ -185,68 +185,69 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
 
-            document.querySelectorAll("form.confirm-delete").forEach(form => {
+            document.addEventListener("submit", function(e) {
+                const form = e.target;
 
-                form.addEventListener("submit", function(e) {
-                    e.preventDefault();
+                if (!(form instanceof HTMLFormElement)) return;
 
+                const isCustomConfirm = form.classList.contains("js-confirm-form");
+                const isOldDeleteConfirm = form.classList.contains("confirm-delete");
+
+                if (!isCustomConfirm && !isOldDeleteConfirm) return;
+
+                if (form.dataset.confirmed === "true") return;
+
+                e.preventDefault();
+                e.stopImmediatePropagation();
+
+                const rawAction = form.getAttribute("action");
+
+                if (!rawAction || rawAction === "#") {
                     Swal.fire({
-                        title: 'Are you sure?',
-                        text: 'This action cannot be undone.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#d33',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Yes, delete it!',
-                        background: '#fff',
-                    }).then((result) => {
-
-                        if (result.isConfirmed) {
-
-                            fetch(form.action, {
-                                    method: 'POST',
-                                    headers: {
-                                        'X-CSRF-TOKEN': form.querySelector(
-                                            'input[name="_token"]').value,
-                                        'X-Requested-With': 'XMLHttpRequest',
-                                        'Accept': 'application/json'
-                                    },
-                                    body: new URLSearchParams({
-                                        _method: 'DELETE'
-                                    })
-                                })
-                                .then(async res => {
-                                    if (!res.ok) {
-                                        const text = await res.text();
-                                        console.error(text);
-                                        throw new Error('Delete failed');
-                                    }
-
-                                    // remove row instantly
-                                    form.closest('tr').remove();
-
-                                    Swal.fire({
-                                        icon: 'success',
-                                        title: 'Deleted!',
-                                        text: 'Item has been deleted.',
-                                        timer: 1500,
-                                        showConfirmButton: false
-                                    });
-                                })
-                                .catch(err => {
-                                    console.error(err);
-
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Error',
-                                        text: 'Failed to delete item'
-                                    });
-                                });
-                        }
+                        icon: "error",
+                        title: "Invalid Route",
+                        text: "The form action is empty. Please check the route name.",
+                        confirmButtonText: "OK"
                     });
-                });
+                    return;
+                }
 
-            });
+                const title = form.dataset.title || "Are you sure?";
+                const text = form.dataset.text || "Please confirm this action.";
+                const icon = form.dataset.icon || "warning";
+                const confirmText = form.dataset.confirmText || "Yes, continue";
+                const confirmClass = form.dataset.confirmClass || "swal-default";
+
+                Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: icon,
+                    showCancelButton: true,
+                    confirmButtonText: confirmText,
+                    cancelButtonText: "Cancel",
+                    reverseButtons: true,
+                    buttonsStyling: false,
+                    customClass: {
+                        popup: "custom-swal-popup",
+                        title: "custom-swal-title",
+                        htmlContainer: "custom-swal-text",
+                        confirmButton: "custom-swal-confirm " + confirmClass,
+                        cancelButton: "custom-swal-cancel"
+                    }
+                }).then((result) => {
+                    if (!result.isConfirmed) return;
+
+                    form.dataset.confirmed = "true";
+
+                    const submitButton = form.querySelector('[type="submit"]');
+
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                    }
+
+                    HTMLFormElement.prototype.submit.call(form);
+                });
+            }, true);
 
         });
     </script>
@@ -278,14 +279,28 @@
     <script>
         document.addEventListener('submit', function(e) {
             const form = e.target;
+
+            if (!(form instanceof HTMLFormElement)) return;
+
+            if (
+                form.classList.contains('js-confirm-form') ||
+                form.classList.contains('confirm-delete')
+            ) {
+                return;
+            }
+
             if (form.dataset.submitted === '1') {
                 e.preventDefault();
                 return;
             }
+
             form.dataset.submitted = '1';
 
             const btn = form.querySelector('[type="submit"]');
-            if (btn) btn.disabled = true;
+
+            if (btn) {
+                btn.disabled = true;
+            }
         }, true);
     </script>
 

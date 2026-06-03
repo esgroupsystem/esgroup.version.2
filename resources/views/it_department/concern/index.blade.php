@@ -13,21 +13,6 @@
         </script>
 
         <div class="content">
-
-            @if (session('success'))
-                <div class="alert alert-success border-0 shadow-sm mb-3">{{ session('success') }}</div>
-            @endif
-
-            @if ($errors->any())
-                <div class="alert alert-danger border-0 shadow-sm mb-3">
-                    <ul class="mb-0 ps-3">
-                        @foreach ($errors->all() as $e)
-                            <li>{{ $e }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
             {{-- Header --}}
             <div class="card mb-3">
                 <div class="card-body py-3">

@@ -1310,7 +1310,7 @@ progress {
 }
 @media (min-width: 1540px) {
   .container-xxl, .container-xl, .container-lg, .container-md, .container-sm, .container {
-    max-width: 1480px;
+    max-width: 1820px;
   }
 }
 :root {
@@ -26480,7 +26480,7 @@ h5, .h5 {
 }
 @media (min-width: 1540px) {
   .container .navbar-vertical {
-    max-width: 1480px;
+    max-width: 1820px;
   }
 }
 @media (min-width: 1540px) {
@@ -28983,7 +28983,7 @@ a[href].bg-200:hover, a[href].bg-200:focus {
   }
 }
 /*-----------------------------------------------
-|  Back to top button   
+|  Back to top button
 -----------------------------------------------*/
 .btn-back-to-top {
   background-color: var(--falcon-dark);

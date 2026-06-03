@@ -1,4 +1,4 @@
-<nav class="navbar navbar-light navbar-vertical navbar-expand-xl px-4 px-lg-7">
+<nav class="navbar navbar-light navbar-vertical navbar-expand-xl px-4 px-lg-1">
     <div class="d-flex align-items-center">
         <div class="toggle-icon-wrapper">
             <button class="btn navbar-toggler-humburger-icon navbar-vertical-toggle" data-bs-toggle="tooltip"

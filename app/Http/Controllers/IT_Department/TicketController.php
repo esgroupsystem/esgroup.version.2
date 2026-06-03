@@ -30,6 +30,7 @@ class TicketController extends Controller
         $tab = $request->get('tab', 'pending');
         $search = trim((string) $request->get('search', ''));
 
+        // Base query with optional search
         $baseQuery = JobOrder::with('bus')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
@@ -47,38 +48,41 @@ class TicketController extends Controller
             })
             ->orderByDesc('job_date_filled');
 
+        // Handle AJAX pagination per tab
         if ($request->ajax()) {
             $list = (clone $baseQuery)
                 ->when($tab === 'pending', fn ($q) => $q->whereIn('job_status', ['Pending', 'Approval']))
                 ->when($tab === 'progress', fn ($q) => $q->where('job_status', 'In Progress'))
                 ->when($tab === 'completed', fn ($q) => $q->where('job_status', 'Completed'))
-                ->paginate(10);
+                ->paginate(10)
+                ->withQueryString(); // preserve tab & search in pagination links
 
-            return view('tickets.partials.table', compact('list'))->render();
+            return view('it_department.people-table', compact('list', 'tab'))->render();
         }
 
-        $pending = JobOrder::with('bus')
+        // Prepare tab-specific paginations
+        $pending = (clone $baseQuery)
             ->whereIn('job_status', ['Pending', 'Approval'])
-            ->orderByDesc('job_date_filled')
-            ->paginate(10, ['*'], 'pending_page');
+            ->paginate(10, ['*'], 'pending_page')
+            ->appends(['tab' => 'pending']);
 
-        $progress = JobOrder::with('bus')
+        $progress = (clone $baseQuery)
             ->where('job_status', 'In Progress')
-            ->orderByDesc('job_date_filled')
-            ->paginate(10, ['*'], 'progress_page');
+            ->paginate(10, ['*'], 'progress_page')
+            ->appends(['tab' => 'progress']);
 
-        $completed = JobOrder::with('bus')
+        $completed = (clone $baseQuery)
             ->where('job_status', 'Completed')
-            ->orderByDesc('job_date_filled')
-            ->paginate(10, ['*'], 'completed_page');
+            ->paginate(10, ['*'], 'completed_page')
+            ->appends(['tab' => 'completed']);
 
+        // Status counts
         $statusCounts = JobOrder::selectRaw("
-                SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as new_count,
-                SUM(CASE WHEN job_status IN ('Pending', 'Approval') THEN 1 ELSE 0 END) as pending_count,
-                SUM(CASE WHEN job_status = 'In Progress' THEN 1 ELSE 0 END) as progress_count,
-                SUM(CASE WHEN job_status = 'Completed' THEN 1 ELSE 0 END) as completed_count
-            ")
-            ->first();
+            SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as new_count,
+            SUM(CASE WHEN job_status IN ('Pending', 'Approval') THEN 1 ELSE 0 END) as pending_count,
+            SUM(CASE WHEN job_status = 'In Progress' THEN 1 ELSE 0 END) as progress_count,
+            SUM(CASE WHEN job_status = 'Completed' THEN 1 ELSE 0 END) as completed_count
+        ")->first();
 
         $stats = [
             'new' => (int) ($statusCounts->new_count ?? 0),
@@ -87,6 +91,7 @@ class TicketController extends Controller
             'completed' => (int) ($statusCounts->completed_count ?? 0),
         ];
 
+        // Categories
         $categoryList = [
             'ACCIDENT', 'COLLECTING FARE', 'CUTTING FARE', 'RE- ISSUEING TICKET',
             'TAMPERING TICKET', 'UNREGISTERED TICKET', 'DELAYING ISSUANCE OF TICKET',
@@ -108,18 +113,14 @@ class TicketController extends Controller
             ->values()
             ->all();
 
+        // Agents
         $agents = User::whereIn('role', ['IT Head', 'IT Officer', 'IT Technician'])
             ->withCount('jobOrdersAssigned')
             ->orderBy('full_name')
             ->get();
 
         return view('it_department.ticket_job_order', compact(
-            'pending',
-            'progress',
-            'completed',
-            'stats',
-            'categories',
-            'agents'
+            'pending', 'progress', 'completed', 'stats', 'categories', 'agents', 'tab'
         ));
     }
 
@@ -129,8 +130,20 @@ class TicketController extends Controller
 
         abort_unless(in_array(Auth::user()->role, ['IT Head', 'Developer']), 403);
 
-        if ($job->job_status !== 'Approval' || $job->approval_status !== 'Approval') {
-            return back();
+        /*
+        |--------------------------------------------------------------------------
+        | Approval Validation
+        |--------------------------------------------------------------------------
+        | Allow approval when approval_status is still "Approval",
+        | even if job_status is already "Pending".
+        */
+        if ($job->approval_status !== 'Approval') {
+            return redirect()
+                ->route('tickets.joborder.index')
+                ->with(
+                    'warning',
+                    "This job order is not waiting for approval. Current status: {$job->job_status} / {$job->approval_status}"
+                );
         }
 
         $job->update([
@@ -144,10 +157,16 @@ class TicketController extends Controller
             'joborder_id' => $job->id,
             'user_id' => Auth::id(),
             'action' => 'approved',
-            'meta' => ['message' => 'Approved by IT Head'],
+            'meta' => [
+                'message' => 'Approved by IT Head',
+                'job_status' => 'Pending',
+                'approval_status' => 'Approved',
+            ],
         ]);
 
-        return back()->with('success', 'Job approved');
+        return redirect()
+            ->route('tickets.joborder.index')
+            ->with('success', 'Job order approved successfully.');
     }
 
     public function disapprove($id)
@@ -156,8 +175,13 @@ class TicketController extends Controller
 
         abort_unless(in_array(Auth::user()->role, ['IT Head', 'Developer']), 403);
 
-        if ($job->job_status !== 'Approval' || $job->approval_status !== 'Approval') {
-            return back();
+        if ($job->approval_status !== 'Approval') {
+            return redirect()
+                ->route('tickets.joborder.index')
+                ->with(
+                    'warning',
+                    "This job order is not waiting for approval. Current status: {$job->job_status} / {$job->approval_status}"
+                );
         }
 
         $job->update([
@@ -171,10 +195,16 @@ class TicketController extends Controller
             'joborder_id' => $job->id,
             'user_id' => Auth::id(),
             'action' => 'disapproved',
-            'meta' => ['message' => 'Disapproved by IT Head'],
+            'meta' => [
+                'message' => 'Disapproved by IT Head',
+                'job_status' => 'Disapproved',
+                'approval_status' => 'Disapproved',
+            ],
         ]);
 
-        return back()->with('error', 'Job disapproved');
+        return redirect()
+            ->route('tickets.joborder.index')
+            ->with('error', 'Job order disapproved.');
     }
 
     public function cctvindex()

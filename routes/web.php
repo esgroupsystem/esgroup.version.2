@@ -21,6 +21,7 @@ use App\Http\Controllers\Maintenance\CategoryController;
 use App\Http\Controllers\Maintenance\ItemsController;
 use App\Http\Controllers\Maintenance\OdometerReportController;
 use App\Http\Controllers\Maintenance\PartsOutController;
+use App\Http\Controllers\Maintenance\PurchaseReceiveController;
 use App\Http\Controllers\Maintenance\ReceivingController;
 use App\Http\Controllers\Maintenance\RequestController;
 use App\Http\Controllers\Maintenance\StockTransferController;
@@ -71,6 +72,10 @@ Route::controller(AuthController::class)->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', ForceLockscreen::class])->group(function () {
+
+    Route::get('/template/pathenol', function () {
+        return view('templates.pathenol-member-template');
+    });
 
     /*
     |--------------------------------------------------------------------------
