@@ -36,9 +36,21 @@ return [
     ],
 
     'crosschex' => [
-        'url' => env('CROSSCHEX_URL', 'https://api.us.crosschexcloud.com/'),
-        'key' => env('CROSSCHEX_API_KEY'),
-        'secret' => env('CROSSCHEX_API_SECRET'),
+        'accounts' => [
+            'main' => [
+                'name' => env('CROSSCHEX_MAIN_NAME', 'Main CrossChex'),
+                'url' => env('CROSSCHEX_MAIN_URL'),
+                'key' => env('CROSSCHEX_MAIN_KEY'),
+                'secret' => env('CROSSCHEX_MAIN_SECRET'),
+            ],
+
+            'second' => [
+                'name' => env('CROSSCHEX_SECOND_NAME', 'Second CrossChex'),
+                'url' => env('CROSSCHEX_SECOND_URL'),
+                'key' => env('CROSSCHEX_SECOND_KEY'),
+                'secret' => env('CROSSCHEX_SECOND_SECRET'),
+            ],
+        ],
     ],
 
     'turnstile' => [

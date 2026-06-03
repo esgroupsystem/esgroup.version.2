@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class MirasolBiometricsLog extends Model
 {
     protected $fillable = [
+        'crosschex_account',
+        'crosschex_account_name',
         'crosschex_id',
         'employee_id',
         'employee_no',

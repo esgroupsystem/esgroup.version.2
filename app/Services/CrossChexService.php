@@ -10,26 +10,50 @@ use Illuminate\Support\Str;
 
 class CrossChexService
 {
+    private string $account;
+
+    private string $name;
+
     private string $url;
 
     private string $key;
 
     private string $secret;
 
-    public function __construct()
+    public function __construct(string $account)
     {
-        $this->url = rtrim((string) config('services.crosschex.url'), '/');
-        $this->key = (string) config('services.crosschex.key');
-        $this->secret = (string) config('services.crosschex.secret');
+        $accounts = config('services.crosschex.accounts', []);
+        $config = $accounts[$account] ?? null;
+
+        if (! is_array($config)) {
+            throw new \RuntimeException("CrossChex account [{$account}] is not configured.");
+        }
+
+        $this->account = $account;
+        $this->name = (string) ($config['name'] ?? $account);
+        $this->url = rtrim((string) ($config['url'] ?? ''), '/');
+        $this->key = (string) ($config['key'] ?? '');
+        $this->secret = (string) ($config['secret'] ?? '');
+    }
+
+    public function account(): string
+    {
+        return $this->account;
+    }
+
+    public function accountName(): string
+    {
+        return $this->name;
     }
 
     private function endpoint(): string
     {
-        if ($this->url === '') {
-            return '';
-        }
+        return $this->url === '' ? '' : $this->url.'/';
+    }
 
-        return $this->url.'/';
+    private function tokenCacheKey(): string
+    {
+        return "crosschex_token:{$this->account}";
     }
 
     private function baseHeader(string $namespace, string $action): array
@@ -46,21 +70,21 @@ class CrossChexService
     private function assertConfigured(): void
     {
         if (! $this->url) {
-            throw new \RuntimeException('CrossChex URL is not configured. Check services.crosschex.url');
+            throw new \RuntimeException("CrossChex URL is not configured for account [{$this->account}].");
         }
 
         if (! filter_var($this->url, FILTER_VALIDATE_URL)) {
-            throw new \RuntimeException('CrossChex URL is invalid: '.$this->url);
+            throw new \RuntimeException("CrossChex URL is invalid for account [{$this->account}]: {$this->url}");
         }
 
         if (! $this->key || ! $this->secret) {
-            throw new \RuntimeException('CrossChex API key/secret not configured. Check services.crosschex.key/secret');
+            throw new \RuntimeException("CrossChex API key/secret not configured for account [{$this->account}].");
         }
     }
 
     public function clearToken(): void
     {
-        Cache::forget('crosschex_token');
+        Cache::forget($this->tokenCacheKey());
     }
 
     public function token(bool $forceRefresh = false): string
@@ -71,7 +95,7 @@ class CrossChexService
             $this->clearToken();
         }
 
-        return Cache::remember('crosschex_token', now()->addMinutes(50), function () {
+        return Cache::remember($this->tokenCacheKey(), now()->addMinutes(50), function (): string {
             $body = [
                 'header' => $this->baseHeader('authorize.token', 'token'),
                 'payload' => [
@@ -81,19 +105,25 @@ class CrossChexService
             ];
 
             try {
-                $res = Http::timeout(30)
+                $response = Http::timeout(30)
                     ->connectTimeout(15)
                     ->acceptJson()
                     ->asJson()
                     ->post($this->endpoint(), $body);
 
-                if (! $res->successful()) {
-                    throw new \RuntimeException('CrossChex token HTTP failed: '.$res->status().' - '.$res->body());
+                if (! $response->successful()) {
+                    throw new \RuntimeException(
+                        'CrossChex token HTTP failed: '.$response->status().' - '.$response->body()
+                    );
                 }
 
-                $json = $res->json();
+                $json = $response->json();
             } catch (RequestException $e) {
-                throw new \RuntimeException('CrossChex token HTTP failed: '.($e->response?->body() ?? $e->getMessage()), 0, $e);
+                throw new \RuntimeException(
+                    'CrossChex token HTTP failed: '.($e->response?->body() ?? $e->getMessage()),
+                    0,
+                    $e
+                );
             } catch (\Throwable $e) {
                 throw new \RuntimeException('CrossChex token request failed: '.$e->getMessage(), 0, $e);
             }
@@ -146,31 +176,37 @@ class CrossChexService
         ];
 
         try {
-            $res = Http::timeout(60)
+            $response = Http::timeout(60)
                 ->connectTimeout(15)
                 ->acceptJson()
                 ->asJson()
                 ->post($this->endpoint(), $body);
 
-            if ($res->status() === 401 || $res->status() === 403) {
+            if ($response->status() === 401 || $response->status() === 403) {
                 $this->clearToken();
 
                 $body['authorize']['token'] = $this->token(true);
 
-                $res = Http::timeout(60)
+                $response = Http::timeout(60)
                     ->connectTimeout(15)
                     ->acceptJson()
                     ->asJson()
                     ->post($this->endpoint(), $body);
             }
 
-            if (! $res->successful()) {
-                throw new \RuntimeException('CrossChex getrecord HTTP failed: '.$res->status().' - '.$res->body());
+            if (! $response->successful()) {
+                throw new \RuntimeException(
+                    'CrossChex getrecord HTTP failed: '.$response->status().' - '.$response->body()
+                );
             }
 
-            $json = $res->json();
+            $json = $response->json();
         } catch (RequestException $e) {
-            throw new \RuntimeException('CrossChex getrecord HTTP failed: '.($e->response?->body() ?? $e->getMessage()), 0, $e);
+            throw new \RuntimeException(
+                'CrossChex getrecord HTTP failed: '.($e->response?->body() ?? $e->getMessage()),
+                0,
+                $e
+            );
         } catch (\Throwable $e) {
             throw new \RuntimeException('CrossChex getrecord request failed: '.$e->getMessage(), 0, $e);
         }

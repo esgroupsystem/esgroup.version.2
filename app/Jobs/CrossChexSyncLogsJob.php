@@ -3,12 +3,12 @@
 namespace App\Jobs;
 
 use App\Services\CrossChexService;
+use App\Services\CrossChexServiceFactory;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -24,22 +24,20 @@ class CrossChexSyncLogsJob implements ShouldQueue
 
     public string $to;
 
+    public array $accounts;
+
     public int $timeout = 1200;
 
     public int $tries = 10;
 
     public int $maxExceptions = 3;
 
-    public function __construct(string $jobId, string $from, string $to)
+    public function __construct(string $jobId, string $from, string $to, array $accounts = [])
     {
         $this->jobId = $jobId;
         $this->from = $from;
         $this->to = $to;
-    }
-
-    public function middleware(): array
-    {
-        return [];
+        $this->accounts = $accounts;
     }
 
     public function backoff(): array
@@ -72,327 +70,283 @@ class CrossChexSyncLogsJob implements ShouldQueue
             return null;
         }
 
-        $tz = config('app.timezone', 'Asia/Manila');
+        $timezone = config('app.timezone', 'Asia/Manila');
 
         if (is_numeric($raw)) {
-            $num = (int) $raw;
+            $number = (int) $raw;
 
-            if ($num > 9999999999) {
-                return Carbon::createFromTimestampMs($num, 'UTC')
-                    ->setTimezone($tz)
+            if ($number > 9999999999) {
+                return Carbon::createFromTimestampMs($number, 'UTC')
+                    ->setTimezone($timezone)
                     ->format('Y-m-d H:i:s');
             }
 
-            return Carbon::createFromTimestamp($num, 'UTC')
-                ->setTimezone($tz)
+            return Carbon::createFromTimestamp($number, 'UTC')
+                ->setTimezone($timezone)
                 ->format('Y-m-d H:i:s');
         }
 
-        $str = trim((string) $raw);
+        $value = trim((string) $raw);
 
         try {
-            if (preg_match('/[zZ]|[+\-]\d{2}:\d{2}$/', $str)) {
-                return Carbon::parse($str)
-                    ->setTimezone($tz)
+            if (preg_match('/[zZ]|[+\-]\d{2}:\d{2}$/', $value)) {
+                return Carbon::parse($value)
+                    ->setTimezone($timezone)
                     ->format('Y-m-d H:i:s');
             }
 
-            if (str_contains($str, 'T')) {
-                return Carbon::parse($str, 'UTC')
-                    ->setTimezone($tz)
-                    ->format('Y-m-d H:i:s');
-            }
-
-            return Carbon::parse($str, 'UTC')
-                ->setTimezone($tz)
+            return Carbon::parse($value, 'UTC')
+                ->setTimezone($timezone)
                 ->format('Y-m-d H:i:s');
         } catch (\Throwable) {
             return null;
         }
     }
 
-    public function handle(CrossChexService $api): void
+    public function handle(CrossChexServiceFactory $factory): void
     {
+        $accounts = ! empty($this->accounts)
+            ? $this->accounts
+            : $factory->accounts();
+
+        if (empty($accounts)) {
+            throw new \RuntimeException('No CrossChex accounts configured.');
+        }
+
+        $totalInserted = 0;
+        $totalUpdated = 0;
+        $accountCount = count($accounts);
+
+        foreach ($accounts as $index => $account) {
+            $api = $factory->make($account);
+
+            [$inserted, $updated] = $this->syncSingleAccount(
+                api: $api,
+                accountNumber: $index + 1,
+                accountCount: $accountCount
+            );
+
+            $totalInserted += $inserted;
+            $totalUpdated += $updated;
+        }
+
+        $this->setStatus([
+            'state' => 'done',
+            'message' => "All CrossChex accounts synced. Inserted: {$totalInserted}, Updated: {$totalUpdated}",
+            'from' => $this->from,
+            'to' => $this->to,
+            'page' => null,
+            'pageCount' => null,
+            'saved' => $totalInserted,
+            'updated' => $totalUpdated,
+            'percent' => 100,
+            'done' => true,
+            'error' => null,
+        ]);
+
+        $this->clearActiveJob();
+    }
+
+    private function syncSingleAccount(
+        CrossChexService $api,
+        int $accountNumber,
+        int $accountCount
+    ): array {
         $page = 1;
         $perPage = 200;
         $saved = 0;
         $updated = 0;
-        $startedAt = microtime(true);
+        $pageCount = 1;
+        $rateLimitHits = 0;
 
-        $this->setStatus([
-            'state' => 'running',
-            'message' => 'Starting sync...',
-            'from' => $this->from,
-            'to' => $this->to,
-            'page' => 0,
-            'pageCount' => null,
-            'saved' => 0,
-            'updated' => 0,
-            'percent' => 0,
-            'done' => false,
-            'error' => null,
-        ]);
+        while (true) {
+            $json = $api->getAttendanceRecords($this->from, $this->to, $page, $perPage);
 
-        try {
-            $pageCount = 1;
-            $rateLimitHits = 0;
+            if (data_get($json, 'header.name') === 'Exception') {
+                $type = (string) data_get($json, 'payload.type');
+                $message = (string) data_get($json, 'payload.message');
 
-            while (true) {
-                $json = $api->getAttendanceRecords($this->from, $this->to, $page, $perPage);
-
-                if (data_get($json, 'header.name') === 'Exception') {
-                    $type = (string) data_get($json, 'payload.type');
-                    $msg = (string) data_get($json, 'payload.message');
-
-                    if (in_array($type, ['FREQUENT_REQUEST', 'TOO_MANY_REQUESTS'])) {
-                        $rateLimitHits++;
-                        $waitSeconds = min(30 * $rateLimitHits, 120);
-
-                        Log::warning('CrossChex rate limit hit', [
-                            'jobId' => $this->jobId,
-                            'page' => $page,
-                            'from' => $this->from,
-                            'to' => $this->to,
-                            'wait_seconds' => $waitSeconds,
-                            'message' => $msg,
-                        ]);
-
-                        $this->setStatus([
-                            'state' => 'running',
-                            'message' => "Rate limited. Waiting {$waitSeconds}s before retrying page {$page}...",
-                            'from' => $this->from,
-                            'to' => $this->to,
-                            'page' => $page,
-                            'pageCount' => $pageCount,
-                            'saved' => $saved,
-                            'updated' => $updated,
-                            'percent' => $pageCount > 0 ? (int) round(($page / $pageCount) * 100) : 0,
-                            'done' => false,
-                            'error' => null,
-                        ]);
-
-                        sleep($waitSeconds);
-
-                        continue;
-                    }
-
-                    if (in_array($type, ['TOKEN_EXPIRED', 'INVALID_TOKEN', 'UNAUTHORIZED'])) {
-                        $api->clearToken();
-
-                        Log::warning('CrossChex token issue, refreshing token', [
-                            'jobId' => $this->jobId,
-                            'page' => $page,
-                            'type' => $type,
-                            'message' => $msg,
-                        ]);
-
-                        sleep(2);
-
-                        continue;
-                    }
+                if (in_array($type, ['FREQUENT_REQUEST', 'TOO_MANY_REQUESTS'], true)) {
+                    $rateLimitHits++;
+                    $waitSeconds = min(30 * $rateLimitHits, 120);
 
                     $this->setStatus([
-                        'state' => 'failed',
-                        'message' => "CrossChex Error: {$type} - {$msg}",
+                        'state' => 'running',
+                        'message' => "{$api->accountName()} rate limited. Waiting {$waitSeconds} seconds...",
                         'from' => $this->from,
                         'to' => $this->to,
+                        'account' => $api->account(),
+                        'accountName' => $api->accountName(),
                         'page' => $page,
-                        'pageCount' => null,
+                        'pageCount' => $pageCount,
                         'saved' => $saved,
                         'updated' => $updated,
                         'percent' => 0,
-                        'done' => true,
-                        'error' => "{$type} - {$msg}",
+                        'done' => false,
+                        'error' => null,
                     ]);
 
-                    $this->clearActiveJob();
+                    sleep($waitSeconds);
 
-                    Log::error('CrossChex API error', [
-                        'jobId' => $this->jobId,
-                        'type' => $type,
-                        'message' => $msg,
-                        'page' => $page,
-                    ]);
-
-                    return;
+                    continue;
                 }
 
-                $rateLimitHits = 0;
+                if (in_array($type, ['TOKEN_EXPIRED', 'INVALID_TOKEN', 'UNAUTHORIZED'], true)) {
+                    $api->clearToken();
+                    sleep(2);
 
-                $list = data_get($json, 'payload.list', []);
-                $pageCount = (int) data_get($json, 'payload.pageCount', 1);
-                $currentPage = (int) data_get($json, 'payload.page', $page);
-                $percent = $pageCount > 0 ? (int) round(($currentPage / $pageCount) * 100) : 0;
-
-                if (! is_array($list) || empty($list)) {
-                    break;
+                    continue;
                 }
 
-                $rows = [];
-                $crossIds = [];
-                $now = now();
-
-                foreach ($list as $r) {
-                    $crossId = data_get($r, 'uuid') ?? data_get($r, 'id');
-                    if (! $crossId) {
-                        continue;
-                    }
-
-                    $employeeNo = data_get($r, 'employee.workno')
-                        ?? data_get($r, 'workno')
-                        ?? data_get($r, 'employee_no');
-
-                    $employeeName = data_get($r, 'employee_name')
-                        ?? trim(
-                            (data_get($r, 'employee.first_name') ?? '').' '.
-                            (data_get($r, 'employee.last_name') ?? '')
-                        );
-
-                    $checkTimeRaw = data_get($r, 'checktime')
-                        ?? data_get($r, 'check_time')
-                        ?? data_get($r, 'time');
-
-                    $checkTime = $this->normalizeCheckTime($checkTimeRaw);
-
-                    $deviceSn = data_get($r, 'device.serial_number')
-                        ?? data_get($r, 'device_sn')
-                        ?? data_get($r, 'sn');
-
-                    $deviceName = data_get($r, 'device.name') ?? null;
-                    $state = data_get($r, 'state') ?? data_get($r, 'type') ?? null;
-
-                    if (! $employeeNo || ! $checkTime) {
-                        continue;
-                    }
-
-                    $crossId = (string) $crossId;
-                    $crossIds[] = $crossId;
-
-                    $rows[] = [
-                        'crosschex_id' => $crossId,
-                        'employee_id' => null,
-                        'employee_no' => (string) $employeeNo,
-                        'employee_name' => $employeeName ?: null,
-                        'device_sn' => $deviceSn ? (string) $deviceSn : null,
-                        'device_name' => $deviceName,
-                        'state' => $state,
-                        'check_time' => $checkTime,
-                        'raw' => json_encode($r, JSON_UNESCAPED_UNICODE),
-                        'created_at' => $now,
-                        'updated_at' => $now,
-                    ];
-                }
-
-                if (! empty($rows)) {
-                    $existingIds = DB::table('mirasol_biometrics_logs')
-                        ->whereIn('crosschex_id', $crossIds)
-                        ->pluck('crosschex_id')
-                        ->map(fn ($id) => (string) $id)
-                        ->all();
-
-                    $existingMap = array_flip($existingIds);
-
-                    foreach ($crossIds as $id) {
-                        if (isset($existingMap[$id])) {
-                            $updated++;
-                        } else {
-                            $saved++;
-                        }
-                    }
-
-                    DB::table('mirasol_biometrics_logs')->upsert(
-                        $rows,
-                        ['crosschex_id'],
-                        [
-                            'employee_no',
-                            'employee_name',
-                            'device_sn',
-                            'device_name',
-                            'state',
-                            'check_time',
-                            'raw',
-                            'updated_at',
-                        ]
-                    );
-                }
-
-                $this->setStatus([
-                    'state' => 'running',
-                    'message' => "Syncing page {$currentPage} of {$pageCount}...",
-                    'from' => $this->from,
-                    'to' => $this->to,
-                    'page' => $currentPage,
-                    'pageCount' => $pageCount,
-                    'saved' => $saved,
-                    'updated' => $updated,
-                    'percent' => $percent,
-                    'done' => false,
-                    'error' => null,
-                ]);
-
-                if ($currentPage >= $pageCount) {
-                    break;
-                }
-
-                $page++;
-                sleep(2);
+                throw new \RuntimeException("{$api->accountName()} CrossChex error: {$type} - {$message}");
             }
 
-            $duration = round(microtime(true) - $startedAt, 2);
+            $rateLimitHits = 0;
+
+            $list = data_get($json, 'payload.list', []);
+            $pageCount = (int) data_get($json, 'payload.pageCount', 1);
+            $currentPage = (int) data_get($json, 'payload.page', $page);
+
+            if (! is_array($list) || empty($list)) {
+                break;
+            }
+
+            $rows = [];
+            $crossIds = [];
+            $now = now();
+
+            foreach ($list as $record) {
+                $crossId = data_get($record, 'uuid')
+                    ?? data_get($record, 'id')
+                    ?? data_get($record, 'record_id');
+
+                if (! $crossId) {
+                    continue;
+                }
+
+                $employeeNo = data_get($record, 'employee.workno')
+                    ?? data_get($record, 'employee.employee_no')
+                    ?? data_get($record, 'workno')
+                    ?? data_get($record, 'employee_no');
+
+                $employeeName = data_get($record, 'employee_name')
+                    ?? data_get($record, 'employee.name')
+                    ?? trim(
+                        (string) data_get($record, 'employee.first_name', '').' '.
+                        (string) data_get($record, 'employee.last_name', '')
+                    );
+
+                $checkTimeRaw = data_get($record, 'checktime')
+                    ?? data_get($record, 'check_time')
+                    ?? data_get($record, 'time');
+
+                $checkTime = $this->normalizeCheckTime($checkTimeRaw);
+
+                $deviceSn = data_get($record, 'device.serial_number')
+                    ?? data_get($record, 'device.sn')
+                    ?? data_get($record, 'device_sn')
+                    ?? data_get($record, 'sn');
+
+                $deviceName = data_get($record, 'device.name')
+                    ?? data_get($record, 'device_name');
+
+                $state = data_get($record, 'state')
+                    ?? data_get($record, 'type')
+                    ?? data_get($record, 'check_type');
+
+                if (! $employeeNo || ! $checkTime) {
+                    continue;
+                }
+
+                $crossId = (string) $crossId;
+                $crossIds[] = $crossId;
+
+                $rows[] = [
+                    'crosschex_account' => $api->account(),
+                    'crosschex_account_name' => $api->accountName(),
+                    'crosschex_id' => $crossId,
+                    'employee_id' => null,
+                    'employee_no' => (string) $employeeNo,
+                    'employee_name' => $employeeName ?: null,
+                    'check_time' => $checkTime,
+                    'device_sn' => $deviceSn ? (string) $deviceSn : null,
+                    'device_name' => $deviceName,
+                    'state' => $state,
+                    'raw' => json_encode($record, JSON_UNESCAPED_UNICODE),
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+
+            if (! empty($rows)) {
+                $existingIds = DB::table('mirasol_biometrics_logs')
+                    ->where('crosschex_account', $api->account())
+                    ->whereIn('crosschex_id', $crossIds)
+                    ->pluck('crosschex_id')
+                    ->map(fn ($id) => (string) $id)
+                    ->all();
+
+                $existingMap = array_flip($existingIds);
+
+                foreach ($crossIds as $id) {
+                    if (isset($existingMap[$id])) {
+                        $updated++;
+                    } else {
+                        $saved++;
+                    }
+                }
+
+                DB::table('mirasol_biometrics_logs')->upsert(
+                    $rows,
+                    ['crosschex_account', 'crosschex_id'],
+                    [
+                        'crosschex_account_name',
+                        'employee_id',
+                        'employee_no',
+                        'employee_name',
+                        'check_time',
+                        'device_sn',
+                        'device_name',
+                        'state',
+                        'raw',
+                        'updated_at',
+                    ]
+                );
+            }
+
+            $accountBaseProgress = (($accountNumber - 1) / max($accountCount, 1)) * 100;
+
+            $pageProgress = $pageCount > 0
+                ? ($currentPage / $pageCount) * (100 / max($accountCount, 1))
+                : 0;
+
+            $percent = (int) min(99, round($accountBaseProgress + $pageProgress));
 
             $this->setStatus([
-                'state' => 'done',
-                'message' => "Sync finished. Inserted: {$saved}, Updated: {$updated}",
+                'state' => 'running',
+                'message' => "Syncing {$api->accountName()} page {$currentPage} of {$pageCount}...",
                 'from' => $this->from,
                 'to' => $this->to,
-                'page' => $page,
-                'pageCount' => $pageCount ?? null,
+                'account' => $api->account(),
+                'accountName' => $api->accountName(),
+                'page' => $currentPage,
+                'pageCount' => $pageCount,
                 'saved' => $saved,
                 'updated' => $updated,
-                'percent' => 100,
-                'done' => true,
+                'percent' => $percent,
+                'done' => false,
                 'error' => null,
             ]);
 
-            $this->clearActiveJob();
+            if ($currentPage >= $pageCount) {
+                break;
+            }
 
-            Log::info('CrossChexSyncLogsJob finished', [
-                'jobId' => $this->jobId,
-                'from' => $this->from,
-                'to' => $this->to,
-                'inserted' => $saved,
-                'updated' => $updated,
-                'duration_seconds' => $duration,
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('CrossChexSyncLogsJob failed', [
-                'jobId' => $this->jobId,
-                'from' => $this->from,
-                'to' => $this->to,
-                'page' => $page,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-
-            $this->setStatus([
-                'state' => 'failed',
-                'message' => $e->getMessage(),
-                'from' => $this->from,
-                'to' => $this->to,
-                'page' => $page,
-                'pageCount' => null,
-                'saved' => $saved,
-                'updated' => $updated,
-                'percent' => 0,
-                'done' => true,
-                'error' => $e->getMessage(),
-            ]);
-
-            $this->clearActiveJob();
-
-            return;
+            $page++;
+            sleep(2);
         }
+
+        return [$saved, $updated];
     }
 
     public function failed(\Throwable $e): void
