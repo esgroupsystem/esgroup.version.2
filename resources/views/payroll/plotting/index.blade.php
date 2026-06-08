@@ -1,352 +1,243 @@
 @extends('layouts.app')
-@section('title', 'Cutoff Plotting Schedule')
+@section('title', 'Permanent Plotting Schedule')
 
 @section('content')
-    <div class="container-fluid" data-layout="container">
-        <script>
-            var isFluid = JSON.parse(localStorage.getItem('isFluid'));
-            if (isFluid) {
-                var container = document.querySelector('[data-layout]');
-                container.classList.remove('container-fluid');
-                container.classList.add('container-fluid');
-            }
-        </script>
+    <div class="container-fluid py-3">
 
-        <div class="content">
+        @if (session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <span class="fas fa-check-circle me-1"></span> {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
 
-            @if (session('success'))
-                <div class="alert alert-success border-0 shadow-sm">
-                    <span class="fas fa-check-circle me-2"></span>{{ session('success') }}
-                </div>
-            @endif
+        <div class="card shadow-sm">
 
-            <div class="card border-0 shadow-sm mb-3">
-                <div class="card-header bg-light border-bottom">
-                    <div class="row g-3 align-items-center">
-                        <div class="col-lg">
-                            <h5 class="mb-1">
-                                <span class="fas fa-calendar-alt text-primary me-2"></span>
-                                Cutoff Plotting Schedule
-                            </h5>
-                            <p class="text-muted fs-10 mb-0">
-                                Create and manage employee plotting based on payroll cutoff periods.
-                            </p>
-                        </div>
+            <div class="card-header bg-light">
+                <h5 class="mb-1">Permanent Plotting Schedule</h5>
+                <p class="text-muted fs-10 mb-0">One-time plotting schedule for all employees</p>
+            </div>
 
-                        <div class="col-lg-auto">
-                            <form method="GET" action="{{ route('payroll-plotting.index') }}"
-                                class="row g-2 align-items-center" id="filterForm">
-                                <div class="col-auto position-relative">
-                                    <input type="text" name="search" id="employeeSearchInput"
-                                        class="form-control form-control-sm" style="width: 280px;"
-                                        placeholder="Search employee name / employee no / bio id..."
-                                        value="{{ request('search') }}" autocomplete="off">
-
-                                    <div id="employeeSearchSuggestions" class="list-group position-absolute w-100 shadow-sm"
-                                        style="top: 100%; left: 0; z-index: 1050; display: none; max-height: 260px; overflow-y: auto;">
-                                    </div>
-                                </div>
-
-                                <div class="col-auto">
-                                    <select name="cutoff_month" class="form-select form-select-sm">
-                                        @for ($m = 1; $m <= 12; $m++)
-                                            <option value="{{ $m }}"
-                                                {{ (int) $cutoffMonth === $m ? 'selected' : '' }}>
-                                                {{ \Carbon\Carbon::create(null, $m, 1)->format('F') }}
-                                            </option>
-                                        @endfor
-                                    </select>
-                                </div>
-
-                                <div class="col-auto">
-                                    <select name="cutoff_year" class="form-select form-select-sm">
-                                        @for ($y = now()->year - 2; $y <= now()->year + 3; $y++)
-                                            <option value="{{ $y }}"
-                                                {{ (int) $cutoffYear === $y ? 'selected' : '' }}>
-                                                {{ $y }}
-                                            </option>
-                                        @endfor
-                                    </select>
-                                </div>
-
-                                <div class="col-auto">
-                                    <select name="cutoff_type" class="form-select form-select-sm">
-                                        <option value="11_25" {{ $cutoffType === '11_25' ? 'selected' : '' }}>
-                                            11 - 25
-                                        </option>
-                                        <option value="26_10" {{ $cutoffType === '26_10' ? 'selected' : '' }}>
-                                            26 - 10
-                                        </option>
-                                    </select>
-                                </div>
-
-                                <div class="col-auto">
-                                    <button class="btn btn-primary btn-sm">
-                                        <span class="fas fa-filter me-1"></span> Load
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
+            {{-- Quick Fill Controls --}}
+            <div class="card-body border-bottom">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-2">
+                        <label class="form-label fs-10 mb-1">Shift Name</label>
+                        <select id="defaultShift" class="form-select form-select-sm">
+                            <option value="Regular Shift">Regular Shift</option>
+                            <option value="Flexible Shift">Flexible Shift</option>
+                        </select>
                     </div>
-                </div>
 
-                <div class="card-body bg-body-tertiary border-bottom">
-                    <div class="row g-3">
-                        <div class="col-lg-8">
-                            <form method="POST" action="{{ route('payroll-plotting.quick-fill') }}"
-                                class="row g-2 align-items-end">
-                                @csrf
-                                <input type="hidden" name="cutoff_month" value="{{ $cutoffMonth }}">
-                                <input type="hidden" name="cutoff_year" value="{{ $cutoffYear }}">
-                                <input type="hidden" name="cutoff_type" value="{{ $cutoffType }}">
-                                <input type="hidden" name="search" value="{{ request('search') }}">
-                                <input type="hidden" name="page" value="{{ $employees->currentPage() }}">
-
-                                @foreach ($employees as $employee)
-                                    @php
-                                        $employeeKey = $employee->biometric_employee_id
-                                            ? 'bio:' . $employee->biometric_employee_id
-                                            : 'empno:' . $employee->employee_no;
-                                    @endphp
-                                    <input type="hidden" name="employee_keys[]" value="{{ $employeeKey }}">
-                                @endforeach
-
-                                <div class="col-md-3">
-                                    <label class="form-label fs-10 mb-1">Shift Name</label>
-                                    <input type="text" name="default_shift_name" class="form-control form-control-sm"
-                                        value="Regular Shift">
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label class="form-label fs-10 mb-1">Time In</label>
-                                    <input type="time" name="default_time_in" class="form-control form-control-sm"
-                                        value="08:00">
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label class="form-label fs-10 mb-1">Time Out</label>
-                                    <input type="time" name="default_time_out" class="form-control form-control-sm"
-                                        value="17:00">
-                                </div>
-
-                                <div class="col-md-1">
-                                    <label class="form-label fs-10 mb-1">Grace</label>
-                                    <input type="number" name="default_grace_minutes" class="form-control form-control-sm"
-                                        value="15" min="0">
-                                </div>
-
-                                <div class="col-md-3">
-                                    <label class="form-label fs-10 mb-1">Rest Day Rule</label>
-                                    <select name="rest_day_mode" class="form-select form-select-sm">
-                                        <option value="sunday">Sunday Only</option>
-                                        <option value="sat_sun">Saturday & Sunday</option>
-                                        <option value="none">No Rest Day</option>
-                                    </select>
-                                </div>
-
-                                <div class="col-md-auto">
-                                    <button type="submit" class="btn btn-warning btn-sm"
-                                        {{ blank(request('search')) ? 'disabled' : '' }}>
-                                        <span class="fas fa-magic me-1"></span> Generate Default Cutoff
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div class="col-lg-4">
-                            <div class="d-flex flex-wrap gap-2 justify-content-lg-end">
-                                <span class="badge bg-success-subtle text-success border">Scheduled</span>
-                                <span class="badge bg-warning-subtle text-warning border">Rest Day</span>
-                                <span class="badge bg-info-subtle text-info border">Leave</span>
-                                <span class="badge bg-danger-subtle text-danger border">Holiday</span>
-                            </div>
-                            <div class="text-muted fs-10 mt-2 text-lg-end">
-                                Current Coverage: <strong>{{ $cutoffLabel }}</strong>
-                            </div>
-                        </div>
+                    <div class="col-md-2">
+                        <label class="form-label fs-10 mb-1">Day Off</label>
+                        <select id="defaultDayOff" class="form-select form-select-sm">
+                            <option value="">None</option>
+                            @foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as $day)
+                                <option value="{{ $day }}">{{ $day }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                </div>
+                    <div class="col-md-2">
+                        <label class="form-label fs-10 mb-1">Time In</label>
+                        <input type="time" id="defaultTimeIn" class="form-control form-control-sm" value="08:00">
+                    </div>
 
-                <div id="plottingTableWrapper">
-                    @include('payroll.plotting.table')
+                    <div class="col-md-2">
+                        <label class="form-label fs-10 mb-1">Time Out</label>
+                        <input type="time" id="defaultTimeOut" class="form-control form-control-sm" value="17:00">
+                    </div>
+                    <div class="col-md-1">
+                        <label class="form-label fs-10 mb-1">Grace</label>
+                        <input type="number" id="defaultGrace" class="form-control form-control-sm" value="15"
+                            min="0">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fs-10 mb-1">Status</label>
+                        <select id="defaultStatus" class="form-select form-select-sm">
+                            <option value="scheduled">Scheduled</option>
+                            <option value="rest_day">Rest Day</option>
+                            <option value="leave">Leave</option>
+                            <option value="holiday">Holiday</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-auto">
+                        <button type="button" class="btn btn-warning btn-sm" id="applyDefault">
+                            <span class="fas fa-magic me-1"></span> Apply Default to All
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            <form method="POST" action="{{ route('payroll-plotting.save') }}">
+                @csrf
+                <div class="card-body p-0">
+                    <div class="table-responsive scrollbar">
+                        <table class="table table-bordered table-sm mb-0 align-middle">
+                            <thead class="bg-light text-center">
+                                <tr>
+                                    <th style="width: 18%;">Employee</th>
+                                    <th style="width: 12%;">Status</th>
+                                    <th style="width: 15%;">Shift Name</th>
+                                    <th style="width: 10%;">Time In</th>
+                                    <th style="width: 10%;">Time Out</th>
+                                    <th style="width: 12%;">Grace</th>
+                                    <th style="width: 12%;">Day Off</th>
+                                    <th style="width: 20%;">Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($employees as $rowIndex => $employee)
+                                    @php
+                                        $employeeNo = trim((string) $employee->employee_no);
+                                        $biometricEmployeeId = trim((string) ($employee->biometric_employee_id ?? ''));
+                                        $schedule = $schedules->get($employeeNo);
+                                    @endphp
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold text-dark">{{ $employee->employee_name ?: 'No Name' }}
+                                            </div>
+                                            <small class="text-muted">{{ $employeeNo }}</small>
+                                            <input type="hidden"
+                                                name="schedule[{{ $rowIndex }}][biometric_employee_id]"
+                                                value="{{ $biometricEmployeeId }}">
+                                            <input type="hidden" name="schedule[{{ $rowIndex }}][employee_no]"
+                                                value="{{ $employeeNo }}">
+                                            <input type="hidden" name="schedule[{{ $rowIndex }}][employee_name]"
+                                                value="{{ $employee->employee_name }}">
+                                        </td>
+                                        <td>
+                                            <select name="schedule[{{ $rowIndex }}][status]"
+                                                class="form-select form-select-sm plot-status">
+                                                <option value="scheduled"
+                                                    {{ ($schedule->status ?? 'scheduled') === 'scheduled' ? 'selected' : '' }}>
+                                                    Scheduled</option>
+                                                <option value="rest_day"
+                                                    {{ ($schedule->status ?? '') === 'rest_day' ? 'selected' : '' }}>Rest
+                                                    Day</option>
+                                                <option value="leave"
+                                                    {{ ($schedule->status ?? '') === 'leave' ? 'selected' : '' }}>Leave
+                                                </option>
+                                                <option value="holiday"
+                                                    {{ ($schedule->status ?? '') === 'holiday' ? 'selected' : '' }}>Holiday
+                                                </option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <select name="schedule[{{ $rowIndex }}][shift_name]"
+                                                class="form-select form-select-sm plot-shift">
+                                                <option value="Regular Shift"
+                                                    {{ ($schedule->shift_name ?? 'Regular Shift') === 'Regular Shift' ? 'selected' : '' }}>
+                                                    Regular Shift</option>
+                                                <option value="Flexible Shift"
+                                                    {{ ($schedule->shift_name ?? '') === 'Flexible Shift' ? 'selected' : '' }}>
+                                                    Flexible Shift</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="time" name="schedule[{{ $rowIndex }}][time_in]"
+                                                class="form-control form-control-sm plot-time-in"
+                                                value="{{ $schedule->time_in ?? '' }}">
+                                        </td>
+                                        <td>
+                                            <input type="time" name="schedule[{{ $rowIndex }}][time_out]"
+                                                class="form-control form-control-sm plot-time-out"
+                                                value="{{ $schedule->time_out ?? '' }}">
+                                        </td>
+                                        <td>
+                                            <input type="number" name="schedule[{{ $rowIndex }}][grace_minutes]"
+                                                class="form-control form-control-sm plot-grace"
+                                                value="{{ $schedule->grace_minutes ?? 15 }}" min="0">
+                                        </td>
+                                        <td>
+                                            <select name="schedule[{{ $rowIndex }}][day_off]"
+                                                class="form-select form-select-sm plot-day-off">
+                                                <option value="">None</option>
+                                                @foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as $day)
+                                                    <option value="{{ $day }}"
+                                                        {{ ($schedule->day_off ?? '') === $day ? 'selected' : '' }}>
+                                                        {{ $day }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input type="text" name="schedule[{{ $rowIndex }}][remarks]"
+                                                class="form-control form-control-sm plot-remarks"
+                                                value="{{ $schedule->remarks ?? '' }}" placeholder="Remarks">
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">No employees found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {{-- Pagination --}}
+                <div class="card-footer bg-body-tertiary d-flex justify-content-between align-items-center">
+                    <div class="fs-10 text-muted">
+                        @if ($employees->total() > 0)
+                            Showing {{ $employees->firstItem() }} to {{ $employees->lastItem() }} of
+                            {{ $employees->total() }} unique employees
+                        @else
+                            Showing 0 employees
+                        @endif
+                    </div>
+                    @if ($employees->hasPages())
+                        <div>{{ $employees->links('pagination.custom') }}</div>
+                    @endif
+                </div>
+
+                <div class="card-footer bg-light text-end">
+                    <button type="submit" class="btn btn-primary btn-sm"><span class="fas fa-save me-1"></span> Save
+                        Permanent Schedule</button>
+                </div>
+
+            </form>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            function bindPlottingEvents(scope = document) {
-                const statusFields = scope.querySelectorAll('.plot-status');
+            const applyBtn = document.getElementById('applyDefault');
+            const defaultShift = document.getElementById('defaultShift');
+            const defaultGrace = document.getElementById('defaultGrace');
+            const defaultStatus = document.getElementById('defaultStatus');
+            const defaultDayOff = document.getElementById('defaultDayOff');
+            const defaultTimeIn = document.getElementById('defaultTimeIn');
+            const defaultTimeOut = document.getElementById('defaultTimeOut');
 
-                function applyCellColor(select) {
-                    const td = select.closest('.plot-cell');
-                    if (!td) return;
+            if (!applyBtn) return;
 
-                    td.classList.remove('plot-scheduled', 'plot-rest-day', 'plot-leave', 'plot-holiday');
+            applyBtn.addEventListener('click', function() {
+                const shift = defaultShift.value;
+                const grace = defaultGrace.value;
+                const status = defaultStatus.value;
+                const dayOff = defaultDayOff ? defaultDayOff.value : '';
+                const timeIn = defaultTimeIn ? defaultTimeIn.value : '';
+                const timeOut = defaultTimeOut ? defaultTimeOut.value : '';
 
-                    if (select.value === 'scheduled') td.classList.add('plot-scheduled');
-                    if (select.value === 'rest_day') td.classList.add('plot-rest-day');
-                    if (select.value === 'leave') td.classList.add('plot-leave');
-                    if (select.value === 'holiday') td.classList.add('plot-holiday');
-                }
+                document.querySelectorAll('tbody tr').forEach(function(row) {
+                    const shiftInput = row.querySelector('.plot-shift');
+                    const graceInput = row.querySelector('.plot-grace');
+                    const statusInput = row.querySelector('.plot-status');
+                    const dayOffInput = row.querySelector('.plot-day-off');
+                    const timeInInput = row.querySelector('.plot-time-in');
+                    const timeOutInput = row.querySelector('.plot-time-out');
 
-                statusFields.forEach(function(select) {
-                    applyCellColor(select);
-
-                    select.addEventListener('change', function() {
-                        applyCellColor(this);
-
-                        const cell = this.closest('.plot-cell');
-                        const timeInputs = cell.querySelectorAll('input[type="time"]');
-
-                        if (this.value !== 'scheduled') {
-                            timeInputs.forEach(function(input) {
-                                input.value = '';
-                            });
-                        }
-                    });
+                    if (shiftInput) shiftInput.value = shift;
+                    if (graceInput) graceInput.value = grace;
+                    if (statusInput) statusInput.value = status;
+                    if (dayOffInput) dayOffInput.value = dayOff;
+                    if (timeInInput) timeInInput.value = timeIn;
+                    if (timeOutInput) timeOutInput.value = timeOut;
                 });
-            }
-
-            bindPlottingEvents(document);
-
-            document.addEventListener('click', function(e) {
-                const link = e.target.closest('#plottingTableWrapper .pagination a');
-                if (!link) return;
-
-                e.preventDefault();
-
-                fetch(link.href, {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(response => response.text())
-                    .then(html => {
-                        document.getElementById('plottingTableWrapper').innerHTML = html;
-                        bindPlottingEvents(document.getElementById('plottingTableWrapper'));
-                    });
             });
-        });
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            function bindPlottingEvents(scope = document) {
-                const statusFields = scope.querySelectorAll('.plot-status');
-
-                function applyCellColor(select) {
-                    const td = select.closest('.plot-cell');
-                    if (!td) return;
-
-                    td.classList.remove('plot-scheduled', 'plot-rest-day', 'plot-leave', 'plot-holiday');
-
-                    if (select.value === 'scheduled') td.classList.add('plot-scheduled');
-                    if (select.value === 'rest_day') td.classList.add('plot-rest-day');
-                    if (select.value === 'leave') td.classList.add('plot-leave');
-                    if (select.value === 'holiday') td.classList.add('plot-holiday');
-                }
-
-                statusFields.forEach(function(select) {
-                    applyCellColor(select);
-
-                    select.addEventListener('change', function() {
-                        applyCellColor(this);
-
-                        const cell = this.closest('.plot-cell');
-                        const timeInputs = cell.querySelectorAll('input[type="time"]');
-
-                        if (this.value !== 'scheduled') {
-                            timeInputs.forEach(function(input) {
-                                input.value = '';
-                            });
-                        }
-                    });
-                });
-            }
-
-            bindPlottingEvents(document);
-
-            document.addEventListener('click', function(e) {
-                const link = e.target.closest('#plottingTableWrapper .pagination a');
-                if (!link) return;
-
-                e.preventDefault();
-
-                fetch(link.href, {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(response => response.text())
-                    .then(html => {
-                        document.getElementById('plottingTableWrapper').innerHTML = html;
-                        bindPlottingEvents(document.getElementById('plottingTableWrapper'));
-                    });
-            });
-
-            const searchInput = document.getElementById('employeeSearchInput');
-            const suggestionBox = document.getElementById('employeeSearchSuggestions');
-
-            let debounceTimer = null;
-
-            if (searchInput && suggestionBox) {
-                searchInput.addEventListener('input', function() {
-                    const keyword = this.value.trim();
-
-                    clearTimeout(debounceTimer);
-
-                    if (keyword.length < 2) {
-                        suggestionBox.style.display = 'none';
-                        suggestionBox.innerHTML = '';
-                        return;
-                    }
-
-                    debounceTimer = setTimeout(() => {
-                        fetch(`{{ route('payroll-plotting.search-suggestions') }}?q=${encodeURIComponent(keyword)}`, {
-                                headers: {
-                                    'X-Requested-With': 'XMLHttpRequest'
-                                }
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                suggestionBox.innerHTML = '';
-
-                                if (!data.length) {
-                                    suggestionBox.style.display = 'none';
-                                    return;
-                                }
-
-                                data.forEach(item => {
-                                    const button = document.createElement('button');
-                                    button.type = 'button';
-                                    button.className =
-                                        'list-group-item list-group-item-action';
-                                    button.textContent = item.label;
-
-                                    button.addEventListener('click', function() {
-                                        searchInput.value = item.value;
-                                        suggestionBox.style.display = 'none';
-                                    });
-
-                                    suggestionBox.appendChild(button);
-                                });
-
-                                suggestionBox.style.display = 'block';
-                            })
-                            .catch(() => {
-                                suggestionBox.style.display = 'none';
-                            });
-                    }, 250);
-                });
-
-                document.addEventListener('click', function(e) {
-                    if (!searchInput.contains(e.target) && !suggestionBox.contains(e.target)) {
-                        suggestionBox.style.display = 'none';
-                    }
-                });
-            }
         });
     </script>
 @endsection

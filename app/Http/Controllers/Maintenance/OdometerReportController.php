@@ -16,7 +16,7 @@ class OdometerReportController extends Controller
     {
         $busId = $request->filled('bus_detail_id') ? (int) $request->bus_detail_id : null;
 
-        $filterType = $request->get('filter_type', 'month'); // month, day, range
+        $filterType = $request->get('filter_type', 'month');
         $month = $request->month ?: now()->format('Y-m');
         $selectedDate = $request->date ?: now()->toDateString();
         $dateFrom = $request->date_from ?: now()->startOfMonth()->toDateString();
@@ -46,83 +46,96 @@ class OdometerReportController extends Controller
             ->orderBy('plate_number')
             ->get();
 
-        $records = collect();
-        $selectedBus = null;
+        $selectedBus = $busId ? BusDetail::find($busId) : null;
 
-        if ($busId) {
-            $selectedBus = BusDetail::find($busId);
+        $perPage = 15; // Number of records per page
 
-            $lastOdometer = OdometerSubmission::where('bus_detail_id', $busId)
+        $submissions = OdometerSubmission::query()
+            ->leftJoin('bus_details', 'odometer_submissions.bus_detail_id', '=', 'bus_details.id')
+            ->select(
+                'odometer_submissions.id',
+                'odometer_submissions.bus_detail_id',
+                'odometer_submissions.date',
+                'odometer_submissions.time',
+                'odometer_submissions.driver_name',
+                'odometer_submissions.new_odometer',
+                'odometer_submissions.diesel_consumption',
+                'bus_details.garage',
+                'bus_details.name as bus_name',
+                'bus_details.body_number',
+                'bus_details.plate_number'
+            )
+            ->when($busId, function ($query) use ($busId) {
+                $query->where('odometer_submissions.bus_detail_id', $busId);
+            })
+            ->whereBetween('odometer_submissions.date', [
+                $startDate->toDateString(),
+                $endDate->toDateString(),
+            ])
+            ->orderBy('odometer_submissions.bus_detail_id')
+            ->orderBy('odometer_submissions.date')
+            ->orderBy('odometer_submissions.time')
+            ->orderBy('odometer_submissions.id')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $previousOdometers = [];
+
+        $busIdsForPrevious = $submissions
+            ->pluck('bus_detail_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($busIdsForPrevious as $submissionBusId) {
+            $previousOdometers[$submissionBusId] = OdometerSubmission::where('bus_detail_id', $submissionBusId)
                 ->whereDate('date', '<', $startDate->toDateString())
                 ->orderByDesc('date')
                 ->orderByDesc('time')
                 ->orderByDesc('id')
                 ->value('new_odometer');
-
-            $submissions = OdometerSubmission::query()
-                ->leftJoin('bus_details', 'odometer_submissions.bus_detail_id', '=', 'bus_details.id')
-                ->select(
-                    'odometer_submissions.id',
-                    'odometer_submissions.bus_detail_id',
-                    'odometer_submissions.date',
-                    'odometer_submissions.time',
-                    'odometer_submissions.driver_name',
-                    'odometer_submissions.new_odometer',
-                    'odometer_submissions.diesel_consumption',
-                    'bus_details.garage',
-                    'bus_details.name as bus_name',
-                    'bus_details.body_number',
-                    'bus_details.plate_number'
-                )
-                ->where('odometer_submissions.bus_detail_id', $busId)
-                ->whereBetween('odometer_submissions.date', [
-                    $startDate->toDateString(),
-                    $endDate->toDateString(),
-                ])
-                ->orderBy('odometer_submissions.date')
-                ->orderBy('odometer_submissions.time')
-                ->orderBy('odometer_submissions.id')
-                ->get();
-
-            $records = $submissions->map(function ($row) use (&$lastOdometer, $lastChangeOilKm, $changeOilEvery) {
-                $previousOdometer = $lastOdometer;
-
-                $totalKmRun = $previousOdometer
-                    ? ((int) $row->new_odometer - (int) $previousOdometer)
-                    : 0;
-
-                $totalKmRun = max($totalKmRun, 0);
-
-                $diesel = (float) $row->diesel_consumption;
-
-                $kmPerLiter = $diesel > 0
-                    ? $totalKmRun / $diesel
-                    : 0;
-
-                $baseChangeOilKm = $lastChangeOilKm ?: (int) $row->new_odometer;
-                $nextChangeOil = $baseChangeOilKm + $changeOilEvery;
-                $remainingKm = $nextChangeOil - (int) $row->new_odometer;
-
-                $lastOdometer = (int) $row->new_odometer;
-
-                return [
-                    'id' => $row->id,
-                    'garage' => $row->garage,
-                    'bus_name' => $row->bus_name,
-                    'body_number' => $row->body_number,
-                    'plate_number' => $row->plate_number,
-                    'date' => $row->date,
-                    'time' => $row->time,
-                    'driver_name' => $row->driver_name,
-                    'previous_odometer' => $previousOdometer,
-                    'new_odometer' => $row->new_odometer,
-                    'total_km_run' => $totalKmRun,
-                    'diesel_consumption' => $diesel,
-                    'km_per_liter' => $kmPerLiter,
-                    'remaining_change_oil' => $remainingKm,
-                ];
-            });
         }
+
+        $records = $submissions->map(function ($row) use (&$previousOdometers, $lastChangeOilKm, $changeOilEvery) {
+            $currentBusId = (int) $row->bus_detail_id;
+
+            $previousOdometer = $previousOdometers[$currentBusId] ?? null;
+
+            $totalKmRun = $previousOdometer
+                ? ((int) $row->new_odometer - (int) $previousOdometer)
+                : 0;
+
+            $totalKmRun = max($totalKmRun, 0);
+
+            $diesel = (float) ($row->diesel_consumption ?? 0);
+
+            $kmPerLiter = $diesel > 0
+                ? $totalKmRun / $diesel
+                : 0;
+
+            $baseChangeOilKm = $lastChangeOilKm ?: (int) $row->new_odometer;
+            $nextChangeOil = $baseChangeOilKm + $changeOilEvery;
+            $remainingKm = $nextChangeOil - (int) $row->new_odometer;
+
+            $previousOdometers[$currentBusId] = (int) $row->new_odometer;
+
+            return [
+                'id' => $row->id,
+                'garage' => $row->garage,
+                'bus_name' => $row->bus_name,
+                'body_number' => $row->body_number,
+                'plate_number' => $row->plate_number,
+                'date' => $row->date,
+                'time' => $row->time,
+                'driver_name' => $row->driver_name,
+                'previous_odometer' => $previousOdometer,
+                'new_odometer' => $row->new_odometer,
+                'total_km_run' => $totalKmRun,
+                'diesel_consumption' => $diesel,
+                'km_per_liter' => $kmPerLiter,
+                'remaining_change_oil' => $remainingKm,
+            ];
+        });
 
         $totalKm = $records->sum('total_km_run');
         $totalLiters = $records->sum('diesel_consumption');
@@ -159,6 +172,7 @@ class OdometerReportController extends Controller
 
         return view('maintenance.odometer.report', compact(
             'records',
+            'submissions',
             'buses',
             'busId',
             'selectedBus',

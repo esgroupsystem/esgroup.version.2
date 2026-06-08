@@ -94,7 +94,7 @@
             </div>
         </div>
 
-        {{-- MAIN DIESEL STOCK SUMMARY --}}
+        {{-- DIESEL STOCK SUMMARY --}}
         <div class="card shadow-sm mb-3">
             <div class="card-header bg-white border-bottom">
                 <h6 class="mb-0 text-900">
@@ -142,34 +142,7 @@
             </div>
         </div>
 
-        {{-- SELECTED BUS CARD --}}
-        @if ($busId)
-            <div class="card shadow-sm mb-3">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-7">
-                            <h5 class="mb-1 text-900">
-                                <span class="fas fa-bus me-2 text-primary"></span>
-                                BUS #{{ $selectedBus->body_number ?? 'N/A' }}
-                            </h5>
-                            <small class="text-muted">
-                                {{ $selectedBus->name ?? 'N/A' }} |
-                                Plate: {{ $selectedBus->plate_number ?? 'N/A' }} |
-                                Garage: {{ $selectedBus->garage ?? 'N/A' }}
-                            </small>
-                        </div>
-
-                        <div class="col-md-5 text-md-end mt-2 mt-md-0">
-                            <span class="badge rounded-pill bg-light text-dark border">
-                                {{ $periodLabel }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @endif
-
-        {{-- ODOMETER COMPUTATION --}}
+        {{-- ODOMETER COMPUTATION SUMMARY --}}
         <div class="card shadow-sm mb-3">
             <div class="card-header bg-white border-bottom">
                 <h6 class="mb-0 text-900">
@@ -247,14 +220,11 @@
                                     <th>Remarks</th>
                                 </tr>
                             </thead>
-
                             <tbody>
                                 @foreach ($dieselStockMovements as $stock)
                                     <tr>
                                         <td class="ps-3 text-nowrap">
-                                            {{ $stock->date ? $stock->date->format('M d, Y') : '-' }}
-                                        </td>
-
+                                            {{ $stock->date ? $stock->date->format('M d, Y') : '-' }}</td>
                                         <td>
                                             @if ($stock->type === 'in')
                                                 <span class="badge rounded-pill bg-success">IN</span>
@@ -264,41 +234,23 @@
                                                 <span class="badge rounded-pill bg-warning text-dark">ADJUSTMENT</span>
                                             @endif
                                         </td>
-
                                         <td>{{ $stock->reference_no ?? '-' }}</td>
-
-                                        <td>
-                                            @if ($stock->bus)
-                                                {{ $stock->bus->body_number }} - {{ $stock->bus->name }}
-                                            @else
-                                                <span class="text-muted">Stock Only</span>
-                                            @endif
+                                        <td>{{ $stock->bus ? $stock->bus->body_number . ' - ' . $stock->bus->name : 'Stock Only' }}
                                         </td>
-
-                                        <td class="text-end fw-semi-bold">
-                                            {{ number_format($stock->liters, 2) }}
-                                        </td>
-
+                                        <td class="text-end fw-semi-bold">{{ number_format($stock->liters, 2) }}</td>
                                         <td class="text-end">
-                                            {{ $stock->unit_cost ? number_format($stock->unit_cost, 2) : '-' }}
-                                        </td>
-
+                                            {{ $stock->unit_cost ? number_format($stock->unit_cost, 2) : '-' }}</td>
                                         <td class="text-end">
-                                            {{ $stock->total_cost ? number_format($stock->total_cost, 2) : '-' }}
-                                        </td>
-
+                                            {{ $stock->total_cost ? number_format($stock->total_cost, 2) : '-' }}</td>
                                         <td>{{ $stock->remarks ?? '-' }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
-
                             <tfoot class="bg-light fw-semi-bold text-900">
                                 <tr>
                                     <td colspan="4" class="ps-3">Period Total</td>
-                                    <td class="text-end">
-                                        IN: {{ number_format($periodDieselIn, 2) }} |
-                                        OUT: {{ number_format($periodDieselOut, 2) }}
-                                    </td>
+                                    <td class="text-end">IN: {{ number_format($periodDieselIn, 2) }} | OUT:
+                                        {{ number_format($periodDieselOut, 2) }}</td>
                                     <td colspan="3"></td>
                                 </tr>
                             </tfoot>
@@ -317,17 +269,11 @@
                 </h6>
             </div>
 
-            @if (!$busId)
-                <div class="card-body text-center py-5">
-                    <span class="fas fa-bus fa-3x text-300 mb-3"></span>
-                    <h5 class="text-700">Please select one bus unit</h5>
-                    <p class="text-muted mb-0">Select a bus to view odometer details.</p>
-                </div>
-            @elseif ($records->isEmpty())
+            @if ($records->isEmpty())
                 <div class="card-body text-center py-5">
                     <span class="fas fa-folder-open fa-3x text-300 mb-3"></span>
                     <h5 class="text-700">No odometer records found</h5>
-                    <p class="text-muted mb-0">No encoded records for this bus in {{ $periodLabel }}.</p>
+                    <p class="text-muted mb-0">No encoded odometer records for {{ $periodLabel }}.</p>
                 </div>
             @else
                 <div class="card-body p-0">
@@ -336,6 +282,7 @@
                             <thead class="bg-light text-700">
                                 <tr>
                                     <th class="ps-3">Date</th>
+                                    <th>Bus</th>
                                     <th>Time</th>
                                     <th>Driver</th>
                                     <th class="text-end">Prev Odometer</th>
@@ -343,67 +290,38 @@
                                     <th class="text-end">KM Run</th>
                                     <th class="text-end">Diesel</th>
                                     <th class="text-center">KM/L</th>
-                                    <th class="text-end pe-3">Change Oil Remaining</th>
                                 </tr>
                             </thead>
-
                             <tbody>
                                 @foreach ($records as $row)
                                     <tr>
                                         <td class="ps-3 text-nowrap">
-                                            {{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}
+                                            {{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}</td>
+                                        <td>
+                                            <div class="fw-semi-bold text-900">{{ $row['body_number'] ?? 'N/A' }}</div>
+                                            <small class="text-muted">{{ $row['plate_number'] ?? '-' }} |
+                                                {{ $row['garage'] ?? '-' }}</small>
                                         </td>
-
-                                        <td class="text-nowrap">
-                                            {{ \Carbon\Carbon::parse($row['time'])->format('g:i A') }}
+                                        <td class="text-nowrap">{{ \Carbon\Carbon::parse($row['time'])->format('g:i A') }}
                                         </td>
-
                                         <td>{{ strtoupper($row['driver_name']) }}</td>
-
                                         <td class="text-end text-muted">
                                             {{ $row['previous_odometer'] ? number_format($row['previous_odometer']) : '-' }}
                                         </td>
-
                                         <td class="text-end fw-semi-bold text-900">
-                                            {{ number_format($row['new_odometer']) }}
-                                        </td>
-
-                                        <td class="text-end">
-                                            {{ number_format($row['total_km_run']) }}
-                                        </td>
-
-                                        <td class="text-end">
-                                            {{ number_format($row['diesel_consumption'], 2) }}
-                                        </td>
-
+                                            {{ number_format($row['new_odometer']) }}</td>
+                                        <td class="text-end">{{ number_format($row['total_km_run']) }}</td>
+                                        <td class="text-end">{{ number_format($row['diesel_consumption'], 2) }}</td>
                                         <td class="text-center">
-                                            <span class="badge rounded-pill bg-light text-dark border">
-                                                {{ number_format($row['km_per_liter'], 2) }}
-                                            </span>
-                                        </td>
-
-                                        <td class="text-end pe-3">
-                                            @if ($row['remaining_change_oil'] <= 0)
-                                                <span class="badge rounded-pill bg-danger">
-                                                    Due
-                                                </span>
-                                            @elseif ($row['remaining_change_oil'] <= 1000)
-                                                <span class="badge rounded-pill bg-warning text-dark">
-                                                    {{ number_format($row['remaining_change_oil']) }} KM
-                                                </span>
-                                            @else
-                                                <span class="badge rounded-pill bg-light text-dark border">
-                                                    {{ number_format($row['remaining_change_oil']) }} KM
-                                                </span>
-                                            @endif
+                                            <span
+                                                class="badge rounded-pill bg-light text-dark border">{{ number_format($row['km_per_liter'], 2) }}</span>
                                         </td>
                                     </tr>
                                 @endforeach
                             </tbody>
-
                             <tfoot class="bg-light fw-semi-bold text-900">
                                 <tr>
-                                    <td colspan="5" class="ps-3">Total</td>
+                                    <td colspan="6" class="ps-3">Total</td>
                                     <td class="text-end">{{ number_format($totalKm) }}</td>
                                     <td class="text-end">{{ number_format($totalLiters, 2) }}</td>
                                     <td class="text-center">{{ number_format($averageKmPerLiter, 2) }}</td>
@@ -414,7 +332,22 @@
                     </div>
                 </div>
             @endif
+            @if ($submissions->hasPages())
+                <div class="card-footer bg-body-tertiary border-top border-200 py-3">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <small class="text-muted">
+                            Showing {{ $submissions->firstItem() }} to {{ $submissions->lastItem() }}
+                            of {{ $submissions->total() }} records
+                        </small>
+
+                        <div>
+                            {{ $submissions->links('pagination.custom') }}
+                        </div>
+                    </div>
+                </div>
+            @endif
         </div>
+
 
     </div>
 
@@ -424,7 +357,6 @@
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <form method="POST" action="{{ route('odometer.diesel-stock.store') }}" class="modal-content">
                 @csrf
-
                 <div class="modal-header bg-light">
                     <h5 class="modal-title" id="addDieselStockModalLabel">
                         <span class="fas fa-gas-pump me-2 text-primary"></span>
@@ -435,7 +367,6 @@
 
                 <div class="modal-body">
                     <div class="row g-3">
-
                         <div class="col-md-4">
                             <label class="form-label">Date</label>
                             <input type="date" name="date" value="{{ now()->toDateString() }}"
@@ -487,14 +418,13 @@
                             <textarea name="remarks" rows="3" class="form-control" placeholder="Optional notes"></textarea>
                         </div>
 
-                    </div>
-                </div>
+                    </div> <!-- row g-3 -->
+                </div> <!-- modal-body -->
 
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-falcon-default" data-bs-dismiss="modal">
                         Cancel
                     </button>
-
                     <button type="submit" class="btn btn-primary">
                         <span class="fas fa-save me-1"></span>
                         Save Diesel Stock

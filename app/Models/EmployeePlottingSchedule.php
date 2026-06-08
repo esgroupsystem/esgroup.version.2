@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 class EmployeePlottingSchedule extends Model
@@ -20,8 +21,21 @@ class EmployeePlottingSchedule extends Model
         'remarks',
     ];
 
+    // Make work_date a Carbon instance
+    protected $dates = ['work_date'];
+
     protected $casts = [
-        'work_date' => 'date',
         'grace_minutes' => 'integer',
     ];
+
+    // Safely parse time in/out
+    public function getFormattedTimeInAttribute()
+    {
+        return $this->time_in ? Carbon::parse($this->time_in)->format('H:i') : '';
+    }
+
+    public function getFormattedTimeOutAttribute()
+    {
+        return $this->time_out ? Carbon::parse($this->time_out)->format('H:i') : '';
+    }
 }

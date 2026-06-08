@@ -5,15 +5,21 @@
     <div class="container-fluid" data-layout="container">
         <script>
             var isFluid = JSON.parse(localStorage.getItem('isFluid'));
+
             if (isFluid) {
                 var container = document.querySelector('[data-layout]');
-                container.classList.remove('container');
-                container.classList.add('container-fluid');
+
+                if (container) {
+                    container.classList.remove('container');
+                    container.classList.add('container-fluid');
+                }
             }
         </script>
 
         @php
             $presentCount = $stats['present'] ?? 0;
+            $halfDayCount = $stats['half_day'] ?? 0;
+            $lateUndertimeRecords = $stats['late_undertime_records'] ?? 0;
             $lateCount = $stats['late'] ?? 0;
             $undertimeCount = $stats['undertime'] ?? 0;
             $absentCount = $stats['absent'] ?? 0;
@@ -22,11 +28,12 @@
             $restDayCount = $stats['rest_day'] ?? 0;
             $leaveCount = $stats['leave'] ?? 0;
             $adjustmentCount = $stats['adjustment'] ?? 0;
+            $regularShiftCount = $stats['regular_shift'] ?? 0;
+            $flexibleShiftCount = $stats['flexible_shift'] ?? 0;
 
             $totalLateMinutes = $stats['total_late_minutes'] ?? 0;
             $totalUndertimeMinutes = $stats['total_undertime_minutes'] ?? 0;
             $totalWorkedMinutes = $stats['total_worked_minutes'] ?? 0;
-            $totalOvertimeMinutes = $stats['total_overtime_minutes'] ?? 0;
             $totalPayableDays = $stats['total_payable_days'] ?? 0;
             $totalPayableHours = $stats['total_payable_hours'] ?? 0;
         @endphp
@@ -46,7 +53,6 @@
                 </div>
             @endif
 
-            {{-- Header --}}
             <div class="card border-0 shadow-sm mb-3 overflow-hidden">
                 <div class="card-body">
                     <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3">
@@ -57,8 +63,9 @@
                             </div>
 
                             <p class="text-muted mb-3">
-                                This page combines plotted schedule, biometrics logs, attendance adjustments, and
-                                holidays into one daily attendance result that payroll will use for computation.
+                                This page combines plotted schedule, biometrics logs, rest days, shift type, time in/out,
+                                attendance adjustments, holidays, and automatic half-day checking into one daily attendance
+                                result for payroll.
                             </p>
 
                             <div class="d-flex flex-wrap gap-2">
@@ -80,9 +87,10 @@
                             </div>
                         </div>
 
-                        <div class="text-xl-end">
+                        <div class="d-flex flex-column flex-md-row gap-2 justify-content-xl-end">
                             <form method="POST" action="{{ route('attendance-summary.rebuild') }}">
                                 @csrf
+
                                 <input type="hidden" name="cutoff_month" value="{{ $cutoffMonth }}">
                                 <input type="hidden" name="cutoff_year" value="{{ $cutoffYear }}">
                                 <input type="hidden" name="cutoff_type" value="{{ $cutoffType }}">
@@ -92,24 +100,32 @@
 
                                 <button type="submit" class="btn btn-success">
                                     <span class="fas fa-sync-alt me-1"></span>
-                                    Rebuild Current Cutoff Summary
+                                    Rebuild Current Cutoff
                                 </button>
                             </form>
-                            <small class="text-muted d-block mt-2">
-                                Rebuild this cutoff after changing plotting, logs, adjustments, or holidays.
-                            </small>
+
+                            <a href="{{ route('attendance-summary.export-payroll', request()->query()) }}" target="_blank"
+                                class="btn btn-primary">
+                                <span class="fas fa-print me-1"></span>
+                                Export Payroll Print
+                            </a>
                         </div>
                     </div>
+
+                    <small class="text-muted d-block mt-3">
+                        Rebuild after changing plotting schedule, biometric logs, rest day, regular/flexible shift,
+                        adjustments, holidays, or half-day computation.
+                    </small>
                 </div>
             </div>
 
-            {{-- Filter --}}
             <div class="card border-0 shadow-sm mb-3">
                 <div class="card-header bg-body-tertiary border-bottom border-200">
                     <div>
                         <h6 class="mb-0">Filter Attendance Summary</h6>
-                        <small class="text-muted">Choose cutoff, filter type, and search employee attendance
-                            records.</small>
+                        <small class="text-muted">
+                            Choose cutoff, filter type, and search employee attendance records.
+                        </small>
                     </div>
                 </div>
 
@@ -120,7 +136,8 @@
                                 <label class="form-label fw-semibold">Month</label>
                                 <select name="cutoff_month" class="form-select">
                                     @for ($m = 1; $m <= 12; $m++)
-                                        <option value="{{ $m }}" {{ $cutoffMonth == $m ? 'selected' : '' }}>
+                                        <option value="{{ $m }}"
+                                            {{ (int) $cutoffMonth === $m ? 'selected' : '' }}>
                                             {{ \Carbon\Carbon::create()->month($m)->format('F') }}
                                         </option>
                                     @endfor
@@ -131,7 +148,8 @@
                                 <label class="form-label fw-semibold">Year</label>
                                 <select name="cutoff_year" class="form-select">
                                     @for ($y = now('Asia/Manila')->year + 1; $y >= now('Asia/Manila')->year - 3; $y--)
-                                        <option value="{{ $y }}" {{ $cutoffYear == $y ? 'selected' : '' }}>
+                                        <option value="{{ $y }}"
+                                            {{ (int) $cutoffYear === $y ? 'selected' : '' }}>
                                             {{ $y }}
                                         </option>
                                     @endfor
@@ -163,7 +181,7 @@
                             </div>
 
                             <div class="col-md-3 col-lg-2">
-                                <label class="form-label fw-semibold">Day Type</label>
+                                <label class="form-label fw-semibold">Day / Shift Type</label>
                                 <select name="day_type" class="form-select">
                                     @foreach ($dayTypeOptions as $value => $label)
                                         <option value="{{ $value }}"
@@ -217,11 +235,26 @@
                     <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="stat-label text-warning">Half Day</span>
+                                <span class="fas fa-adjust text-warning"></span>
+                            </div>
+                            <h3 class="mb-1 stat-value">{{ number_format($halfDayCount) }}</h3>
+                            <p class="text-muted mb-0 fs-10 stat-help">
+                                No time out or same time in/out
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span class="stat-label text-warning">Late / Undertime</span>
                                 <span class="fas fa-clock text-warning"></span>
                             </div>
-                            <h3 class="mb-1 stat-value">{{ number_format($lateCount + $undertimeCount) }}</h3>
-                            <p class="text-muted mb-0 fs-10 stat-help">Attendance with time deduction indicators</p>
+                            <h3 class="mb-1 stat-value">{{ number_format($lateUndertimeRecords) }}</h3>
+                            <p class="text-muted mb-0 fs-10 stat-help">Records with late or undertime deduction</p>
                         </div>
                     </div>
                 </div>
@@ -238,19 +271,6 @@
                         </div>
                     </div>
                 </div>
-
-                <div class="col-sm-6 col-xl-3">
-                    <div class="card border-0 shadow-sm h-100 summary-stat-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="stat-label text-info">Holiday / Rest Day</span>
-                                <span class="fas fa-calendar-day text-info"></span>
-                            </div>
-                            <h3 class="mb-1 stat-value">{{ number_format($holidayCount + $restDayCount) }}</h3>
-                            <p class="text-muted mb-0 fs-10 stat-help">Special day related attendance records</p>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             {{-- Secondary Stats --}}
@@ -258,9 +278,9 @@
                 <div class="col-sm-6 col-xl-3">
                     <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
-                            <div class="text-primary fs-9 fw-bold text-uppercase mb-2">With Adjustment</div>
-                            <h4 class="mb-1 stat-value">{{ number_format($adjustmentCount) }}</h4>
-                            <p class="text-muted mb-0 fs-10 stat-help">Records affected by attendance adjustment</p>
+                            <div class="text-primary fs-9 fw-bold text-uppercase mb-2">Regular Shift Records</div>
+                            <h4 class="mb-1 stat-value">{{ number_format($regularShiftCount) }}</h4>
+                            <p class="text-muted mb-0 fs-10 stat-help">Records checked using plotted time in/out</p>
                         </div>
                     </div>
                 </div>
@@ -268,9 +288,9 @@
                 <div class="col-sm-6 col-xl-3">
                     <div class="card border-0 shadow-sm h-100 summary-stat-card">
                         <div class="card-body">
-                            <div class="text-info fs-9 fw-bold text-uppercase mb-2">Holiday Count</div>
-                            <h4 class="mb-1 stat-value">{{ number_format($holidayCount) }}</h4>
-                            <p class="text-muted mb-0 fs-10 stat-help">Holiday and holiday worked records</p>
+                            <div class="text-info fs-9 fw-bold text-uppercase mb-2">Flexible Shift Records</div>
+                            <h4 class="mb-1 stat-value">{{ number_format($flexibleShiftCount) }}</h4>
+                            <p class="text-muted mb-0 fs-10 stat-help">Records checked using required 9 hours</p>
                         </div>
                     </div>
                 </div>
@@ -333,7 +353,9 @@
                         <div class="card-body">
                             <div class="text-primary fs-9 fw-bold text-uppercase mb-2">Payable Summary</div>
                             <h4 class="mb-1 stat-value">{{ number_format((float) $totalPayableDays, 2) }} day(s)</h4>
-                            <p class="text-muted mb-0 fs-10 stat-help">Total days employees are payable for</p>
+                            <p class="text-muted mb-0 fs-10 stat-help">
+                                {{ number_format((float) $totalPayableHours, 2) }} payable hour(s)
+                            </p>
                         </div>
                     </div>
                 </div>

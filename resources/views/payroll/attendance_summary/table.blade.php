@@ -25,7 +25,7 @@
                 <thead class="bg-200 text-900">
                     <tr>
                         <th class="text-nowrap ps-3">Date</th>
-                        <th style="min-width: 240px;">Employee</th>
+                        <th style="min-width: 230px;">Employee</th>
                         <th class="text-nowrap">Shift</th>
                         <th class="text-nowrap">Schedule</th>
                         <th class="text-nowrap">Time In</th>
@@ -34,10 +34,9 @@
                         <th class="text-center text-nowrap">UT</th>
                         <th class="text-center text-nowrap">Worked</th>
                         <th class="text-nowrap">Status</th>
+                        <th class="text-nowrap">Day Type</th>
                         <th class="text-nowrap">Adjustment</th>
-                        <th class="text-nowrap">Holiday</th>
                         <th class="text-nowrap">Payable</th>
-                        {{-- <th style="min-width: 260px;" class="pe-3">Remarks</th> --}}
                     </tr>
                 </thead>
 
@@ -55,12 +54,12 @@
                             };
 
                             $statusLabel = strtoupper(str_replace('_', ' ', $row->attendance_status ?? 'N/A'));
-
                             $scheduleStatusLabel = $row->schedule_status
                                 ? strtoupper(str_replace('_', ' ', $row->schedule_status))
                                 : 'NO STATUS';
 
                             $workedHours = ((int) $row->worked_minutes) / 60;
+                            $isFlexible = str_contains(strtolower((string) $row->shift_name), 'flexible');
                         @endphp
 
                         <tr>
@@ -74,24 +73,27 @@
                             </td>
 
                             <td>
-                                <div class="d-flex flex-column">
-                                    <div class="fw-semibold text-dark">{{ $row->employee_name }}</div>
-                                    <div class="text-muted fs-11">
-                                        <strong>Emp No:</strong> {{ $row->employee_no ?: '—' }}
-                                    </div>
-                                    <div class="text-muted fs-11">
-                                        <strong>Biometric ID:</strong> {{ $row->biometric_employee_id ?: '—' }}
-                                    </div>
+                                <div class="fw-semibold text-dark">{{ $row->employee_name }}</div>
+                                <div class="text-muted fs-11">
+                                    <strong>Emp No:</strong> {{ $row->employee_no ?: '—' }}
+                                </div>
+                                <div class="text-muted fs-11">
+                                    <strong>Biometric ID:</strong> {{ $row->biometric_employee_id ?: '—' }}
                                 </div>
                             </td>
 
                             <td class="text-nowrap">
-                                <div class="fw-semibold text-dark">{{ $row->shift_name ?: '—' }}</div>
+                                <div class="fw-semibold {{ $isFlexible ? 'text-info' : 'text-primary' }}">
+                                    {{ $row->shift_name ?: '—' }}
+                                </div>
                                 <div class="text-muted fs-11">{{ $scheduleStatusLabel }}</div>
                             </td>
 
                             <td class="text-nowrap">
-                                @if ($row->scheduled_time_in || $row->scheduled_time_out)
+                                @if ($isFlexible)
+                                    <div class="fw-semibold text-info">Flexible 9 hrs</div>
+                                    <div class="text-muted fs-11">No fixed schedule</div>
+                                @elseif ($row->scheduled_time_in || $row->scheduled_time_out)
                                     <div class="fw-semibold text-dark">
                                         {{ $row->scheduled_time_in ? \Carbon\Carbon::parse($row->scheduled_time_in)->format('h:i A') : '—' }}
                                         <span class="text-muted mx-1">to</span>
@@ -164,30 +166,31 @@
                                 </span>
                             </td>
 
-                            <td>
-                                @if ($row->has_adjustment)
-                                    <div>
-                                        <span class="badge badge-phoenix badge-phoenix-primary px-2 py-1">
-                                            ADJUSTED
-                                        </span>
-                                    </div>
-                                    <div class="text-muted fs-11 mt-1">
-                                        {{ $row->adjustment_type ? strtoupper(str_replace('_', ' ', $row->adjustment_type)) : 'Manual Adjustment' }}
-                                    </div>
+                            <td class="text-nowrap">
+                                @if ($row->is_holiday)
+                                    <span class="badge badge-phoenix badge-phoenix-info px-2 py-1">
+                                        HOLIDAY
+                                    </span>
+                                @elseif ($row->is_rest_day)
+                                    <span class="badge badge-phoenix badge-phoenix-secondary px-2 py-1">
+                                        REST DAY
+                                    </span>
+                                @elseif ($row->is_leave)
+                                    <span class="badge badge-phoenix badge-phoenix-primary px-2 py-1">
+                                        LEAVE
+                                    </span>
                                 @else
-                                    <span class="text-muted">—</span>
+                                    <span class="text-muted">Regular Day</span>
                                 @endif
                             </td>
 
                             <td>
-                                @if ($row->is_holiday)
-                                    <div>
-                                        <span class="badge badge-phoenix badge-phoenix-info px-2 py-1">
-                                            {{ $row->holiday_type ?: 'HOLIDAY' }}
-                                        </span>
-                                    </div>
+                                @if ($row->has_adjustment)
+                                    <span class="badge badge-phoenix badge-phoenix-primary px-2 py-1">
+                                        ADJUSTED
+                                    </span>
                                     <div class="text-muted fs-11 mt-1">
-                                        {{ $row->holiday_name ?: 'Holiday Applied' }}
+                                        {{ $row->adjustment_type ? strtoupper(str_replace('_', ' ', $row->adjustment_type)) : 'Manual Adjustment' }}
                                     </div>
                                 @else
                                     <span class="text-muted">—</span>
@@ -202,36 +205,10 @@
                                     {{ number_format((float) $row->payable_hours, 2) }} hr
                                 </div>
                             </td>
-
-                            {{-- <td class="pe-3">
-                                @if ($row->remarks || $row->schedule_remarks || $row->adjustment_remarks)
-                                    <div class="small lh-sm">
-                                        @if ($row->remarks)
-                                            <div class="mb-1 text-body">
-                                                {{ $row->remarks }}
-                                            </div>
-                                        @endif
-
-                                        @if ($row->schedule_remarks)
-                                            <div class="mb-1 text-muted">
-                                                <strong>Schedule:</strong> {{ $row->schedule_remarks }}
-                                            </div>
-                                        @endif
-
-                                        @if ($row->adjustment_remarks)
-                                            <div class="text-primary">
-                                                <strong>Adjustment:</strong> {{ $row->adjustment_remarks }}
-                                            </div>
-                                        @endif
-                                    </div>
-                                @else
-                                    <span class="text-muted">—</span>
-                                @endif
-                            </td> --}}
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="14" class="text-center py-5">
+                            <td colspan="13" class="text-center py-5">
                                 <div class="d-flex flex-column align-items-center justify-content-center">
                                     <div class="avatar avatar-4xl mb-3">
                                         <div class="avatar-name rounded-circle bg-soft-secondary text-secondary">
@@ -261,7 +238,7 @@
                 </small>
 
                 <div>
-                    {{ $summaries->links('pagination::bootstrap-5') }}
+                    {{ $summaries->links('pagination.custom') }}
                 </div>
             </div>
         </div>

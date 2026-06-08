@@ -10,11 +10,15 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class MirasolBiometricsLogController extends Controller
 {
+    private const FLEXIBLE_REQUIRED_MINUTES = 540; // 9 hours
+
     public function index(Request $request)
     {
         [$defaultCutoffMonth, $defaultCutoffYear, $defaultCutoffType] = $this->getDefaultCutoff();
@@ -31,20 +35,10 @@ class MirasolBiometricsLogController extends Controller
         );
 
         $people = $this->buildPeopleSuggestions();
-
-        $isSearch = ! empty($search);
+        $isSearch = $search !== '';
 
         if (! $isSearch) {
-            $rows = new \Illuminate\Pagination\LengthAwarePaginator(
-                collect(),
-                0,
-                20,
-                \Illuminate\Pagination\LengthAwarePaginator::resolveCurrentPage(),
-                [
-                    'path' => $request->url(),
-                    'query' => $request->query(),
-                ]
-            );
+            $rows = $this->emptyPaginator($request);
 
             return view('hr_department.mirasol_logs.index', [
                 'rows' => $rows,
@@ -60,124 +54,101 @@ class MirasolBiometricsLogController extends Controller
             ]);
         }
 
-        $logs = MirasolBiometricsLog::query()
-            ->whereNotNull('check_time')
-            ->whereBetween('check_time', [
-                $startDate->copy()->startOfDay(),
-                $endDate->copy()->endOfDay(),
-            ])
-            ->where(function ($q) use ($search) {
-                $q->where('employee_name', 'like', "%{$search}%")
-                    ->orWhere('employee_no', 'like', "%{$search}%")
-                    ->orWhere('employee_id', 'like', "%{$search}%")
-                    ->orWhere('crosschex_id', 'like', "%{$search}%");
-            })
-            ->orderBy('employee_name')
-            ->orderBy('check_time')
-            ->get()
-            ->groupBy(function ($log) {
-                return $this->buildEmployeeKey($log->employee_no, $log->employee_id).'_'.
-                    Carbon::parse($log->check_time)->toDateString();
-            })
-            ->map(function ($group) {
-                $sorted = $group->sortBy('check_time')->values();
-                $first = $sorted->first();
-                $last = $sorted->last();
+        $matchedPeople = $this->resolvePeopleFromSearch($search);
 
-                $firstCheckTime = $first?->check_time ? Carbon::parse($first->check_time) : null;
-                $lastCheckTime = $last?->check_time ? Carbon::parse($last->check_time) : null;
+        if ($matchedPeople->isEmpty()) {
+            $rows = $this->emptyPaginator($request);
 
-                return [
-                    'employee_key' => $this->buildEmployeeKey($first->employee_no, $first->employee_id),
-                    'biometric_employee_id' => $first->employee_id,
-                    'employee_no' => $first->employee_no,
-                    'employee_name' => $first->employee_name,
-                    'log_date' => $firstCheckTime?->toDateString(),
-                    'actual_time_in' => $firstCheckTime?->toDateTimeString(),
-                    'actual_time_out' => $lastCheckTime?->toDateTimeString(),
-                    'log_count' => $group->count(),
-                    'has_logs' => true,
-                ];
-            });
-
-        $schedules = EmployeePlottingSchedule::query()
-            ->whereBetween('work_date', [
-                $startDate->copy()->toDateString(),
-                $endDate->copy()->toDateString(),
-            ])
-            ->where(function ($q) use ($search) {
-                $q->where('employee_name', 'like', "%{$search}%")
-                    ->orWhere('employee_no', 'like', "%{$search}%")
-                    ->orWhere('biometric_employee_id', 'like', "%{$search}%")
-                    ->orWhere('crosschex_id', 'like', "%{$search}%");
-            })
-            ->orderBy('employee_name')
-            ->orderBy('work_date')
-            ->get()
-            ->keyBy(function ($schedule) {
-                return $this->buildEmployeeKey($schedule->employee_no, $schedule->biometric_employee_id).'_'.
-                    Carbon::parse($schedule->work_date)->toDateString();
-            });
-
-        $merged = [];
-
-        foreach ($schedules as $key => $schedule) {
-            $merged[$key] = [
-                'employee_key' => $this->buildEmployeeKey($schedule->employee_no, $schedule->biometric_employee_id),
-                'biometric_employee_id' => $schedule->biometric_employee_id,
-                'employee_no' => $schedule->employee_no,
-                'employee_name' => $schedule->employee_name,
-                'log_date' => Carbon::parse($schedule->work_date)->toDateString(),
-
-                'schedule_status' => $schedule->status,
-                'shift_name' => $schedule->shift_name,
-                'scheduled_time_in' => $schedule->time_in,
-                'scheduled_time_out' => $schedule->time_out,
-                'grace_minutes' => (int) ($schedule->grace_minutes ?? 15),
-                'remarks' => $schedule->remarks,
-
-                'actual_time_in' => null,
-                'actual_time_out' => null,
-                'log_count' => 0,
-                'has_logs' => false,
-                'has_schedule' => true,
-            ];
+            return view('hr_department.mirasol_logs.index', [
+                'rows' => $rows,
+                'people' => $people,
+                'cutoffMonth' => $cutoffMonth,
+                'cutoffYear' => $cutoffYear,
+                'cutoffType' => $cutoffType,
+                'startDate' => $startDate,
+                'endDate' => $endDate,
+                'cutoffLabel' => $cutoffLabel,
+                'search' => $search,
+                'isSearch' => true,
+            ]);
         }
 
-        foreach ($logs as $key => $logRow) {
-            if (! isset($merged[$key])) {
-                $merged[$key] = [
-                    'employee_key' => $logRow['employee_key'],
-                    'biometric_employee_id' => $logRow['biometric_employee_id'],
-                    'employee_no' => $logRow['employee_no'],
-                    'employee_name' => $logRow['employee_name'],
-                    'log_date' => $logRow['log_date'],
+        $employeeNos = $matchedPeople
+            ->pluck('employee_no')
+            ->map(fn ($value) => trim((string) $value))
+            ->filter()
+            ->unique()
+            ->values();
 
+        $biometricEmployeeIds = $matchedPeople
+            ->pluck('biometric_employee_id')
+            ->map(fn ($value) => trim((string) $value))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $logsByEmployeeDate = $this->getLogsByEmployeeDate(
+            $employeeNos,
+            $biometricEmployeeIds,
+            $startDate,
+            $endDate
+        );
+
+        [$dateSchedules, $permanentSchedules] = $this->getSchedules(
+            $employeeNos,
+            $biometricEmployeeIds,
+            $startDate,
+            $endDate
+        );
+
+        $rows = collect();
+
+        foreach ($matchedPeople as $person) {
+            $employeeKey = $this->buildEmployeeKey(
+                $person['employee_no'] ?? null,
+                $person['biometric_employee_id'] ?? null
+            );
+
+            foreach ($this->dateRange($startDate, $endDate) as $date) {
+                $dateString = $date->toDateString();
+                $logKey = $employeeKey.'_'.$dateString;
+
+                $schedule = $dateSchedules->get($logKey)
+                    ?? $permanentSchedules->get($employeeKey);
+
+                $logRow = $logsByEmployeeDate->get($logKey);
+
+                $row = [
+                    'employee_key' => $employeeKey,
+                    'biometric_employee_id' => $person['biometric_employee_id'] ?? null,
+                    'employee_no' => $person['employee_no'] ?? null,
+                    'employee_name' => $person['employee_name'] ?? null,
+                    'log_date' => $dateString,
+
+                    'has_schedule' => $schedule !== null,
                     'schedule_status' => null,
                     'shift_name' => null,
                     'scheduled_time_in' => null,
                     'scheduled_time_out' => null,
                     'grace_minutes' => 15,
+                    'day_off' => null,
                     'remarks' => null,
 
-                    'actual_time_in' => $logRow['actual_time_in'],
-                    'actual_time_out' => $logRow['actual_time_out'],
-                    'log_count' => $logRow['log_count'],
-                    'has_logs' => true,
-                    'has_schedule' => false,
+                    'actual_time_in' => $logRow['actual_time_in'] ?? null,
+                    'actual_time_out' => $logRow['actual_time_out'] ?? null,
+                    'log_count' => $logRow['log_count'] ?? 0,
+                    'has_logs' => ! empty($logRow),
                 ];
-            } else {
-                $merged[$key]['actual_time_in'] = $logRow['actual_time_in'];
-                $merged[$key]['actual_time_out'] = $logRow['actual_time_out'];
-                $merged[$key]['log_count'] = $logRow['log_count'];
-                $merged[$key]['has_logs'] = true;
+
+                if ($schedule) {
+                    $row = array_merge($row, $this->schedulePayload($schedule, $date));
+                }
+
+                $rows->push($this->decorateAttendanceRow($row));
             }
         }
 
-        $rows = collect($merged)
-            ->map(function ($row) {
-                return $this->decorateAttendanceRow($row);
-            })
+        $rows = $rows
             ->sortBy([
                 ['employee_name', 'asc'],
                 ['log_date', 'asc'],
@@ -211,11 +182,6 @@ class MirasolBiometricsLogController extends Controller
             $from = Carbon::parse($validated['from'])->startOfDay();
             $to = Carbon::parse($validated['to'])->endOfDay();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Get CrossChex accounts FIRST
-            |--------------------------------------------------------------------------
-            */
             $accounts = array_keys(config('services.crosschex.accounts', []));
 
             if (empty($accounts)) {
@@ -277,18 +243,18 @@ class MirasolBiometricsLogController extends Controller
     public function syncStatus(Request $request)
     {
         try {
-            $v = $request->validate([
+            $validated = $request->validate([
                 'job' => ['required', 'string'],
             ]);
 
-            $key = "crosschex_sync_status:{$v['job']}";
+            $key = "crosschex_sync_status:{$validated['job']}";
             $status = Cache::get($key);
 
             if (! $status) {
                 return response()->json([
                     'ok' => false,
                     'state' => 'unknown',
-                    'message' => 'No status found (maybe expired).',
+                    'message' => 'No status found. It may have expired.',
                 ], 404);
             }
 
@@ -300,7 +266,9 @@ class MirasolBiometricsLogController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Throwable $e) {
-            Log::error('syncStatus failed', ['error' => $e->getMessage()]);
+            Log::error('syncStatus failed', [
+                'error' => $e->getMessage(),
+            ]);
 
             return response()->json([
                 'ok' => false,
@@ -309,9 +277,120 @@ class MirasolBiometricsLogController extends Controller
         }
     }
 
+    private function getLogsByEmployeeDate($employeeNos, $biometricEmployeeIds, Carbon $startDate, Carbon $endDate)
+    {
+        return MirasolBiometricsLog::query()
+            ->whereNotNull('check_time')
+            ->whereBetween('check_time', [
+                $startDate->copy()->startOfDay(),
+                $endDate->copy()->endOfDay(),
+            ])
+            ->where(function ($query) use ($employeeNos, $biometricEmployeeIds) {
+                if ($employeeNos->isNotEmpty()) {
+                    $query->orWhereIn(DB::raw('TRIM(employee_no)'), $employeeNos->all());
+                }
+
+                if ($biometricEmployeeIds->isNotEmpty()) {
+                    $query->orWhereIn(DB::raw('TRIM(employee_id)'), $biometricEmployeeIds->all());
+                }
+            })
+            ->orderBy('employee_name')
+            ->orderBy('check_time')
+            ->get()
+            ->groupBy(function ($log) {
+                return $this->buildEmployeeKey($log->employee_no, $log->employee_id).'_'.
+                    Carbon::parse($log->check_time)->toDateString();
+            })
+            ->map(function ($group) {
+                $sorted = $group->sortBy('check_time')->values();
+                $first = $sorted->first();
+                $last = $sorted->last();
+
+                $firstCheckTime = $first?->check_time ? Carbon::parse($first->check_time) : null;
+                $lastCheckTime = $last?->check_time ? Carbon::parse($last->check_time) : null;
+
+                return [
+                    'employee_key' => $this->buildEmployeeKey($first->employee_no, $first->employee_id),
+                    'biometric_employee_id' => $first->employee_id,
+                    'employee_no' => $first->employee_no,
+                    'employee_name' => $first->employee_name,
+                    'log_date' => $firstCheckTime?->toDateString(),
+                    'actual_time_in' => $firstCheckTime?->toDateTimeString(),
+                    'actual_time_out' => $sorted->count() > 1 ? $lastCheckTime?->toDateTimeString() : null,
+                    'log_count' => $group->count(),
+                    'has_logs' => true,
+                ];
+            });
+    }
+
+    private function getSchedules($employeeNos, $biometricEmployeeIds, Carbon $startDate, Carbon $endDate): array
+    {
+        $scheduleQuery = EmployeePlottingSchedule::query()
+            ->where(function ($query) use ($employeeNos, $biometricEmployeeIds) {
+                if ($employeeNos->isNotEmpty()) {
+                    $query->orWhereIn(DB::raw('TRIM(employee_no)'), $employeeNos->all());
+                }
+
+                if ($biometricEmployeeIds->isNotEmpty()) {
+                    $query->orWhereIn(DB::raw('TRIM(biometric_employee_id)'), $biometricEmployeeIds->all());
+                }
+            })
+            ->orderByDesc('updated_at')
+            ->get();
+
+        $dateSchedules = $scheduleQuery
+            ->filter(fn ($schedule) => ! empty($schedule->work_date))
+            ->filter(function ($schedule) use ($startDate, $endDate) {
+                $workDate = Carbon::parse($schedule->work_date)->toDateString();
+
+                return $workDate >= $startDate->toDateString()
+                    && $workDate <= $endDate->toDateString();
+            })
+            ->keyBy(function ($schedule) {
+                return $this->buildEmployeeKey($schedule->employee_no, $schedule->biometric_employee_id).'_'.
+                    Carbon::parse($schedule->work_date)->toDateString();
+            });
+
+        $permanentSchedules = $scheduleQuery
+            ->unique(function ($schedule) {
+                return $this->buildEmployeeKey($schedule->employee_no, $schedule->biometric_employee_id);
+            })
+            ->keyBy(function ($schedule) {
+                return $this->buildEmployeeKey($schedule->employee_no, $schedule->biometric_employee_id);
+            });
+
+        return [$dateSchedules, $permanentSchedules];
+    }
+
+    private function schedulePayload(EmployeePlottingSchedule $schedule, Carbon $date): array
+    {
+        $shiftName = $schedule->shift_name ?: 'Regular Shift';
+        $dayOff = $schedule->day_off ?: null;
+        $status = $schedule->status ?: 'scheduled';
+
+        if ($dayOff && strtolower($dayOff) === strtolower($date->format('l'))) {
+            $status = 'rest_day';
+        }
+
+        return [
+            'has_schedule' => true,
+            'schedule_status' => $status,
+            'shift_name' => $shiftName,
+            'scheduled_time_in' => $this->normalizeTime($schedule->time_in),
+            'scheduled_time_out' => $this->normalizeTime($schedule->time_out),
+            'grace_minutes' => (int) ($schedule->grace_minutes ?? 15),
+            'day_off' => $dayOff,
+            'remarks' => $schedule->remarks,
+        ];
+    }
+
     private function decorateAttendanceRow(array $row): array
     {
         $date = Carbon::parse($row['log_date']);
+        $shiftName = $row['shift_name'] ?? null;
+        $status = $row['schedule_status'] ?? null;
+        $isFlexible = $this->isFlexibleShift($shiftName);
+        $isRegular = $this->isRegularShift($shiftName);
 
         $scheduledIn = ! empty($row['scheduled_time_in'])
             ? Carbon::parse($date->toDateString().' '.$row['scheduled_time_in'])
@@ -320,6 +399,10 @@ class MirasolBiometricsLogController extends Controller
         $scheduledOut = ! empty($row['scheduled_time_out'])
             ? Carbon::parse($date->toDateString().' '.$row['scheduled_time_out'])
             : null;
+
+        if ($scheduledIn && $scheduledOut && $scheduledOut->lessThanOrEqualTo($scheduledIn)) {
+            $scheduledOut->addDay();
+        }
 
         $actualIn = ! empty($row['actual_time_in'])
             ? Carbon::parse($row['actual_time_in'])
@@ -334,70 +417,93 @@ class MirasolBiometricsLogController extends Controller
         $lateMinutes = 0;
         $undertimeMinutes = 0;
         $workedMinutes = null;
-        $attendanceNote = null;
+        $attendanceNote = 'No attendance remark.';
         $attendanceClass = 'secondary';
 
         if ($actualIn && $actualOut) {
             $workedMinutes = $actualIn->diffInMinutes($actualOut, false);
+
             if ($workedMinutes <= 0) {
                 $workedMinutes = null;
             }
         }
 
         if (! $row['has_schedule'] && $row['has_logs']) {
-            $attendanceNote = 'No plotted schedule found for this cutoff date. Please coordinate with Payroll / Admin to set the employee schedule.';
+            $attendanceNote = 'No plotted schedule found.';
             $attendanceClass = 'warning';
-        } elseif ($row['has_schedule'] && ! $row['has_logs'] && $row['schedule_status'] === 'scheduled') {
-            $attendanceNote = 'Absent';
-            $attendanceClass = 'danger';
-        } elseif (in_array($row['schedule_status'], ['rest_day', 'leave', 'holiday'])) {
+        } elseif (! $row['has_schedule'] && ! $row['has_logs']) {
+            $attendanceNote = 'No schedule and no biometric log.';
+            $attendanceClass = 'secondary';
+        } elseif (in_array($status, ['rest_day', 'leave', 'holiday'], true)) {
             if ($row['has_logs']) {
-                $attendanceNote = 'Biometric log detected on a non-working plotted status.';
+                $attendanceNote = 'Biometric log detected on '.ucwords(str_replace('_', ' ', $status)).'.';
                 $attendanceClass = 'info';
             } else {
-                $attendanceNote = ucwords(str_replace('_', ' ', $row['schedule_status']));
+                $attendanceNote = ucwords(str_replace('_', ' ', $status));
                 $attendanceClass = 'secondary';
             }
-        } elseif ($row['schedule_status'] === 'scheduled') {
-            if ($actualIn && $scheduledIn) {
-                $allowedIn = $scheduledIn->copy()->addMinutes($graceMinutes);
-
-                if ($actualIn->gt($allowedIn)) {
-                    $lateMinutes = $allowedIn->diffInMinutes($actualIn);
-                }
-            }
-
-            if ($actualOut && $scheduledOut && $actualOut->lt($scheduledOut)) {
-                $undertimeMinutes = $actualOut->diffInMinutes($scheduledOut);
-            }
-
-            if ($row['has_logs'] && (int) $row['log_count'] < 2) {
-                $attendanceNote = 'Incomplete biometric logs detected for this scheduled workday.';
+        } elseif ($status === 'scheduled') {
+            if (! $row['has_logs']) {
+                $attendanceNote = 'Absent';
+                $attendanceClass = 'danger';
+            } elseif ((int) $row['log_count'] < 2) {
+                $attendanceNote = 'Incomplete biometric logs.';
                 $attendanceClass = 'warning';
+            } elseif ($isFlexible) {
+                $requiredMinutes = self::FLEXIBLE_REQUIRED_MINUTES;
+
+                if ($workedMinutes === null) {
+                    $attendanceNote = 'Incomplete biometric logs.';
+                    $attendanceClass = 'warning';
+                } elseif ($workedMinutes >= $requiredMinutes) {
+                    $attendanceNote = 'Completed Flexible 9 Hours';
+                    $attendanceClass = 'success';
+                } else {
+                    $undertimeMinutes = $requiredMinutes - $workedMinutes;
+                    $attendanceNote = 'Incomplete Flexible Hours';
+                    $attendanceClass = 'warning';
+                }
+            } elseif ($isRegular) {
+                if (! $scheduledIn || ! $scheduledOut) {
+                    $attendanceNote = 'Regular Shift needs plotted Time In and Time Out.';
+                    $attendanceClass = 'warning';
+                } else {
+                    $allowedIn = $scheduledIn->copy()->addMinutes($graceMinutes);
+
+                    if ($actualIn && $actualIn->gt($allowedIn)) {
+                        $lateMinutes = $allowedIn->diffInMinutes($actualIn);
+                    }
+
+                    if ($actualOut && $actualOut->lt($scheduledOut)) {
+                        $undertimeMinutes = $actualOut->diffInMinutes($scheduledOut);
+                    }
+
+                    $parts = [];
+
+                    if ($lateMinutes > 0) {
+                        $parts[] = 'Late';
+                    }
+
+                    if ($undertimeMinutes > 0) {
+                        $parts[] = 'Undertime';
+                    }
+
+                    if (empty($parts)) {
+                        $parts[] = 'On Time';
+                    }
+
+                    $attendanceNote = implode(' / ', $parts);
+                    $attendanceClass = ($lateMinutes > 0 || $undertimeMinutes > 0) ? 'warning' : 'success';
+                }
             } else {
-                $parts = [];
-
-                if ($lateMinutes > 0) {
-                    $parts[] = 'Late';
-                }
-
-                if ($undertimeMinutes > 0) {
-                    $parts[] = 'Undertime';
-                }
-
-                if (empty($parts) && $row['has_logs']) {
-                    $parts[] = 'On Time';
-                }
-
-                $attendanceNote = ! empty($parts)
-                    ? implode(' / ', $parts)
-                    : 'No attendance remark.';
-                $attendanceClass = ($lateMinutes > 0 || $undertimeMinutes > 0) ? 'warning' : 'success';
+                $attendanceNote = 'Unknown shift type.';
+                $attendanceClass = 'warning';
             }
-        } else {
-            $attendanceNote = 'No schedule and no attendance record available for this date.';
-            $attendanceClass = 'secondary';
         }
+
+        $row['shift_mode'] = $isFlexible ? 'Flexible' : 'Regular';
+        $row['required_minutes'] = $isFlexible ? self::FLEXIBLE_REQUIRED_MINUTES : null;
+        $row['required_hours_label'] = $isFlexible ? '09:00' : '—';
 
         $row['late_minutes'] = $lateMinutes;
         $row['undertime_minutes'] = $undertimeMinutes;
@@ -409,6 +515,141 @@ class MirasolBiometricsLogController extends Controller
         $row['attendance_class'] = $attendanceClass;
 
         return $row;
+    }
+
+    private function buildPeopleSuggestions()
+    {
+        $logPeople = MirasolBiometricsLog::query()
+            ->selectRaw("
+                MIN(employee_id) AS biometric_employee_id,
+                TRIM(employee_no) AS employee_no,
+                MIN(NULLIF(TRIM(employee_name), '')) AS employee_name
+            ")
+            ->whereNotNull('employee_name')
+            ->whereRaw("TRIM(employee_name) <> ''")
+            ->groupBy(DB::raw('TRIM(employee_no)'))
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'employee_no' => $row->employee_no,
+                    'employee_name' => $row->employee_name,
+                    'biometric_employee_id' => $row->biometric_employee_id,
+                ];
+            });
+
+        $schedulePeople = EmployeePlottingSchedule::query()
+            ->selectRaw("
+                MIN(biometric_employee_id) AS biometric_employee_id,
+                TRIM(employee_no) AS employee_no,
+                MIN(NULLIF(TRIM(employee_name), '')) AS employee_name
+            ")
+            ->whereNotNull('employee_name')
+            ->whereRaw("TRIM(employee_name) <> ''")
+            ->groupBy(DB::raw('TRIM(employee_no)'))
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'employee_no' => $row->employee_no,
+                    'employee_name' => $row->employee_name,
+                    'biometric_employee_id' => $row->biometric_employee_id,
+                ];
+            });
+
+        return $logPeople
+            ->merge($schedulePeople)
+            ->filter(fn ($row) => ! empty($row['employee_name']) || ! empty($row['employee_no']))
+            ->unique(function ($row) {
+                return $this->buildEmployeeKey($row['employee_no'] ?? null, $row['biometric_employee_id'] ?? null);
+            })
+            ->sortBy('employee_name')
+            ->values();
+    }
+
+    private function resolvePeopleFromSearch(string $search)
+    {
+        $logPeople = MirasolBiometricsLog::query()
+            ->selectRaw("
+                MIN(employee_id) AS biometric_employee_id,
+                TRIM(employee_no) AS employee_no,
+                MIN(NULLIF(TRIM(employee_name), '')) AS employee_name
+            ")
+            ->where(function ($query) use ($search) {
+                $query->where('employee_name', 'like', "%{$search}%")
+                    ->orWhere('employee_no', 'like', "%{$search}%")
+                    ->orWhere('employee_id', 'like', "%{$search}%")
+                    ->orWhere('crosschex_id', 'like', "%{$search}%");
+            })
+            ->groupBy(DB::raw('TRIM(employee_no)'))
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'employee_no' => $row->employee_no,
+                    'employee_name' => $row->employee_name,
+                    'biometric_employee_id' => $row->biometric_employee_id,
+                ];
+            });
+
+        $schedulePeople = EmployeePlottingSchedule::query()
+            ->selectRaw("
+                MIN(biometric_employee_id) AS biometric_employee_id,
+                TRIM(employee_no) AS employee_no,
+                MIN(NULLIF(TRIM(employee_name), '')) AS employee_name
+            ")
+            ->where(function ($query) use ($search) {
+                $query->where('employee_name', 'like', "%{$search}%")
+                    ->orWhere('employee_no', 'like', "%{$search}%")
+                    ->orWhere('biometric_employee_id', 'like', "%{$search}%")
+                    ->orWhere('crosschex_id', 'like', "%{$search}%");
+            })
+            ->groupBy(DB::raw('TRIM(employee_no)'))
+            ->get()
+            ->map(function ($row) {
+                return [
+                    'employee_no' => $row->employee_no,
+                    'employee_name' => $row->employee_name,
+                    'biometric_employee_id' => $row->biometric_employee_id,
+                ];
+            });
+
+        return $logPeople
+            ->merge($schedulePeople)
+            ->filter(fn ($row) => ! empty($row['employee_name']) || ! empty($row['employee_no']))
+            ->unique(function ($row) {
+                return $this->buildEmployeeKey($row['employee_no'] ?? null, $row['biometric_employee_id'] ?? null);
+            })
+            ->sortBy('employee_name')
+            ->values();
+    }
+
+    private function buildEmployeeKey($employeeNo, $biometricEmployeeId): string
+    {
+        $employeeNo = trim((string) $employeeNo);
+        $biometricEmployeeId = trim((string) $biometricEmployeeId);
+
+        if ($employeeNo !== '') {
+            return 'EMPNO:'.$employeeNo;
+        }
+
+        return 'BIO:'.($biometricEmployeeId !== '' ? $biometricEmployeeId : 'UNKNOWN');
+    }
+
+    private function isFlexibleShift(?string $shiftName): bool
+    {
+        return str_contains(strtolower((string) $shiftName), 'flexible');
+    }
+
+    private function isRegularShift(?string $shiftName): bool
+    {
+        return ! $this->isFlexibleShift($shiftName);
+    }
+
+    private function normalizeTime($time): ?string
+    {
+        if (empty($time)) {
+            return null;
+        }
+
+        return Carbon::parse($time)->format('H:i');
     }
 
     private function formatMinutesToHours(?int $minutes): string
@@ -423,52 +664,31 @@ class MirasolBiometricsLogController extends Controller
         return sprintf('%02d:%02d', $hours, $mins);
     }
 
-    private function buildPeopleSuggestions()
+    private function dateRange(Carbon $startDate, Carbon $endDate)
     {
-        $logPeople = MirasolBiometricsLog::query()
-            ->select('employee_no', 'employee_name', 'employee_id')
-            ->whereNotNull('employee_name')
-            ->get()
-            ->map(function ($row) {
-                return [
-                    'employee_no' => $row->employee_no,
-                    'employee_name' => $row->employee_name,
-                    'biometric_employee_id' => $row->employee_id,
-                ];
-            });
+        $dates = collect();
+        $current = $startDate->copy()->startOfDay();
 
-        $schedulePeople = EmployeePlottingSchedule::query()
-            ->select('employee_no', 'employee_name', 'biometric_employee_id')
-            ->whereNotNull('employee_name')
-            ->get()
-            ->map(function ($row) {
-                return [
-                    'employee_no' => $row->employee_no,
-                    'employee_name' => $row->employee_name,
-                    'biometric_employee_id' => $row->biometric_employee_id,
-                ];
-            });
-
-        return $logPeople
-            ->merge($schedulePeople)
-            ->unique(function ($row) {
-                return strtolower(
-                    ($row['employee_name'] ?? '').'|'.
-                    ($row['employee_no'] ?? '').'|'.
-                    ($row['biometric_employee_id'] ?? '')
-                );
-            })
-            ->sortBy('employee_name')
-            ->values();
-    }
-
-    private function buildEmployeeKey($employeeNo, $biometricEmployeeId): string
-    {
-        if (! empty($employeeNo)) {
-            return 'EMPNO:'.$employeeNo;
+        while ($current->lte($endDate)) {
+            $dates->push($current->copy());
+            $current->addDay();
         }
 
-        return 'BIO:'.($biometricEmployeeId ?: 'UNKNOWN');
+        return $dates;
+    }
+
+    private function emptyPaginator(Request $request): LengthAwarePaginator
+    {
+        return new LengthAwarePaginator(
+            collect(),
+            0,
+            20,
+            LengthAwarePaginator::resolveCurrentPage(),
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
     }
 
     private function paginateCollection($items, int $perPage, Request $request): LengthAwarePaginator

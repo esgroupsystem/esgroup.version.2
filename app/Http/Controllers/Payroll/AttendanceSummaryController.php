@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
 use App\Models\DailyAttendanceSummary;
+use App\Models\EmployeePlottingSchedule;
 use App\Services\Payroll\DailyAttendanceSummaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AttendanceSummaryController extends Controller
 {
@@ -22,86 +24,30 @@ class AttendanceSummaryController extends Controller
         $status = trim((string) $request->status);
         $dayType = trim((string) $request->day_type);
 
-        [$startDate, $endDate, $cutoffLabel] = $this->resolveCutoffRange($cutoffMonth, $cutoffYear, $cutoffType);
+        [$startDate, $endDate, $cutoffLabel] = $this->resolveCutoffRange(
+            $cutoffMonth,
+            $cutoffYear,
+            $cutoffType
+        );
 
-        $baseQuery = DailyAttendanceSummary::query()
-            ->whereBetween('work_date', [$startDate->toDateString(), $endDate->toDateString()])
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('employee_name', 'like', "%{$search}%")
-                        ->orWhere('employee_no', 'like', "%{$search}%")
-                        ->orWhere('biometric_employee_id', 'like', "%{$search}%")
-                        ->orWhere('attendance_status', 'like', "%{$search}%")
-                        ->orWhere('shift_name', 'like', "%{$search}%")
-                        ->orWhere('remarks', 'like', "%{$search}%");
-                });
-            })
-            ->when($status, function ($query) use ($status) {
-                $query->where('attendance_status', $status);
-            })
-            ->when($dayType, function ($query) use ($dayType) {
-                if ($dayType === 'holiday') {
-                    $query->where('is_holiday', true);
-                } elseif ($dayType === 'rest_day') {
-                    $query->where('is_rest_day', true);
-                } elseif ($dayType === 'leave') {
-                    $query->where('is_leave', true);
-                } elseif ($dayType === 'regular') {
-                    $query->where('is_holiday', false)
-                        ->where('is_rest_day', false)
-                        ->where('is_leave', false);
-                }
-            });
+        $baseQuery = $this->summaryBaseQuery(
+            $startDate,
+            $endDate,
+            $search,
+            $status,
+            $dayType
+        );
 
-        $stats = [
-            'total' => (clone $baseQuery)->count(),
-            'present' => (clone $baseQuery)->whereIn('attendance_status', ['present', 'adjusted_present'])->count(),
-            'late' => (clone $baseQuery)->whereIn('attendance_status', ['late', 'late_undertime'])->count(),
-            'undertime' => (clone $baseQuery)->whereIn('attendance_status', ['undertime', 'late_undertime'])->count(),
-            'absent' => (clone $baseQuery)->where('attendance_status', 'absent')->count(),
-            'incomplete' => (clone $baseQuery)->where('attendance_status', 'incomplete_log')->count(),
-            'holiday' => (clone $baseQuery)->whereIn('attendance_status', ['holiday', 'holiday_worked'])->count(),
-            'rest_day' => (clone $baseQuery)->whereIn('attendance_status', ['rest_day', 'rest_day_worked'])->count(),
-            'leave' => (clone $baseQuery)->where('attendance_status', 'leave')->count(),
-            'adjustment' => (clone $baseQuery)->where('has_adjustment', true)->count(),
-
-            'total_late_minutes' => (clone $baseQuery)->sum('late_minutes'),
-            'total_undertime_minutes' => (clone $baseQuery)->sum('undertime_minutes'),
-            'total_worked_minutes' => (clone $baseQuery)->sum('worked_minutes'),
-            'total_overtime_minutes' => (clone $baseQuery)->sum('overtime_minutes'),
-            'total_payable_days' => (clone $baseQuery)->sum('payable_days'),
-            'total_payable_hours' => (clone $baseQuery)->sum('payable_hours'),
-        ];
+        $stats = $this->buildStats(clone $baseQuery);
 
         $summaries = (clone $baseQuery)
-            ->orderBy('work_date')
             ->orderBy('employee_name')
+            ->orderBy('work_date')
             ->paginate(15)
             ->withQueryString();
 
-        $statusOptions = [
-            '' => 'All Status',
-            'present' => 'Present',
-            'adjusted_present' => 'Adjusted Present',
-            'late' => 'Late',
-            'undertime' => 'Undertime',
-            'late_undertime' => 'Late + Undertime',
-            'absent' => 'Absent',
-            'incomplete_log' => 'Incomplete Log',
-            'holiday' => 'Holiday',
-            'holiday_worked' => 'Holiday Worked',
-            'rest_day' => 'Rest Day',
-            'rest_day_worked' => 'Rest Day Worked',
-            'leave' => 'Leave',
-        ];
-
-        $dayTypeOptions = [
-            '' => 'All Day Types',
-            'regular' => 'Regular Day',
-            'holiday' => 'Holiday',
-            'rest_day' => 'Rest Day',
-            'leave' => 'Leave',
-        ];
+        $statusOptions = $this->statusOptions();
+        $dayTypeOptions = $this->dayTypeOptions();
 
         if ($request->ajax()) {
             return view('payroll.attendance_summary.table', compact(
@@ -154,6 +100,302 @@ class AttendanceSummaryController extends Controller
             ->with('success', 'Attendance summary rebuilt successfully.');
     }
 
+    public function exportPayroll(Request $request)
+    {
+        [$defaultCutoffMonth, $defaultCutoffYear, $defaultCutoffType] = $this->getDefaultCutoff();
+
+        $cutoffMonth = (int) ($request->cutoff_month ?: $defaultCutoffMonth);
+        $cutoffYear = (int) ($request->cutoff_year ?: $defaultCutoffYear);
+        $cutoffType = $request->cutoff_type ?: $defaultCutoffType;
+
+        $search = trim((string) $request->search);
+        $status = trim((string) $request->status);
+        $dayType = trim((string) $request->day_type);
+
+        [$startDate, $endDate, $cutoffLabel] = $this->resolveCutoffRange(
+            $cutoffMonth,
+            $cutoffYear,
+            $cutoffType
+        );
+
+        $summaryRows = $this->summaryBaseQuery(
+            $startDate,
+            $endDate,
+            $search,
+            $status,
+            $dayType
+        )
+            ->orderBy('employee_name')
+            ->orderBy('work_date')
+            ->get();
+
+        $masterEmployees = EmployeePlottingSchedule::query()
+            ->selectRaw("
+                MIN(biometric_employee_id) AS biometric_employee_id,
+                TRIM(employee_no) AS employee_no,
+                MIN(NULLIF(TRIM(employee_name), '')) AS employee_name
+            ")
+            ->whereNotNull('employee_no')
+            ->whereRaw("TRIM(employee_no) <> ''")
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('employee_name', 'like', "%{$search}%")
+                        ->orWhere('employee_no', 'like', "%{$search}%")
+                        ->orWhere('biometric_employee_id', 'like', "%{$search}%");
+                });
+            })
+            ->groupBy(DB::raw('TRIM(employee_no)'))
+            ->orderBy('employee_name')
+            ->get();
+
+        $summaryEmployees = $summaryRows
+            ->map(function ($row) {
+                return [
+                    'employee_name' => $row->employee_name,
+                    'employee_no' => trim((string) $row->employee_no),
+                    'biometric_employee_id' => $row->biometric_employee_id,
+                ];
+            })
+            ->filter(fn ($row) => $row['employee_no'] !== '')
+            ->unique('employee_no')
+            ->values();
+
+        $allEmployees = $masterEmployees
+            ->map(function ($employee) {
+                return [
+                    'employee_name' => $employee->employee_name,
+                    'employee_no' => trim((string) $employee->employee_no),
+                    'biometric_employee_id' => $employee->biometric_employee_id,
+                ];
+            })
+            ->merge($summaryEmployees)
+            ->filter(fn ($row) => ! empty($row['employee_no']))
+            ->unique('employee_no')
+            ->sortBy('employee_name')
+            ->values();
+
+        $recordsByEmployee = $summaryRows->groupBy(function ($row) {
+            return trim((string) $row->employee_no);
+        });
+
+        $employees = $allEmployees->map(function ($employee) use ($recordsByEmployee) {
+            $employeeNo = trim((string) $employee['employee_no']);
+            $records = $recordsByEmployee->get($employeeNo, collect())->values();
+
+            return [
+                'employee_name' => $employee['employee_name'],
+                'employee_no' => $employeeNo,
+                'biometric_employee_id' => $employee['biometric_employee_id'],
+                'records' => $records,
+
+                'total_late_minutes' => $records->sum('late_minutes'),
+                'total_undertime_minutes' => $records->sum('undertime_minutes'),
+                'total_worked_minutes' => $records->sum('worked_minutes'),
+                'total_payable_days' => $records->sum('payable_days'),
+                'total_payable_hours' => $records->sum('payable_hours'),
+
+                'total_absent_count' => $records
+                    ->where('attendance_status', 'absent')
+                    ->count(),
+
+                'total_half_day_count' => $records
+                    ->where('attendance_status', 'half_day')
+                    ->count(),
+            ];
+        });
+
+        $employeePages = $employees->chunk(9);
+
+        $stats = $this->buildStats($this->summaryBaseQuery(
+            $startDate,
+            $endDate,
+            $search,
+            $status,
+            $dayType
+        ));
+
+        return view('payroll.attendance_summary.export-payroll', compact(
+            'employeePages',
+            'employees',
+            'summaryRows',
+            'stats',
+            'cutoffMonth',
+            'cutoffYear',
+            'cutoffType',
+            'cutoffLabel',
+            'search',
+            'status',
+            'dayType'
+        ));
+    }
+
+    protected function summaryBaseQuery(
+        Carbon $startDate,
+        Carbon $endDate,
+        ?string $search = null,
+        ?string $status = null,
+        ?string $dayType = null
+    ) {
+        return DailyAttendanceSummary::query()
+            ->whereBetween('work_date', [
+                $startDate->toDateString(),
+                $endDate->toDateString(),
+            ])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('employee_name', 'like', "%{$search}%")
+                        ->orWhere('employee_no', 'like', "%{$search}%")
+                        ->orWhere('biometric_employee_id', 'like', "%{$search}%")
+                        ->orWhere('attendance_status', 'like', "%{$search}%")
+                        ->orWhere('shift_name', 'like', "%{$search}%")
+                        ->orWhere('remarks', 'like', "%{$search}%")
+                        ->orWhere('schedule_remarks', 'like', "%{$search}%");
+                });
+            })
+            ->when($status, function ($query) use ($status) {
+                $query->where('attendance_status', $status);
+            })
+            ->when($dayType, function ($query) use ($dayType) {
+                if ($dayType === 'holiday') {
+                    $query->where('is_holiday', true);
+                } elseif ($dayType === 'rest_day') {
+                    $query->where('is_rest_day', true);
+                } elseif ($dayType === 'leave') {
+                    $query->where('is_leave', true);
+                } elseif ($dayType === 'regular') {
+                    $query->where('is_holiday', false)
+                        ->where('is_rest_day', false)
+                        ->where('is_leave', false);
+                } elseif ($dayType === 'regular_shift') {
+                    $query->where('shift_name', 'like', '%Regular%');
+                } elseif ($dayType === 'flexible_shift') {
+                    $query->where('shift_name', 'like', '%Flexible%');
+                } elseif ($dayType === 'half_day') {
+                    $query->where('attendance_status', 'half_day');
+                }
+            });
+    }
+
+    protected function buildStats($baseQuery): array
+    {
+        return [
+            'total' => (clone $baseQuery)->count(),
+
+            'present' => (clone $baseQuery)
+                ->whereIn('attendance_status', [
+                    'present',
+                    'adjusted_present',
+                ])
+                ->count(),
+
+            'half_day' => (clone $baseQuery)
+                ->where('attendance_status', 'half_day')
+                ->count(),
+
+            'late_undertime_records' => (clone $baseQuery)
+                ->whereIn('attendance_status', [
+                    'late',
+                    'undertime',
+                    'late_undertime',
+                ])
+                ->count(),
+
+            'late' => (clone $baseQuery)
+                ->whereIn('attendance_status', [
+                    'late',
+                    'late_undertime',
+                ])
+                ->count(),
+
+            'undertime' => (clone $baseQuery)
+                ->whereIn('attendance_status', [
+                    'undertime',
+                    'late_undertime',
+                    'half_day',
+                ])
+                ->count(),
+
+            'absent' => (clone $baseQuery)
+                ->where('attendance_status', 'absent')
+                ->count(),
+
+            'incomplete' => (clone $baseQuery)
+                ->where('attendance_status', 'incomplete_log')
+                ->count(),
+
+            'holiday' => (clone $baseQuery)
+                ->whereIn('attendance_status', [
+                    'holiday',
+                    'holiday_worked',
+                ])
+                ->count(),
+
+            'rest_day' => (clone $baseQuery)
+                ->whereIn('attendance_status', [
+                    'rest_day',
+                    'rest_day_worked',
+                ])
+                ->count(),
+
+            'leave' => (clone $baseQuery)
+                ->where('attendance_status', 'leave')
+                ->count(),
+
+            'adjustment' => (clone $baseQuery)
+                ->where('has_adjustment', true)
+                ->count(),
+
+            'regular_shift' => (clone $baseQuery)
+                ->where('shift_name', 'like', '%Regular%')
+                ->count(),
+
+            'flexible_shift' => (clone $baseQuery)
+                ->where('shift_name', 'like', '%Flexible%')
+                ->count(),
+
+            'total_late_minutes' => (clone $baseQuery)->sum('late_minutes'),
+            'total_undertime_minutes' => (clone $baseQuery)->sum('undertime_minutes'),
+            'total_worked_minutes' => (clone $baseQuery)->sum('worked_minutes'),
+            'total_overtime_minutes' => (clone $baseQuery)->sum('overtime_minutes'),
+            'total_payable_days' => (clone $baseQuery)->sum('payable_days'),
+            'total_payable_hours' => (clone $baseQuery)->sum('payable_hours'),
+        ];
+    }
+
+    protected function statusOptions(): array
+    {
+        return [
+            '' => 'All Status',
+            'present' => 'Present',
+            'adjusted_present' => 'Adjusted Present',
+            'half_day' => 'Half Day',
+            'late' => 'Late',
+            'undertime' => 'Undertime',
+            'late_undertime' => 'Late + Undertime',
+            'absent' => 'Absent',
+            'incomplete_log' => 'Incomplete Log',
+            'holiday' => 'Holiday',
+            'holiday_worked' => 'Holiday Worked',
+            'rest_day' => 'Rest Day',
+            'rest_day_worked' => 'Rest Day Worked',
+            'leave' => 'Leave',
+        ];
+    }
+
+    protected function dayTypeOptions(): array
+    {
+        return [
+            '' => 'All Day Types',
+            'regular' => 'Regular Day',
+            'regular_shift' => 'Regular Shift',
+            'flexible_shift' => 'Flexible Shift',
+            'half_day' => 'Half Day',
+            'holiday' => 'Holiday',
+            'rest_day' => 'Rest Day',
+            'leave' => 'Leave',
+        ];
+    }
+
     protected function getDefaultCutoff(): array
     {
         $today = now('Asia/Manila');
@@ -187,21 +429,23 @@ class AttendanceSummaryController extends Controller
     {
         $month = max(1, min(12, $month));
         $year = max(2000, min(2100, $year));
-        $type = in_array($type, ['first', 'second']) ? $type : 'first';
+        $type = in_array($type, ['first', 'second'], true) ? $type : 'first';
 
         if ($type === 'first') {
             $startDate = Carbon::create($year, $month, 11, 0, 0, 0, 'Asia/Manila')->startOfDay();
             $endDate = Carbon::create($year, $month, 25, 23, 59, 59, 'Asia/Manila')->endOfDay();
             $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' (1st Cutoff)';
-        } else {
-            $startDate = Carbon::create($year, $month, 26, 0, 0, 0, 'Asia/Manila')->startOfDay();
-            $endDate = Carbon::create($year, $month, 26, 23, 59, 59, 'Asia/Manila')
-                ->addMonth()
-                ->day(10)
-                ->endOfDay();
 
-            $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' (2nd Cutoff)';
+            return [$startDate, $endDate, $label];
         }
+
+        $startDate = Carbon::create($year, $month, 26, 0, 0, 0, 'Asia/Manila')->startOfDay();
+        $endDate = Carbon::create($year, $month, 26, 23, 59, 59, 'Asia/Manila')
+            ->addMonth()
+            ->day(10)
+            ->endOfDay();
+
+        $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' (2nd Cutoff)';
 
         return [$startDate, $endDate, $label];
     }

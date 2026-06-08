@@ -6,16 +6,23 @@
         <script>
             (function() {
                 const isFluid = JSON.parse(localStorage.getItem('isFluid') || 'false');
-                if (!isFluid) return;
+
+                if (!isFluid) {
+                    return;
+                }
+
                 const container = document.querySelector('[data-layout]');
-                if (!container) return;
+
+                if (!container) {
+                    return;
+                }
+
                 container.classList.remove('container');
                 container.classList.add('container-fluid');
             })();
         </script>
 
         <div class="content">
-            {{-- SYNC CARD --}}
             <div class="card monitor-card shadow-sm mb-3">
                 <div class="card-header bg-body-tertiary border-bottom border-200">
                     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
@@ -44,15 +51,18 @@
 
                         <div class="col-12 col-lg-6 d-flex gap-2">
                             <button id="syncBtn" class="btn btn-primary btn-sm flex-grow-1" type="submit">
-                                <span class="fas fa-sync me-1"></span> Sync Now
+                                <span class="fas fa-sync me-1"></span>
+                                Sync Now
                             </button>
-                            <a class="btn btn-outline-secondary btn-sm" href="{{ route('mirasol-logs.index') }}">Reset</a>
+
+                            <a class="btn btn-outline-secondary btn-sm" href="{{ route('mirasol-logs.index') }}">
+                                Reset
+                            </a>
                         </div>
                     </form>
                 </div>
             </div>
 
-            {{-- TABLE CARD --}}
             <div class="card jo-card shadow-sm">
                 <div class="card-header bg-body-tertiary border-bottom border-200">
                     <div class="d-flex flex-column flex-lg-row gap-2 align-items-lg-center justify-content-between">
@@ -114,6 +124,7 @@
                                     <option value="11_25" {{ $cutoffType === '11_25' ? 'selected' : '' }}>
                                         11 - 25
                                     </option>
+
                                     <option value="26_10" {{ $cutoffType === '26_10' ? 'selected' : '' }}>
                                         26 - 10
                                     </option>
@@ -137,15 +148,19 @@
                                 <th style="width:220px;">Employee Name</th>
                                 <th style="width:120px;">Employee No</th>
                                 <th style="width:170px;">Date</th>
-                                <th style="width:170px;">Plotted Schedule</th>
+                                <th style="width:150px;">Shift</th>
+                                <th style="width:190px;">Plotted Schedule</th>
+                                <th style="width:110px;">Day Off</th>
                                 <th style="width:110px;">Time In</th>
                                 <th style="width:110px;">Time Out</th>
-                                <th style="width:100px;">Total Hours</th>
+                                <th style="width:100px;">Worked</th>
+                                <th style="width:100px;">Required</th>
                                 <th style="width:100px;">Late</th>
                                 <th style="width:100px;">Undertime</th>
-                                <th style="width:120px;">Attendance Status</th>
+                                <th style="width:180px;">Attendance Status</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             @forelse($rows as $i => $r)
                                 <tr>
@@ -155,8 +170,11 @@
 
                                     <td class="fw-semi-bold">
                                         {{ $r['employee_name'] ?? '—' }}
-                                        @if (!empty($r['shift_name']))
-                                            <div class="text-muted fs-11">{{ $r['shift_name'] }}</div>
+
+                                        @if (!empty($r['remarks']))
+                                            <div class="text-muted fs-11">
+                                                {{ $r['remarks'] }}
+                                            </div>
                                         @endif
                                     </td>
 
@@ -169,23 +187,68 @@
                                     </td>
 
                                     <td>
-                                        @if (($r['schedule_status'] ?? null) === 'scheduled')
-                                            <div class="fw-semibold text-success">
-                                                {{ !empty($r['scheduled_time_in']) ? \Carbon\Carbon::parse($r['scheduled_time_in'])->format('h:i A') : '—' }}
-                                                -
-                                                {{ !empty($r['scheduled_time_out']) ? \Carbon\Carbon::parse($r['scheduled_time_out'])->format('h:i A') : '—' }}
-                                            </div>
-                                            <div class="fs-11 text-muted">
-                                                Grace: {{ $r['grace_minutes'] ?? 15 }} min
-                                            </div>
-                                        @elseif (($r['schedule_status'] ?? null) === 'rest_day')
-                                            <span class="badge bg-warning-subtle text-warning border">Rest Day</span>
-                                        @elseif (($r['schedule_status'] ?? null) === 'leave')
-                                            <span class="badge bg-info-subtle text-info border">Leave</span>
-                                        @elseif (($r['schedule_status'] ?? null) === 'holiday')
-                                            <span class="badge bg-danger-subtle text-danger border">Holiday</span>
+                                        @if (!empty($r['shift_name']))
+                                            @if (($r['shift_mode'] ?? '') === 'Flexible')
+                                                <span class="badge bg-info-subtle text-info border">
+                                                    Flexible Shift
+                                                </span>
+                                            @else
+                                                <span class="badge bg-primary-subtle text-primary border">
+                                                    Regular Shift
+                                                </span>
+                                            @endif
                                         @else
-                                            <span class="badge bg-secondary-subtle text-secondary border">No Schedule</span>
+                                            <span class="badge bg-secondary-subtle text-secondary border">
+                                                No Shift
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        @if (($r['schedule_status'] ?? null) === 'scheduled')
+                                            @if (($r['shift_mode'] ?? '') === 'Flexible')
+                                                <div class="fw-semibold text-info">
+                                                    Flexible - 9 Hours Required
+                                                </div>
+                                                <div class="fs-11 text-muted">
+                                                    No fixed Time In / Time Out
+                                                </div>
+                                            @else
+                                                <div class="fw-semibold text-success">
+                                                    {{ !empty($r['scheduled_time_in']) ? \Carbon\Carbon::parse($r['scheduled_time_in'])->format('h:i A') : 'No Time In' }}
+                                                    -
+                                                    {{ !empty($r['scheduled_time_out']) ? \Carbon\Carbon::parse($r['scheduled_time_out'])->format('h:i A') : 'No Time Out' }}
+                                                </div>
+                                                <div class="fs-11 text-muted">
+                                                    Grace: {{ $r['grace_minutes'] ?? 15 }} min
+                                                </div>
+                                            @endif
+                                        @elseif (($r['schedule_status'] ?? null) === 'rest_day')
+                                            <span class="badge bg-warning-subtle text-warning border">
+                                                Rest Day
+                                            </span>
+                                        @elseif (($r['schedule_status'] ?? null) === 'leave')
+                                            <span class="badge bg-info-subtle text-info border">
+                                                Leave
+                                            </span>
+                                        @elseif (($r['schedule_status'] ?? null) === 'holiday')
+                                            <span class="badge bg-danger-subtle text-danger border">
+                                                Holiday
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary-subtle text-secondary border">
+                                                No Schedule
+                                            </span>
+                                        @endif
+                                    </td>
+
+                                    <td>
+                                        @if (!empty($r['day_off']))
+                                            <span class="badge bg-warning-subtle text-warning border">
+                                                {{ $r['day_off'] }}
+                                            </span>
+                                        @else
+                                            <span class="text-muted">None</span>
                                         @endif
                                     </td>
 
@@ -199,6 +262,10 @@
 
                                     <td class="fw-semibold">
                                         {{ $r['worked_hours_label'] ?? '—' }}
+                                    </td>
+
+                                    <td>
+                                        {{ $r['required_hours_label'] ?? '—' }}
                                     </td>
 
                                     <td>
@@ -230,9 +297,11 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="11" class="text-center">
+                                    <td colspan="14" class="text-center">
                                         <div class="empty-state py-4">
-                                            <div class="icon"><span class="fas fa-fingerprint"></span></div>
+                                            <div class="icon">
+                                                <span class="fas fa-fingerprint"></span>
+                                            </div>
 
                                             @if (!($isSearch ?? false))
                                                 <div class="fw-bold">Search Employee First</div>
@@ -262,7 +331,10 @@
                                 Showing {{ $rows->firstItem() ?? 0 }} to {{ $rows->lastItem() ?? 0 }} of
                                 {{ $rows->total() }}
                             </small>
-                            <div class="ms-md-auto">{{ $rows->links('pagination.custom') }}</div>
+
+                            <div class="ms-md-auto">
+                                {{ $rows->links('pagination.custom') }}
+                            </div>
                         </div>
                     </div>
                 @endif
@@ -270,7 +342,6 @@
         </div>
     </div>
 
-    {{-- SYNC PROGRESS MODAL --}}
     <div class="modal fade" id="syncModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-md modal-dialog-centered">
             <div class="modal-content" style="border-radius:14px;">
@@ -280,15 +351,22 @@
                 </div>
 
                 <div class="modal-body">
-                    <div class="small text-muted mb-2" id="syncStatusText">Preparing...</div>
+                    <div class="small text-muted mb-2" id="syncStatusText">
+                        Preparing...
+                    </div>
 
                     <div class="progress" style="height: 12px;">
                         <div id="syncProgressBar" class="progress-bar" role="progressbar" style="width:0%"></div>
                     </div>
 
                     <div class="d-flex justify-content-between mt-2">
-                        <div class="small text-muted" id="syncMetaLeft">Page: -</div>
-                        <div class="small text-muted" id="syncMetaRight">Saved: 0</div>
+                        <div class="small text-muted" id="syncMetaLeft">
+                            Page: -
+                        </div>
+
+                        <div class="small text-muted" id="syncMetaRight">
+                            Saved: 0
+                        </div>
                     </div>
 
                     <div class="alert alert-danger mt-3 d-none" id="syncErrorBox"></div>
@@ -296,8 +374,9 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-sm"
-                        data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                        Close
+                    </button>
                 </div>
             </div>
         </div>
@@ -317,6 +396,7 @@
             ];
 
             const missing = need.filter(id => !document.getElementById(id));
+
             if (missing.length) {
                 console.error('Sync UI missing elements:', missing.map(x => '#' + x).join(', '));
                 return;
@@ -333,6 +413,7 @@
             const modalBody = modalEl.querySelector('.modal-body');
 
             let errBox = document.getElementById('syncErrorBox');
+
             if (!errBox && modalBody) {
                 errBox = document.createElement('div');
                 errBox.id = 'syncErrorBox';
@@ -341,6 +422,7 @@
             }
 
             let warnBox = document.getElementById('syncWarnBox');
+
             if (!warnBox && modalBody) {
                 warnBox = document.createElement('div');
                 warnBox.id = 'syncWarnBox';
@@ -356,13 +438,17 @@
             const modal = new bootstrap.Modal(modalEl);
 
             const show = (el, msg) => {
-                if (!el) return;
+                if (!el) {
+                    return;
+                }
+
                 el.textContent = msg || '';
                 el.classList.toggle('d-none', !msg);
             };
 
             const setBar = (pct) => {
                 const p = Math.max(0, Math.min(100, Number(pct) || 0));
+
                 barEl.style.width = p + '%';
                 barEl.textContent = p ? (p + '%') : '';
             };
@@ -371,14 +457,22 @@
             let queuedTimer = null;
 
             const stop = () => {
-                if (pollTimer) clearInterval(pollTimer);
+                if (pollTimer) {
+                    clearInterval(pollTimer);
+                }
+
                 pollTimer = null;
-                if (queuedTimer) clearTimeout(queuedTimer);
+
+                if (queuedTimer) {
+                    clearTimeout(queuedTimer);
+                }
+
                 queuedTimer = null;
             };
 
             const parseJson = async (res) => {
                 const text = await res.text();
+
                 try {
                     return {
                         ok: true,
@@ -404,19 +498,28 @@
                         });
 
                     const parsed = await parseJson(res);
+
                     if (!parsed.ok) {
                         console.error('Non-JSON status:', parsed.raw);
-                        show(errBox, 'Server returned non-JSON (check laravel.log).');
+                        show(errBox, 'Server returned non-JSON. Check laravel.log.');
                         return;
                     }
 
                     const data = parsed.json || {};
+
                     if (!res.ok) {
                         show(errBox, data.message || `Request failed (${res.status}).`);
-                        if (res.status === 404) stop();
+
+                        if (res.status === 404) {
+                            stop();
+                        }
+
                         return;
                     }
-                    if (!data.ok) return;
+
+                    if (!data.ok) {
+                        return;
+                    }
 
                     statusEl.textContent = data.message || data.state || '...';
                     metaL.textContent =
@@ -424,17 +527,24 @@
                     metaR.textContent = `Saved: ${data.saved ?? 0}`;
 
                     show(errBox, data.error || '');
-                    if (data.percent !== null && data.percent !== undefined) setBar(data.percent);
+
+                    if (data.percent !== null && data.percent !== undefined) {
+                        setBar(data.percent);
+                    }
 
                     if ((data.state === 'queued' || data.page === 0) && !queuedTimer) {
                         queuedTimer = setTimeout(() => {
                             show(warnBox, 'Still queued. If stuck, run: php artisan queue:work');
                         }, 12000);
                     }
-                    if (data.state === 'running') show(warnBox, '');
+
+                    if (data.state === 'running') {
+                        show(warnBox, '');
+                    }
 
                     if (data.done) {
                         stop();
+
                         setTimeout(() => {
                             const url = new URL(window.location.href);
                             window.location.href = url.toString();
@@ -457,15 +567,25 @@
                 const from = form.querySelector('input[name="from"]')?.value;
                 const to = form.querySelector('input[name="to"]')?.value;
 
-                if (!from || !to) return show(errBox, 'Please select Start Date and End Date.');
-                if (to < from) return show(errBox, 'End Date must be after or equal to Start Date.');
+                if (!from || !to) {
+                    show(errBox, 'Please select Start Date and End Date.');
+                    return;
+                }
+
+                if (to < from) {
+                    show(errBox, 'End Date must be after or equal to Start Date.');
+                    return;
+                }
 
                 statusEl.textContent = 'Starting...';
                 metaL.textContent = 'Page: -';
                 metaR.textContent = 'Saved: 0';
 
                 modal.show();
-                if (syncBtn) syncBtn.disabled = true;
+
+                if (syncBtn) {
+                    syncBtn.disabled = true;
+                }
 
                 try {
                     const res = await fetch(`{{ route('mirasol-logs.sync-start') }}`, {
@@ -477,18 +597,27 @@
                     });
 
                     if (res.status === 419) {
-                        show(errBox, 'Session expired (CSRF). Refresh the page then try again.');
+                        show(errBox, 'Session expired. Refresh the page then try again.');
                         statusEl.textContent = 'Failed.';
-                        if (syncBtn) syncBtn.disabled = false;
+
+                        if (syncBtn) {
+                            syncBtn.disabled = false;
+                        }
+
                         return;
                     }
 
                     const parsed = await parseJson(res);
+
                     if (!parsed.ok) {
                         console.error('Non-JSON start:', parsed.raw);
-                        show(errBox, 'Server returned non-JSON (check laravel.log).');
+                        show(errBox, 'Server returned non-JSON. Check laravel.log.');
                         statusEl.textContent = 'Failed.';
-                        if (syncBtn) syncBtn.disabled = false;
+
+                        if (syncBtn) {
+                            syncBtn.disabled = false;
+                        }
+
                         return;
                     }
 
@@ -498,16 +627,25 @@
                         const errs = data.errors || {};
                         const msg = Object.values(errs).flat().join('\n') || data.message ||
                             'Validation failed.';
+
                         show(errBox, msg);
                         statusEl.textContent = 'Failed.';
-                        if (syncBtn) syncBtn.disabled = false;
+
+                        if (syncBtn) {
+                            syncBtn.disabled = false;
+                        }
+
                         return;
                     }
 
                     if (!res.ok || !data.ok) {
                         show(errBox, data.message || `Failed to start sync (${res.status}).`);
                         statusEl.textContent = 'Failed.';
-                        if (syncBtn) syncBtn.disabled = false;
+
+                        if (syncBtn) {
+                            syncBtn.disabled = false;
+                        }
+
                         return;
                     }
 
@@ -517,13 +655,20 @@
                     console.error(e);
                     show(errBox, 'Failed to start sync. Check console/network.');
                     statusEl.textContent = 'Failed.';
-                    if (syncBtn) syncBtn.disabled = false;
+
+                    if (syncBtn) {
+                        syncBtn.disabled = false;
+                    }
                 }
             });
 
             modalEl.addEventListener('hidden.bs.modal', () => {
                 stop();
-                if (syncBtn) syncBtn.disabled = false;
+
+                if (syncBtn) {
+                    syncBtn.disabled = false;
+                }
+
                 show(errBox, '');
                 show(warnBox, '');
                 setBar(0);
