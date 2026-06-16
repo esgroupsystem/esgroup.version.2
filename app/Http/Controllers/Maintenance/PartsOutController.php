@@ -10,9 +10,12 @@ use App\Models\PartsOutItem;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\StockMovement;
+use App\Services\Maintenance\PartsOutRollbackService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class PartsOutController extends Controller
 {
@@ -73,7 +76,7 @@ class PartsOutController extends Controller
         return view('maintenance.parts_out.create', compact('vehicles', 'locations'));
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'vehicle_id' => 'nullable|exists:bus_details,id',
@@ -130,7 +133,10 @@ class PartsOutController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
-            $partsOutNumber = 'POUT-'.now()->format('Y').'-'.str_pad($partsOut->id, 5, '0', STR_PAD_LEFT);
+            $partsOutNumber = 'POUT-'
+                .now()->format('Y')
+                .'-'
+                .str_pad((string) $partsOut->id, 5, '0', STR_PAD_LEFT);
 
             $partsOut->update([
                 'parts_out_number' => $partsOutNumber,
@@ -155,7 +161,8 @@ class PartsOutController extends Controller
 
                 if ($stockBefore < $qtyUsed) {
                     throw new \Exception(
-                        "Insufficient stock for {$product->product_name} at {$location->name}. Available: {$stockBefore}, Requested: {$qtyUsed}."
+                        "Insufficient stock for {$product->product_name} at {$location->name}. "
+                        ."Available: {$stockBefore}, Requested: {$qtyUsed}."
                     );
                 }
 
@@ -198,7 +205,7 @@ class PartsOutController extends Controller
             return redirect()
                 ->route('parts-out.show', $partsOut->id)
                 ->with('success', 'Parts Out transaction saved successfully.');
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollBack();
 
             return back()
@@ -281,69 +288,34 @@ class PartsOutController extends Controller
         return response()->json($products);
     }
 
-    public function rollback(PartsOut $partsOut)
-    {
+    public function rollback(
+        Request $request,
+        PartsOut $partsOut,
+        PartsOutRollbackService $rollbackService
+    ): RedirectResponse {
+        $request->validate([
+            'rollback_reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
         $userLocationId = $this->userLocationId();
 
         if ($userLocationId && (int) $partsOut->location_id !== (int) $userLocationId) {
             abort(403, 'You are not allowed to rollback this Parts Out record.');
         }
 
-        DB::transaction(function () use ($partsOut) {
-            $partsOut->load(['items.product', 'location']);
+        try {
+            $rollbackService->rollback(
+                partsOutId: $partsOut->id,
+                reason: $request->input('rollback_reason')
+            );
 
-            if ($partsOut->status !== 'posted') {
-                throw new \Exception('Only posted Parts Out transactions can be rolled back.');
-            }
-
-            foreach ($partsOut->items as $item) {
-                $product = Product::lockForUpdate()->findOrFail($item->product_id);
-
-                $productStock = ProductStock::lockForUpdate()->firstOrCreate(
-                    [
-                        'product_id' => $item->product_id,
-                        'location_id' => $partsOut->location_id,
-                    ],
-                    [
-                        'qty' => 0,
-                    ]
-                );
-
-                $stockBefore = (int) $productStock->qty;
-                $qtyToReturn = (int) $item->qty_used;
-                $stockAfter = $stockBefore + $qtyToReturn;
-
-                $productStock->update([
-                    'qty' => $stockAfter,
-                ]);
-
-                $product->update([
-                    'stock_qty' => ProductStock::where('product_id', $item->product_id)->sum('qty'),
-                ]);
-
-                StockMovement::create([
-                    'product_id' => $item->product_id,
-                    'location_id' => $partsOut->location_id,
-                    'reference_type' => 'parts_out_rollback',
-                    'reference_id' => $partsOut->id,
-                    'movement_type' => 'in',
-                    'qty' => $qtyToReturn,
-                    'stock_before' => $stockBefore,
-                    'stock_after' => $stockAfter,
-                    'transaction_date' => now()->toDateString(),
-                    'remarks' => 'Rollback of Parts Out #'.$partsOut->parts_out_number,
-                    'created_by' => Auth::id(),
-                ]);
-            }
-
-            $partsOut->update([
-                'status' => 'rolled_back',
-            ]);
-        });
-
-        return redirect()
-            ->route('parts-out.show', $partsOut->id)
-            ->with('success', 'Parts Out transaction rolled back successfully. Stock has been returned.');
+            return redirect()
+                ->route('parts-out.index')
+                ->with('success', 'Parts Out transaction rolled back successfully. Stock has been returned and the record was removed from vehicle history.');
+        } catch (Throwable $e) {
+            return back()
+                ->with('error', $e->getMessage());
+        }
     }
 
     private function userLocationId()

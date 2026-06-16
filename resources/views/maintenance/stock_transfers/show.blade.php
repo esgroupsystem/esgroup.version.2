@@ -13,6 +13,21 @@
         </script>
 
         <div class="content">
+
+            @if (session('success'))
+                <div class="alert alert-success border-0 shadow-sm d-flex align-items-center" role="alert">
+                    <span class="fas fa-check-circle me-2"></span>
+                    <div>{{ session('success') }}</div>
+                </div>
+            @endif
+
+            @if (session('error'))
+                <div class="alert alert-danger border-0 shadow-sm d-flex align-items-center" role="alert">
+                    <span class="fas fa-exclamation-circle me-2"></span>
+                    <div>{{ session('error') }}</div>
+                </div>
+            @endif
+
             <div class="card border-0 shadow-sm overflow-hidden">
                 {{-- Header --}}
                 <div class="card-header bg-light border-bottom py-3">
@@ -29,18 +44,56 @@
                             </p>
                         </div>
 
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 flex-wrap">
                             <a href="{{ route('stock-transfers.index') }}" class="btn btn-falcon-default btn-sm">
                                 <span class="fas fa-arrow-left me-1"></span> Back
                             </a>
+
                             <a href="{{ route('stock-transfers.create') }}" class="btn btn-primary btn-sm">
                                 <span class="fas fa-plus me-1"></span> New Transfer
                             </a>
+
+                            @if (($transfer->status ?? 'completed') !== 'rolled_back')
+                                <button type="button" class="btn btn-falcon-danger btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#rollbackTransferModal">
+                                    <span class="fas fa-undo me-1"></span> Rollback Transfer
+                                </button>
+                            @endif
                         </div>
                     </div>
                 </div>
 
                 <div class="card-body bg-body-tertiary">
+
+                    {{-- Rollback Alert --}}
+                    @if (($transfer->status ?? 'completed') === 'rolled_back')
+                        <div class="alert alert-danger border-0 shadow-sm">
+                            <div class="d-flex align-items-start">
+                                <span class="fas fa-undo me-2 mt-1"></span>
+                                <div>
+                                    <div class="fw-bold">This stock transfer has been rolled back.</div>
+                                    <div class="fs-10">
+                                        Rolled back by:
+                                        <strong>
+                                            {{ $transfer->rollbackUser->name ?? ($transfer->rollbackUser->full_name ?? 'System') }}
+                                        </strong>
+                                        |
+                                        Date:
+                                        <strong>
+                                            {{ optional($transfer->rolled_back_at)->format('F d, Y h:i A') }}
+                                        </strong>
+                                    </div>
+
+                                    @if (!empty($transfer->rollback_reason))
+                                        <div class="fs-10 mt-1">
+                                            Reason: {{ $transfer->rollback_reason }}
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
                     {{-- Top Summary --}}
                     <div class="row g-3 mb-4">
                         <div class="col-md-4">
@@ -83,6 +136,7 @@
                                 Transfer Route
                             </h6>
                         </div>
+
                         <div class="card-body">
                             <div class="row align-items-center text-center g-3">
                                 <div class="col-md-5">
@@ -124,6 +178,7 @@
                                         Personnel Information
                                     </h6>
                                 </div>
+
                                 <div class="card-body">
                                     <div class="mb-3">
                                         <div class="text-muted fs-10 text-uppercase">Requested By</div>
@@ -137,7 +192,9 @@
 
                                     <div>
                                         <div class="text-muted fs-10 text-uppercase">Created By</div>
-                                        <div class="fw-semibold">{{ $transfer->creator->full_name ?? '—' }}</div>
+                                        <div class="fw-semibold">
+                                            {{ $transfer->creator->full_name ?? ($transfer->creator->name ?? '—') }}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -151,6 +208,7 @@
                                         Remarks / Notes
                                     </h6>
                                 </div>
+
                                 <div class="card-body">
                                     @if (!empty($transfer->remarks))
                                         <div class="p-3 rounded-3 bg-light border text-800" style="min-height: 120px;">
@@ -180,6 +238,7 @@
                                     List of all products included in this stock transfer.
                                 </p>
                             </div>
+
                             <span class="badge bg-success-subtle text-success fs-10">
                                 {{ number_format($transfer->items->count()) }} item(s)
                             </span>
@@ -196,8 +255,10 @@
                                             <th>Part Number</th>
                                             <th>Unit</th>
                                             <th class="text-center">Transferred Qty</th>
+                                            <th class="text-center">Status</th>
                                         </tr>
                                     </thead>
+
                                     <tbody>
                                         @forelse($transfer->items as $index => $item)
                                             <tr>
@@ -237,10 +298,22 @@
                                                         {{ number_format($item->qty) }}
                                                     </span>
                                                 </td>
+
+                                                <td class="text-center">
+                                                    @if (($item->status ?? 'completed') === 'rolled_back')
+                                                        <span class="badge bg-danger-subtle text-danger px-3 py-2">
+                                                            <span class="fas fa-undo me-1"></span> Rolled Back
+                                                        </span>
+                                                    @else
+                                                        <span class="badge bg-success-subtle text-success px-3 py-2">
+                                                            <span class="fas fa-check me-1"></span> Completed
+                                                        </span>
+                                                    @endif
+                                                </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="6">
+                                                <td colspan="7">
                                                     <div class="text-center py-5">
                                                         <div class="mb-3">
                                                             <span class="fas fa-box-open text-400 fs-1"></span>
@@ -263,4 +336,49 @@
             </div>
         </div>
     </div>
+
+    @if (($transfer->status ?? 'completed') !== 'rolled_back')
+        <div class="modal fade" id="rollbackTransferModal" tabindex="-1" aria-labelledby="rollbackTransferModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <form action="{{ route('stock-transfers.rollback', $transfer->id) }}" method="POST"
+                    class="modal-content">
+                    @csrf
+
+                    <div class="modal-header bg-danger-subtle">
+                        <h5 class="modal-title text-danger" id="rollbackTransferModalLabel">
+                            <span class="fas fa-undo me-2"></span>
+                            Rollback Stock Transfer
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="alert alert-warning border-0 fs-10">
+                            This will reverse the stock transfer. Quantities will be returned to
+                            <strong>{{ $transfer->fromLocation->name ?? 'source location' }}</strong>
+                            and deducted from
+                            <strong>{{ $transfer->toLocation->name ?? 'destination location' }}</strong>.
+                        </div>
+
+                        <label class="form-label">Rollback Reason</label>
+                        <textarea name="rollback_reason" rows="3" class="form-control"
+                            placeholder="Example: Wrong destination garage, duplicate transfer, encoding mistake..."></textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-falcon-default" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+
+                        <button type="submit" class="btn btn-danger"
+                            onclick="return confirm('Are you sure you want to rollback this stock transfer?');">
+                            <span class="fas fa-undo me-1"></span>
+                            Confirm Rollback
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
 @endsection

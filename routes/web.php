@@ -1137,6 +1137,9 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
         Route::resource('stock-transfers', StockTransferController::class)
             ->only(['index', 'create', 'store', 'show']);
+
+        Route::post('/stock-transfers/{stock_transfer}/rollback', [StockTransferController::class, 'rollback'])
+            ->name('stock-transfers.rollback');
     });
 
     /*

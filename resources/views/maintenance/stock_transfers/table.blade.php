@@ -4,6 +4,7 @@
             <thead class="bg-200 text-900">
                 <tr>
                     <th class="ps-3">Transfer No.</th>
+                    <th>Status</th>
                     <th>Route</th>
                     <th>Requested / Received By</th>
                     <th class="text-center">Items</th>
@@ -21,6 +22,21 @@
                                 Created by:
                                 {{ $transfer->creator->name ?? 'System' }}
                             </div>
+                        </td>
+
+                        <td>
+                            @if (($transfer->status ?? 'completed') === 'rolled_back')
+                                <span class="badge badge-subtle-danger px-3 py-2">
+                                    <span class="fas fa-undo me-1"></span> Rolled Back
+                                </span>
+                                <div class="text-500 fs-11 mt-1">
+                                    {{ optional($transfer->rolled_back_at)->format('M d, Y h:i A') }}
+                                </div>
+                            @else
+                                <span class="badge badge-subtle-success px-3 py-2">
+                                    <span class="fas fa-check me-1"></span> Completed
+                                </span>
+                            @endif
                         </td>
 
                         <td>
@@ -75,15 +91,32 @@
                         </td>
 
                         <td class="text-center pe-3">
-                            <a href="{{ route('stock-transfers.show', $transfer->id) }}"
-                                class="btn btn-falcon-default btn-sm">
-                                <span class="fas fa-eye me-1"></span> View
-                            </a>
+                            <div class="d-flex justify-content-center gap-1">
+                                <a href="{{ route('stock-transfers.show', $transfer->id) }}"
+                                    class="btn btn-falcon-default btn-sm">
+                                    <span class="fas fa-eye me-1"></span> View
+                                </a>
+
+                                @if (($transfer->status ?? 'completed') !== 'rolled_back')
+                                    <form action="{{ route('stock-transfers.rollback', $transfer->id) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Rollback this stock transfer? This will return the item quantities to the original garage.');">
+                                        @csrf
+
+                                        <input type="hidden" name="rollback_reason"
+                                            value="Rollback from stock transfer list">
+
+                                        <button type="submit" class="btn btn-falcon-danger btn-sm">
+                                            <span class="fas fa-undo me-1"></span> Rollback
+                                        </button>
+                                    </form>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center py-5">
+                        <td colspan="8" class="text-center py-5">
                             <div class="d-flex flex-column align-items-center justify-content-center text-muted">
                                 <span class="fas fa-exchange-alt fs-3 mb-3 text-300"></span>
                                 <h6 class="mb-1">No stock transfers found</h6>

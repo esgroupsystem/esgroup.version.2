@@ -8,6 +8,7 @@ use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\StockTransfer;
 use App\Models\StockTransferItem;
+use App\Services\Maintenance\StockTransferRollbackService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -155,6 +156,7 @@ class StockTransferController extends Controller
                 'requested_by' => $validated['requested_by'] ?? null,
                 'received_by' => $validated['received_by'] ?? null,
                 'remarks' => $validated['remarks'] ?? null,
+                'status' => 'completed',
                 'created_by' => Auth::id(),
             ]);
 
@@ -212,6 +214,7 @@ class StockTransferController extends Controller
                     'stock_transfer_id' => $transfer->id,
                     'product_id' => $productId,
                     'qty' => $qty,
+                    'status' => 'completed',
                 ]);
 
                 $product->update([
@@ -274,7 +277,9 @@ class StockTransferController extends Controller
                 'fromLocation',
                 'toLocation',
                 'creator',
+                'rollbackUser',
                 'items.product.category',
+                'items.rollbackUser',
             ]);
 
             $transfer = $stock_transfer;
@@ -375,6 +380,39 @@ class StockTransferController extends Controller
                 'message' => 'Failed to search products.',
                 'error' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    public function rollback(
+        Request $request,
+        StockTransfer $stock_transfer,
+        StockTransferRollbackService $rollbackService
+    ) {
+        $validated = $request->validate([
+            'rollback_reason' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        try {
+            $rollbackService->rollback(
+                stockTransfer: $stock_transfer,
+                userId: (int) Auth::id(),
+                reason: $validated['rollback_reason'] ?? null
+            );
+
+            return redirect()
+                ->route('stock-transfers.show', $stock_transfer->id)
+                ->with('success', 'Stock transfer rolled back successfully. Item quantities were returned to the original location.');
+        } catch (Throwable $e) {
+            Log::error('StockTransferController@rollback failed', [
+                'stock_transfer_id' => $stock_transfer->id,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'user_id' => Auth::id(),
+            ]);
+
+            return back()
+                ->with('error', $e->getMessage());
         }
     }
 }
