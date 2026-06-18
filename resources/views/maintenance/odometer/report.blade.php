@@ -210,7 +210,7 @@
                         <table class="table table-sm table-hover mb-0 fs--1 align-middle">
                             <thead class="bg-light text-700">
                                 <tr>
-                                    <th class="ps-3">Date Deployed</th>
+                                    <th class="ps-3">Date</th>
                                     <th>Type</th>
                                     <th>Reference</th>
                                     <th>Bus</th>
@@ -281,7 +281,7 @@
                         <table class="table table-sm table-hover mb-0 fs--1 align-middle">
                             <thead class="bg-light text-700">
                                 <tr>
-                                    <th class="ps-3">Date</th>
+                                    <th class="ps-3">Date Deployed</th>
                                     <th>Bus</th>
                                     <th>Time</th>
                                     <th>Driver</th>
