@@ -24,7 +24,7 @@
                             <div class="violation-row border rounded p-3 mb-3">
 
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h6 class="mb-0">Violation #1</h6>
+                                    <h6 class="mb-0 violation-title">Violation #1</h6>
 
                                     <button type="button" class="btn btn-sm btn-danger removeViolation d-none">
                                         Remove
@@ -122,13 +122,13 @@
                     <div class="col">
                         <label class="form-label fw-semibold">Suspension Start Date</label>
                         <input type="date" name="suspension_start_date" class="form-control"
-                            id="suspensionStartDate" required>
+                            id="suspensionStartDate" disabled>
                     </div>
 
                     <div class="col">
                         <label class="form-label fw-semibold">Suspension End Date</label>
-                        <input type="date" name="suspension_end_date" class="form-control"
-                            id="suspensionEndDate">
+                        <input type="date" name="suspension_end_date" class="form-control" id="suspensionEndDate"
+                            disabled>
                         <small class="text-muted">Leave blank if still suspended</small>
                     </div>
                 </div>
@@ -136,7 +136,7 @@
             </div>
 
             <div class="modal-footer">
-                <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                 <button class="btn btn-primary">
                     <i class="fas fa-save me-1"></i> Save Violation
                 </button>
