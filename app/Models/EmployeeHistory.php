@@ -17,6 +17,7 @@ class EmployeeHistory extends Model
         'sda_start_date',
         'sda_end_date',
         'description',
+        'remarks',
         'start_date',
         'end_date',
         'suspension_start_date',

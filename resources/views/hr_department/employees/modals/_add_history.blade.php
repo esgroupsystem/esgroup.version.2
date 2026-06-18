@@ -63,6 +63,20 @@
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Other Description / Remarks
+                            <span class="text-muted">(Optional)</span>
+                        </label>
+
+                        <textarea name="remarks" class="form-control" rows="3"
+                            placeholder="Enter additional remarks, employee explanation, HR notes, or follow-up action details...">{{ old('remarks') }}</textarea>
+
+                        <small class="text-muted">
+                            Use this field for additional notes not included in the offense description.
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label fw-semibold">Action (Optional)</label>
 
                         <div class="form-check">

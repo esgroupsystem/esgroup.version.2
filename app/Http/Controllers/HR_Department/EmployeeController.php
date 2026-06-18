@@ -615,36 +615,37 @@ class EmployeeController extends Controller
                 'disciplinary_action' => 'nullable|array',
                 'disciplinary_action.*' => 'in:Salary Deduction Authorization,Suspension',
 
-                // SDA (end date is now nullable)
                 'sda_amount' => 'nullable|numeric|min:0',
                 'sda_terms' => 'nullable|integer|min:1',
                 'sda_start_date' => 'nullable|date',
                 'sda_end_date' => 'nullable|date|after_or_equal:sda_start_date',
 
-                // Suspension dates (new)
                 'suspension_start_date' => 'nullable|date',
                 'suspension_end_date' => 'nullable|date|after_or_equal:suspension_start_date',
 
                 'description' => 'nullable|array',
                 'description.*' => 'nullable|string',
-                'ir_number' => 'nullable|string|max:255',
 
+                'remarks' => 'nullable|string|max:5000',
+                'ir_number' => 'nullable|string|max:255',
             ]);
 
             $actions = $validated['disciplinary_action'] ?? [];
+
             $hasSda = in_array('Salary Deduction Authorization', $actions, true);
             $hasSuspension = in_array('Suspension', $actions, true);
 
-            // SDA required fields (end date optional)
             if ($hasSda) {
                 $errors = [];
 
                 if (! array_key_exists('sda_amount', $validated) || is_null($validated['sda_amount'])) {
                     $errors['sda_amount'] = 'SDA total amount is required when SDA is selected.';
                 }
+
                 if (! array_key_exists('sda_terms', $validated) || is_null($validated['sda_terms'])) {
                     $errors['sda_terms'] = 'Deduction terms is required when SDA is selected.';
                 }
+
                 if (empty($validated['sda_start_date'] ?? null)) {
                     $errors['sda_start_date'] = 'Deduction start date is required when SDA is selected.';
                 }
@@ -659,7 +660,6 @@ class EmployeeController extends Controller
                 $validated['sda_end_date'] = null;
             }
 
-            // Suspension required fields (end date optional)
             if ($hasSuspension) {
                 if (empty($validated['suspension_start_date'] ?? null)) {
                     return back()->withErrors([
@@ -667,7 +667,6 @@ class EmployeeController extends Controller
                     ])->withInput();
                 }
 
-                // since we disabled general start/end when suspension checked, keep clean:
                 $validated['start_date'] = null;
                 $validated['end_date'] = null;
             } else {
@@ -675,35 +674,27 @@ class EmployeeController extends Controller
                 $validated['suspension_end_date'] = null;
             }
 
-            foreach ($request->offense_id as $index => $offenseId) {
-
+            foreach ($validated['offense_id'] as $index => $offenseId) {
                 $employee->histories()->create([
-
                     'title' => 'Violations',
-
-                    'ir_number' => $request->ir_number,
-
+                    'ir_number' => $validated['ir_number'] ?? null,
                     'offense_id' => $offenseId,
+                    'description' => $validated['description'][$index] ?? null,
+                    'remarks' => $validated['remarks'] ?? null,
 
-                    'description' => $request->description[$index] ?? null,
-
-                    'disciplinary_action' => $validated['disciplinary_action'] ?? [],
+                    'disciplinary_action' => $actions,
 
                     'sda_amount' => $validated['sda_amount'] ?? null,
-
                     'sda_terms' => $validated['sda_terms'] ?? null,
-
                     'sda_start_date' => $validated['sda_start_date'] ?? null,
-
                     'sda_end_date' => $validated['sda_end_date'] ?? null,
 
                     'suspension_start_date' => $validated['suspension_start_date'] ?? null,
-
                     'suspension_end_date' => $validated['suspension_end_date'] ?? null,
                 ]);
             }
 
-            flash('History added!')->success();
+            flash('History added successfully!')->success();
 
             return redirect()->route('employees.staff.show', $employee->id);
 
@@ -723,40 +714,51 @@ class EmployeeController extends Controller
         try {
             $originalHistory = $employee->histories()->findOrFail($historyId);
 
-            // Validation
             $validated = $request->validate([
                 'title' => 'required|string|max:255',
+
                 'offense_id' => 'required|array|min:1',
                 'offense_id.*' => 'exists:hr_offenses,id',
+
                 'description' => 'nullable|array',
                 'description.*' => 'nullable|string',
+
+                'remarks' => 'nullable|string|max:5000',
+
                 'disciplinary_action' => 'nullable|array',
                 'disciplinary_action.*' => 'in:Salary Deduction Authorization,Suspension',
+
                 'sda_amount' => 'nullable|numeric|min:0',
                 'sda_terms' => 'nullable|integer|min:1',
                 'sda_start_date' => 'nullable|date',
                 'sda_end_date' => 'nullable|date|after_or_equal:sda_start_date',
+
                 'suspension_start_date' => 'nullable|date',
                 'suspension_end_date' => 'nullable|date|after_or_equal:suspension_start_date',
+
                 'ir_number' => 'nullable|string|max:255',
             ]);
 
             $actions = $validated['disciplinary_action'] ?? [];
+
             $hasSda = in_array('Salary Deduction Authorization', $actions, true);
             $hasSuspension = in_array('Suspension', $actions, true);
 
-            // SDA validation
             if ($hasSda) {
                 $errors = [];
+
                 if (empty($validated['sda_amount'])) {
                     $errors['sda_amount'] = 'SDA total amount is required.';
                 }
+
                 if (empty($validated['sda_terms'])) {
                     $errors['sda_terms'] = 'Deduction terms are required.';
                 }
+
                 if (empty($validated['sda_start_date'])) {
                     $errors['sda_start_date'] = 'SDA start date is required.';
                 }
+
                 if (! empty($errors)) {
                     return back()->withErrors($errors)->withInput();
                 }
@@ -767,34 +769,38 @@ class EmployeeController extends Controller
                 $validated['sda_end_date'] = null;
             }
 
-            // Suspension validation
-            if ($hasSuspension && empty($validated['suspension_start_date'])) {
-                return back()->withErrors(['suspension_start_date' => 'Suspension start date is required.'])->withInput();
-            } elseif (! $hasSuspension) {
+            if ($hasSuspension) {
+                if (empty($validated['suspension_start_date'])) {
+                    return back()->withErrors([
+                        'suspension_start_date' => 'Suspension start date is required.',
+                    ])->withInput();
+                }
+            } else {
                 $validated['suspension_start_date'] = null;
                 $validated['suspension_end_date'] = null;
             }
 
-            // Delete old violations for this IR
-            $employee->histories()->where('ir_number', $originalHistory->ir_number)->delete();
+            $employee->histories()
+                ->where('ir_number', $originalHistory->ir_number)
+                ->delete();
 
-            // Create new records for each offense
-            $offenseIds = $validated['offense_id'];
-            $descriptions = $validated['description'] ?? [];
-
-            foreach ($offenseIds as $index => $offenseId) {
+            foreach ($validated['offense_id'] as $index => $offenseId) {
                 $employee->histories()->create([
                     'title' => $validated['title'],
                     'ir_number' => $validated['ir_number'] ?? $originalHistory->ir_number,
                     'offense_id' => $offenseId,
-                    'description' => $descriptions[$index] ?? null,
+                    'description' => $validated['description'][$index] ?? null,
+                    'remarks' => $validated['remarks'] ?? null,
+
                     'disciplinary_action' => $actions,
-                    'sda_amount' => $validated['sda_amount'],
-                    'sda_terms' => $validated['sda_terms'],
-                    'sda_start_date' => $validated['sda_start_date'] ? \Illuminate\Support\Carbon::parse($validated['sda_start_date']) : null,
-                    'sda_end_date' => $validated['sda_end_date'] ? \Illuminate\Support\Carbon::parse($validated['sda_end_date']) : null,
-                    'suspension_start_date' => $validated['suspension_start_date'] ? \Illuminate\Support\Carbon::parse($validated['suspension_start_date']) : null,
-                    'suspension_end_date' => $validated['suspension_end_date'] ? \Illuminate\Support\Carbon::parse($validated['suspension_end_date']) : null,
+
+                    'sda_amount' => $validated['sda_amount'] ?? null,
+                    'sda_terms' => $validated['sda_terms'] ?? null,
+                    'sda_start_date' => $validated['sda_start_date'] ?? null,
+                    'sda_end_date' => $validated['sda_end_date'] ?? null,
+
+                    'suspension_start_date' => $validated['suspension_start_date'] ?? null,
+                    'suspension_end_date' => $validated['suspension_end_date'] ?? null,
                 ]);
             }
 
@@ -802,9 +808,25 @@ class EmployeeController extends Controller
 
             return redirect()->route('employees.staff.show', $employee->id);
 
+        } catch (ValidationException $e) {
+            foreach ($e->errors() as $msgList) {
+                foreach ($msgList as $msg) {
+                    flash($msg)->warning();
+                }
+            }
+
+            return back()->withErrors($e->validator)->withInput();
+
         } catch (\Throwable $e) {
-            dd($e->getMessage(), $e->getFile(), $e->getLine()); // Debug exact error
-            flash('Unable to update history.')->error();
+            Log::error('Employee history update failed', [
+                'employee_id' => $employee->id,
+                'history_id' => $historyId,
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            flash('Unable to update history. Please try again.')->error();
 
             return back()->withInput();
         }
