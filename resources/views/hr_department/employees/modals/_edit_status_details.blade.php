@@ -16,7 +16,9 @@
                         <label class="form-label fw-bold">Type of Status</label>
                         <select name="type_of_status" class="form-control">
                             <option value="">— Select —</option>
-
+                            <option value="Resigned" @selected(old('type_of_status', $employee->type_of_status) === 'Resigned')>
+                                Resigned
+                            </option>
                             <option value="Terminated" @selected(old('type_of_status', $employee->type_of_status) === 'Terminated')>
                                 Terminated
                             </option>

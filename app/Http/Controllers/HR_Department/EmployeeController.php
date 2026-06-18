@@ -590,6 +590,7 @@ class EmployeeController extends Controller
             'type_of_status' => [
                 'nullable',
                 Rule::in([
+                    'Resigned',
                     'Terminated',
                     'Terminated due to AWOL',
                     'Retrenched',
