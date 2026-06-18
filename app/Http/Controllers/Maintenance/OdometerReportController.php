@@ -294,4 +294,19 @@ class OdometerReportController extends Controller
 
         return back()->with('success', 'Manual odometer record saved successfully.');
     }
+
+    public function destroyOdometer(OdometerSubmission $odometerSubmission)
+    {
+        DB::transaction(function () use ($odometerSubmission) {
+
+            DieselStock::where('reference_no', 'ODO-'.$odometerSubmission->id)
+                ->where('type', 'out')
+                ->where('bus_detail_id', $odometerSubmission->bus_detail_id)
+                ->delete();
+
+            $odometerSubmission->delete();
+        });
+
+        return back()->with('success', 'Odometer record deleted successfully.');
+    }
 }

@@ -1164,6 +1164,10 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/maintenance/odometer/manual', 'storeManualOdometer')
                 ->middleware('permission:odometer.create')
                 ->name('manual.store');
+
+            Route::delete('/maintenance/odometer/{odometerSubmission}', 'destroyOdometer')
+                ->middleware('permission:odometer.delete')
+                ->name('destroy');
         });
 
     /*

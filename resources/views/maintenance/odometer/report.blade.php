@@ -622,7 +622,8 @@
                                     <th class="text-end">New ODO</th>
                                     <th class="text-end">KM Run</th>
                                     <th class="text-end">Diesel</th>
-                                    <th class="text-center pe-3">KM/L</th>
+                                    <th class="text-center">KM/L</th>
+                                    <th class="text-center pe-3">Action</th>
                                 </tr>
                             </thead>
 
@@ -688,11 +689,26 @@
                                             {{ number_format($row['diesel_consumption'], 2) }} L
                                         </td>
 
-                                        <td class="text-center pe-3">
+                                        <td class="text-center">
                                             <span
                                                 class="badge rounded-pill bg-{{ $kmPerLiterClass }}-subtle text-{{ $kmPerLiterClass }}">
                                                 {{ number_format($row['km_per_liter'], 2) }}
                                             </span>
+                                        </td>
+
+                                        <td class="text-center pe-3">
+                                            <form method="POST"
+                                                action="{{ route('odometer.destroy', ['odometerSubmission' => $row['id']]) }}"
+                                                onsubmit="return confirm('Are you sure you want to delete this odometer record? This action cannot be undone.');"
+                                                class="d-inline">
+                                                @csrf
+                                                @method('DELETE')
+
+                                                <button type="submit" class="btn btn-sm btn-falcon-danger"
+                                                    title="Delete Odometer">
+                                                    <span class="fas fa-trash-alt"></span>
+                                                </button>
+                                            </form>
                                         </td>
                                     </tr>
                                 @endforeach
