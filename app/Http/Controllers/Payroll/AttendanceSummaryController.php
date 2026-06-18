@@ -41,9 +41,9 @@ class AttendanceSummaryController extends Controller
         $stats = $this->buildStats(clone $baseQuery);
 
         $summaries = (clone $baseQuery)
-            ->orderBy('employee_name')
             ->orderBy('work_date')
-            ->paginate(15)
+            ->orderBy('employee_name')
+            ->paginate(25)
             ->withQueryString();
 
         $statusOptions = $this->statusOptions();
@@ -80,6 +80,13 @@ class AttendanceSummaryController extends Controller
             'cutoff_type' => ['required', 'in:first,second'],
         ]);
 
+        /*
+         * Rebuild can be heavy because it recalculates all employees
+         * for all dates in the cutoff.
+         */
+        @ini_set('max_execution_time', '300');
+        @set_time_limit(300);
+
         [$startDate, $endDate] = $this->resolveCutoffRange(
             (int) $request->cutoff_month,
             (int) $request->cutoff_year,
@@ -97,7 +104,7 @@ class AttendanceSummaryController extends Controller
                 'status' => $request->status,
                 'day_type' => $request->day_type,
             ])
-            ->with('success', 'Attendance summary rebuilt successfully.');
+            ->with('success', 'Attendance summary rebuilt successfully. Please review no schedule, incomplete logs, holidays, and adjustments before payroll.');
     }
 
     public function exportPayroll(Request $request)
@@ -156,7 +163,7 @@ class AttendanceSummaryController extends Controller
                     'biometric_employee_id' => $row->biometric_employee_id,
                 ];
             })
-            ->filter(fn ($row) => $row['employee_no'] !== '')
+            ->filter(fn (array $row) => $row['employee_no'] !== '')
             ->unique('employee_no')
             ->values();
 
@@ -169,7 +176,7 @@ class AttendanceSummaryController extends Controller
                 ];
             })
             ->merge($summaryEmployees)
-            ->filter(fn ($row) => ! empty($row['employee_no']))
+            ->filter(fn (array $row) => ! empty($row['employee_no']))
             ->unique('employee_no')
             ->sortBy('employee_name')
             ->values();
@@ -198,8 +205,16 @@ class AttendanceSummaryController extends Controller
                     ->where('attendance_status', 'absent')
                     ->count(),
 
-                'total_half_day_count' => $records
-                    ->where('attendance_status', 'half_day')
+                'total_review_count' => $records
+                    ->whereIn('attendance_status', ['half_day', 'incomplete_log', 'no_schedule', 'holiday_unpaid'])
+                    ->count(),
+
+                'total_holiday_paid_count' => $records
+                    ->filter(fn ($record) => (bool) $record->is_holiday && (float) $record->payable_days > 0)
+                    ->count(),
+
+                'total_holiday_unpaid_count' => $records
+                    ->where('attendance_status', 'holiday_unpaid')
                     ->count(),
             ];
         });
@@ -248,20 +263,40 @@ class AttendanceSummaryController extends Controller
                         ->orWhere('biometric_employee_id', 'like', "%{$search}%")
                         ->orWhere('attendance_status', 'like', "%{$search}%")
                         ->orWhere('shift_name', 'like', "%{$search}%")
+                        ->orWhere('holiday_name', 'like', "%{$search}%")
+                        ->orWhere('holiday_type', 'like', "%{$search}%")
                         ->orWhere('remarks', 'like', "%{$search}%")
                         ->orWhere('schedule_remarks', 'like', "%{$search}%");
                 });
             })
             ->when($status, function ($query) use ($status) {
-                $query->where('attendance_status', $status);
+                if ($status === 'needs_review') {
+                    $query->whereIn('attendance_status', [
+                        'half_day',
+                        'incomplete_log',
+                        'no_schedule',
+                        'holiday_unpaid',
+                        'absent',
+                    ]);
+                } elseif ($status === 'payable') {
+                    $query->where('payable_days', '>', 0);
+                } else {
+                    $query->where('attendance_status', $status);
+                }
             })
             ->when($dayType, function ($query) use ($dayType) {
                 if ($dayType === 'holiday') {
                     $query->where('is_holiday', true);
+                } elseif ($dayType === 'holiday_paid') {
+                    $query->where('is_holiday', true)->where('payable_days', '>', 0);
+                } elseif ($dayType === 'holiday_unpaid') {
+                    $query->where('attendance_status', 'holiday_unpaid');
                 } elseif ($dayType === 'rest_day') {
                     $query->where('is_rest_day', true);
                 } elseif ($dayType === 'leave') {
                     $query->where('is_leave', true);
+                } elseif ($dayType === 'adjustment') {
+                    $query->where('has_adjustment', true);
                 } elseif ($dayType === 'regular') {
                     $query->where('is_holiday', false)
                         ->where('is_rest_day', false)
@@ -270,8 +305,14 @@ class AttendanceSummaryController extends Controller
                     $query->where('shift_name', 'like', '%Regular%');
                 } elseif ($dayType === 'flexible_shift') {
                     $query->where('shift_name', 'like', '%Flexible%');
-                } elseif ($dayType === 'half_day') {
-                    $query->where('attendance_status', 'half_day');
+                } elseif ($dayType === 'needs_review') {
+                    $query->whereIn('attendance_status', [
+                        'half_day',
+                        'incomplete_log',
+                        'no_schedule',
+                        'holiday_unpaid',
+                        'absent',
+                    ]);
                 }
             });
     }
@@ -285,6 +326,20 @@ class AttendanceSummaryController extends Controller
                 ->whereIn('attendance_status', [
                     'present',
                     'adjusted_present',
+                ])
+                ->count(),
+
+            'payable_records' => (clone $baseQuery)
+                ->where('payable_days', '>', 0)
+                ->count(),
+
+            'needs_review' => (clone $baseQuery)
+                ->whereIn('attendance_status', [
+                    'half_day',
+                    'incomplete_log',
+                    'no_schedule',
+                    'holiday_unpaid',
+                    'absent',
                 ])
                 ->count(),
 
@@ -323,22 +378,55 @@ class AttendanceSummaryController extends Controller
                 ->where('attendance_status', 'incomplete_log')
                 ->count(),
 
+            'no_schedule' => (clone $baseQuery)
+                ->where('attendance_status', 'no_schedule')
+                ->count(),
+
             'holiday' => (clone $baseQuery)
-                ->whereIn('attendance_status', [
-                    'holiday',
-                    'holiday_worked',
-                ])
+                ->where('is_holiday', true)
+                ->count(),
+
+            'holiday_paid' => (clone $baseQuery)
+                ->where('is_holiday', true)
+                ->where('payable_days', '>', 0)
+                ->count(),
+
+            'holiday_unpaid' => (clone $baseQuery)
+                ->where('attendance_status', 'holiday_unpaid')
+                ->count(),
+
+            'holiday_worked' => (clone $baseQuery)
+                ->where('attendance_status', 'holiday_worked')
+                ->count(),
+
+            'regular_holiday_worked' => (clone $baseQuery)
+                ->where('attendance_status', 'holiday_worked')
+                ->where(function ($query) {
+                    $query->where('holiday_type', 'like', '%regular%')
+                        ->where('holiday_type', 'not like', '%non%')
+                        ->where('holiday_type', 'not like', '%special%');
+                })
+                ->count(),
+
+            'special_holiday_worked' => (clone $baseQuery)
+                ->where('attendance_status', 'holiday_worked')
+                ->where(function ($query) {
+                    $query->where('holiday_type', 'like', '%special%')
+                        ->orWhere('holiday_type', 'like', '%non%');
+                })
                 ->count(),
 
             'rest_day' => (clone $baseQuery)
-                ->whereIn('attendance_status', [
-                    'rest_day',
-                    'rest_day_worked',
-                ])
+                ->where('is_rest_day', true)
+                ->count(),
+
+            'rest_day_paid' => (clone $baseQuery)
+                ->where('is_rest_day', true)
+                ->where('payable_days', '>', 0)
                 ->count(),
 
             'leave' => (clone $baseQuery)
-                ->where('attendance_status', 'leave')
+                ->where('is_leave', true)
                 ->count(),
 
             'adjustment' => (clone $baseQuery)
@@ -366,6 +454,8 @@ class AttendanceSummaryController extends Controller
     {
         return [
             '' => 'All Status',
+            'payable' => 'Payable Records',
+            'needs_review' => 'Needs Review',
             'present' => 'Present',
             'adjusted_present' => 'Adjusted Present',
             'half_day' => 'Half Day',
@@ -374,9 +464,11 @@ class AttendanceSummaryController extends Controller
             'late_undertime' => 'Late + Undertime',
             'absent' => 'Absent',
             'incomplete_log' => 'Incomplete Log',
-            'holiday' => 'Holiday',
+            'no_schedule' => 'No Plotted Schedule',
+            'holiday' => 'Paid Holiday',
             'holiday_worked' => 'Holiday Worked',
-            'rest_day' => 'Rest Day',
+            'holiday_unpaid' => 'Unpaid Holiday',
+            'rest_day' => 'Paid Rest Day',
             'rest_day_worked' => 'Rest Day Worked',
             'leave' => 'Leave',
         ];
@@ -389,10 +481,13 @@ class AttendanceSummaryController extends Controller
             'regular' => 'Regular Day',
             'regular_shift' => 'Regular Shift',
             'flexible_shift' => 'Flexible Shift',
-            'half_day' => 'Half Day',
-            'holiday' => 'Holiday',
-            'rest_day' => 'Rest Day',
+            'holiday' => 'All Holidays',
+            'holiday_paid' => 'Paid Holidays',
+            'holiday_unpaid' => 'Unpaid Holidays',
+            'rest_day' => 'Rest Day / Day Off',
             'leave' => 'Leave',
+            'adjustment' => 'With Adjustment',
+            'needs_review' => 'Needs Review',
         ];
     }
 

@@ -650,6 +650,10 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         ->controller(PayrollAttendanceAdjustmentController::class)
         ->group(function () {
 
+            Route::get('/offset-proof', 'offsetProof')
+                ->middleware('permission:payroll-attendance-adjustments.view|payroll-attendance-adjustments.create|payroll-attendance-adjustments.update')
+                ->name('offset-proof');
+
             Route::get('/', 'index')
                 ->middleware('permission:payroll-attendance-adjustments.view')
                 ->name('index');

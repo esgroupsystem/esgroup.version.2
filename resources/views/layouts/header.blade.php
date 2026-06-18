@@ -47,7 +47,7 @@
     <ul class="navbar-nav navbar-nav-icons ms-auto flex-row align-items-center">
 
         {{-- THEME SWITCH --}}
-        <li class="nav-item ps-2 pe-0">
+        {{-- <li class="nav-item ps-2 pe-0">
             <div class="dropdown theme-control-dropdown">
                 <a class="nav-link d-flex align-items-center dropdown-toggle fs-9 pe-1 py-0" href="#"
                     id="themeSwitchDropdown" data-bs-toggle="dropdown">
@@ -75,10 +75,10 @@
                     </div>
                 </div>
             </div>
-        </li>
+        </li> --}}
 
         {{-- NOTIFICATION BELL --}}
-        <li class="nav-item dropdown px-2">
+        {{-- <li class="nav-item dropdown px-2">
             <a class="nav-link notification-indicator px-0" id="navbarDropdownNotification" data-bs-toggle="dropdown">
 
                 <span class="fas fa-bell fs-7"></span>
@@ -92,7 +92,7 @@
                     </div>
                 </div>
             </div>
-        </li>
+        </li> --}}
 
         {{-- USER MENU --}}
         <li class="nav-item ps-2 pe-0">

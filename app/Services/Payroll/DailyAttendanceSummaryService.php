@@ -26,11 +26,23 @@ class DailyAttendanceSummaryService
 
     private const HALF_DAY_PAYABLE_HOURS = 4.50;
 
+    private const REGULAR_HOLIDAY_WORKED_PAY_DAYS = 2.00;
+
+    private const SPECIAL_HOLIDAY_WORKED_PAY_DAYS = 1.30;
+
+    private array $columnCache = [];
+
     public function buildForDate(string|Carbon $date): void
     {
-        $workDate = $date instanceof Carbon
-            ? $date->copy()->timezone('Asia/Manila')->startOfDay()
-            : Carbon::parse($date, 'Asia/Manila')->startOfDay();
+        $workDate = $this->asManilaDate($date);
+
+        /*
+         * Delete only this date before rebuilding.
+         * This avoids one very long database transaction for the whole cutoff.
+         */
+        DailyAttendanceSummary::query()
+            ->whereDate('work_date', $workDate->toDateString())
+            ->delete();
 
         $people = $this->collectPeopleForDate($workDate);
 
@@ -41,19 +53,32 @@ class DailyAttendanceSummaryService
 
     public function buildForPeriod(string|Carbon $startDate, string|Carbon $endDate): void
     {
-        $start = $startDate instanceof Carbon
-            ? $startDate->copy()->timezone('Asia/Manila')->startOfDay()
-            : Carbon::parse($startDate, 'Asia/Manila')->startOfDay();
+        $start = $this->asManilaDate($startDate);
+        $end = $this->asManilaDate($endDate);
 
-        $end = $endDate instanceof Carbon
-            ? $endDate->copy()->timezone('Asia/Manila')->startOfDay()
-            : Carbon::parse($endDate, 'Asia/Manila')->startOfDay();
+        @ini_set('max_execution_time', '300');
+        @set_time_limit(300);
 
         $current = $start->copy();
 
         while ($current->lte($end)) {
+            /*
+             * Refresh timeout per date.
+             */
+            @set_time_limit(300);
+
             $this->buildForDate($current);
+
             $current->addDay();
+        }
+    }
+
+    protected function buildDateRows(Carbon $workDate): void
+    {
+        $people = $this->collectPeopleForDate($workDate);
+
+        foreach ($people as $person) {
+            $this->buildForPersonDate($person, $workDate);
         }
     }
 
@@ -62,73 +87,102 @@ class DailyAttendanceSummaryService
         $people = collect();
 
         /*
-         * Include all plotted employees.
-         * This supports permanent schedules where work_date may be NULL.
+         * 1. Include all employees with plotted schedule.
+         * Since your plotting is now permanent, work_date can be NULL.
          */
         EmployeePlottingSchedule::query()
+            ->where(function ($query) {
+                $query->whereNotNull('employee_no')
+                    ->orWhereNotNull('biometric_employee_id')
+                    ->orWhereNotNull('crosschex_id');
+            })
             ->get()
             ->each(function ($row) use ($people) {
-                $person = [
-                    'biometric_employee_id' => $this->cleanString($row->biometric_employee_id),
-                    'employee_no' => $this->cleanString($row->employee_no),
-                    'employee_name' => $this->cleanString($row->employee_name),
-                ];
-
-                $people->put($this->makePersonKey($person), $person);
+                $this->putPerson($people, [
+                    'crosschex_id' => $this->cleanString($row->crosschex_id ?? null),
+                    'biometric_employee_id' => $this->cleanString($row->biometric_employee_id ?? null),
+                    'employee_no' => $this->cleanString($row->employee_no ?? null),
+                    'employee_name' => $this->cleanString($row->employee_name ?? null),
+                ]);
             });
 
         /*
-         * Include employees with biometric logs on the work date.
+         * 2. Include employees with biometrics on the work date.
+         * These will match against plotted schedule using employee_no OR biometric_employee_id OR employee_id.
          */
         MirasolBiometricsLog::query()
-            ->whereDate('check_time', $workDate->toDateString())
+            ->whereDate($this->biometricTimeColumn(), $workDate->toDateString())
             ->get()
             ->each(function ($row) use ($people) {
-                $person = [
-                    'biometric_employee_id' => $this->cleanString($row->employee_id),
-                    'employee_no' => $this->cleanString($row->employee_no),
-                    'employee_name' => $this->cleanString($row->employee_name),
-                ];
-
-                $people->put($this->makePersonKey($person), $person);
+                $this->putPerson($people, [
+                    'crosschex_id' => $this->cleanString($row->crosschex_id ?? null),
+                    'biometric_employee_id' => $this->cleanString($row->employee_id ?? null),
+                    'employee_no' => $this->cleanString($row->employee_no ?? null),
+                    'employee_name' => $this->cleanString($row->employee_name ?? null),
+                ]);
             });
 
         /*
-         * Include employees with manual attendance adjustment.
+         * 3. Include manual adjustments.
          */
         PayrollAttendanceAdjustment::query()
             ->whereDate('work_date', $workDate->toDateString())
             ->get()
             ->each(function ($row) use ($people) {
-                $person = [
-                    'biometric_employee_id' => $this->cleanString($row->biometric_employee_id),
-                    'employee_no' => $this->cleanString($row->employee_no),
-                    'employee_name' => $this->cleanString($row->employee_name),
-                ];
-
-                $people->put($this->makePersonKey($person), $person);
+                $this->putPerson($people, [
+                    'crosschex_id' => $this->cleanString($row->crosschex_id ?? null),
+                    'biometric_employee_id' => $this->cleanString($row->biometric_employee_id ?? null),
+                    'employee_no' => $this->cleanString($row->employee_no ?? null),
+                    'employee_name' => $this->cleanString($row->employee_name ?? null),
+                ]);
             });
 
         return $people
-            ->filter(fn ($person) => ! empty($person['employee_no']) || ! empty($person['biometric_employee_id']))
+            ->filter(fn (array $person) => count($this->personIdentityValues($person)) > 0)
             ->values();
+    }
+
+    protected function putPerson(Collection $people, array $newPerson): void
+    {
+        $newIdentities = $this->personIdentityValues($newPerson);
+
+        if (empty($newIdentities)) {
+            return;
+        }
+
+        $existingKey = null;
+
+        foreach ($people as $key => $existingPerson) {
+            $existingIdentities = $this->personIdentityValues($existingPerson);
+
+            if (! empty(array_intersect($newIdentities, $existingIdentities))) {
+                $existingKey = $key;
+                break;
+            }
+        }
+
+        if ($existingKey === null) {
+            $people->put($this->makePersonKey($newPerson), $newPerson);
+
+            return;
+        }
+
+        $existingPerson = $people->get($existingKey);
+
+        $people->put($existingKey, [
+            'crosschex_id' => $existingPerson['crosschex_id'] ?: ($newPerson['crosschex_id'] ?? ''),
+            'biometric_employee_id' => $existingPerson['biometric_employee_id'] ?: ($newPerson['biometric_employee_id'] ?? ''),
+            'employee_no' => $existingPerson['employee_no'] ?: ($newPerson['employee_no'] ?? ''),
+            'employee_name' => $existingPerson['employee_name'] ?: ($newPerson['employee_name'] ?? ''),
+        ]);
     }
 
     public function buildForPersonDate(array $person, string|Carbon $date): DailyAttendanceSummary
     {
-        $workDate = $date instanceof Carbon
-            ? $date->copy()->timezone('Asia/Manila')->startOfDay()
-            : Carbon::parse($date, 'Asia/Manila')->startOfDay();
+        $workDate = $this->asManilaDate($date);
 
         $schedule = $this->resolveScheduleForPersonDate($person, $workDate);
-
-        $logs = MirasolBiometricsLog::query()
-            ->whereDate('check_time', $workDate->toDateString())
-            ->where(function ($query) use ($person) {
-                $this->applyLogPersonMatch($query, $person);
-            })
-            ->orderBy('check_time')
-            ->get();
+        $logs = $this->logsForPersonDate($person, $workDate, $schedule);
 
         $adjustment = PayrollAttendanceAdjustment::query()
             ->whereDate('work_date', $workDate->toDateString())
@@ -152,64 +206,51 @@ class DailyAttendanceSummaryService
 
     protected function resolveScheduleForPersonDate(array $person, Carbon $workDate): ?EmployeePlottingSchedule
     {
+        $table = (new EmployeePlottingSchedule)->getTable();
+
+        $baseQuery = EmployeePlottingSchedule::query()
+            ->where(function ($query) use ($person) {
+                $this->applySchedulePersonMatch($query, $person);
+            });
+
         /*
-         * Priority 1: exact date schedule.
-         * Priority 2: permanent schedule where work_date is NULL.
-         * Priority 3: latest schedule for that employee.
+         * Priority 1:
+         * Permanent plotted schedule.
+         * This is your current setup: work_date = NULL.
          */
-        $exactSchedule = EmployeePlottingSchedule::query()
-            ->whereDate('work_date', $workDate->toDateString())
-            ->where(function ($query) use ($person) {
-                $this->applySchedulePersonMatch($query, $person);
-            })
-            ->latest('updated_at')
-            ->first();
+        if ($this->columnExists($table, 'work_date')) {
+            $permanentSchedule = (clone $baseQuery)
+                ->whereNull('work_date')
+                ->latest('updated_at')
+                ->latest('id')
+                ->first();
 
-        if ($exactSchedule) {
-            return $exactSchedule;
+            if ($permanentSchedule) {
+                return $permanentSchedule;
+            }
+
+            /*
+             * Priority 2:
+             * Exact old date-based schedule fallback.
+             */
+            $exactDateSchedule = (clone $baseQuery)
+                ->whereDate('work_date', $workDate->toDateString())
+                ->latest('updated_at')
+                ->latest('id')
+                ->first();
+
+            if ($exactDateSchedule) {
+                return $exactDateSchedule;
+            }
         }
 
-        $permanentSchedule = EmployeePlottingSchedule::query()
-            ->whereNull('work_date')
-            ->where(function ($query) use ($person) {
-                $this->applySchedulePersonMatch($query, $person);
-            })
+        /*
+         * Priority 3:
+         * Last fallback for old rows.
+         */
+        return (clone $baseQuery)
             ->latest('updated_at')
-            ->first();
-
-        if ($permanentSchedule) {
-            return $permanentSchedule;
-        }
-
-        return EmployeePlottingSchedule::query()
-            ->where(function ($query) use ($person) {
-                $this->applySchedulePersonMatch($query, $person);
-            })
-            ->latest('updated_at')
-            ->first();
-    }
-
-    protected function resolveHoliday(Carbon $workDate)
-    {
-        if (! class_exists(Holiday::class)) {
-            return null;
-        }
-
-        return Holiday::query()
-            ->when($this->columnExists('holidays', 'is_active'), function ($query) {
-                $query->where('is_active', true);
-            })
-            ->where(function ($query) use ($workDate) {
-                if ($this->columnExists('holidays', 'observed_date')) {
-                    $query->whereDate('observed_date', $workDate->toDateString());
-                } elseif ($this->columnExists('holidays', 'holiday_date')) {
-                    $query->whereDate('holiday_date', $workDate->toDateString());
-                } elseif ($this->columnExists('holidays', 'date')) {
-                    $query->whereDate('date', $workDate->toDateString());
-                } elseif ($this->columnExists('holidays', 'work_date')) {
-                    $query->whereDate('work_date', $workDate->toDateString());
-                }
-            })
+            ->latest('id')
             ->first();
     }
 
@@ -221,22 +262,28 @@ class DailyAttendanceSummaryService
         ?PayrollAttendanceAdjustment $adjustment,
         $holiday
     ): DailyAttendanceSummary {
+        $rawLogCount = $logs->count();
+        $hasRawBiometrics = $rawLogCount > 0;
+
         $firstLog = $logs->first();
         $lastLog = $logs->last();
 
-        $actualTimeIn = $firstLog?->check_time
-            ? Carbon::parse($firstLog->check_time, 'Asia/Manila')
+        $biometricTimeColumn = $this->biometricTimeColumn();
+
+        $actualTimeIn = $firstLog?->{$biometricTimeColumn}
+            ? Carbon::parse($firstLog->{$biometricTimeColumn}, 'Asia/Manila')
             : null;
 
-        $actualTimeOut = $logs->count() >= 2 && $lastLog?->check_time
-            ? Carbon::parse($lastLog->check_time, 'Asia/Manila')
+        $actualTimeOut = $rawLogCount >= 2 && $lastLog?->{$biometricTimeColumn}
+            ? Carbon::parse($lastLog->{$biometricTimeColumn}, 'Asia/Manila')
             : null;
 
-        $rawLogCount = $logs->count();
-        $hasBiometrics = $rawLogCount > 0;
+        if ($actualTimeIn && $actualTimeOut && $actualTimeOut->lessThanOrEqualTo($actualTimeIn)) {
+            $actualTimeOut->addDay();
+        }
 
-        $shiftName = $schedule?->shift_name ?: 'Regular Shift';
-        $scheduleStatus = $schedule?->status ?: 'scheduled';
+        $shiftName = $schedule?->shift_name ?: null;
+        $scheduleStatus = $this->cleanString($schedule?->status) ?: 'scheduled';
         $scheduleRemarks = $schedule?->remarks;
         $dayOff = $schedule?->day_off;
         $graceMinutes = (int) ($schedule?->grace_minutes ?? 15);
@@ -244,28 +291,16 @@ class DailyAttendanceSummaryService
         $scheduledTimeIn = $this->normalizeTime($schedule?->time_in);
         $scheduledTimeOut = $this->normalizeTime($schedule?->time_out);
 
-        /*
-         * Day off from plotting schedule automatically becomes rest day.
-         */
-        if (! empty($dayOff) && strtolower($dayOff) === strtolower($workDate->format('l'))) {
-            $scheduleStatus = 'rest_day';
-        }
-
-        $isFlexible = $this->isFlexibleShift($shiftName);
-        $isRegular = ! $isFlexible;
-
         $isHoliday = ! is_null($holiday);
-        $isRestDay = $scheduleStatus === 'rest_day';
-        $isLeave = $scheduleStatus === 'leave';
-
-        $holidayName = $holiday?->name;
-        $holidayType = $holiday?->holiday_type;
+        $holidayName = $this->holidayName($holiday);
+        $holidayType = $this->holidayType($holiday);
 
         $hasAdjustment = ! is_null($adjustment);
         $adjustmentType = $adjustment?->adjustment_type;
         $adjustmentRemarks = $adjustment?->remarks;
         $adjustmentReason = $adjustment?->reason;
-        $adjustmentIsPaid = (bool) ($adjustment?->is_paid ?? false);
+        $adjustmentIsPaid = $this->adjustmentQualifiesForPay($adjustment);
+
         $ignoreLate = (bool) ($adjustment?->ignore_late ?? false);
         $ignoreUndertime = (bool) ($adjustment?->ignore_undertime ?? false);
 
@@ -278,6 +313,10 @@ class DailyAttendanceSummaryService
         $payableHours = 0.00;
         $attendanceStatus = 'absent';
 
+        if (! $schedule) {
+            $remarks[] = 'No plotted permanent schedule found. Please check Permanent Plotting Schedule.';
+        }
+
         if (! empty($scheduleRemarks)) {
             $remarks[] = 'Schedule: '.$scheduleRemarks;
         }
@@ -286,8 +325,12 @@ class DailyAttendanceSummaryService
             $remarks[] = 'Adjustment Reason: '.$adjustmentReason;
         }
 
+        if ($hasRawBiometrics) {
+            $remarks[] = 'Biometrics logs found: '.$rawLogCount.'.';
+        }
+
         /*
-         * Apply adjusted actual time if adjustment provides time.
+         * Manual adjustment can replace actual time in/out.
          */
         if ($adjustment) {
             if (! empty($adjustment->adjusted_time_in)) {
@@ -295,7 +338,8 @@ class DailyAttendanceSummaryService
                     $workDate->toDateString().' '.$adjustment->adjusted_time_in,
                     'Asia/Manila'
                 );
-                $remarks[] = 'Adjusted actual time in applied.';
+
+                $remarks[] = 'Adjusted time in applied.';
             }
 
             if (! empty($adjustment->adjusted_time_out)) {
@@ -303,56 +347,100 @@ class DailyAttendanceSummaryService
                     $workDate->toDateString().' '.$adjustment->adjusted_time_out,
                     'Asia/Manila'
                 );
-                $remarks[] = 'Adjusted actual time out applied.';
+
+                $remarks[] = 'Adjusted time out applied.';
+            }
+
+            if ($actualTimeIn && $actualTimeOut && $actualTimeOut->lessThanOrEqualTo($actualTimeIn)) {
+                $actualTimeOut->addDay();
             }
 
             if (! empty($adjustment->adjusted_day_type)) {
                 $scheduleStatus = $adjustment->adjusted_day_type;
-                $isRestDay = $scheduleStatus === 'rest_day';
-                $isLeave = $scheduleStatus === 'leave';
                 $remarks[] = 'Adjusted day type applied.';
             }
         }
 
-        /*
-         * Compute worked minutes only if actual out is valid and greater than actual in.
-         */
-        if ($actualTimeIn && $actualTimeOut && $actualTimeOut->gt($actualTimeIn)) {
+        $isRestDay = $this->scheduleIndicatesRestDay($scheduleStatus, $dayOff, $workDate);
+        $isLeave = $this->scheduleIndicatesLeave($scheduleStatus);
+
+        if ($isRestDay) {
+            $scheduleStatus = 'rest_day';
+        }
+
+        if ($isLeave) {
+            $scheduleStatus = 'leave';
+        }
+
+        $isFlexible = $this->isFlexibleShift($shiftName);
+        $hasValidInOut = $actualTimeIn && $actualTimeOut && $actualTimeOut->gt($actualTimeIn);
+        $hasAttendanceProof = $hasRawBiometrics || $hasAdjustment || $hasValidInOut;
+
+        if ($hasValidInOut) {
             $workedMinutes = $actualTimeIn->diffInMinutes($actualTimeOut);
         }
 
-        /*
-         * Automatic Half Day Rule:
-         * - Has Time In but no Time Out
-         * - Has Time In and Time Out but same or invalid sequence
-         */
         $isAutomaticHalfDay = $this->isAutomaticHalfDay($actualTimeIn, $actualTimeOut);
 
         if ($isHoliday) {
-            if ($hasBiometrics) {
+            [$holidayWorkedPayDays, $holidayRateLabel] = $this->holidayWorkedPayDays($holidayType);
+            $holidayQualified = $this->isHolidayPayQualified($person, $workDate, $adjustment);
+
+            if ($hasValidInOut) {
                 $attendanceStatus = 'holiday_worked';
+                $payableDays = $holidayWorkedPayDays;
+                $payableHours = round(self::FULL_DAY_PAYABLE_HOURS * $holidayWorkedPayDays, 2);
+
+                $remarks[] = 'Holiday worked rate applied: '.$holidayRateLabel.'.';
+            } elseif ($isAutomaticHalfDay) {
+                $attendanceStatus = 'half_day';
+
+                $workedMinutes = self::HALF_DAY_MINUTES;
+                $lateMinutes = 0;
+                $undertimeMinutes = self::FULL_DAY_MINUTES - self::HALF_DAY_MINUTES;
+
+                $payableDays = self::HALF_DAY_PAYABLE_DAYS;
+                $payableHours = self::HALF_DAY_PAYABLE_HOURS;
+
+                $remarks[] = 'No time out. Half day paid based on company policy.';
+            } elseif ($holidayQualified || $adjustmentIsPaid) {
+                $attendanceStatus = 'holiday';
                 $payableDays = self::FULL_DAY_PAYABLE_DAYS;
                 $payableHours = self::FULL_DAY_PAYABLE_HOURS;
+
+                $remarks[] = 'Paid holiday. Before/after holiday rule qualified.';
             } else {
-                $attendanceStatus = 'holiday';
+                $attendanceStatus = 'holiday_unpaid';
                 $payableDays = 0.00;
                 $payableHours = 0.00;
+
+                $remarks[] = 'Holiday unpaid. Employee has no qualifying record before and after holiday.';
             }
         } elseif ($isLeave) {
             $attendanceStatus = 'leave';
-            $payableDays = 1.00;
+            $payableDays = self::FULL_DAY_PAYABLE_DAYS;
             $payableHours = self::FULL_DAY_PAYABLE_HOURS;
+
+            $remarks[] = 'Paid leave/day type applied.';
         } elseif ($isRestDay) {
-            if ($hasBiometrics) {
+            $payableDays = self::FULL_DAY_PAYABLE_DAYS;
+            $payableHours = self::FULL_DAY_PAYABLE_HOURS;
+
+            if ($hasValidInOut) {
                 $attendanceStatus = 'rest_day_worked';
-                $payableDays = self::FULL_DAY_PAYABLE_DAYS;
-                $payableHours = self::FULL_DAY_PAYABLE_HOURS;
+                $remarks[] = 'Rest day worked. Base rest day pay retained.';
+            } elseif ($isAutomaticHalfDay) {
+                $attendanceStatus = 'incomplete_log';
+                $remarks[] = 'Rest day has incomplete biometrics. Base rest day pay retained; please verify.';
             } else {
                 $attendanceStatus = 'rest_day';
-                $payableDays = 0.00;
-                $payableHours = 0.00;
+                $remarks[] = 'Paid rest day/day off.';
             }
-        } elseif (! $hasBiometrics) {
+        } elseif (! $schedule && ! $adjustmentIsPaid) {
+            $attendanceStatus = 'no_schedule';
+            $payableDays = 0.00;
+            $payableHours = 0.00;
+        } elseif (! $hasAttendanceProof) {
             $attendanceStatus = 'absent';
             $payableDays = 0.00;
             $payableHours = 0.00;
@@ -362,19 +450,31 @@ class DailyAttendanceSummaryService
             $undertimeMinutes = self::FULL_DAY_MINUTES - self::HALF_DAY_MINUTES;
             $payableDays = self::HALF_DAY_PAYABLE_DAYS;
             $payableHours = self::HALF_DAY_PAYABLE_HOURS;
-            $remarks[] = 'Automatic half day: no time out or time in and time out are the same.';
+
+            $remarks[] = 'No time out. Half day paid based on company policy.';
         } elseif ($isFlexible) {
+            /*
+             * Flexible rule:
+             * Full day only when complete 9 hours.
+             */
             if ($workedMinutes >= self::FULL_DAY_MINUTES) {
                 $attendanceStatus = 'present';
                 $payableDays = self::FULL_DAY_PAYABLE_DAYS;
                 $payableHours = self::FULL_DAY_PAYABLE_HOURS;
+
+                $remarks[] = 'Flexible shift completed 9 hours.';
             } else {
                 $attendanceStatus = 'undertime';
-                $undertimeMinutes = self::FULL_DAY_MINUTES - $workedMinutes;
+                $undertimeMinutes = max(0, self::FULL_DAY_MINUTES - $workedMinutes);
                 $payableDays = max(0, round($workedMinutes / self::FULL_DAY_MINUTES, 2));
                 $payableHours = round($workedMinutes / 60, 2);
+
+                $remarks[] = 'Flexible shift below 9 hours.';
             }
-        } elseif ($isRegular) {
+        } else {
+            /*
+             * Fixed / Regular Shift rule.
+             */
             [$lateMinutes, $undertimeMinutes] = $this->computeRegularShiftDeductions(
                 $workDate,
                 $scheduledTimeIn,
@@ -408,41 +508,47 @@ class DailyAttendanceSummaryService
             $payableHours = self::FULL_DAY_PAYABLE_HOURS;
         }
 
-        /*
-         * Paid adjustment can force payable day.
-         */
-        if ($hasAdjustment && $adjustmentIsPaid && in_array($attendanceStatus, ['absent', 'incomplete_log'], true)) {
+        if (
+            $hasAdjustment
+            && $adjustmentIsPaid
+            && in_array($attendanceStatus, ['absent', 'incomplete_log', 'no_schedule', 'holiday_unpaid'], true)
+        ) {
             $attendanceStatus = 'adjusted_present';
             $payableDays = self::FULL_DAY_PAYABLE_DAYS;
             $payableHours = self::FULL_DAY_PAYABLE_HOURS;
-            $remarks[] = 'Paid adjustment applied.';
+
+            $remarks[] = 'Paid adjustment forced payable attendance.';
         }
 
-        /*
-         * Overtime calculation, only when worked minutes exceed 9 hours.
-         */
         if ($workedMinutes > self::FULL_DAY_MINUTES) {
             $overtimeMinutes = $workedMinutes - self::FULL_DAY_MINUTES;
         }
 
+        $employeeNo = $this->cleanString($person['employee_no'] ?? null);
+        $biometricEmployeeId = $this->cleanString($person['biometric_employee_id'] ?? null);
+
+        /*
+         * If biometric_employee_id is empty but employee_no is the same number used by biometrics,
+         * keep employee_no as the primary key.
+         */
         $summaryKeys = [
             'work_date' => $workDate->toDateString(),
         ];
 
-        if (! empty($person['employee_no'])) {
-            $summaryKeys['employee_no'] = $this->cleanString($person['employee_no']);
+        if ($employeeNo !== '') {
+            $summaryKeys['employee_no'] = $employeeNo;
         } else {
-            $summaryKeys['biometric_employee_id'] = $this->cleanString($person['biometric_employee_id']);
+            $summaryKeys['biometric_employee_id'] = $biometricEmployeeId;
         }
 
         return DailyAttendanceSummary::updateOrCreate(
             $summaryKeys,
             [
-                'biometric_employee_id' => $this->cleanString($person['biometric_employee_id']),
-                'employee_no' => $this->cleanString($person['employee_no']),
-                'employee_name' => $this->cleanString($person['employee_name']),
+                'biometric_employee_id' => $biometricEmployeeId,
+                'employee_no' => $employeeNo,
+                'employee_name' => $this->cleanString($person['employee_name'] ?? null),
 
-                'shift_name' => $shiftName,
+                'shift_name' => $shiftName ?: 'No Schedule',
                 'schedule_status' => $scheduleStatus,
                 'scheduled_time_in' => $scheduledTimeIn,
                 'scheduled_time_out' => $scheduledTimeOut,
@@ -470,12 +576,44 @@ class DailyAttendanceSummaryService
                 'adjustment_type' => $adjustmentType,
                 'adjustment_remarks' => $adjustmentRemarks,
 
-                'payable_days' => $payableDays,
-                'payable_hours' => $payableHours,
+                'payable_days' => round((float) $payableDays, 2),
+                'payable_hours' => round((float) $payableHours, 2),
 
                 'remarks' => implode(' ', array_filter($remarks)),
             ]
         );
+    }
+
+    protected function logsForPersonDate(
+        array $person,
+        Carbon $workDate,
+        ?EmployeePlottingSchedule $schedule = null
+    ): Collection {
+        $timeColumn = $this->biometricTimeColumn();
+
+        $start = $workDate->copy()->startOfDay();
+        $end = $workDate->copy()->endOfDay();
+
+        $scheduledTimeIn = $this->normalizeTime($schedule?->time_in);
+        $scheduledTimeOut = $this->normalizeTime($schedule?->time_out);
+
+        if ($scheduledTimeIn && $scheduledTimeOut) {
+            $scheduledIn = Carbon::parse($workDate->toDateString().' '.$scheduledTimeIn, 'Asia/Manila');
+            $scheduledOut = Carbon::parse($workDate->toDateString().' '.$scheduledTimeOut, 'Asia/Manila');
+
+            if ($scheduledOut->lessThanOrEqualTo($scheduledIn)) {
+                $scheduledOut->addDay();
+                $end = $scheduledOut->copy()->addHours(6);
+            }
+        }
+
+        return MirasolBiometricsLog::query()
+            ->whereBetween($timeColumn, [$start, $end])
+            ->where(function ($query) use ($person) {
+                $this->applyLogPersonMatch($query, $person);
+            })
+            ->orderBy($timeColumn)
+            ->get();
     }
 
     protected function computeRegularShiftDeductions(
@@ -517,6 +655,207 @@ class DailyAttendanceSummaryService
         return [$lateMinutes, $undertimeMinutes];
     }
 
+    protected function resolveHoliday(Carbon $workDate)
+    {
+        if (! class_exists(Holiday::class)) {
+            return null;
+        }
+
+        $table = (new Holiday)->getTable();
+
+        $dateColumn = null;
+
+        foreach (['observed_date', 'holiday_date', 'date', 'work_date'] as $column) {
+            if ($this->columnExists($table, $column)) {
+                $dateColumn = $column;
+                break;
+            }
+        }
+
+        if (! $dateColumn) {
+            return null;
+        }
+
+        return Holiday::query()
+            ->when($this->columnExists($table, 'is_active'), function ($query) {
+                $query->where('is_active', true);
+            })
+            ->whereDate($dateColumn, $workDate->toDateString())
+            ->first();
+    }
+
+    protected function isHolidayPayQualified(
+        array $person,
+        Carbon $holidayDate,
+        ?PayrollAttendanceAdjustment $holidayAdjustment = null
+    ): bool {
+        if ($this->adjustmentQualifiesForPay($holidayAdjustment)) {
+            return true;
+        }
+
+        $beforeDate = $holidayDate->copy()->subDay();
+        $afterDate = $holidayDate->copy()->addDay();
+
+        return $this->isHolidayBoundaryDateQualified($person, $beforeDate)
+            && $this->isHolidayBoundaryDateQualified($person, $afterDate);
+    }
+
+    protected function isHolidayBoundaryDateQualified(array $person, Carbon $date): bool
+    {
+        $schedule = $this->resolveScheduleForPersonDate($person, $date);
+        $holiday = $this->resolveHoliday($date);
+
+        if ($holiday) {
+            return true;
+        }
+
+        if ($schedule && $this->scheduleIndicatesRestDay($schedule->status, $schedule->day_off, $date)) {
+            return true;
+        }
+
+        if ($schedule && $this->scheduleIndicatesLeave($schedule->status)) {
+            return true;
+        }
+
+        $adjustment = PayrollAttendanceAdjustment::query()
+            ->whereDate('work_date', $date->toDateString())
+            ->where(function ($query) use ($person) {
+                $this->applyAdjustmentPersonMatch($query, $person);
+            })
+            ->latest('id')
+            ->first();
+
+        if ($adjustment) {
+            return true;
+        }
+
+        $logs = $this->logsForPersonDate($person, $date, $schedule);
+
+        if ($logs->count() < 2) {
+            return false;
+        }
+
+        $timeColumn = $this->biometricTimeColumn();
+
+        $first = Carbon::parse($logs->first()->{$timeColumn}, 'Asia/Manila');
+        $last = Carbon::parse($logs->last()->{$timeColumn}, 'Asia/Manila');
+
+        return $last->gt($first);
+    }
+
+    protected function adjustmentQualifiesForPay(?PayrollAttendanceAdjustment $adjustment): bool
+    {
+        if (! $adjustment) {
+            return false;
+        }
+
+        if ((bool) ($adjustment->is_paid ?? false)) {
+            return true;
+        }
+
+        $adjustmentType = strtolower((string) ($adjustment->adjustment_type ?? ''));
+        $adjustedDayType = strtolower((string) ($adjustment->adjusted_day_type ?? ''));
+
+        $paidKeywords = [
+            'paid',
+            'leave',
+            'offset',
+            'official',
+            'ob',
+            'holiday',
+            'rest_day',
+            'rest day',
+            'day_off',
+            'day off',
+        ];
+
+        foreach ($paidKeywords as $keyword) {
+            if (str_contains($adjustmentType, $keyword) || str_contains($adjustedDayType, $keyword)) {
+                return true;
+            }
+        }
+
+        return ! empty($adjustment->adjusted_time_in) && ! empty($adjustment->adjusted_time_out);
+    }
+
+    protected function holidayWorkedPayDays(?string $holidayType): array
+    {
+        $type = strtolower((string) $holidayType);
+
+        if (str_contains($type, 'special') || str_contains($type, 'non') || str_contains($type, '30')) {
+            return [
+                self::SPECIAL_HOLIDAY_WORKED_PAY_DAYS,
+                'Special / non-regular holiday +30% = 1.30 pay units',
+            ];
+        }
+
+        return [
+            self::REGULAR_HOLIDAY_WORKED_PAY_DAYS,
+            'Regular holiday double pay = 2.00 pay units',
+        ];
+    }
+
+    protected function holidayName($holiday): ?string
+    {
+        if (! $holiday) {
+            return null;
+        }
+
+        foreach (['name', 'holiday_name', 'title', 'description'] as $column) {
+            $value = $holiday->{$column} ?? null;
+
+            if (! empty($value)) {
+                return (string) $value;
+            }
+        }
+
+        return 'Holiday';
+    }
+
+    protected function holidayType($holiday): ?string
+    {
+        if (! $holiday) {
+            return null;
+        }
+
+        foreach (['holiday_type', 'type', 'category'] as $column) {
+            $value = $holiday->{$column} ?? null;
+
+            if (! empty($value)) {
+                return (string) $value;
+            }
+        }
+
+        return null;
+    }
+
+    protected function scheduleIndicatesRestDay(?string $scheduleStatus, mixed $dayOff, Carbon $workDate): bool
+    {
+        $status = strtolower(trim((string) $scheduleStatus));
+
+        if (in_array($status, ['rest_day', 'rest day', 'restday', 'day_off', 'day off', 'off'], true)) {
+            return true;
+        }
+
+        $dayOffText = strtolower(trim((string) $dayOff));
+
+        if ($dayOffText === '') {
+            return false;
+        }
+
+        $weekday = strtolower($workDate->format('l'));
+
+        return str_contains($dayOffText, $weekday);
+    }
+
+    protected function scheduleIndicatesLeave(?string $scheduleStatus): bool
+    {
+        $status = strtolower(trim((string) $scheduleStatus));
+
+        return in_array($status, ['leave', 'on_leave', 'paid_leave', 'sick_leave', 'vacation_leave'], true)
+            || str_contains($status, 'leave');
+    }
+
     protected function isAutomaticHalfDay(?Carbon $actualTimeIn, ?Carbon $actualTimeOut): bool
     {
         if (! $actualTimeIn) {
@@ -546,66 +885,100 @@ class DailyAttendanceSummaryService
 
     protected function applySchedulePersonMatch(Builder $query, array $person): void
     {
-        $employeeNo = $this->cleanString($person['employee_no'] ?? null);
-        $biometricEmployeeId = $this->cleanString($person['biometric_employee_id'] ?? null);
+        $identities = $this->personIdentityValues($person);
+        $table = (new EmployeePlottingSchedule)->getTable();
 
-        $query->where(function ($q) use ($employeeNo, $biometricEmployeeId) {
-            if ($employeeNo !== '') {
-                $q->orWhereRaw('TRIM(employee_no) = ?', [$employeeNo]);
-            }
+        $query->where(function ($q) use ($identities, $table) {
+            foreach ($identities as $identity) {
+                if ($this->columnExists($table, 'employee_no')) {
+                    $q->orWhereRaw('TRIM(employee_no) = ?', [$identity]);
+                }
 
-            if ($biometricEmployeeId !== '') {
-                $q->orWhereRaw('TRIM(biometric_employee_id) = ?', [$biometricEmployeeId]);
+                if ($this->columnExists($table, 'biometric_employee_id')) {
+                    $q->orWhereRaw('TRIM(biometric_employee_id) = ?', [$identity]);
+                }
+
+                if ($this->columnExists($table, 'crosschex_id')) {
+                    $q->orWhereRaw('TRIM(crosschex_id) = ?', [$identity]);
+                }
             }
         });
     }
 
     protected function applyLogPersonMatch(Builder $query, array $person): void
     {
-        $employeeNo = $this->cleanString($person['employee_no'] ?? null);
-        $biometricEmployeeId = $this->cleanString($person['biometric_employee_id'] ?? null);
+        $identities = $this->personIdentityValues($person);
+        $table = (new MirasolBiometricsLog)->getTable();
 
-        $query->where(function ($q) use ($employeeNo, $biometricEmployeeId) {
-            if ($employeeNo !== '') {
-                $q->orWhereRaw('TRIM(employee_no) = ?', [$employeeNo]);
-            }
+        $query->where(function ($q) use ($identities, $table) {
+            foreach ($identities as $identity) {
+                if ($this->columnExists($table, 'employee_id')) {
+                    $q->orWhereRaw('TRIM(employee_id) = ?', [$identity]);
+                }
 
-            if ($biometricEmployeeId !== '') {
-                $q->orWhereRaw('TRIM(employee_id) = ?', [$biometricEmployeeId]);
+                if ($this->columnExists($table, 'employee_no')) {
+                    $q->orWhereRaw('TRIM(employee_no) = ?', [$identity]);
+                }
+
+                if ($this->columnExists($table, 'biometric_employee_id')) {
+                    $q->orWhereRaw('TRIM(biometric_employee_id) = ?', [$identity]);
+                }
+
+                if ($this->columnExists($table, 'crosschex_id')) {
+                    $q->orWhereRaw('TRIM(crosschex_id) = ?', [$identity]);
+                }
             }
         });
     }
 
     protected function applyAdjustmentPersonMatch(Builder $query, array $person): void
     {
-        $employeeNo = $this->cleanString($person['employee_no'] ?? null);
-        $biometricEmployeeId = $this->cleanString($person['biometric_employee_id'] ?? null);
+        $identities = $this->personIdentityValues($person);
+        $table = (new PayrollAttendanceAdjustment)->getTable();
 
-        $query->where(function ($q) use ($employeeNo, $biometricEmployeeId) {
-            if ($employeeNo !== '') {
-                $q->orWhereRaw('TRIM(employee_no) = ?', [$employeeNo]);
-            }
+        $query->where(function ($q) use ($identities, $table) {
+            foreach ($identities as $identity) {
+                if ($this->columnExists($table, 'employee_no')) {
+                    $q->orWhereRaw('TRIM(employee_no) = ?', [$identity]);
+                }
 
-            if ($biometricEmployeeId !== '') {
-                $q->orWhereRaw('TRIM(biometric_employee_id) = ?', [$biometricEmployeeId]);
+                if ($this->columnExists($table, 'biometric_employee_id')) {
+                    $q->orWhereRaw('TRIM(biometric_employee_id) = ?', [$identity]);
+                }
+
+                if ($this->columnExists($table, 'crosschex_id')) {
+                    $q->orWhereRaw('TRIM(crosschex_id) = ?', [$identity]);
+                }
             }
         });
     }
 
+    protected function personIdentityValues(array $person): array
+    {
+        return collect([
+            $person['employee_no'] ?? null,
+            $person['biometric_employee_id'] ?? null,
+            $person['crosschex_id'] ?? null,
+        ])
+            ->map(fn ($value) => $this->cleanString($value))
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+    }
+
     protected function makePersonKey(array $person): string
     {
-        $employeeNo = $this->cleanString($person['employee_no'] ?? null);
-        $biometricEmployeeId = $this->cleanString($person['biometric_employee_id'] ?? null);
+        $identities = $this->personIdentityValues($person);
 
-        if ($employeeNo !== '') {
-            return 'EMPLOYEE_NO:'.$employeeNo;
-        }
+        return 'PERSON:'.($identities[0] ?? md5(json_encode($person)));
+    }
 
-        if ($biometricEmployeeId !== '') {
-            return 'BIOMETRIC_ID:'.$biometricEmployeeId;
-        }
-
-        return 'UNKNOWN:'.md5(json_encode($person));
+    protected function asManilaDate(string|Carbon $date): Carbon
+    {
+        return $date instanceof Carbon
+            ? $date->copy()->timezone('Asia/Manila')->startOfDay()
+            : Carbon::parse($date, 'Asia/Manila')->startOfDay();
     }
 
     protected function cleanString($value): string
@@ -613,12 +986,33 @@ class DailyAttendanceSummaryService
         return trim((string) ($value ?? ''));
     }
 
+    protected function biometricTimeColumn(): string
+    {
+        $table = (new MirasolBiometricsLog)->getTable();
+
+        foreach (['check_time', 'date_time', 'datetime', 'punch_time', 'scan_time', 'log_time'] as $column) {
+            if ($this->columnExists($table, $column)) {
+                return $column;
+            }
+        }
+
+        return 'check_time';
+    }
+
     protected function columnExists(string $table, string $column): bool
     {
-        try {
-            return Schema::hasColumn($table, $column);
-        } catch (\Throwable) {
-            return false;
+        $key = $table.'.'.$column;
+
+        if (array_key_exists($key, $this->columnCache)) {
+            return $this->columnCache[$key];
         }
+
+        try {
+            $this->columnCache[$key] = Schema::hasColumn($table, $column);
+        } catch (\Throwable) {
+            $this->columnCache[$key] = false;
+        }
+
+        return $this->columnCache[$key];
     }
 }

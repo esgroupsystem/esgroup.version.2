@@ -500,7 +500,7 @@
                                         <span class="fas fa-clipboard-list"></span>
                                     </span>
                                     <span class="nav-link-text ps-1">
-                                        Attendance Summary
+                                        Compilation Summary
                                     </span>
                                 </div>
                             </a>

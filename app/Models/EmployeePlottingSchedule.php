@@ -18,24 +18,32 @@ class EmployeePlottingSchedule extends Model
         'time_out',
         'grace_minutes',
         'status',
+        'day_off',
         'remarks',
     ];
 
-    // Make work_date a Carbon instance
-    protected $dates = ['work_date'];
-
     protected $casts = [
+        'work_date' => 'date',
         'grace_minutes' => 'integer',
     ];
 
-    // Safely parse time in/out
-    public function getFormattedTimeInAttribute()
+    public function getFormattedTimeInAttribute(): string
     {
         return $this->time_in ? Carbon::parse($this->time_in)->format('H:i') : '';
     }
 
-    public function getFormattedTimeOutAttribute()
+    public function getFormattedTimeOutAttribute(): string
     {
         return $this->time_out ? Carbon::parse($this->time_out)->format('H:i') : '';
+    }
+
+    public function getIsFlexibleAttribute(): bool
+    {
+        return str_contains(strtolower((string) $this->shift_name), 'flexible');
+    }
+
+    public function getIsPermanentAttribute(): bool
+    {
+        return is_null($this->work_date);
     }
 }

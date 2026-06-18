@@ -6,97 +6,255 @@
         <div class="content">
 
             @if (session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
+                <div class="alert alert-success border-0 shadow-sm">
+                    <span class="fas fa-check-circle me-1"></span>
+                    {{ session('success') }}
+                </div>
             @endif
 
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-0">Payroll Attendance Adjustments</h5>
-                        <small class="text-muted">Manual encoding of paper-approved attendance adjustments</small>
-                    </div>
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+                        <div>
+                            <h4 class="mb-1 text-900">
+                                <span class="fas fa-user-clock text-primary me-2"></span>
+                                Payroll Attendance Adjustments
+                            </h4>
+                            <p class="mb-0 text-600">
+                                Manage Sick Leave, Medical Leave, Change Schedule, Offset, and Official Business
+                                adjustments.
+                            </p>
+                        </div>
 
-                    <a href="{{ route('payroll-attendance-adjustments.create') }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus me-1"></i> New Adjustment
-                    </a>
+                        <a href="{{ route('payroll-attendance-adjustments.create') }}" class="btn btn-primary">
+                            <span class="fas fa-plus me-1"></span>
+                            New Adjustment
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xl me-3">
+                                    <div class="avatar-name rounded-circle bg-primary-subtle text-primary">
+                                        <span class="fas fa-list"></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="mb-0">{{ number_format($stats['total']) }}</h4>
+                                    <small class="text-600">Total Adjustments</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="card-body">
-                    <form method="GET" action="{{ route('payroll-attendance-adjustments.index') }}" class="row g-2 mb-3">
-                        <div class="col-md-4">
-                            <input type="text" name="search" class="form-control"
-                                placeholder="Search employee name / employee ID..." value="{{ request('search') }}">
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xl me-3">
+                                    <div class="avatar-name rounded-circle bg-success-subtle text-success">
+                                        <span class="fas fa-notes-medical"></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="mb-0">{{ number_format($stats['leaves']) }}</h4>
+                                    <small class="text-600">Leave Adjustments</small>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-auto">
-                            <button class="btn btn-secondary">Search</button>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xl me-3">
+                                    <div class="avatar-name rounded-circle bg-warning-subtle text-warning">
+                                        <span class="fas fa-exchange-alt"></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="mb-0">{{ number_format($stats['offsets']) }}</h4>
+                                    <small class="text-600">Offset Requests</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xl me-3">
+                                    <div class="avatar-name rounded-circle bg-info-subtle text-info">
+                                        <span class="fas fa-clock"></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="mb-0">{{ number_format($stats['manual_time']) }}</h4>
+                                    <small class="text-600">Manual Time Entries</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-body-tertiary border-bottom">
+                    <form method="GET" action="{{ route('payroll-attendance-adjustments.index') }}"
+                        class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                            <label class="form-label fs-10 fw-semibold text-700">Search</label>
+                            <input type="text" name="search" class="form-control"
+                                placeholder="Employee name, employee no, type, reason..." value="{{ $search }}">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label fs-10 fw-semibold text-700">Adjustment Type</label>
+                            <select name="type" class="form-select">
+                                <option value="">All Types</option>
+                                @foreach ($types as $value => $label)
+                                    <option value="{{ $value }}" @selected($type === $value)>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="form-label fs-10 fw-semibold text-700">From</label>
+                            <input type="date" name="date_from" class="form-control" value="{{ $dateFrom }}">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label class="form-label fs-10 fw-semibold text-700">To</label>
+                            <input type="date" name="date_to" class="form-control" value="{{ $dateTo }}">
+                        </div>
+
+                        <div class="col-md-1 d-grid">
+                            <button class="btn btn-secondary">
+                                <span class="fas fa-search"></span>
+                            </button>
                         </div>
                     </form>
+                </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
+                <div class="card-body p-0">
+                    <div class="table-responsive scrollbar">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-body-tertiary">
                                 <tr>
-                                    <th>Date</th>
                                     <th>Employee</th>
                                     <th>Type</th>
+                                    <th>Period / Date</th>
                                     <th>Adjusted Time</th>
-                                    <th>Day Type</th>
-                                    <th>Options</th>
-                                    <th>Encoded By</th>
-                                    <th width="160">Action</th>
+                                    <th>Offset Proof</th>
+                                    <th>Payroll Effect</th>
+                                    <th>Encoded</th>
+                                    <th class="text-end" width="160">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($adjustments as $item)
                                     <tr>
-                                        <td>{{ optional($item->work_date)->format('M d, Y') }}</td>
                                         <td>
-                                            <strong>{{ $item->employee->full_name ?? ($item->employee->name ?? 'N/A') }}</strong><br>
-                                            <small class="text-muted">
-                                                {{ $item->employee->employee_id_permanent ?? '' }}
+                                            <div class="fw-semibold text-900">{{ $item->employee_name }}</div>
+                                            <div class="fs-10 text-600">
+                                                Emp No: {{ $item->employee_no ?: 'N/A' }}
+                                                |
+                                                Bio ID: {{ $item->biometric_employee_id ?: 'N/A' }}
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            @php
+                                                $badgeClass = match ($item->adjustment_type) {
+                                                    'sick_leave', 'medical_leave' => 'success',
+                                                    'change_schedule' => 'info',
+                                                    'offset' => 'warning',
+                                                    'official_business' => 'primary',
+                                                    default => 'secondary',
+                                                };
+                                            @endphp
+
+                                            <span class="badge bg-{{ $badgeClass }}-subtle text-{{ $badgeClass }}">
+                                                {{ $item->type_label }}
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <div class="fw-semibold">{{ $item->period_label }}</div>
+                                            <small class="text-600">
+                                                {{ $item->adjusted_day_type ?: '—' }}
                                             </small>
                                         </td>
-                                        <td>{{ ucwords(str_replace('_', ' ', $item->adjustment_type)) }}</td>
+
                                         <td>
-                                            {{ $item->adjusted_time_in ?? '--:--' }} -
-                                            {{ $item->adjusted_time_out ?? '--:--' }}
+                                            <span class="text-800">{{ $item->adjusted_time_label }}</span>
                                         </td>
-                                        <td>{{ $item->adjusted_day_type ?? '—' }}</td>
+
                                         <td>
-                                            @if ($item->is_paid)
-                                                <span class="badge bg-success">Paid</span>
+                                            @if ($item->adjustment_type === 'offset')
+                                                <div class="fw-semibold text-900">
+                                                    {{ $item->offset_proof_label }}
+                                                </div>
+                                                <small class="text-success">
+                                                    <span class="fas fa-check-circle me-1"></span>
+                                                    Biometrics verified
+                                                </small>
                                             @else
-                                                <span class="badge bg-secondary">Unpaid</span>
-                                            @endif
-
-                                            @if ($item->ignore_late)
-                                                <span class="badge bg-info">Ignore Late</span>
-                                            @endif
-
-                                            @if ($item->ignore_undertime)
-                                                <span class="badge bg-warning text-dark">Ignore UT</span>
+                                                <span class="text-500">—</span>
                                             @endif
                                         </td>
+
                                         <td>
-                                            {{ $item->encoder->name ?? 'N/A' }}<br>
-                                            <small class="text-muted">
-                                                {{ optional($item->encoded_at)->format('M d, Y h:i A') }}
+                                            <div class="d-flex flex-wrap gap-1">
+                                                @if ($item->is_paid)
+                                                    <span class="badge bg-success">Paid</span>
+                                                @else
+                                                    <span class="badge bg-secondary">Unpaid</span>
+                                                @endif
+
+                                                @if ($item->ignore_late)
+                                                    <span class="badge bg-info">Ignore Late</span>
+                                                @endif
+
+                                                @if ($item->ignore_undertime)
+                                                    <span class="badge bg-warning text-dark">Ignore UT</span>
+                                                @endif
+                                            </div>
+                                        </td>
+
+                                        <td>
+                                            <div class="text-900">{{ $item->encoder->name ?? 'N/A' }}</div>
+                                            <small class="text-600">
+                                                {{ $item->encoded_at?->format('M d, Y h:i A') ?? '—' }}
                                             </small>
                                         </td>
-                                        <td>
-                                            <div class="d-flex gap-1">
+
+                                        <td class="text-end">
+                                            <div class="btn-group">
                                                 <a href="{{ route('payroll-attendance-adjustments.edit', $item) }}"
-                                                    class="btn btn-warning btn-sm">
-                                                    Edit
+                                                    class="btn btn-falcon-warning btn-sm">
+                                                    <span class="fas fa-edit"></span>
                                                 </a>
 
                                                 <form method="POST"
                                                     action="{{ route('payroll-attendance-adjustments.destroy', $item) }}"
-                                                    onsubmit="return confirm('Delete this adjustment?')">
+                                                    onsubmit="return confirm('Delete this payroll adjustment?')">
                                                     @csrf
                                                     @method('DELETE')
-                                                    <button class="btn btn-danger btn-sm">
-                                                        Delete
+                                                    <button class="btn btn-falcon-danger btn-sm">
+                                                        <span class="fas fa-trash"></span>
                                                     </button>
                                                 </form>
                                             </div>
@@ -104,47 +262,25 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center text-muted py-4">
-                                            No payroll attendance adjustments found.
+                                        <td colspan="8" class="text-center py-5">
+                                            <div class="text-500">
+                                                <span class="fas fa-folder-open fa-2x mb-2"></span>
+                                                <div>No payroll attendance adjustments found.</div>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforelse
                             </tbody>
                         </table>
                     </div>
-
-                    {{ $adjustments->links('pagination.custom') }}
                 </div>
-            </div>
 
+                @if ($adjustments->hasPages())
+                    <div class="card-footer bg-body-tertiary">
+                        {{ $adjustments->links('pagination.custom') }}
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const picker = document.getElementById('employee_picker');
-            const biometricIdInput = document.getElementById('biometric_employee_id');
-            const employeeNoInput = document.getElementById('employee_no');
-            const employeeNameInput = document.getElementById('employee_name');
-
-            function syncSelectedEmployee() {
-                const selected = picker.options[picker.selectedIndex];
-
-                if (!selected || !selected.value) {
-                    biometricIdInput.value = '';
-                    employeeNoInput.value = '';
-                    employeeNameInput.value = '';
-                    return;
-                }
-
-                biometricIdInput.value = selected.dataset.biometricId || '';
-                employeeNoInput.value = selected.dataset.employeeNo || '';
-                employeeNameInput.value = selected.dataset.employeeName || '';
-            }
-
-            picker.addEventListener('change', syncSelectedEmployee);
-
-            syncSelectedEmployee();
-        });
-    </script>
 @endsection
