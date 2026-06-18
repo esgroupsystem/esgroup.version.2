@@ -24,30 +24,166 @@ class EmployeeController extends Controller
     ========================================================== */
     public function index(Request $request)
     {
+        $perPage = (int) $request->input('per_page', 10);
+        $perPage = in_array($perPage, [10, 25, 50, 100], true) ? $perPage : 10;
 
-        if (! $request->ajax()) {
-            session(['employees_back_url' => url()->full()]);
-        }
+        $query = Employee::query()
+            ->with([
+                'position',
+                'department',
+            ]);
 
-        $query = Employee::with(['department', 'position'])
-            ->orderBy('full_name', 'asc');
+        /*
+        |--------------------------------------------------------------------------
+        | Search
+        |--------------------------------------------------------------------------
+        | Uses your actual fields:
+        | employee_id, employee_id_permanent, full_name, email, phone_number,
+        | company, garage, position title, and department name.
+        */
+        if ($request->filled('search')) {
+            $search = trim($request->input('search'));
 
-        if ($request->search) {
-            $query->where(function ($q) use ($request) {
-                $q->where('full_name', 'like', "%{$request->search}%")
-                    ->orWhere('employee_id', 'like', "%{$request->search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('employee_id', 'like', "%{$search}%")
+                    ->orWhere('employee_id_permanent', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone_number', 'like', "%{$search}%")
+                    ->orWhere('company', 'like', "%{$search}%")
+                    ->orWhere('garage', 'like', "%{$search}%")
+                    ->orWhereHas('position', function ($positionQuery) use ($search) {
+                        $positionQuery->where('title', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('department', function ($departmentQuery) use ($search) {
+                        $departmentQuery->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
-        $employees = $query->paginate(20)->withQueryString();
-
-        if ($request->ajax()) {
-            return view('hr_department.employees.modals._table', compact('employees'))->render();
+        /*
+        |--------------------------------------------------------------------------
+        | Filters
+        |--------------------------------------------------------------------------
+        */
+        if ($request->filled('status')) {
+            $query->where('status', $request->input('status'));
         }
 
-        $departments = Department::with('positions')->get();
+        if ($request->filled('company')) {
+            $query->where('company', $request->input('company'));
+        }
 
-        return view('hr_department.employees.index', compact('employees', 'departments'));
+        if ($request->filled('garage')) {
+            $query->where('garage', $request->input('garage'));
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Paginated Employees
+        |--------------------------------------------------------------------------
+        */
+        $employees = $query
+            ->orderBy('full_name')
+            ->paginate($perPage)
+            ->appends($request->query());
+
+        /*
+        |--------------------------------------------------------------------------
+        | Needed By Add Employee Modal
+        |--------------------------------------------------------------------------
+        | This fixes:
+        | Undefined variable $departments
+        */
+        $departments = Department::with([
+            'positions' => function ($query) {
+                $query->orderBy('title');
+            },
+        ])
+            ->orderBy('name')
+            ->get();
+
+        $positions = Position::query()
+            ->orderBy('title')
+            ->get();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Header / Dashboard Statistics
+        |--------------------------------------------------------------------------
+        */
+        $employeeStats = [
+            'total' => Employee::count(),
+
+            'active' => Employee::whereIn('status', [
+                'Active',
+                'Active(Re-Entry)',
+            ])->count(),
+
+            'inactive' => Employee::whereIn('status', [
+                'Inactive',
+                'Resigned',
+                'Terminated',
+                'Terminated(due to AWOL)',
+                'End of Contract',
+                'Retrench',
+                'Retired',
+            ])->count(),
+
+            'suspended' => Employee::where('status', 'Suspended')->count(),
+
+            'companies' => Employee::whereNotNull('company')
+                ->where('company', '!=', '')
+                ->distinct()
+                ->count('company'),
+
+            'garages' => Employee::whereNotNull('garage')
+                ->where('garage', '!=', '')
+                ->distinct()
+                ->count('garage'),
+        ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Filter Dropdown Data
+        |--------------------------------------------------------------------------
+        */
+        $companies = Employee::query()
+            ->whereNotNull('company')
+            ->where('company', '!=', '')
+            ->distinct()
+            ->orderBy('company')
+            ->pluck('company');
+
+        $garages = Employee::query()
+            ->whereNotNull('garage')
+            ->where('garage', '!=', '')
+            ->distinct()
+            ->orderBy('garage')
+            ->pluck('garage');
+
+        $statusOptions = [
+            'Active',
+            'Active(Re-Entry)',
+            'Suspended',
+            'Inactive',
+            'Terminated',
+            'Terminated(due to AWOL)',
+            'End of Contract',
+            'Retrench',
+            'Retired',
+            'Resigned',
+        ];
+
+        return view('hr_department.employees.index', compact(
+            'employees',
+            'departments',
+            'positions',
+            'employeeStats',
+            'companies',
+            'garages',
+            'statusOptions'
+        ));
     }
 
     /* ==========================================================
