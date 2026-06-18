@@ -9,6 +9,7 @@ use App\Models\OdometerSubmission;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class OdometerReportController extends Controller
 {
@@ -215,5 +216,82 @@ class OdometerReportController extends Controller
         DieselStock::create($validated);
 
         return back()->with('success', 'Diesel stock record saved successfully.');
+    }
+
+    public function storeManualOdometer(Request $request)
+    {
+        $validated = $request->validate([
+            'bus_detail_id' => ['required', 'exists:bus_details,id'],
+            'date_bus_deployed' => ['nullable', 'date'],
+            'date' => ['required', 'date'],
+            'time' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
+            'driver_name' => ['nullable', 'string', 'max:255'],
+            'new_odometer' => ['required', 'integer', 'min:0'],
+            'diesel_consumption' => ['nullable', 'numeric', 'min:0'],
+            'also_deduct_diesel_stock' => ['nullable', 'boolean'],
+        ]);
+
+        $manualDate = Carbon::parse($validated['date'])->toDateString();
+        $manualTime = Carbon::parse($validated['time'])->format('H:i:s');
+
+        $previousSubmission = OdometerSubmission::where('bus_detail_id', $validated['bus_detail_id'])
+            ->where(function ($query) use ($manualDate, $manualTime) {
+                $query->whereDate('date', '<', $manualDate)
+                    ->orWhere(function ($q) use ($manualDate, $manualTime) {
+                        $q->whereDate('date', $manualDate)
+                            ->whereTime('time', '<', $manualTime);
+                    });
+            })
+            ->orderByDesc('date')
+            ->orderByDesc('time')
+            ->orderByDesc('id')
+            ->first();
+
+        if (
+            $previousSubmission &&
+            (int) $validated['new_odometer'] < (int) $previousSubmission->new_odometer
+        ) {
+            return back()
+                ->withInput()
+                ->with('error', 'New odometer cannot be lower than the previous odometer reading of '
+                    .number_format($previousSubmission->new_odometer).' km.');
+        }
+
+        DB::transaction(function () use ($validated, $request, $manualDate, $manualTime) {
+            $submission = OdometerSubmission::create([
+                'user_id' => Auth::id(),
+                'bus_detail_id' => $validated['bus_detail_id'],
+                'new_odometer' => $validated['new_odometer'],
+                'driver_name' => $validated['driver_name'] ?? null,
+                'diesel_consumption' => $validated['diesel_consumption'] ?? 0,
+                'date_bus_deployed' => $validated['date_bus_deployed'] ?? $manualDate,
+                'date' => $manualDate,
+                'time' => $manualTime,
+            ]);
+
+            /*
+             * Optional:
+             * If checked, this will also deduct diesel stock automatically.
+             * Do not check this if you already encode diesel OUT separately.
+             */
+            if (
+                $request->boolean('also_deduct_diesel_stock') &&
+                (float) ($validated['diesel_consumption'] ?? 0) > 0
+            ) {
+                DieselStock::create([
+                    'date' => $manualDate,
+                    'type' => 'out',
+                    'liters' => $validated['diesel_consumption'],
+                    'unit_cost' => null,
+                    'total_cost' => null,
+                    'bus_detail_id' => $validated['bus_detail_id'],
+                    'reference_no' => 'ODO-'.$submission->id,
+                    'remarks' => 'Auto diesel OUT from manual odometer encoding.',
+                    'encoded_by' => Auth::id(),
+                ]);
+            }
+        });
+
+        return back()->with('success', 'Manual odometer record saved successfully.');
     }
 }

@@ -10,6 +10,13 @@
             </div>
         @endif
 
+        @if (session('error'))
+            <div class="alert alert-danger border-0 shadow-sm">
+                <span class="fas fa-exclamation-circle me-2"></span>
+                {{ session('error') }}
+            </div>
+        @endif
+
         {{-- FILTER CARD --}}
         <div class="card mb-3 shadow-sm">
             <div class="card-header bg-white border-bottom">
@@ -24,7 +31,13 @@
                         </small>
                     </div>
 
-                    <div class="col-auto">
+                    <div class="col-auto d-flex gap-2">
+                        <button class="btn btn-sm btn-success" data-bs-toggle="modal"
+                            data-bs-target="#addManualOdometerModal">
+                            <span class="fas fa-tachometer-alt me-1"></span>
+                            Add Odometer
+                        </button>
+
                         <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addDieselStockModal">
                             <span class="fas fa-plus me-1"></span>
                             Add Diesel Stock
@@ -351,6 +364,115 @@
 
     </div>
 
+    {{-- ADD MANUAL ODOMETER MODAL --}}
+    <div class="modal fade" id="addManualOdometerModal" tabindex="-1" aria-labelledby="addManualOdometerModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <form method="POST" action="{{ route('odometer.manual.store') }}" class="modal-content">
+                @csrf
+
+                <input type="hidden" name="manual_odometer_form" value="1">
+
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title" id="addManualOdometerModalLabel">
+                        <span class="fas fa-tachometer-alt me-2 text-success"></span>
+                        Add Manual Odometer
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-3">
+
+                        <div class="col-md-12">
+                            <label class="form-label">Bus Unit <span class="text-danger">*</span></label>
+                            <select name="bus_detail_id" id="manualBusDetailSelect" class="form-select" required>
+                                <option value="">Select Bus Unit</option>
+                                @foreach ($buses as $bus)
+                                    <option value="{{ $bus->id }}"
+                                        data-custom-properties="{{ $bus->body_number }} {{ $bus->plate_number }} {{ $bus->name }} {{ $bus->garage }}"
+                                        {{ old('bus_detail_id') == $bus->id ? 'selected' : '' }}>
+                                        {{ $bus->body_number }} - {{ $bus->name }} - {{ $bus->garage }} -
+                                        {{ $bus->plate_number }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Date Bus Deployed</label>
+                            <input type="date" name="date_bus_deployed"
+                                value="{{ old('date_bus_deployed', now()->toDateString()) }}" class="form-control">
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Odometer Date <span class="text-danger">*</span></label>
+                            <input type="date" name="date" value="{{ old('date', now()->toDateString()) }}"
+                                class="form-control" required>
+                        </div>
+
+                        <div class="col-md-4">
+                            <label class="form-label">Time <span class="text-danger">*</span></label>
+                            <input type="time" name="time" value="{{ old('time', now()->format('H:i')) }}"
+                                class="form-control" required>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Driver Name</label>
+                            <input type="text" name="driver_name" value="{{ old('driver_name') }}"
+                                class="form-control" placeholder="Enter driver name">
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">New Odometer <span class="text-danger">*</span></label>
+                            <input type="number" name="new_odometer" value="{{ old('new_odometer') }}"
+                                class="form-control" min="0" placeholder="Example: 250000" required>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label class="form-label">Diesel Used</label>
+                            <div class="input-group">
+                                <input type="number" step="0.01" name="diesel_consumption"
+                                    value="{{ old('diesel_consumption') }}" class="form-control" min="0"
+                                    placeholder="0.00">
+                                <span class="input-group-text">L</span>
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-check border rounded-3 p-3 ps-5 bg-light">
+                                <input class="form-check-input" type="checkbox" value="1"
+                                    name="also_deduct_diesel_stock" id="alsoDeductDieselStock"
+                                    {{ old('also_deduct_diesel_stock') ? 'checked' : '' }}>
+
+                                <label class="form-check-label fw-semibold" for="alsoDeductDieselStock">
+                                    Also deduct this diesel consumption from Diesel Stock
+                                </label>
+
+                                <div class="text-muted fs--1 mt-1">
+                                    Check this only if this odometer entry should automatically create a Diesel OUT record.
+                                    Leave unchecked if you already encode diesel OUT separately.
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-falcon-default" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+
+                    <button type="submit" class="btn btn-success">
+                        <span class="fas fa-save me-1"></span>
+                        Save Odometer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     {{-- ADD DIESEL STOCK MODAL --}}
     <div class="modal fade" id="addDieselStockModal" tabindex="-1" aria-labelledby="addDieselStockModalLabel"
         aria-hidden="true">
@@ -458,6 +580,26 @@
                 });
             }
 
+            const manualBusSelect = document.getElementById('manualBusDetailSelect');
+
+            if (manualBusSelect) {
+                new Choices(manualBusSelect, {
+                    searchEnabled: true,
+                    searchResultLimit: 50,
+                    shouldSort: false,
+                    itemSelectText: '',
+                    placeholder: true,
+                    placeholderValue: 'Select Bus Unit',
+                    searchFields: ['label', 'customProperties'],
+                    fuseOptions: {
+                        threshold: 0,
+                        distance: 0,
+                        ignoreLocation: true,
+                        minMatchCharLength: 1
+                    }
+                });
+            }
+
             const filterType = document.getElementById('filterType');
             const monthFields = document.querySelectorAll('.filter-month');
             const dayFields = document.querySelectorAll('.filter-day');
@@ -483,6 +625,14 @@
 
             toggleDateFilters();
             filterType?.addEventListener('change', toggleDateFilters);
+
+            @if ($errors->any() && old('manual_odometer_form'))
+                const manualOdometerModal = document.getElementById('addManualOdometerModal');
+
+                if (manualOdometerModal) {
+                    new bootstrap.Modal(manualOdometerModal).show();
+                }
+            @endif
         });
     </script>
 @endpush

@@ -4,11 +4,14 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 
 class PermissionSeeder extends Seeder
 {
     public function run(): void
     {
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
         $permissions = [
             // Dashboard
             'dashboard.view',
@@ -49,11 +52,14 @@ class PermissionSeeder extends Seeder
             // Departments
             'departments.view',
             'departments.create',
+            'departments.update',
             'departments.delete',
 
             // Violations
             'violations.view',
             'violations.create',
+            'violations.update',
+            'violations.delete',
 
             // Driver Leave
             'driver-leave.view',
@@ -93,6 +99,7 @@ class PermissionSeeder extends Seeder
             // Attendance Summary
             'attendance-summary.view',
             'attendance-summary.create',
+            'attendance-summary.export',
 
             // Employee Salary
             'employee-salaries.view',
@@ -129,46 +136,67 @@ class PermissionSeeder extends Seeder
             'roles.update',
             'roles.delete',
 
-            // Maintenance
+            // Maintenance Requests
             'request.view',
             'request.create',
             'request.update',
             'request.delete',
 
+            // Categories
             'category.view',
             'category.create',
             'category.update',
             'category.delete',
 
+            // Items
             'items.view',
             'items.create',
             'items.update',
             'items.delete',
 
+            // Stock Transfers
             'stock-transfers.view',
+            'stock-transfers.create',
+            'stock-transfers.rollback',
 
+            // Odometer
             'odometer.view',
+            'odometer.create',
             'odometer.update',
 
+            // Purchase Orders
             'purchase.view',
             'purchase.update',
 
+            // Parts Out
             'parts-out.view',
             'parts-out.create',
             'parts-out.update',
+            'parts-out.cancel',
+            'parts-out.rollback',
 
+            // Receivings
             'receivings.view',
             'receivings.create',
             'receivings.update',
+            'receivings.rollback',
 
+            // Purchase Receiving
             'received.view',
+            'received.receive',
             'received.update',
 
+            // Buses
             'buses.view',
-            'allbus.view',
             'buses.create',
             'buses.update',
             'buses.delete',
+
+            // All Bus Resource
+            'allbus.view',
+            'allbus.create',
+            'allbus.update',
+            'allbus.delete',
         ];
 
         foreach ($permissions as $permission) {
@@ -177,5 +205,7 @@ class PermissionSeeder extends Seeder
                 'guard_name' => 'web',
             ]);
         }
+
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

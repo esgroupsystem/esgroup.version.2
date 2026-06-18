@@ -23,4 +23,9 @@ class BusDetail extends Model
     {
         return $this->hasMany(CctvConcern::class, 'bus_no');
     }
+
+    public function odometerSubmissions(): HasMany
+    {
+        return $this->hasMany(OdometerSubmission::class);
+    }
 }

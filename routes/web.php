@@ -686,7 +686,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         ->name('attendance-summary.')
         ->controller(AttendanceSummaryController::class)
         ->group(function () {
-
             Route::get('/', 'index')
                 ->middleware('permission:attendance-summary.view')
                 ->name('index');
@@ -696,6 +695,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->name('rebuild');
 
             Route::get('/attendance-summary/export-payroll', 'exportPayroll')
+                ->middleware('permission:attendance-summary.export')
                 ->name('export-payroll');
         });
 
@@ -708,7 +708,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     Route::prefix('payroll')
         ->middleware(['auth'])
         ->group(function () {
-
             Route::get(
                 'employee-salaries/sync',
                 [PayrollEmployeeSalaryController::class, 'syncFromBiometrics']
@@ -724,8 +723,11 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->parameters([
                     'employee-salaries' => 'payrollEmployeeSalary',
                 ])
-                ->names('payroll-employee-salaries');
-
+                ->names('payroll-employee-salaries')
+                ->middlewareFor(['index'], 'permission:employee-salaries.view')
+                ->middlewareFor(['create', 'store'], 'permission:employee-salaries.create')
+                ->middlewareFor(['edit', 'update'], 'permission:employee-salaries.update')
+                ->middlewareFor(['destroy'], 'permission:employee-salaries.delete');
         });
 
     /*
@@ -884,7 +886,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             ->name('roles.')
             ->controller(RoleController::class)
             ->group(function () {
-
                 Route::get('/', 'index')
                     ->middleware('permission:roles.view')
                     ->name('index');
@@ -893,9 +894,9 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:roles.create')
                     ->name('store');
 
-                Route::get('/edit/{id}', 'edit')
+                Route::post('/sync-permissions', 'syncPermissions')
                     ->middleware('permission:roles.update')
-                    ->name('edit');
+                    ->name('sync-permissions');
 
                 Route::put('/update/{role}', 'update')
                     ->middleware('permission:roles.update')
@@ -904,7 +905,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::delete('/destroy/{role}', 'destroy')
                     ->middleware('permission:roles.delete')
                     ->name('destroy');
-
             });
 
     });
@@ -1010,7 +1010,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             ->name('parts-out.')
             ->controller(PartsOutController::class)
             ->group(function () {
-
                 Route::get('/', 'index')
                     ->middleware('permission:parts-out.view')
                     ->name('index');
@@ -1040,15 +1039,15 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->name('update');
 
                 Route::patch('/{partsOut}/cancel', 'cancel')
-                    ->middleware('permission:parts-out.update')
+                    ->middleware('permission:parts-out.cancel')
                     ->name('cancel');
 
                 Route::get('/{partsOut}/print', 'print')
                     ->middleware('permission:parts-out.view')
                     ->name('print');
 
-                Route::post('/parts-out/{partsOut}/rollback', 'rollback')
-                    ->middleware('permission:parts-out.update')
+                Route::post('/{partsOut}/rollback', 'rollback')
+                    ->middleware('permission:parts-out.rollback')
                     ->name('rollback');
             });
 
@@ -1056,7 +1055,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             ->name('receivings.')
             ->controller(ReceivingController::class)
             ->group(function () {
-
                 Route::get('/', 'index')
                     ->middleware('permission:receivings.view')
                     ->name('index');
@@ -1078,7 +1076,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->name('show');
 
                 Route::post('/{receiving}/items/{item}/rollback', 'rollbackItem')
-                    ->middleware('permission:receivings.update')
+                    ->middleware('permission:receivings.rollback')
                     ->name('rollback');
             });
 
@@ -1086,7 +1084,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             ->name('received.')
             ->controller(PurchaseReceiveController::class)
             ->group(function () {
-
                 Route::get('po/receiving', 'index')
                     ->middleware('permission:received.view')
                     ->name('index');
@@ -1096,7 +1093,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->name('details');
 
                 Route::post('po/item/{id}/receive', 'receive')
-                    ->middleware('permission:received.update')
+                    ->middleware('permission:received.receive')
                     ->name('received');
             });
 
@@ -1127,7 +1124,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     */
 
     Route::middleware(['auth'])->group(function () {
-
         Route::get(
             'stock-transfers/search-products',
             [StockTransferController::class, 'searchProducts']
@@ -1136,9 +1132,12 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             ->name('stock-transfers.search-products');
 
         Route::resource('stock-transfers', StockTransferController::class)
-            ->only(['index', 'create', 'store', 'show']);
+            ->only(['index', 'create', 'store', 'show'])
+            ->middlewareFor(['index', 'show'], 'permission:stock-transfers.view')
+            ->middlewareFor(['create', 'store'], 'permission:stock-transfers.create');
 
         Route::post('/stock-transfers/{stock_transfer}/rollback', [StockTransferController::class, 'rollback'])
+            ->middleware('permission:stock-transfers.rollback')
             ->name('stock-transfers.rollback');
     });
 
@@ -1161,6 +1160,10 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/maintenance/diesel-stock', 'storeDieselStock')
                 ->middleware('permission:odometer.update')
                 ->name('diesel-stock.store');
+
+            Route::post('/maintenance/odometer/manual', 'storeManualOdometer')
+                ->middleware('permission:odometer.create')
+                ->name('manual.store');
         });
 
     /*
