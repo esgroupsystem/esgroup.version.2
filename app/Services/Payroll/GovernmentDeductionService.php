@@ -6,39 +6,27 @@ class GovernmentDeductionService
 {
     public function compute(array $data): array
     {
-        $monthlyBasic = (float) ($data['monthly_basic'] ?? 0);
-        $taxableCutoffCompensation = (float) ($data['taxable_cutoff_compensation'] ?? 0);
+        $monthlyBasic = round((float) ($data['monthly_basic'] ?? 0), 2);
+        $sssMonthlyBasic = round((float) ($data['sss_monthly_basic'] ?? $monthlyBasic), 2);
+        $philHealthMonthlyBasic = round((float) ($data['philhealth_monthly_basic'] ?? $monthlyBasic), 2);
+        $pagibigMonthlyBasic = round((float) ($data['pagibig_monthly_basic'] ?? $monthlyBasic), 2);
+        $semiMonthlyTaxableCompensation = round((float) ($data['taxable_cutoff_compensation'] ?? 0), 2);
 
-        $sss = $this->computeSss($monthlyBasic);
-        $philhealth = $this->computePhilHealth($monthlyBasic);
-        $pagibig = $this->computePagIbig($monthlyBasic);
+        $sss = $this->computeSss($sssMonthlyBasic);
+        $philhealth = $this->computePhilHealth($philHealthMonthlyBasic);
+        $pagibig = $this->computePagIbig($pagibigMonthlyBasic);
 
         $withholdingTax = $this->computeSemiMonthlyWithholdingTax(
             max(
                 0,
-                $taxableCutoffCompensation
+                $semiMonthlyTaxableCompensation
                 - $sss['employee']
                 - $philhealth['employee']
                 - $pagibig['employee']
             )
         );
 
-        $totalEmployeeGovernmentDeductions = round(
-            $sss['employee']
-            + $philhealth['employee']
-            + $pagibig['employee']
-            + $withholdingTax,
-            2
-        );
-
-        $totalEmployerGovernmentContributions = round(
-            $sss['employer']
-            + $philhealth['employer']
-            + $pagibig['employer'],
-            2
-        );
-
-        return [
+        return $this->total([
             'sss_employee' => $sss['employee'],
             'sss_employer' => $sss['employer'],
             'philhealth_employee' => $philhealth['employee'],
@@ -46,9 +34,58 @@ class GovernmentDeductionService
             'pagibig_employee' => $pagibig['employee'],
             'pagibig_employer' => $pagibig['employer'],
             'withholding_tax' => $withholdingTax,
-            'total_employee_government_deductions' => $totalEmployeeGovernmentDeductions,
-            'total_employer_government_contributions' => $totalEmployerGovernmentContributions,
-        ];
+        ]);
+    }
+
+    public function applyDeductionSchedule(array $government, string $cutoffType): array
+    {
+        $schedule = config('payroll.government_deduction_schedule', []);
+
+        foreach (['sss', 'philhealth', 'pagibig', 'withholding_tax'] as $key) {
+            $deductOn = (string) ($schedule[$key] ?? 'first');
+
+            if (! $this->shouldDeductOnCutoff($deductOn, $cutoffType)) {
+                if ($key === 'withholding_tax') {
+                    $government['withholding_tax'] = 0;
+                    continue;
+                }
+
+                $government[$key . '_employee'] = 0;
+                $government[$key . '_employer'] = 0;
+            }
+        }
+
+        return $this->total($government);
+    }
+
+    protected function shouldDeductOnCutoff(string $schedule, string $cutoffType): bool
+    {
+        return match ($schedule) {
+            'both' => true,
+            'none' => false,
+            'second' => $cutoffType === 'second',
+            default => $cutoffType === 'first',
+        };
+    }
+
+    protected function total(array $government): array
+    {
+        $government['total_employee_government_deductions'] = round(
+            (float) ($government['sss_employee'] ?? 0)
+            + (float) ($government['philhealth_employee'] ?? 0)
+            + (float) ($government['pagibig_employee'] ?? 0)
+            + (float) ($government['withholding_tax'] ?? 0),
+            2
+        );
+
+        $government['total_employer_government_contributions'] = round(
+            (float) ($government['sss_employer'] ?? 0)
+            + (float) ($government['philhealth_employer'] ?? 0)
+            + (float) ($government['pagibig_employer'] ?? 0),
+            2
+        );
+
+        return $government;
     }
 
     protected function computeSss(float $monthlyBasic): array
@@ -59,9 +96,6 @@ class GovernmentDeductionService
             return ['employee' => 0, 'employer' => 0];
         }
 
-        // Effective Jan 2025 table logic
-        // Total MSC: min 5,000, max 35,000; regular SSC capped at 20,000;
-        // MPF applies above 20,000; EC is 10 or 30.
         if ($compensation <= 5249.99) {
             $totalMsc = 5000;
         } elseif ($compensation >= 34750) {
@@ -71,19 +105,13 @@ class GovernmentDeductionService
             $totalMsc = 5000 + ($step * 500);
         }
 
-        $regularMsc = min($totalMsc, 20000);
-        $mpfMsc = max(0, $totalMsc - 20000);
-        $ec = $compensation < 14750 ? 10 : 30;
-
-        $employeeRegular = $regularMsc * 0.05;
-        $employerRegular = $regularMsc * 0.10;
-
-        $employeeMpf = $mpfMsc * 0.025;
-        $employerMpf = $mpfMsc * 0.05;
+        $employee = $totalMsc * 0.05;
+        $employer = $totalMsc * 0.10;
+        $ec = $totalMsc <= 14500 ? 10 : 30;
 
         return [
-            'employee' => round($employeeRegular + $employeeMpf, 2),
-            'employer' => round($employerRegular + $employerMpf + $ec, 2),
+            'employee' => round($employee, 2),
+            'employer' => round($employer + $ec, 2),
         ];
     }
 
@@ -108,10 +136,6 @@ class GovernmentDeductionService
             return ['employee' => 0, 'employer' => 0];
         }
 
-        // Configurable default:
-        // Employee: 1% if <= 1500, else 2%
-        // Employer: 2%
-        // Max fund salary used here: 10,000
         $fundSalary = min($monthlyBasic, 10000);
         $employeeRate = $monthlyBasic <= 1500 ? 0.01 : 0.02;
         $employerRate = 0.02;
@@ -124,38 +148,26 @@ class GovernmentDeductionService
 
     protected function computeSemiMonthlyWithholdingTax(float $semiMonthlyTaxableCompensation): float
     {
-        if ($semiMonthlyTaxableCompensation <= 0) {
+        if ($semiMonthlyTaxableCompensation <= 10417) {
             return 0;
         }
 
-        $monthlyTaxable = $semiMonthlyTaxableCompensation * 2;
-        $monthlyTax = $this->computeMonthlyWithholdingTax($monthlyTaxable);
-
-        return round($monthlyTax / 2, 2);
-    }
-
-    protected function computeMonthlyWithholdingTax(float $monthlyTaxable): float
-    {
-        if ($monthlyTaxable <= 20833) {
-            return 0;
+        if ($semiMonthlyTaxableCompensation <= 16666) {
+            return round(($semiMonthlyTaxableCompensation - 10417) * 0.15, 2);
         }
 
-        if ($monthlyTaxable <= 33333) {
-            return ($monthlyTaxable - 20833) * 0.15;
+        if ($semiMonthlyTaxableCompensation <= 33332) {
+            return round(937.50 + (($semiMonthlyTaxableCompensation - 16667) * 0.20), 2);
         }
 
-        if ($monthlyTaxable <= 66667) {
-            return 1875 + (($monthlyTaxable - 33333) * 0.20);
+        if ($semiMonthlyTaxableCompensation <= 83332) {
+            return round(4270.70 + (($semiMonthlyTaxableCompensation - 33333) * 0.25), 2);
         }
 
-        if ($monthlyTaxable <= 166667) {
-            return 8541.80 + (($monthlyTaxable - 66667) * 0.25);
+        if ($semiMonthlyTaxableCompensation <= 333332) {
+            return round(16770.70 + (($semiMonthlyTaxableCompensation - 83333) * 0.30), 2);
         }
 
-        if ($monthlyTaxable <= 666667) {
-            return 33541.80 + (($monthlyTaxable - 166667) * 0.30);
-        }
-
-        return 183541.80 + (($monthlyTaxable - 666667) * 0.35);
+        return round(91770.70 + (($semiMonthlyTaxableCompensation - 333333) * 0.35), 2);
     }
 }

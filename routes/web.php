@@ -1197,4 +1197,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->name('update');
         });
 
+    require __DIR__.'/payroll.php';
+
 });

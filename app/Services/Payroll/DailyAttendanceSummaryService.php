@@ -26,20 +26,27 @@ class DailyAttendanceSummaryService
 
     private const HALF_DAY_PAYABLE_HOURS = 4.50;
 
+    private const DEFAULT_GRACE_MINUTES = 15;
+
+    /*
+     * Duplicate punch rule:
+     * If the first punch and last punch are within 30 minutes,
+     * treat the later punch as duplicate scan, not a valid timeout.
+     */
+    private const DUPLICATE_PUNCH_WINDOW_MINUTES = 30;
+
     private const REGULAR_HOLIDAY_WORKED_PAY_DAYS = 2.00;
 
     private const SPECIAL_HOLIDAY_WORKED_PAY_DAYS = 1.30;
 
     private array $columnCache = [];
 
+    private ?string $biometricTimeColumnCache = null;
+
     public function buildForDate(string|Carbon $date): void
     {
         $workDate = $this->asManilaDate($date);
 
-        /*
-         * Delete only this date before rebuilding.
-         * This avoids one very long database transaction for the whole cutoff.
-         */
         DailyAttendanceSummary::query()
             ->whereDate('work_date', $workDate->toDateString())
             ->delete();
@@ -62,9 +69,6 @@ class DailyAttendanceSummaryService
         $current = $start->copy();
 
         while ($current->lte($end)) {
-            /*
-             * Refresh timeout per date.
-             */
             @set_time_limit(300);
 
             $this->buildForDate($current);
@@ -73,23 +77,10 @@ class DailyAttendanceSummaryService
         }
     }
 
-    protected function buildDateRows(Carbon $workDate): void
-    {
-        $people = $this->collectPeopleForDate($workDate);
-
-        foreach ($people as $person) {
-            $this->buildForPersonDate($person, $workDate);
-        }
-    }
-
     protected function collectPeopleForDate(Carbon $workDate): Collection
     {
         $people = collect();
 
-        /*
-         * 1. Include all employees with plotted schedule.
-         * Since your plotting is now permanent, work_date can be NULL.
-         */
         EmployeePlottingSchedule::query()
             ->where(function ($query) {
                 $query->whereNotNull('employee_no')
@@ -106,10 +97,6 @@ class DailyAttendanceSummaryService
                 ]);
             });
 
-        /*
-         * 2. Include employees with biometrics on the work date.
-         * These will match against plotted schedule using employee_no OR biometric_employee_id OR employee_id.
-         */
         MirasolBiometricsLog::query()
             ->whereDate($this->biometricTimeColumn(), $workDate->toDateString())
             ->get()
@@ -122,9 +109,6 @@ class DailyAttendanceSummaryService
                 ]);
             });
 
-        /*
-         * 3. Include manual adjustments.
-         */
         PayrollAttendanceAdjustment::query()
             ->whereDate('work_date', $workDate->toDateString())
             ->get()
@@ -213,11 +197,6 @@ class DailyAttendanceSummaryService
                 $this->applySchedulePersonMatch($query, $person);
             });
 
-        /*
-         * Priority 1:
-         * Permanent plotted schedule.
-         * This is your current setup: work_date = NULL.
-         */
         if ($this->columnExists($table, 'work_date')) {
             $permanentSchedule = (clone $baseQuery)
                 ->whereNull('work_date')
@@ -229,10 +208,6 @@ class DailyAttendanceSummaryService
                 return $permanentSchedule;
             }
 
-            /*
-             * Priority 2:
-             * Exact old date-based schedule fallback.
-             */
             $exactDateSchedule = (clone $baseQuery)
                 ->whereDate('work_date', $workDate->toDateString())
                 ->latest('updated_at')
@@ -244,10 +219,6 @@ class DailyAttendanceSummaryService
             }
         }
 
-        /*
-         * Priority 3:
-         * Last fallback for old rows.
-         */
         return (clone $baseQuery)
             ->latest('updated_at')
             ->latest('id')
@@ -262,31 +233,23 @@ class DailyAttendanceSummaryService
         ?PayrollAttendanceAdjustment $adjustment,
         $holiday
     ): DailyAttendanceSummary {
+        $remarks = [];
+
         $rawLogCount = $logs->count();
         $hasRawBiometrics = $rawLogCount > 0;
-
-        $firstLog = $logs->first();
-        $lastLog = $logs->last();
-
         $biometricTimeColumn = $this->biometricTimeColumn();
 
-        $actualTimeIn = $firstLog?->{$biometricTimeColumn}
-            ? Carbon::parse($firstLog->{$biometricTimeColumn}, 'Asia/Manila')
-            : null;
-
-        $actualTimeOut = $rawLogCount >= 2 && $lastLog?->{$biometricTimeColumn}
-            ? Carbon::parse($lastLog->{$biometricTimeColumn}, 'Asia/Manila')
-            : null;
-
-        if ($actualTimeIn && $actualTimeOut && $actualTimeOut->lessThanOrEqualTo($actualTimeIn)) {
-            $actualTimeOut->addDay();
-        }
+        [$actualTimeIn, $actualTimeOut] = $this->resolveBiometricActualInOut(
+            $logs,
+            $biometricTimeColumn,
+            $remarks
+        );
 
         $shiftName = $schedule?->shift_name ?: null;
         $scheduleStatus = $this->cleanString($schedule?->status) ?: 'scheduled';
         $scheduleRemarks = $schedule?->remarks;
         $dayOff = $schedule?->day_off;
-        $graceMinutes = (int) ($schedule?->grace_minutes ?? 15);
+        $graceMinutes = $this->resolveGraceMinutes($schedule);
 
         $scheduledTimeIn = $this->normalizeTime($schedule?->time_in);
         $scheduledTimeOut = $this->normalizeTime($schedule?->time_out);
@@ -304,7 +267,6 @@ class DailyAttendanceSummaryService
         $ignoreLate = (bool) ($adjustment?->ignore_late ?? false);
         $ignoreUndertime = (bool) ($adjustment?->ignore_undertime ?? false);
 
-        $remarks = [];
         $lateMinutes = 0;
         $undertimeMinutes = 0;
         $overtimeMinutes = 0;
@@ -315,6 +277,8 @@ class DailyAttendanceSummaryService
 
         if (! $schedule) {
             $remarks[] = 'No plotted permanent schedule found. Please check Permanent Plotting Schedule.';
+        } elseif ($this->isLegacyDateBasedSchedule($schedule)) {
+            $remarks[] = 'Legacy plotted schedule row used as permanent fallback. Re-save employee in Permanent Plotting Schedule.';
         }
 
         if (! empty($scheduleRemarks)) {
@@ -329,9 +293,10 @@ class DailyAttendanceSummaryService
             $remarks[] = 'Biometrics logs found: '.$rawLogCount.'.';
         }
 
-        /*
-         * Manual adjustment can replace actual time in/out.
-         */
+        if ($graceMinutes > 0) {
+            $remarks[] = 'Late grace period applied: '.$graceMinutes.' minute(s).';
+        }
+
         if ($adjustment) {
             if (! empty($adjustment->adjusted_time_in)) {
                 $actualTimeIn = Carbon::parse(
@@ -352,7 +317,12 @@ class DailyAttendanceSummaryService
             }
 
             if ($actualTimeIn && $actualTimeOut && $actualTimeOut->lessThanOrEqualTo($actualTimeIn)) {
-                $actualTimeOut->addDay();
+                if ($this->scheduleIsOvernight($scheduledTimeIn, $scheduledTimeOut)) {
+                    $actualTimeOut->addDay();
+                } else {
+                    $actualTimeOut = null;
+                    $remarks[] = 'Adjusted time out is not later than time in. Treated as no valid time out.';
+                }
             }
 
             if (! empty($adjustment->adjusted_day_type)) {
@@ -373,11 +343,12 @@ class DailyAttendanceSummaryService
         }
 
         $isFlexible = $this->isFlexibleShift($shiftName);
+
         $hasValidInOut = $actualTimeIn && $actualTimeOut && $actualTimeOut->gt($actualTimeIn);
         $hasAttendanceProof = $hasRawBiometrics || $hasAdjustment || $hasValidInOut;
 
         if ($hasValidInOut) {
-            $workedMinutes = $actualTimeIn->diffInMinutes($actualTimeOut);
+            $workedMinutes = (int) $actualTimeIn->diffInMinutes($actualTimeOut);
         }
 
         $isAutomaticHalfDay = $this->isAutomaticHalfDay($actualTimeIn, $actualTimeOut);
@@ -394,15 +365,12 @@ class DailyAttendanceSummaryService
                 $remarks[] = 'Holiday worked rate applied: '.$holidayRateLabel.'.';
             } elseif ($isAutomaticHalfDay) {
                 $attendanceStatus = 'half_day';
-
                 $workedMinutes = self::HALF_DAY_MINUTES;
-                $lateMinutes = 0;
                 $undertimeMinutes = self::FULL_DAY_MINUTES - self::HALF_DAY_MINUTES;
-
                 $payableDays = self::HALF_DAY_PAYABLE_DAYS;
                 $payableHours = self::HALF_DAY_PAYABLE_HOURS;
 
-                $remarks[] = 'No time out. Half day paid based on company policy.';
+                $remarks[] = 'No valid time out. Half day paid based on company policy.';
             } elseif ($holidayQualified || $adjustmentIsPaid) {
                 $attendanceStatus = 'holiday';
                 $payableDays = self::FULL_DAY_PAYABLE_DAYS;
@@ -430,8 +398,8 @@ class DailyAttendanceSummaryService
                 $attendanceStatus = 'rest_day_worked';
                 $remarks[] = 'Rest day worked. Base rest day pay retained.';
             } elseif ($isAutomaticHalfDay) {
-                $attendanceStatus = 'incomplete_log';
-                $remarks[] = 'Rest day has incomplete biometrics. Base rest day pay retained; please verify.';
+                $attendanceStatus = 'rest_day';
+                $remarks[] = 'Rest day has no valid time out. Base rest day pay retained.';
             } else {
                 $attendanceStatus = 'rest_day';
                 $remarks[] = 'Paid rest day/day off.';
@@ -447,34 +415,28 @@ class DailyAttendanceSummaryService
         } elseif ($isAutomaticHalfDay) {
             $attendanceStatus = 'half_day';
             $workedMinutes = self::HALF_DAY_MINUTES;
+            $lateMinutes = 0;
             $undertimeMinutes = self::FULL_DAY_MINUTES - self::HALF_DAY_MINUTES;
             $payableDays = self::HALF_DAY_PAYABLE_DAYS;
             $payableHours = self::HALF_DAY_PAYABLE_HOURS;
 
-            $remarks[] = 'No time out. Half day paid based on company policy.';
+            $remarks[] = 'No valid time out. Half day paid based on company policy.';
         } elseif ($isFlexible) {
-            /*
-             * Flexible rule:
-             * Full day only when complete 9 hours.
-             */
             if ($workedMinutes >= self::FULL_DAY_MINUTES) {
                 $attendanceStatus = 'present';
                 $payableDays = self::FULL_DAY_PAYABLE_DAYS;
                 $payableHours = self::FULL_DAY_PAYABLE_HOURS;
 
-                $remarks[] = 'Flexible shift completed 9 hours.';
+                $remarks[] = 'Flexible shift completed 9 worked hours.';
             } else {
                 $attendanceStatus = 'undertime';
                 $undertimeMinutes = max(0, self::FULL_DAY_MINUTES - $workedMinutes);
-                $payableDays = max(0, round($workedMinutes / self::FULL_DAY_MINUTES, 2));
-                $payableHours = round($workedMinutes / 60, 2);
 
-                $remarks[] = 'Flexible shift below 9 hours.';
+                [$payableDays, $payableHours] = $this->payUnitsFromMinutes($workedMinutes);
+
+                $remarks[] = 'Flexible shift below 9 worked hours. Payable hours based on actual worked minutes.';
             }
         } else {
-            /*
-             * Fixed / Regular Shift rule.
-             */
             [$lateMinutes, $undertimeMinutes] = $this->computeRegularShiftDeductions(
                 $workDate,
                 $scheduledTimeIn,
@@ -504,8 +466,17 @@ class DailyAttendanceSummaryService
                 $attendanceStatus = 'present';
             }
 
-            $payableDays = self::FULL_DAY_PAYABLE_DAYS;
-            $payableHours = self::FULL_DAY_PAYABLE_HOURS;
+            if ($attendanceStatus === 'present') {
+                $payableDays = self::FULL_DAY_PAYABLE_DAYS;
+                $payableHours = self::FULL_DAY_PAYABLE_HOURS;
+            } else {
+                $deductionMinutes = max(0, (int) $lateMinutes + (int) $undertimeMinutes);
+                $payableMinutes = max(0, self::FULL_DAY_MINUTES - $deductionMinutes);
+
+                [$payableDays, $payableHours] = $this->payUnitsFromMinutes($payableMinutes);
+
+                $remarks[] = 'Late/undertime deducted from 9-hour regular shift.';
+            }
         }
 
         if (
@@ -527,10 +498,6 @@ class DailyAttendanceSummaryService
         $employeeNo = $this->cleanString($person['employee_no'] ?? null);
         $biometricEmployeeId = $this->cleanString($person['biometric_employee_id'] ?? null);
 
-        /*
-         * If biometric_employee_id is empty but employee_no is the same number used by biometrics,
-         * keep employee_no as the primary key.
-         */
         $summaryKeys = [
             'work_date' => $workDate->toDateString(),
         ];
@@ -584,6 +551,52 @@ class DailyAttendanceSummaryService
         );
     }
 
+    protected function resolveBiometricActualInOut(
+        Collection $logs,
+        string $timeColumn,
+        array &$remarks
+    ): array {
+        if ($logs->isEmpty()) {
+            return [null, null];
+        }
+
+        $firstLog = $logs->first();
+
+        if (empty($firstLog->{$timeColumn})) {
+            return [null, null];
+        }
+
+        $actualTimeIn = Carbon::parse($firstLog->{$timeColumn}, 'Asia/Manila');
+
+        if ($logs->count() < 2) {
+            return [$actualTimeIn, null];
+        }
+
+        $lastLog = $logs->last();
+
+        if (empty($lastLog->{$timeColumn})) {
+            return [$actualTimeIn, null];
+        }
+
+        $candidateTimeOut = Carbon::parse($lastLog->{$timeColumn}, 'Asia/Manila');
+
+        if ($candidateTimeOut->lessThanOrEqualTo($actualTimeIn)) {
+            $remarks[] = 'Duplicate or invalid biometric timeout ignored.';
+
+            return [$actualTimeIn, null];
+        }
+
+        $minutesBetweenFirstAndLast = (int) $actualTimeIn->diffInMinutes($candidateTimeOut);
+
+        if ($minutesBetweenFirstAndLast <= self::DUPLICATE_PUNCH_WINDOW_MINUTES) {
+            $remarks[] = 'Biometric punches within 30 minutes from first time in were treated as duplicate scans, not time out.';
+
+            return [$actualTimeIn, null];
+        }
+
+        return [$actualTimeIn, $candidateTimeOut];
+    }
+
     protected function logsForPersonDate(
         array $person,
         Carbon $workDate,
@@ -616,6 +629,25 @@ class DailyAttendanceSummaryService
             ->get();
     }
 
+    protected function resolveGraceMinutes(?EmployeePlottingSchedule $schedule): int
+    {
+        $configuredDefault = (int) config('payroll.attendance.late_grace_minutes', self::DEFAULT_GRACE_MINUTES);
+
+        /*
+         | Company rule:
+         | First 15 minutes after scheduled time-in is free.
+         | If schedule grace_minutes is blank, null, or 0, use the company default.
+         | This keeps Attendance Summary and Payroll using the same effective late minutes.
+         */
+        $scheduleGrace = $schedule?->grace_minutes;
+
+        if (is_numeric($scheduleGrace) && (int) $scheduleGrace > 0) {
+            return max(0, (int) $scheduleGrace);
+        }
+
+        return max(0, $configuredDefault);
+    }
+
     protected function computeRegularShiftDeductions(
         Carbon $workDate,
         ?string $scheduledTimeIn,
@@ -645,14 +677,24 @@ class DailyAttendanceSummaryService
         $allowedIn = $scheduledIn->copy()->addMinutes($graceMinutes);
 
         if ($actualTimeIn->gt($allowedIn)) {
-            $lateMinutes = $allowedIn->diffInMinutes($actualTimeIn);
+            $lateMinutes = (int) $allowedIn->diffInMinutes($actualTimeIn);
         }
 
         if ($actualTimeOut->lt($scheduledOut)) {
-            $undertimeMinutes = $actualTimeOut->diffInMinutes($scheduledOut);
+            $undertimeMinutes = (int) $actualTimeOut->diffInMinutes($scheduledOut);
         }
 
         return [$lateMinutes, $undertimeMinutes];
+    }
+
+    protected function payUnitsFromMinutes(int $minutes): array
+    {
+        $payableMinutes = max(0, min(self::FULL_DAY_MINUTES, $minutes));
+
+        return [
+            round($payableMinutes / self::FULL_DAY_MINUTES, 2),
+            round($payableMinutes / 60, 2),
+        ];
     }
 
     protected function resolveHoliday(Carbon $workDate)
@@ -730,17 +772,15 @@ class DailyAttendanceSummaryService
         }
 
         $logs = $this->logsForPersonDate($person, $date, $schedule);
+        $remarks = [];
 
-        if ($logs->count() < 2) {
-            return false;
-        }
+        [$actualTimeIn, $actualTimeOut] = $this->resolveBiometricActualInOut(
+            $logs,
+            $this->biometricTimeColumn(),
+            $remarks
+        );
 
-        $timeColumn = $this->biometricTimeColumn();
-
-        $first = Carbon::parse($logs->first()->{$timeColumn}, 'Asia/Manila');
-        $last = Carbon::parse($logs->last()->{$timeColumn}, 'Asia/Manila');
-
-        return $last->gt($first);
+        return $actualTimeIn && $actualTimeOut && $actualTimeOut->gt($actualTimeIn);
     }
 
     protected function adjustmentQualifiesForPay(?PayrollAttendanceAdjustment $adjustment): bool
@@ -883,6 +923,22 @@ class DailyAttendanceSummaryService
         return str_contains(strtolower((string) $shiftName), 'flexible');
     }
 
+    protected function isLegacyDateBasedSchedule(EmployeePlottingSchedule $schedule): bool
+    {
+        $table = (new EmployeePlottingSchedule)->getTable();
+
+        return $this->columnExists($table, 'work_date') && ! empty($schedule->work_date);
+    }
+
+    protected function scheduleIsOvernight(?string $scheduledTimeIn, ?string $scheduledTimeOut): bool
+    {
+        if (! $scheduledTimeIn || ! $scheduledTimeOut) {
+            return false;
+        }
+
+        return Carbon::parse($scheduledTimeOut)->lessThanOrEqualTo(Carbon::parse($scheduledTimeIn));
+    }
+
     protected function applySchedulePersonMatch(Builder $query, array $person): void
     {
         $identities = $this->personIdentityValues($person);
@@ -988,15 +1044,23 @@ class DailyAttendanceSummaryService
 
     protected function biometricTimeColumn(): string
     {
+        if ($this->biometricTimeColumnCache !== null) {
+            return $this->biometricTimeColumnCache;
+        }
+
         $table = (new MirasolBiometricsLog)->getTable();
 
         foreach (['check_time', 'date_time', 'datetime', 'punch_time', 'scan_time', 'log_time'] as $column) {
             if ($this->columnExists($table, $column)) {
+                $this->biometricTimeColumnCache = $column;
+
                 return $column;
             }
         }
 
-        return 'check_time';
+        $this->biometricTimeColumnCache = 'check_time';
+
+        return $this->biometricTimeColumnCache;
     }
 
     protected function columnExists(string $table, string $column): bool
