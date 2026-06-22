@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Bus extends Model
 {
@@ -52,6 +54,16 @@ class Bus extends Model
             self::SALE_NOT_FOR_SALE => 'Not For Sale',
             self::SALE_FOR_SALE => 'For Sale',
         ];
+    }
+
+    public function forSaleRecords(): HasMany
+    {
+        return $this->hasMany(BusForSaleRecord::class);
+    }
+
+    public function currentForSaleRecord(): HasOne
+    {
+        return $this->hasOne(BusForSaleRecord::class)->latestOfMany();
     }
 
     public function getOperationalStatusLabelAttribute(): string

@@ -7,6 +7,7 @@ use App\Http\Controllers\BusDetailController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Fleet\BusController;
+use App\Http\Controllers\Fleet\ForSaleUnitController;
 use App\Http\Controllers\HR_Department\ConductorLeaveController;
 use App\Http\Controllers\HR_Department\DepartmentController;
 use App\Http\Controllers\HR_Department\DriverLeaveController;
@@ -1216,16 +1217,40 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     Route::middleware(['auth'])
         ->prefix('fleet')
         ->name('fleet.')
-        ->controller(BusController::class)
-        ->group(function () {
+        ->group(function (): void {
+            Route::controller(BusController::class)->group(function (): void {
+                Route::get('/buses', 'index')
+                    ->middleware('permission:fleet.view')
+                    ->name('buses.index');
 
-            Route::get('/buses', 'index')
-                ->middleware('permission:fleet.view')
-                ->name('buses.index');
+                Route::get('/buses/analytics', 'analytics')
+                    ->middleware('permission:fleet.view')
+                    ->name('buses.analytics');
+            });
 
-            Route::get('/buses/analytics', 'analytics')
+            Route::get('/for-sale-units', [ForSaleUnitController::class, 'index'])
                 ->middleware('permission:fleet.view')
-                ->name('buses.analytics');
+                ->name('for-sale-units.index');
+
+            Route::get('/for-sale-units/create', [ForSaleUnitController::class, 'create'])
+                ->middleware('permission:fleet.manage.view')
+                ->name('for-sale-units.create');
+
+            Route::post('/for-sale-units', [ForSaleUnitController::class, 'store'])
+                ->middleware('permission:fleet.manage,create')
+                ->name('for-sale-units.store');
+
+            Route::get('/for-sale-units/{forSaleRecord}/edit', [ForSaleUnitController::class, 'edit'])
+                ->middleware('permission:fleet.manage.edit')
+                ->name('for-sale-units.edit');
+
+            Route::put('/for-sale-units/{forSaleRecord}', [ForSaleUnitController::class, 'update'])
+                ->middleware('permission:fleet.manage.update')
+                ->name('for-sale-units.update');
+
+            Route::delete('/for-sale-units/{forSaleRecord}', [ForSaleUnitController::class, 'destroy'])
+                ->middleware('permission:fleet.manage.delete')
+                ->name('for-sale-units.destroy');
         });
 
 });

@@ -251,7 +251,7 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between">
                             <div>
-                                <div class="fleet-muted small fw-semibold">ACTIVE</div>
+                                <div class="fleet-muted small fw-semibold">ACTIVE NOT FOR SALE</div>
                                 <h3 class="mb-0 text-success">{{ number_format($totals['active']) }}</h3>
                             </div>
                             <div class="fleet-stat-icon bg-success-subtle text-success">
@@ -451,82 +451,7 @@
         </div>
 
         {{-- FOR SALE SUMMARY --}}
-        <div class="card mb-3">
-            <div class="card-header bg-body-tertiary">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-0 fleet-section-title">For Sale Units With Breakdown</h5>
-                        <small class="fleet-muted">Same monitoring structure as your Excel file.</small>
-                    </div>
-                    <span class="badge badge-soft badge-subtle-danger text-danger">
-                        {{ number_format($for_sale_summary['total_for_sale']) }} Total For Sale
-                    </span>
-                </div>
-            </div>
-
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0 fleet-table">
-                        <thead>
-                            <tr>
-                                <th>Company</th>
-                                <th class="text-end">Mechanical Breakdown</th>
-                                <th class="text-end">Accident Related</th>
-                                <th class="text-end">On Hold due to Plate Reg.</th>
-                                <th class="text-end">Breakdown Total</th>
-                                <th class="text-end">Running Condition</th>
-                                <th class="text-end">Total Units For Sale</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($for_sale_summary['rows'] as $company => $data)
-                                <tr>
-                                    <td class="fw-bold">{{ $company }}</td>
-                                    <td class="text-end">{{ number_format($data['mechanical_breakdown']) }}</td>
-                                    <td class="text-end">{{ number_format($data['accident_related']) }}</td>
-                                    <td class="text-end">{{ number_format($data['on_hold']) }}</td>
-                                    <td class="text-end fw-bold text-danger">{{ number_format($data['breakdown_total']) }}
-                                    </td>
-                                    <td class="text-end fw-bold text-success">
-                                        {{ number_format($data['running_condition']) }}</td>
-                                    <td class="text-end fw-bold">{{ number_format($data['total_for_sale']) }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                        <tfoot>
-                            <tr class="fleet-total-box">
-                                <th>Total</th>
-                                <th class="text-end">{{ number_format($for_sale_summary['mechanical_breakdown_total']) }}
-                                </th>
-                                <th class="text-end">{{ number_format($for_sale_summary['accident_related_total']) }}</th>
-                                <th class="text-end">{{ number_format($for_sale_summary['on_hold_total']) }}</th>
-                                <th class="text-end text-danger">{{ number_format($for_sale_summary['breakdown_total']) }}
-                                </th>
-                                <th class="text-end text-success">
-                                    {{ number_format($for_sale_summary['running_condition_total']) }}</th>
-                                <th class="text-end">{{ number_format($for_sale_summary['total_for_sale']) }}</th>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card-footer bg-white">
-                <div class="row g-3 align-items-center">
-                    <div class="col-md-8">
-                        <small class="fleet-muted">
-                            Breakdown Total + Running Condition = Total Units For Sale.
-                        </small>
-                    </div>
-                    <div class="col-md-4 text-md-end">
-                        <div class="fleet-for-sale-total px-3 py-2 d-inline-flex align-items-center gap-3">
-                            <span class="fw-semibold">Total Units For Sale</span>
-                            <span class="fs-4 fw-bold">{{ number_format($for_sale_summary['total_for_sale']) }}</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @include('fleet.buses.partials.for-sale-monitoring')
 
         {{-- DETAILED MONITORING LIST --}}
         <div class="card">
@@ -548,6 +473,14 @@
                 </div>
             </div>
 
+            @php
+                $netActiveCount = fn($items): int => $items
+                    ->filter(
+                        fn($bus): bool => $bus->operational_status === \App\Models\Bus::STATUS_ACTIVE &&
+                            $bus->sale_status !== \App\Models\Bus::SALE_FOR_SALE,
+                    )
+                    ->count();
+            @endphp
             <div class="card-body">
                 @forelse ($grouped_buses as $garage => $companies)
                     @php
@@ -567,7 +500,7 @@
                                 <div class="d-flex gap-2 flex-wrap">
                                     <span class="badge badge-soft badge-subtle-success text-success">
                                         Active:
-                                        {{ $garageBuses->where('operational_status', \App\Models\Bus::STATUS_ACTIVE)->count() }}
+                                        {{ $netActiveCount($garageBuses) }}
                                     </span>
                                     <span class="badge badge-soft badge-subtle-warning text-warning">
                                         Mechanical:
@@ -599,7 +532,7 @@
                                         <div class="d-flex gap-2 flex-wrap">
                                             <span class="badge badge-soft badge-subtle-success text-success">
                                                 Active
-                                                {{ $buses->where('operational_status', \App\Models\Bus::STATUS_ACTIVE)->count() }}
+                                                {{ $netActiveCount($buses) }}
                                             </span>
                                             <span class="badge badge-soft badge-subtle-danger text-danger">
                                                 For Sale
