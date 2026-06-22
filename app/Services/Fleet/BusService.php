@@ -7,16 +7,27 @@ use App\Models\BusForSaleRecord;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 class BusService
 {
     public function getMonitoringDashboard(array $filters = []): array
     {
+        $filters = $this->normalizeFilters($filters);
+
         $filteredBuses = $this->filteredBusQuery($filters)
             ->orderBy('garage')
             ->orderBy('company')
             ->orderBy('bus_no')
             ->get();
+
+        $groupedBuses = $filteredBuses
+            ->groupBy(fn (Bus $bus): string => $this->displayGroup($bus->garage))
+            ->map(function (Collection $garageBuses): Collection {
+                return $garageBuses->groupBy(
+                    fn (Bus $bus): string => $this->displayGroup($bus->company)
+                );
+            });
 
         return [
             'filters' => $filters,
@@ -26,14 +37,21 @@ class BusService
             'operational_status_options' => Bus::operationalStatusOptions(),
             'sale_status_options' => Bus::saleStatusOptions(),
 
-            'grouped_buses' => $filteredBuses
-                ->groupBy('garage')
-                ->map(fn (Collection $garageBuses): Collection => $garageBuses->groupBy('company')),
+            'grouped_buses' => $groupedBuses,
+
+            'garage_summary_raw' => $filteredBuses->groupBy(
+                fn (Bus $bus): string => $this->displayGroup($bus->garage)
+            ),
+            'company_summary_raw' => $filteredBuses->groupBy(
+                fn (Bus $bus): string => $this->displayGroup($bus->company)
+            ),
 
             'garage_summary' => $this->summaryBy('garage'),
             'company_summary' => $this->summaryBy('company'),
             'for_sale_summary' => $this->forSaleSummary(),
             'for_sale_records' => $this->dashboardForSaleRecords($filters),
+            'for_sale_bus_ids' => $this->forSaleBusIds(),
+            'for_sale_bus_numbers' => $this->forSaleBusNumbers(),
             'totals' => $this->overallTotals(),
 
             'filtered_count' => $filteredBuses->count(),
@@ -88,7 +106,21 @@ class BusService
                 $query->where('operational_status', trim((string) $filters['operational_status']));
             })
             ->when($this->filled($filters, 'sale_status'), function (Builder $query) use ($filters): void {
-                $query->where('sale_status', trim((string) $filters['sale_status']));
+                $saleStatus = trim((string) $filters['sale_status']);
+
+                if ($saleStatus === Bus::SALE_FOR_SALE) {
+                    $this->applyForSaleConstraint($query);
+
+                    return;
+                }
+
+                if ($this->isNotForSaleStatus($saleStatus)) {
+                    $this->applyNotForSaleConstraint($query);
+
+                    return;
+                }
+
+                $query->where('sale_status', $saleStatus);
             });
     }
 
@@ -115,7 +147,16 @@ class BusService
                 $query->where('company', strtoupper(trim((string) $filters['company'])));
             })
             ->when($this->filled($filters, 'operational_status'), function (Builder $query) use ($filters): void {
-                $query->where('status', trim((string) $filters['operational_status']));
+                $status = trim((string) $filters['operational_status']);
+
+                $query->whereIn('status', $this->statusVariants($status));
+            })
+            ->when($this->filled($filters, 'sale_status'), function (Builder $query) use ($filters): void {
+                $saleStatus = trim((string) $filters['sale_status']);
+
+                if ($saleStatus !== Bus::SALE_FOR_SALE) {
+                    $query->whereRaw('1 = 0');
+                }
             })
             ->orderByDesc('days_in_breakdown')
             ->orderBy('company')
@@ -127,31 +168,82 @@ class BusService
 
     private function summaryBy(string $column): Collection
     {
-        $groupExpression = "COALESCE(NULLIF({$column}, ''), 'UNKNOWN')";
+        if (! in_array($column, ['garage', 'company'], true)) {
+            throw new InvalidArgumentException('Invalid fleet summary column.');
+        }
+
+        $busAlias = 'b';
+        $forSaleAlias = 'fs';
+
+        $groupExpression = sprintf(
+            "COALESCE(NULLIF(%s, ''), 'UNKNOWN')",
+            $this->qualifiedColumn($busAlias, $column)
+        );
 
         $rows = Bus::query()
+            ->from('buses as b')
             ->selectRaw("{$groupExpression} as group_name")
-            ->selectRaw('COUNT(*) as total')
-            ->selectRaw($this->countActiveNotForSaleSql().' as active')
-            ->selectRaw($this->countStatusSql(Bus::STATUS_MECHANICAL_BREAKDOWN).' as mechanical_breakdown')
-            ->selectRaw($this->countStatusSql(Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN).' as accident_related')
-            ->selectRaw($this->countStatusSql(Bus::STATUS_ON_HOLD_PLATE_REGISTRATION).' as on_hold')
-            ->selectRaw($this->countActiveForSaleSql().' as active_for_sale')
-            ->selectRaw($this->countForSaleSql().' as for_sale')
-            ->groupBy($column)
-            ->orderBy($column)
+
+            // Total registered units, including for sale.
+            ->selectRaw('COUNT(*) as total_units')
+
+            // Total units that are NOT for sale.
+            ->selectRaw($this->countNotForSaleSql($busAlias, $forSaleAlias).' as not_for_sale')
+
+            // These are counted only from NOT FOR SALE units.
+            ->selectRaw($this->countStatusNotForSaleSql(
+                Bus::STATUS_MECHANICAL_BREAKDOWN,
+                $busAlias,
+                $forSaleAlias
+            ).' as mechanical_breakdown')
+
+            ->selectRaw($this->countStatusNotForSaleSql(
+                Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN,
+                $busAlias,
+                $forSaleAlias
+            ).' as accident_related')
+
+            ->selectRaw($this->countStatusNotForSaleSql(
+                Bus::STATUS_ON_HOLD_PLATE_REGISTRATION,
+                $busAlias,
+                $forSaleAlias
+            ).' as on_hold')
+
+            // For-sale count for reference.
+            ->selectRaw($this->countForSaleSql($busAlias, $forSaleAlias).' as for_sale')
+
+            ->groupBy('group_name')
+            ->orderBy('group_name')
             ->get();
 
         return $rows->mapWithKeys(function ($row): array {
+            $notForSale = (int) $row->not_for_sale;
+            $mechanical = (int) $row->mechanical_breakdown;
+            $accident = (int) $row->accident_related;
+            $onHold = (int) $row->on_hold;
+
+            /*
+             * Required rule:
+             * Active = Not For Sale - Mechanical - Accident - On Hold
+             */
+            $active = max($notForSale - $mechanical - $accident - $onHold, 0);
+
             return [
                 $row->group_name => [
-                    'active' => (int) $row->active,
-                    'mechanical_breakdown' => (int) $row->mechanical_breakdown,
-                    'accident_related' => (int) $row->accident_related,
-                    'on_hold' => (int) $row->on_hold,
-                    'active_for_sale' => (int) $row->active_for_sale,
+                    'active' => $active,
+                    'mechanical_breakdown' => $mechanical,
+                    'accident_related' => $accident,
+                    'on_hold' => $onHold,
                     'for_sale' => (int) $row->for_sale,
-                    'total' => (int) $row->total,
+
+                    // Use this as the Garage/Company Summary total.
+                    'not_for_sale' => $notForSale,
+
+                    // Keep this available if you still need all registered units.
+                    'total_units' => (int) $row->total_units,
+
+                    // Backward compatibility for your existing Blade.
+                    'total' => $notForSale,
                 ],
             ];
         });
@@ -164,6 +256,7 @@ class BusService
             ->selectRaw('status')
             ->selectRaw('COUNT(*) as total')
             ->groupBy('company', 'status')
+            ->orderBy('company')
             ->get();
 
         $summary = [];
@@ -171,6 +264,7 @@ class BusService
         foreach ($rows as $row) {
             $company = (string) $row->company_name;
             $count = (int) $row->total;
+            $status = $this->normalizeOperationalStatus((string) $row->status);
 
             if (! isset($summary[$company])) {
                 $summary[$company] = [
@@ -183,7 +277,7 @@ class BusService
                 ];
             }
 
-            switch ($row->status) {
+            switch ($status) {
                 case Bus::STATUS_MECHANICAL_BREAKDOWN:
                     $summary[$company]['mechanical_breakdown'] += $count;
                     break;
@@ -228,54 +322,88 @@ class BusService
     {
         $totalUnits = Bus::query()->count();
 
-        $forSale = BusForSaleRecord::query()->count();
+        $forSale = $this->applyForSaleConstraint(
+            Bus::query()
+        )->count();
 
-        $forSaleBusNumbers = BusForSaleRecord::query()
-            ->select('bus_no')
-            ->whereNotNull('bus_no')
-            ->where('bus_no', '!=', '')
-            ->distinct();
+        $notForSale = $this->applyNotForSaleConstraint(
+            Bus::query()
+        )->count();
 
-        $active = Bus::query()
-            ->where('operational_status', Bus::STATUS_ACTIVE)
-            ->whereNotIn('bus_no', $forSaleBusNumbers)
-            ->count();
+        $mechanicalBreakdown = $this->applyNotForSaleConstraint(
+            Bus::query()->where('operational_status', Bus::STATUS_MECHANICAL_BREAKDOWN)
+        )->count();
 
-        $mechanicalBreakdown = Bus::query()
-            ->where('operational_status', Bus::STATUS_MECHANICAL_BREAKDOWN)
-            ->count();
+        $accidentRelated = $this->applyNotForSaleConstraint(
+            Bus::query()->where('operational_status', Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN)
+        )->count();
 
-        $accidentRelated = Bus::query()
-            ->where('operational_status', Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN)
-            ->count();
+        $onHold = $this->applyNotForSaleConstraint(
+            Bus::query()->where('operational_status', Bus::STATUS_ON_HOLD_PLATE_REGISTRATION)
+        )->count();
 
-        $onHold = Bus::query()
-            ->where('operational_status', Bus::STATUS_ON_HOLD_PLATE_REGISTRATION)
-            ->count();
+        /*
+         * Required rule:
+         * Active = Not For Sale - Mechanical - Accident - On Hold
+         */
+        $active = max(
+            $notForSale - $mechanicalBreakdown - $accidentRelated - $onHold,
+            0
+        );
+
+        $activeForSale = $this->applyForSaleConstraint(
+            Bus::query()->where('operational_status', Bus::STATUS_ACTIVE)
+        )->count();
 
         return [
             'total_units' => $totalUnits,
             'active' => $active,
+            'active_for_sale' => $activeForSale,
             'mechanical_breakdown' => $mechanicalBreakdown,
             'accident_related' => $accidentRelated,
             'on_hold' => $onHold,
-
-            // Source of truth: For Sale Unit Monitoring records.
             'for_sale' => $forSale,
-
-            'not_for_sale' => max($totalUnits - $forSale, 0),
+            'not_for_sale' => $notForSale,
         ];
     }
 
-    private function countActiveNotForSaleSql(): string
+    private function applyForSaleConstraint(Builder $query): Builder
     {
+        $busTable = $this->busTable();
+        $forSaleTable = $this->forSaleTable();
+
+        return $query->whereExists(function ($subQuery) use ($busTable, $forSaleTable): void {
+            $subQuery->selectRaw('1')
+                ->from($forSaleTable)
+                ->whereRaw($this->forSaleMatchRaw($busTable, $forSaleTable));
+        });
+    }
+
+    private function applyNotForSaleConstraint(Builder $query): Builder
+    {
+        $busTable = $this->busTable();
+        $forSaleTable = $this->forSaleTable();
+
+        return $query->whereNotExists(function ($subQuery) use ($busTable, $forSaleTable): void {
+            $subQuery->selectRaw('1')
+                ->from($forSaleTable)
+                ->whereRaw($this->forSaleMatchRaw($busTable, $forSaleTable));
+        });
+    }
+
+    private function countActiveNotForSaleSql(string $busReference, ?string $forSaleAlias = null): string
+    {
+        $forSaleTable = $this->forSaleTable();
+        $forSaleReference = $forSaleAlias ?: $forSaleTable;
+
         return '
             SUM(
                 CASE
-                    WHEN operational_status = '.DB::getPdo()->quote(Bus::STATUS_ACTIVE).'
-                    AND (
-                        sale_status IS NULL
-                        OR sale_status != '.DB::getPdo()->quote(Bus::SALE_FOR_SALE).'
+                    WHEN '.$this->qualifiedColumn($busReference, 'operational_status').' = '.$this->quote(Bus::STATUS_ACTIVE).'
+                    AND NOT EXISTS (
+                        SELECT 1
+                        FROM '.$this->tableReference($forSaleTable, $forSaleAlias).'
+                        WHERE '.$this->forSaleMatchRaw($busReference, $forSaleReference).'
                     )
                     THEN 1
                     ELSE 0
@@ -284,13 +412,20 @@ class BusService
         ';
     }
 
-    private function countActiveForSaleSql(): string
+    private function countActiveForSaleSql(string $busReference, ?string $forSaleAlias = null): string
     {
+        $forSaleTable = $this->forSaleTable();
+        $forSaleReference = $forSaleAlias ?: $forSaleTable;
+
         return '
             SUM(
                 CASE
-                    WHEN operational_status = '.DB::getPdo()->quote(Bus::STATUS_ACTIVE).'
-                    AND sale_status = '.DB::getPdo()->quote(Bus::SALE_FOR_SALE).'
+                    WHEN '.$this->qualifiedColumn($busReference, 'operational_status').' = '.$this->quote(Bus::STATUS_ACTIVE).'
+                    AND EXISTS (
+                        SELECT 1
+                        FROM '.$this->tableReference($forSaleTable, $forSaleAlias).'
+                        WHERE '.$this->forSaleMatchRaw($busReference, $forSaleReference).'
+                    )
                     THEN 1
                     ELSE 0
                 END
@@ -298,12 +433,19 @@ class BusService
         ';
     }
 
-    private function countForSaleSql(): string
+    private function countForSaleSql(string $busReference, ?string $forSaleAlias = null): string
     {
+        $forSaleTable = $this->forSaleTable();
+        $forSaleReference = $forSaleAlias ?: $forSaleTable;
+
         return '
             SUM(
                 CASE
-                    WHEN sale_status = '.DB::getPdo()->quote(Bus::SALE_FOR_SALE).'
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM '.$this->tableReference($forSaleTable, $forSaleAlias).'
+                        WHERE '.$this->forSaleMatchRaw($busReference, $forSaleReference).'
+                    )
                     THEN 1
                     ELSE 0
                 END
@@ -311,17 +453,62 @@ class BusService
         ';
     }
 
-    private function countStatusSql(string $status): string
+    private function countStatusSql(string $status, string $busReference): string
     {
         return '
             SUM(
                 CASE
-                    WHEN operational_status = '.DB::getPdo()->quote($status).'
+                    WHEN '.$this->qualifiedColumn($busReference, 'operational_status').' = '.$this->quote($status).'
                     THEN 1
                     ELSE 0
                 END
             )
         ';
+    }
+
+    private function forSaleMatchRaw(string $busReference, string $forSaleReference): string
+    {
+        $busId = $this->qualifiedColumn($busReference, 'id');
+        $busNo = $this->qualifiedColumn($busReference, 'bus_no');
+
+        $forSaleBusId = $this->qualifiedColumn($forSaleReference, 'bus_id');
+        $forSaleBusNo = $this->qualifiedColumn($forSaleReference, 'bus_no');
+
+        return "
+            (
+                ({$forSaleBusId} IS NOT NULL AND {$forSaleBusId} = {$busId})
+                OR
+                (
+                    {$forSaleBusNo} IS NOT NULL
+                    AND {$forSaleBusNo} != ''
+                    AND {$busNo} IS NOT NULL
+                    AND {$busNo} != ''
+                    AND UPPER(TRIM({$forSaleBusNo})) = UPPER(TRIM({$busNo}))
+                )
+            )
+        ";
+    }
+
+    private function forSaleBusIds(): Collection
+    {
+        return BusForSaleRecord::query()
+            ->whereNotNull('bus_id')
+            ->pluck('bus_id')
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
+    }
+
+    private function forSaleBusNumbers(): Collection
+    {
+        return BusForSaleRecord::query()
+            ->whereNotNull('bus_no')
+            ->where('bus_no', '!=', '')
+            ->pluck('bus_no')
+            ->map(fn ($busNo): string => strtoupper(trim((string) $busNo)))
+            ->filter()
+            ->unique()
+            ->values();
     }
 
     private function getGarages(): Collection
@@ -344,8 +531,191 @@ class BusService
             ->pluck('company');
     }
 
+    private function normalizeFilters(array $filters): array
+    {
+        return collect($filters)
+            ->map(fn ($value) => is_string($value) ? trim($value) : $value)
+            ->all();
+    }
+
+    private function displayGroup(?string $value): string
+    {
+        $value = trim((string) $value);
+
+        return $value !== '' ? $value : 'UNKNOWN';
+    }
+
     private function filled(array $filters, string $key): bool
     {
         return isset($filters[$key]) && trim((string) $filters[$key]) !== '';
+    }
+
+    private function isNotForSaleStatus(string $saleStatus): bool
+    {
+        $normalized = strtolower(str_replace(' ', '_', trim($saleStatus)));
+
+        return $saleStatus === Bus::SALE_NOT_FOR_SALE || $normalized === 'not_for_sale';
+    }
+
+    private function normalizeOperationalStatus(string $status): string
+    {
+        $normalized = strtolower(trim($status));
+        $normalized = str_replace(['-', '/', '.'], ' ', $normalized);
+        $normalized = preg_replace('/\s+/', ' ', $normalized);
+        $slug = str_replace(' ', '_', $normalized);
+
+        return match ($slug) {
+            'active',
+            'running',
+            'running_condition' => Bus::STATUS_ACTIVE,
+
+            'mechanical_breakdown',
+            'mechanical' => Bus::STATUS_MECHANICAL_BREAKDOWN,
+
+            'accident_related_breakdown',
+            'accident_breakdown',
+            'accident_related',
+            'accident' => Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN,
+
+            'on_hold_plate_registration',
+            'on_hold_due_to_plate_reg',
+            'on_hold_due_to_plate_registration',
+            'on_hold',
+            'plate_registration' => Bus::STATUS_ON_HOLD_PLATE_REGISTRATION,
+
+            default => $slug,
+        };
+    }
+
+    private function statusVariants(string $status): array
+    {
+        $normalized = $this->normalizeOperationalStatus($status);
+
+        return match ($normalized) {
+            Bus::STATUS_ACTIVE => [
+                Bus::STATUS_ACTIVE,
+                'Active',
+                'Running',
+                'Running Condition',
+                'running_condition',
+            ],
+
+            Bus::STATUS_MECHANICAL_BREAKDOWN => [
+                Bus::STATUS_MECHANICAL_BREAKDOWN,
+                'Mechanical Breakdown',
+                'Mechanical',
+            ],
+
+            Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN => [
+                Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN,
+                'Accident Related Breakdown',
+                'Accident Breakdown',
+                'Accident Related',
+                'Accident',
+            ],
+
+            Bus::STATUS_ON_HOLD_PLATE_REGISTRATION => [
+                Bus::STATUS_ON_HOLD_PLATE_REGISTRATION,
+                'On Hold due to Plate Reg.',
+                'On Hold due to Plate Registration',
+                'On Hold Plate Registration',
+                'On Hold',
+            ],
+
+            default => [$status, $normalized],
+        };
+    }
+
+    private function countNotForSaleSql(string $busReference, ?string $forSaleAlias = null): string
+    {
+        $forSaleTable = $this->forSaleTable();
+        $forSaleReference = $forSaleAlias ?: $forSaleTable;
+
+        return '
+        SUM(
+            CASE
+                WHEN NOT EXISTS (
+                    SELECT 1
+                    FROM '.$this->tableReference($forSaleTable, $forSaleAlias).'
+                    WHERE '.$this->forSaleMatchRaw($busReference, $forSaleReference).'
+                )
+                THEN 1
+                ELSE 0
+            END
+        )
+    ';
+    }
+
+    private function countStatusNotForSaleSql(
+        string $status,
+        string $busReference,
+        ?string $forSaleAlias = null
+    ): string {
+        $forSaleTable = $this->forSaleTable();
+        $forSaleReference = $forSaleAlias ?: $forSaleTable;
+
+        return '
+        SUM(
+            CASE
+                WHEN '.$this->qualifiedColumn($busReference, 'operational_status').' = '.$this->quote($status).'
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM '.$this->tableReference($forSaleTable, $forSaleAlias).'
+                    WHERE '.$this->forSaleMatchRaw($busReference, $forSaleReference).'
+                )
+                THEN 1
+                ELSE 0
+            END
+        )
+    ';
+    }
+
+    public function updateBus(Bus $bus, array $data): Bus
+    {
+        $bus->fill($data);
+
+        if ($bus->isDirty(['operational_status', 'sale_status'])) {
+            $bus->status_updated_at = now();
+        }
+
+        $bus->save();
+
+        return $bus->refresh();
+    }
+
+    private function busTable(): string
+    {
+        return (new Bus)->getTable();
+    }
+
+    private function forSaleTable(): string
+    {
+        return (new BusForSaleRecord)->getTable();
+    }
+
+    private function quote(string $value): string
+    {
+        return DB::getPdo()->quote($value);
+    }
+
+    private function qualifiedColumn(string $reference, string $column): string
+    {
+        return $this->quotedIdentifier($reference).'.'.$this->quotedIdentifier($column);
+    }
+
+    private function tableReference(string $table, ?string $alias = null): string
+    {
+        $reference = $this->quotedIdentifier($table);
+
+        if ($alias === null || trim($alias) === '') {
+            return $reference;
+        }
+
+        return $reference.' as '.$this->quotedIdentifier($alias);
+    }
+
+    private function quotedIdentifier(string $identifier): string
+    {
+        return '`'.str_replace('`', '``', $identifier).'`';
     }
 }

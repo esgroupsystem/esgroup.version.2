@@ -1226,6 +1226,14 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::get('/buses/analytics', 'analytics')
                     ->middleware('permission:fleet.view')
                     ->name('buses.analytics');
+
+                Route::get('/buses/{bus}/edit', 'edit')
+                    ->middleware('permission:fleet.manage.edit')
+                    ->name('buses.edit');
+
+                Route::put('/buses/{bus}', 'update')
+                    ->middleware('permission:fleet.manage.update')
+                    ->name('buses.update');
             });
 
             Route::get('/for-sale-units', [ForSaleUnitController::class, 'index'])

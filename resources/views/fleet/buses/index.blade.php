@@ -121,6 +121,28 @@
         }
     </style>
 
+    @php
+        $forSaleBusIds = collect($for_sale_bus_ids ?? []);
+        $forSaleBusNumbers = collect($for_sale_bus_numbers ?? []);
+
+        $isForSaleBus = function ($bus) use ($forSaleBusIds, $forSaleBusNumbers): bool {
+            return $forSaleBusIds->contains((int) $bus->id) ||
+                $forSaleBusNumbers->contains(strtoupper(trim((string) $bus->bus_no)));
+        };
+
+        $netActiveCount = function ($items) use ($isForSaleBus): int {
+            return collect($items)
+                ->filter(function ($bus) use ($isForSaleBus): bool {
+                    return $bus->operational_status === \App\Models\Bus::STATUS_ACTIVE && !$isForSaleBus($bus);
+                })
+                ->count();
+        };
+
+        $forSaleCount = function ($items) use ($isForSaleBus): int {
+            return collect($items)->filter(fn($bus): bool => $isForSaleBus($bus))->count();
+        };
+    @endphp
+
     <div class="container-fluid">
 
         {{-- PAGE HEADER --}}
@@ -330,12 +352,13 @@
         {{-- ANALYTICS TABLES --}}
         <div class="row g-3 mb-3">
             {{-- GARAGE SUMMARY --}}
+            {{-- GARAGE SUMMARY --}}
             <div class="col-xl-6">
                 <div class="card h-100">
                     <div class="card-header bg-body-tertiary">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="mb-0 fleet-section-title">Garage Summary</h5>
-                            <span class="badge badge-soft badge-subtle-info text-info">By Garage</span>
+                            <span class="badge badge-soft badge-subtle-info text-info">Not For Sale Only</span>
                         </div>
                     </div>
 
@@ -349,38 +372,67 @@
                                         <th class="text-end">Mechanical</th>
                                         <th class="text-end">Accident</th>
                                         <th class="text-end">On Hold</th>
-                                        <th class="text-end">Total</th>
+                                        <th class="text-end">Not For Sale</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
                                     @forelse ($garage_summary as $garage => $data)
                                         <tr>
                                             <td class="fw-bold">{{ $garage }}</td>
+
                                             <td class="text-end text-success fw-semibold">
-                                                {{ number_format($data['active']) }}</td>
+                                                {{ number_format($data['active']) }}
+                                            </td>
+
                                             <td class="text-end text-warning fw-semibold">
-                                                {{ number_format($data['mechanical_breakdown']) }}</td>
+                                                {{ number_format($data['mechanical_breakdown']) }}
+                                            </td>
+
                                             <td class="text-end text-danger fw-semibold">
-                                                {{ number_format($data['accident_related']) }}</td>
+                                                {{ number_format($data['accident_related']) }}
+                                            </td>
+
                                             <td class="text-end text-info fw-semibold">
-                                                {{ number_format($data['on_hold']) }}</td>
-                                            <td class="text-end fw-bold">{{ number_format($data['total']) }}</td>
+                                                {{ number_format($data['on_hold']) }}
+                                            </td>
+
+                                            <td class="text-end fw-bold">
+                                                {{ number_format($data['not_for_sale'] ?? $data['total']) }}
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="text-center text-muted py-4">No garage data
-                                                available.</td>
+                                            <td colspan="6" class="text-center text-muted py-4">
+                                                No garage data available.
+                                            </td>
                                         </tr>
                                     @endforelse
                                 </tbody>
+
                                 <tfoot>
                                     <tr class="fleet-total-box">
                                         <th>Total</th>
-                                        <th class="text-end">{{ number_format($totals['active']) }}</th>
-                                        <th class="text-end">{{ number_format($totals['mechanical_breakdown']) }}</th>
-                                        <th class="text-end">{{ number_format($totals['accident_related']) }}</th>
-                                        <th class="text-end">{{ number_format($totals['on_hold']) }}</th>
-                                        <th class="text-end">{{ number_format($totals['total_units']) }}</th>
+
+                                        <th class="text-end">
+                                            {{ number_format($totals['active']) }}
+                                        </th>
+
+                                        <th class="text-end">
+                                            {{ number_format($totals['mechanical_breakdown']) }}
+                                        </th>
+
+                                        <th class="text-end">
+                                            {{ number_format($totals['accident_related']) }}
+                                        </th>
+
+                                        <th class="text-end">
+                                            {{ number_format($totals['on_hold']) }}
+                                        </th>
+
+                                        <th class="text-end">
+                                            {{ number_format($totals['not_for_sale']) }}
+                                        </th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -390,12 +442,13 @@
             </div>
 
             {{-- COMPANY SUMMARY --}}
+            {{-- COMPANY SUMMARY --}}
             <div class="col-xl-6">
                 <div class="card h-100">
                     <div class="card-header bg-body-tertiary">
                         <div class="d-flex justify-content-between align-items-center">
                             <h5 class="mb-0 fleet-section-title">Company Summary</h5>
-                            <span class="badge badge-soft badge-subtle-info text-info">By Company</span>
+                            <span class="badge badge-soft badge-subtle-info text-info">Not For Sale Only</span>
                         </div>
                     </div>
 
@@ -409,38 +462,67 @@
                                         <th class="text-end">Mechanical</th>
                                         <th class="text-end">Accident</th>
                                         <th class="text-end">On Hold</th>
-                                        <th class="text-end">Total</th>
+                                        <th class="text-end">Not For Sale</th>
                                     </tr>
                                 </thead>
+
                                 <tbody>
                                     @forelse ($company_summary as $company => $data)
                                         <tr>
                                             <td class="fw-bold">{{ $company }}</td>
+
                                             <td class="text-end text-success fw-semibold">
-                                                {{ number_format($data['active']) }}</td>
+                                                {{ number_format($data['active']) }}
+                                            </td>
+
                                             <td class="text-end text-warning fw-semibold">
-                                                {{ number_format($data['mechanical_breakdown']) }}</td>
+                                                {{ number_format($data['mechanical_breakdown']) }}
+                                            </td>
+
                                             <td class="text-end text-danger fw-semibold">
-                                                {{ number_format($data['accident_related']) }}</td>
+                                                {{ number_format($data['accident_related']) }}
+                                            </td>
+
                                             <td class="text-end text-info fw-semibold">
-                                                {{ number_format($data['on_hold']) }}</td>
-                                            <td class="text-end fw-bold">{{ number_format($data['total']) }}</td>
+                                                {{ number_format($data['on_hold']) }}
+                                            </td>
+
+                                            <td class="text-end fw-bold">
+                                                {{ number_format($data['not_for_sale'] ?? $data['total']) }}
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="text-center text-muted py-4">No company data
-                                                available.</td>
+                                            <td colspan="6" class="text-center text-muted py-4">
+                                                No company data available.
+                                            </td>
                                         </tr>
                                     @endforelse
                                 </tbody>
+
                                 <tfoot>
                                     <tr class="fleet-total-box">
                                         <th>Total</th>
-                                        <th class="text-end">{{ number_format($totals['active']) }}</th>
-                                        <th class="text-end">{{ number_format($totals['mechanical_breakdown']) }}</th>
-                                        <th class="text-end">{{ number_format($totals['accident_related']) }}</th>
-                                        <th class="text-end">{{ number_format($totals['on_hold']) }}</th>
-                                        <th class="text-end">{{ number_format($totals['total_units']) }}</th>
+
+                                        <th class="text-end">
+                                            {{ number_format($totals['active']) }}
+                                        </th>
+
+                                        <th class="text-end">
+                                            {{ number_format($totals['mechanical_breakdown']) }}
+                                        </th>
+
+                                        <th class="text-end">
+                                            {{ number_format($totals['accident_related']) }}
+                                        </th>
+
+                                        <th class="text-end">
+                                            {{ number_format($totals['on_hold']) }}
+                                        </th>
+
+                                        <th class="text-end">
+                                            {{ number_format($totals['not_for_sale']) }}
+                                        </th>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -463,24 +545,9 @@
                             Grouped by garage and company.
                         </small>
                     </div>
-
-                    <div class="d-flex gap-2 flex-wrap">
-                        <span class="badge badge-soft badge-subtle-success text-success">Active</span>
-                        <span class="badge badge-soft badge-subtle-warning text-warning">Mechanical</span>
-                        <span class="badge badge-soft badge-subtle-danger text-danger">Accident</span>
-                        <span class="badge badge-soft badge-subtle-info text-info">On Hold</span>
-                    </div>
                 </div>
             </div>
 
-            @php
-                $netActiveCount = fn($items): int => $items
-                    ->filter(
-                        fn($bus): bool => $bus->operational_status === \App\Models\Bus::STATUS_ACTIVE &&
-                            $bus->sale_status !== \App\Models\Bus::SALE_FOR_SALE,
-                    )
-                    ->count();
-            @endphp
             <div class="card-body">
                 @forelse ($grouped_buses as $garage => $companies)
                     @php
@@ -536,7 +603,7 @@
                                             </span>
                                             <span class="badge badge-soft badge-subtle-danger text-danger">
                                                 For Sale
-                                                {{ $buses->where('sale_status', \App\Models\Bus::SALE_FOR_SALE)->count() }}
+                                                {{ $forSaleCount($buses) }}
                                             </span>
                                         </div>
                                     </div>
@@ -556,6 +623,9 @@
                                                 <th>Engine Number</th>
                                                 <th>Case Number</th>
                                                 <th>Remarks</th>
+                                                @can('fleet.manage.update')
+                                                    <th class="text-end">Action</th>
+                                                @endcan
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -583,6 +653,16 @@
                                                     <td class="text-muted">
                                                         {{ $bus->monitoring_remarks ?? '—' }}
                                                     </td>
+
+                                                    @can('fleet.manage.update')
+                                                        <td class="text-end">
+                                                            <a href="{{ route('fleet.buses.edit', array_merge(['bus' => $bus->id], request()->query())) }}"
+                                                                class="btn btn-falcon-primary btn-sm">
+                                                                <span class="fas fa-pen me-1"></span>
+                                                                Update
+                                                            </a>
+                                                        </td>
+                                                    @endcan
                                                 </tr>
                                             @endforeach
                                         </tbody>
