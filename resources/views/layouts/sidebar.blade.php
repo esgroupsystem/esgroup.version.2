@@ -90,6 +90,15 @@
                             </li>
                         @endcan
 
+                        @can('fleet.view')
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('fleet/buses/analytics') ? 'active' : '' }}"
+                                    href="{{ route('fleet.buses.index') }}">
+                                    Bus Analytics
+                                </a>
+                            </li>
+                        @endcan
+
                     </ul>
                 </li>
 

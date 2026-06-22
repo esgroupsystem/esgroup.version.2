@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\BusDetailController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Fleet\BusController;
 use App\Http\Controllers\HR_Department\ConductorLeaveController;
 use App\Http\Controllers\HR_Department\DepartmentController;
 use App\Http\Controllers\HR_Department\DriverLeaveController;
@@ -746,10 +747,12 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         ->controller(PayrollController::class)
         ->group(function () {
 
+            // 📊 Index
             Route::get('/', 'index')
                 ->middleware('permission:payroll.view')
                 ->name('index');
 
+            // ➕ Create
             Route::get('/create', 'create')
                 ->middleware('permission:payroll.create')
                 ->name('create');
@@ -758,35 +761,42 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->middleware('permission:payroll.create')
                 ->name('store');
 
-            Route::get('/payrolls/{payroll}/items/{item}', 'showItem')
-                ->middleware('permission:payroll.view')
-                ->whereNumber('payroll')
-                ->name('items.show');
-
-            Route::post('/payrolls/{payroll}/finalize', 'finalize')
-                ->middleware('permission:payroll.finalize')
-                ->whereNumber('payroll')
-                ->name('finalize');
-
-            Route::get('/payrolls/{payroll}/export/excel', 'exportExcel')
-                ->middleware('permission:payroll.export')
-                ->whereNumber('payroll')
-                ->name('export.excel');
-
-            Route::get('/payrolls/{payroll}/export/pdf', 'exportPdf')
-                ->middleware('permission:payroll.export')
-                ->whereNumber('payroll')
-                ->name('export.pdf');
-
+            // 👁 Show payroll
             Route::get('/{payroll}', 'show')
                 ->middleware('permission:payroll.view')
                 ->whereNumber('payroll')
                 ->name('show');
 
+            // 🔥 FINALIZE payroll
+            Route::post('/{payroll}/finalize', 'finalize')
+                ->middleware('permission:payroll.finalize')
+                ->whereNumber('payroll')
+                ->name('finalize');
+
+            // 🗑 Delete payroll
             Route::delete('/{payroll}', 'destroy')
                 ->middleware('permission:payroll.delete')
                 ->whereNumber('payroll')
                 ->name('destroy');
+
+            // 📄 Export Excel
+            Route::get('/{payroll}/export/excel', 'exportExcel')
+                ->middleware('permission:payroll.export')
+                ->whereNumber('payroll')
+                ->name('export.excel');
+
+            // 📄 Export PDF
+            Route::get('/{payroll}/export/pdf', 'exportPdf')
+                ->middleware('permission:payroll.export')
+                ->whereNumber('payroll')
+                ->name('export.pdf');
+
+            // 📦 Items
+            Route::get('/{payroll}/items/{item}', 'showItem')
+                ->middleware('permission:payroll.view')
+                ->whereNumber('payroll')
+                ->whereNumber('item')
+                ->name('items.show');
         });
 
     /*
@@ -1197,6 +1207,25 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->name('update');
         });
 
-    require __DIR__.'/payroll.php';
+    /*
+    |--------------------------------------------------------------------------
+    | Fleet Management - Buses
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware(['auth'])
+        ->prefix('fleet')
+        ->name('fleet.')
+        ->controller(BusController::class)
+        ->group(function () {
+
+            Route::get('/buses', 'index')
+                ->middleware('permission:fleet.view')
+                ->name('buses.index');
+
+            Route::get('/buses/analytics', 'analytics')
+                ->middleware('permission:fleet.view')
+                ->name('buses.analytics');
+        });
 
 });
