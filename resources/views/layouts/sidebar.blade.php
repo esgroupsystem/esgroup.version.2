@@ -509,7 +509,7 @@
                                         <span class="fas fa-clipboard-list"></span>
                                     </span>
                                     <span class="nav-link-text ps-1">
-                                        Compilation Summary
+                                        Summary
                                     </span>
                                 </div>
                             </a>
