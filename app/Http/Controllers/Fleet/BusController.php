@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Fleet;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Fleet\StoreBusRequest;
 use App\Http\Requests\Fleet\UpdateBusRequest;
 use App\Models\Bus;
 use App\Services\Fleet\BusService;
@@ -35,6 +36,25 @@ class BusController extends Controller
     public function analytics(Request $request): RedirectResponse
     {
         return redirect()->route('fleet.buses.index', $request->query());
+    }
+
+    public function create(): View
+    {
+        return view('fleet.buses.create', [
+            'operationalStatusOptions' => Bus::operationalStatusOptions(),
+            'saleStatusOptions' => Bus::saleStatusOptions(),
+        ]);
+    }
+
+    public function store(StoreBusRequest $request): RedirectResponse
+    {
+        $bus = $this->busService->createBus(
+            data: $request->validated()
+        );
+
+        return redirect()
+            ->route('fleet.buses.index')
+            ->with('success', "Bus {$bus->bus_no} added successfully.");
     }
 
     public function edit(Request $request, Bus $bus): View

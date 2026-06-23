@@ -670,6 +670,13 @@ class BusService
     ';
     }
 
+    public function createBus(array $data): Bus
+    {
+        $data['status_updated_at'] = now();
+
+        return Bus::create($data);
+    }
+
     public function updateBus(Bus $bus, array $data): Bus
     {
         $bus->fill($data);

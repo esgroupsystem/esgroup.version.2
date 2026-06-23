@@ -119,6 +119,136 @@
         .badge-subtle-secondary {
             background: #edf2f9;
         }
+
+
+        .fleet-action-panel {
+            border: 1px solid #edf2f9;
+            border-radius: 1.15rem;
+            background: linear-gradient(180deg, #ffffff 0%, #f9fbff 100%);
+            box-shadow: 0 .35rem 1rem rgba(15, 34, 58, .07);
+        }
+
+        .fleet-action-eyebrow {
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: #2c7be5;
+        }
+
+        .fleet-action-card {
+            min-height: 112px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem;
+            border: 1px solid #e6edf7;
+            border-radius: 1rem;
+            background: #ffffff;
+            color: #344050;
+            text-decoration: none;
+            transition: .18s ease-in-out;
+        }
+
+        .fleet-action-card:hover {
+            color: #344050;
+            border-color: #bad7ff;
+            transform: translateY(-2px);
+            box-shadow: 0 .55rem 1.25rem rgba(15, 34, 58, .11);
+        }
+
+        .fleet-action-main {
+            display: flex;
+            align-items: center;
+            gap: .85rem;
+            min-width: 0;
+        }
+
+        .fleet-action-icon {
+            width: 48px;
+            height: 48px;
+            flex: 0 0 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1rem;
+            font-size: 1.15rem;
+        }
+
+        .fleet-action-primary .fleet-action-icon {
+            background: #e7f0ff;
+            color: #2c7be5;
+        }
+
+        .fleet-action-success .fleet-action-icon {
+            background: #d9f8eb;
+            color: #00d27a;
+        }
+
+        .fleet-action-danger .fleet-action-icon {
+            background: #ffe0e9;
+            color: #e63757;
+        }
+
+        .fleet-action-muted-card .fleet-action-icon {
+            background: #edf2f9;
+            color: #5e6e82;
+        }
+
+        .fleet-action-title {
+            display: block;
+            font-weight: 700;
+            color: #263442;
+            line-height: 1.2;
+        }
+
+        .fleet-action-description {
+            display: block;
+            margin-top: .25rem;
+            color: #748194;
+            font-size: .78rem;
+            line-height: 1.35;
+        }
+
+        .fleet-action-button {
+            flex: 0 0 auto;
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            border-radius: 999px;
+            padding: .45rem .75rem;
+            font-size: .78rem;
+            font-weight: 700;
+            color: #ffffff;
+            background: #2c7be5;
+            white-space: nowrap;
+        }
+
+        .fleet-action-success .fleet-action-button {
+            background: #00a96e;
+        }
+
+        .fleet-action-danger .fleet-action-button {
+            background: #e63757;
+        }
+
+        .fleet-action-muted-card .fleet-action-button {
+            color: #344050;
+            background: #edf2f9;
+        }
+
+        @media (max-width: 575.98px) {
+            .fleet-action-card {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .fleet-action-button {
+                width: 100%;
+                justify-content: center;
+            }
+        }
     </style>
 
     @php
@@ -141,6 +271,31 @@
         $forSaleCount = function ($items) use ($isForSaleBus): int {
             return collect($items)->filter(fn($bus): bool => $isForSaleBus($bus))->count();
         };
+
+
+        $resolveRouteUrl = function (array $routeNames, string $fallback): string {
+            foreach ($routeNames as $routeName) {
+                if (\Illuminate\Support\Facades\Route::has($routeName)) {
+                    return route($routeName, request()->query());
+                }
+            }
+
+            return $fallback;
+        };
+
+        $manageForSaleUrl = $resolveRouteUrl([
+            'fleet.bus-for-sale-records.index',
+            'fleet.bus-for-sale.index',
+            'fleet.for-sale.index',
+            'fleet.buses.for-sale.index',
+        ], '#for-sale-monitoring');
+
+        $addForSaleUrl = $resolveRouteUrl([
+            'fleet.bus-for-sale-records.create',
+            'fleet.bus-for-sale.create',
+            'fleet.for-sale.create',
+            'fleet.buses.for-sale.create',
+        ], '#for-sale-monitoring');
     @endphp
 
     <div class="container-fluid">
@@ -247,6 +402,126 @@
                         </a>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        {{-- QUICK ACTIONS --}}
+        <div class="card fleet-action-panel mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+                    <div>
+                        <div class="fleet-action-eyebrow mb-1">Quick Actions</div>
+                        <h5 class="mb-1 fleet-section-title">Unit Management Shortcuts</h5>
+                        <small class="fleet-muted">
+                            Main actions are placed here before the total cards and computation summaries.
+                        </small>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    @can('fleet.manage.update')
+                        <div class="col-xl-4 col-md-6">
+                            <a href="{{ route('fleet.buses.create', request()->query()) }}"
+                                class="fleet-action-card fleet-action-primary h-100">
+                                <span class="fleet-action-main">
+                                    <span class="fleet-action-icon">
+                                        <span class="fas fa-bus"></span>
+                                    </span>
+                                    <span>
+                                        <span class="fleet-action-title">Add Bus</span>
+                                        <span class="fleet-action-description">
+                                            Register a new unit in the fleet monitoring master list.
+                                        </span>
+                                    </span>
+                                </span>
+                                <span class="fleet-action-button">
+                                    Add
+                                    <span class="fas fa-arrow-right"></span>
+                                </span>
+                            </a>
+                        </div>
+
+                        <div class="col-xl-4 col-md-6">
+                            <a href="{{ $addForSaleUrl }}" class="fleet-action-card fleet-action-danger h-100">
+                                <span class="fleet-action-main">
+                                    <span class="fleet-action-icon">
+                                        <span class="fas fa-tag"></span>
+                                    </span>
+                                    <span>
+                                        <span class="fleet-action-title">Add For Sale Unit</span>
+                                        <span class="fleet-action-description">
+                                            Add a unit to the for-sale monitoring list and mark its condition.
+                                        </span>
+                                    </span>
+                                </span>
+                                <span class="fleet-action-button">
+                                    Add Unit
+                                    <span class="fas fa-arrow-right"></span>
+                                </span>
+                            </a>
+                        </div>
+
+                        <div class="col-xl-4 col-md-6">
+                            <a href="{{ $manageForSaleUrl }}" class="fleet-action-card fleet-action-success h-100">
+                                <span class="fleet-action-main">
+                                    <span class="fleet-action-icon">
+                                        <span class="fas fa-clipboard-list"></span>
+                                    </span>
+                                    <span>
+                                        <span class="fleet-action-title">Manage For Sale</span>
+                                        <span class="fleet-action-description">
+                                            Review running units, breakdown units, and company totals for sale.
+                                        </span>
+                                    </span>
+                                </span>
+                                <span class="fleet-action-button">
+                                    Manage
+                                    <span class="fas fa-arrow-right"></span>
+                                </span>
+                            </a>
+                        </div>
+                    @endcan
+
+                    <div class="col-xl-4 col-md-6">
+                        <a href="#for-sale-monitoring" class="fleet-action-card fleet-action-muted-card h-100">
+                            <span class="fleet-action-main">
+                                <span class="fleet-action-icon">
+                                    <span class="fas fa-chart-pie"></span>
+                                </span>
+                                <span>
+                                    <span class="fleet-action-title">View For Sale Computation</span>
+                                    <span class="fleet-action-description">
+                                        Jump directly to the for-sale breakdown computation table.
+                                    </span>
+                                </span>
+                            </span>
+                            <span class="fleet-action-button">
+                                View
+                                <span class="fas fa-arrow-down"></span>
+                            </span>
+                        </a>
+                    </div>
+
+                    <div class="col-xl-4 col-md-6">
+                        <a href="{{ route('fleet.buses.index') }}" class="fleet-action-card fleet-action-muted-card h-100">
+                            <span class="fleet-action-main">
+                                <span class="fleet-action-icon">
+                                    <span class="fas fa-filter"></span>
+                                </span>
+                                <span>
+                                    <span class="fleet-action-title">Clear Current Filter</span>
+                                    <span class="fleet-action-description">
+                                        Reset search, garage, company, condition, and sale status filters.
+                                    </span>
+                                </span>
+                            </span>
+                            <span class="fleet-action-button">
+                                Reset
+                                <span class="fas fa-redo"></span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -533,7 +808,9 @@
         </div>
 
         {{-- FOR SALE SUMMARY --}}
-        @include('fleet.buses.partials.for-sale-monitoring')
+        <div id="for-sale-monitoring">
+            @include('fleet.buses.partials.for-sale-monitoring')
+        </div>
 
         {{-- DETAILED MONITORING LIST --}}
         <div class="card">
@@ -545,6 +822,14 @@
                             Grouped by garage and company.
                         </small>
                     </div>
+
+                    @can('fleet.manage.update')
+                        <a href="{{ route('fleet.buses.create', request()->query()) }}"
+                            class="btn btn-falcon-primary btn-sm">
+                            <span class="fas fa-plus me-1"></span>
+                            Add Bus
+                        </a>
+                    @endcan
                 </div>
             </div>
 

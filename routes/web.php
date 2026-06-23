@@ -1227,6 +1227,14 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:fleet.view')
                     ->name('buses.analytics');
 
+                Route::get('/buses/create', 'create')
+                    ->middleware('permission:fleet.manage.create.view')
+                    ->name('buses.create');
+
+                Route::post('/buses', 'store')
+                    ->middleware('permission:fleet.manage.store')
+                    ->name('buses.store');
+
                 Route::get('/buses/{bus}/edit', 'edit')
                     ->middleware('permission:fleet.manage.edit')
                     ->name('buses.edit');
