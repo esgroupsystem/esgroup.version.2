@@ -538,6 +538,69 @@
             animation-delay: .16s;
         }
 
+        /* FORCE PASSWORD CLEAN OVERLAY */
+        .force-password-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2147483000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(18, 38, 63, .55);
+            pointer-events: auto;
+        }
+
+        .force-password-card {
+            width: 100%;
+            max-width: 480px;
+            background: #ffffff;
+            border-radius: 14px;
+            box-shadow: 0 24px 70px rgba(18, 38, 63, .35);
+            overflow: hidden;
+            pointer-events: auto;
+        }
+
+        .force-password-header {
+            padding: 18px 22px;
+            background: #ffffff;
+            border-bottom: 1px solid #edf2f9;
+        }
+
+        .force-password-title {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 800;
+            color: #12263f;
+        }
+
+        .force-password-body {
+            padding: 22px;
+        }
+
+        .force-password-footer {
+            padding: 16px 22px;
+            background: #ffffff;
+            border-top: 1px solid #edf2f9;
+        }
+
+        .force-password-card .form-control {
+            height: 42px;
+            border-radius: 8px;
+        }
+
+        .force-password-card .btn {
+            height: 42px;
+            border-radius: 8px;
+            font-weight: 700;
+        }
+
+        .force-password-overlay input,
+        .force-password-overlay button {
+            pointer-events: auto !important;
+        }
+
+
         @keyframes fadeUpSoft {
             from {
                 opacity: 0;
@@ -627,14 +690,6 @@
         </script>
 
         <div class="content welcome-page">
-
-            @if (auth()->user()->must_change_password)
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        new bootstrap.Modal(document.getElementById('forceChangePasswordModal')).show();
-                    });
-                </script>
-            @endif
 
             @php
                 date_default_timezone_set('Asia/Manila');
@@ -864,38 +919,63 @@
         </div>
     </div>
 
-    {{-- FORCE PASSWORD MODAL --}}
-    <div class="modal fade" id="forceChangePasswordModal" tabindex="-1">
-        <div class="modal-dialog modal-md modal-dialog-centered">
-            <div class="modal-content border-0 shadow">
+    @if (auth()->user()->must_change_password)
+        {{-- FORCE PASSWORD OVERLAY --}}
+        <div class="force-password-overlay" id="forcePasswordOverlay">
+            <div class="force-password-card">
 
                 <form action="{{ route('auth.change.password.update') }}" method="POST">
                     @csrf
 
-                    <div class="modal-header bg-body-tertiary">
-                        <h5 class="modal-title fw-bold">
+                    <div class="force-password-header">
+                        <h5 class="force-password-title">
                             <span class="fas fa-lock text-primary me-2"></span>
                             Change Your Password
                         </h5>
                     </div>
 
-                    <div class="modal-body">
-                        <p class="text-muted fs-9">
+                    <div class="force-password-body">
+                        <p class="text-muted fs-9 mb-3">
                             Please change your password to continue using the system.
                         </p>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">New Password</label>
-                            <input type="password" name="password" class="form-control" required>
-                        </div>
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0 ps-3">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">Confirm Password</label>
-                            <input type="password" name="password_confirmation" class="form-control" required>
+                            <label class="form-label fw-semibold">
+                                New Password
+                            </label>
+
+                            <input type="password" name="password" id="forcePasswordInput"
+                                class="form-control @error('password') is-invalid @enderror" required
+                                autocomplete="new-password">
+
+                            @error('password')
+                                <div class="invalid-feedback">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label fw-semibold">
+                                Confirm Password
+                            </label>
+
+                            <input type="password" name="password_confirmation" class="form-control" required
+                                autocomplete="new-password">
                         </div>
                     </div>
 
-                    <div class="modal-footer bg-body-tertiary">
+                    <div class="force-password-footer">
                         <button class="btn btn-primary w-100" type="submit">
                             <span class="fas fa-save me-1"></span>
                             Update Password
@@ -905,6 +985,25 @@
 
             </div>
         </div>
-    </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const overlay = document.getElementById('forcePasswordOverlay');
+                const passwordInput = document.getElementById('forcePasswordInput');
+
+                if (overlay) {
+                    document.body.appendChild(overlay);
+                }
+
+                document.body.style.overflow = 'hidden';
+
+                if (passwordInput) {
+                    setTimeout(function() {
+                        passwordInput.focus();
+                    }, 150);
+                }
+            });
+        </script>
+    @endif
 
 @endsection
