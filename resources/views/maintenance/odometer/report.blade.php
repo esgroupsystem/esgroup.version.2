@@ -30,7 +30,7 @@
         }
 
         $movementCount = $dieselStockMovements->count();
-        $odometerCount = $records->count();
+        $odometerCount = $submissions->total();
     @endphp
 
     <div class="container-fluid">

@@ -8,6 +8,7 @@ use App\Models\DieselStock;
 use App\Models\OdometerSubmission;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -40,6 +41,7 @@ class OdometerReportController extends Controller
 
         $lastChangeOilKm = $request->filled('last_change_oil') ? (int) $request->last_change_oil : null;
         $changeOilEvery = 10000;
+        $perPage = 15;
 
         $buses = BusDetail::query()
             ->select('id', 'garage', 'name', 'body_number', 'plate_number')
@@ -49,9 +51,7 @@ class OdometerReportController extends Controller
 
         $selectedBus = $busId ? BusDetail::find($busId) : null;
 
-        $perPage = 15; // Number of records per page
-
-        $submissions = OdometerSubmission::query()
+        $baseSubmissionsQuery = OdometerSubmission::query()
             ->leftJoin('bus_details', 'odometer_submissions.bus_detail_id', '=', 'bus_details.id')
             ->select(
                 'odometer_submissions.id',
@@ -72,7 +72,23 @@ class OdometerReportController extends Controller
             ->whereBetween('odometer_submissions.date', [
                 $startDate->toDateString(),
                 $endDate->toDateString(),
-            ])
+            ]);
+
+        $allSubmissions = (clone $baseSubmissionsQuery)
+            ->orderBy('odometer_submissions.bus_detail_id')
+            ->orderBy('odometer_submissions.date')
+            ->orderBy('odometer_submissions.time')
+            ->orderBy('odometer_submissions.id')
+            ->get();
+
+        $allRecords = $this->buildOdometerRecords(
+            submissions: $allSubmissions,
+            startDate: $startDate,
+            lastChangeOilKm: $lastChangeOilKm,
+            changeOilEvery: $changeOilEvery
+        );
+
+        $submissions = (clone $baseSubmissionsQuery)
             ->orderBy('odometer_submissions.bus_detail_id')
             ->orderBy('odometer_submissions.date')
             ->orderBy('odometer_submissions.time')
@@ -80,66 +96,17 @@ class OdometerReportController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        $previousOdometers = [];
+        $pageIds = $submissions->getCollection()
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
 
-        $busIdsForPrevious = $submissions
-            ->pluck('bus_detail_id')
-            ->filter()
-            ->unique()
+        $records = $allRecords
+            ->whereIn('id', $pageIds)
             ->values();
 
-        foreach ($busIdsForPrevious as $submissionBusId) {
-            $previousOdometers[$submissionBusId] = OdometerSubmission::where('bus_detail_id', $submissionBusId)
-                ->whereDate('date', '<', $startDate->toDateString())
-                ->orderByDesc('date')
-                ->orderByDesc('time')
-                ->orderByDesc('id')
-                ->value('new_odometer');
-        }
-
-        $records = $submissions->map(function ($row) use (&$previousOdometers, $lastChangeOilKm, $changeOilEvery) {
-            $currentBusId = (int) $row->bus_detail_id;
-
-            $previousOdometer = $previousOdometers[$currentBusId] ?? null;
-
-            $totalKmRun = $previousOdometer
-                ? ((int) $row->new_odometer - (int) $previousOdometer)
-                : 0;
-
-            $totalKmRun = max($totalKmRun, 0);
-
-            $diesel = (float) ($row->diesel_consumption ?? 0);
-
-            $kmPerLiter = $diesel > 0
-                ? $totalKmRun / $diesel
-                : 0;
-
-            $baseChangeOilKm = $lastChangeOilKm ?: (int) $row->new_odometer;
-            $nextChangeOil = $baseChangeOilKm + $changeOilEvery;
-            $remainingKm = $nextChangeOil - (int) $row->new_odometer;
-
-            $previousOdometers[$currentBusId] = (int) $row->new_odometer;
-
-            return [
-                'id' => $row->id,
-                'garage' => $row->garage,
-                'bus_name' => $row->bus_name,
-                'body_number' => $row->body_number,
-                'plate_number' => $row->plate_number,
-                'date' => $row->date,
-                'time' => $row->time,
-                'driver_name' => $row->driver_name,
-                'previous_odometer' => $previousOdometer,
-                'new_odometer' => $row->new_odometer,
-                'total_km_run' => $totalKmRun,
-                'diesel_consumption' => $diesel,
-                'km_per_liter' => $kmPerLiter,
-                'remaining_change_oil' => $remainingKm,
-            ];
-        });
-
-        $totalKm = $records->sum('total_km_run');
-        $totalLiters = $records->sum('diesel_consumption');
+        $totalKm = $allRecords->sum('total_km_run');
+        $totalLiters = $allRecords->sum('diesel_consumption');
         $averageKmPerLiter = $totalLiters > 0 ? $totalKm / $totalLiters : 0;
 
         $overallDieselIn = DieselStock::where('type', 'in')->sum('liters');
@@ -208,7 +175,7 @@ class OdometerReportController extends Controller
         ]);
 
         $validated['total_cost'] = ! empty($validated['unit_cost'])
-            ? $validated['liters'] * $validated['unit_cost']
+            ? (float) $validated['liters'] * (float) $validated['unit_cost']
             : null;
 
         $validated['encoded_by'] = Auth::id();
@@ -233,72 +200,117 @@ class OdometerReportController extends Controller
 
         $manualDate = Carbon::parse($validated['date'])->toDateString();
         $manualTime = Carbon::parse($validated['time'])->format('H:i:s');
+        $newOdometer = (int) $validated['new_odometer'];
+        $busDetailId = (int) $validated['bus_detail_id'];
+        $dieselConsumption = (float) ($validated['diesel_consumption'] ?? 0);
 
-        $previousSubmission = OdometerSubmission::where('bus_detail_id', $validated['bus_detail_id'])
-            ->where(function ($query) use ($manualDate, $manualTime) {
-                $query->whereDate('date', '<', $manualDate)
-                    ->orWhere(function ($q) use ($manualDate, $manualTime) {
-                        $q->whereDate('date', $manualDate)
-                            ->whereTime('time', '<', $manualTime);
-                    });
-            })
-            ->orderByDesc('date')
-            ->orderByDesc('time')
-            ->orderByDesc('id')
-            ->first();
-
-        if (
-            $previousSubmission &&
-            (int) $validated['new_odometer'] < (int) $previousSubmission->new_odometer
+        $result = DB::transaction(function () use (
+            $validated,
+            $request,
+            $manualDate,
+            $manualTime,
+            $newOdometer,
+            $busDetailId,
+            $dieselConsumption
         ) {
-            return back()
-                ->withInput()
-                ->with('error', 'New odometer cannot be lower than the previous odometer reading of '
-                    .number_format($previousSubmission->new_odometer).' km.');
-        }
+            $duplicateSubmissionExists = OdometerSubmission::query()
+                ->where('bus_detail_id', $busDetailId)
+                ->whereDate('date', $manualDate)
+                ->whereTime('time', $manualTime)
+                ->lockForUpdate()
+                ->exists();
 
-        DB::transaction(function () use ($validated, $request, $manualDate, $manualTime) {
+            if ($duplicateSubmissionExists) {
+                return [
+                    'saved' => false,
+                    'message' => 'This bus already has an odometer record with the same date and time. Adjust the time by at least 1 minute.',
+                ];
+            }
+
+            $previousSubmission = $this->findPreviousSubmission(
+                busDetailId: $busDetailId,
+                date: $manualDate,
+                time: $manualTime,
+                lockForUpdate: true
+            );
+
+            if (
+                $previousSubmission &&
+                $newOdometer < (int) $previousSubmission->new_odometer
+            ) {
+                return [
+                    'saved' => false,
+                    'message' => 'New odometer cannot be lower than the previous odometer reading of '
+                        .number_format((int) $previousSubmission->new_odometer).' km.',
+                ];
+            }
+
+            $nextSubmission = $this->findNextSubmission(
+                busDetailId: $busDetailId,
+                date: $manualDate,
+                time: $manualTime,
+                lockForUpdate: true
+            );
+
+            if (
+                $nextSubmission &&
+                $newOdometer > (int) $nextSubmission->new_odometer
+            ) {
+                return [
+                    'saved' => false,
+                    'message' => 'New odometer cannot be higher than the next odometer reading of '
+                        .number_format((int) $nextSubmission->new_odometer).' km on '
+                        .Carbon::parse($nextSubmission->date)->format('M d, Y').' '
+                        .Carbon::parse($nextSubmission->time)->format('g:i A').'.',
+                ];
+            }
+
             $submission = OdometerSubmission::create([
                 'user_id' => Auth::id(),
-                'bus_detail_id' => $validated['bus_detail_id'],
-                'new_odometer' => $validated['new_odometer'],
+                'bus_detail_id' => $busDetailId,
+                'new_odometer' => $newOdometer,
                 'driver_name' => $validated['driver_name'] ?? null,
-                'diesel_consumption' => $validated['diesel_consumption'] ?? 0,
+                'diesel_consumption' => $dieselConsumption,
                 'date_bus_deployed' => $validated['date_bus_deployed'] ?? $manualDate,
                 'date' => $manualDate,
                 'time' => $manualTime,
             ]);
 
-            /*
-             * Optional:
-             * If checked, this will also deduct diesel stock automatically.
-             * Do not check this if you already encode diesel OUT separately.
-             */
             if (
                 $request->boolean('also_deduct_diesel_stock') &&
-                (float) ($validated['diesel_consumption'] ?? 0) > 0
+                $dieselConsumption > 0
             ) {
                 DieselStock::create([
                     'date' => $manualDate,
                     'type' => 'out',
-                    'liters' => $validated['diesel_consumption'],
+                    'liters' => $dieselConsumption,
                     'unit_cost' => null,
                     'total_cost' => null,
-                    'bus_detail_id' => $validated['bus_detail_id'],
+                    'bus_detail_id' => $busDetailId,
                     'reference_no' => 'ODO-'.$submission->id,
                     'remarks' => 'Auto diesel OUT from manual odometer encoding.',
                     'encoded_by' => Auth::id(),
                 ]);
             }
+
+            return [
+                'saved' => true,
+                'message' => 'Manual odometer record saved successfully.',
+            ];
         });
 
-        return back()->with('success', 'Manual odometer record saved successfully.');
+        if (! $result['saved']) {
+            return back()
+                ->withInput()
+                ->with('error', $result['message']);
+        }
+
+        return back()->with('success', $result['message']);
     }
 
     public function destroyOdometer(OdometerSubmission $odometerSubmission)
     {
         DB::transaction(function () use ($odometerSubmission) {
-
             DieselStock::where('reference_no', 'ODO-'.$odometerSubmission->id)
                 ->where('type', 'out')
                 ->where('bus_detail_id', $odometerSubmission->bus_detail_id)
@@ -308,5 +320,121 @@ class OdometerReportController extends Controller
         });
 
         return back()->with('success', 'Odometer record deleted successfully.');
+    }
+
+    private function buildOdometerRecords(
+        Collection $submissions,
+        Carbon $startDate,
+        ?int $lastChangeOilKm,
+        int $changeOilEvery
+    ): Collection {
+        $previousOdometers = [];
+
+        $busIdsForPrevious = $submissions
+            ->pluck('bus_detail_id')
+            ->filter()
+            ->unique()
+            ->values();
+
+        foreach ($busIdsForPrevious as $submissionBusId) {
+            $previousOdometers[(int) $submissionBusId] = OdometerSubmission::query()
+                ->where('bus_detail_id', (int) $submissionBusId)
+                ->whereDate('date', '<', $startDate->toDateString())
+                ->orderByDesc('date')
+                ->orderByDesc('time')
+                ->orderByDesc('id')
+                ->value('new_odometer');
+        }
+
+        return $submissions->map(function ($row) use (&$previousOdometers, $lastChangeOilKm, $changeOilEvery) {
+            $currentBusId = (int) $row->bus_detail_id;
+            $newOdometer = (int) $row->new_odometer;
+            $previousOdometer = $previousOdometers[$currentBusId] ?? null;
+
+            $totalKmRun = $previousOdometer !== null
+                ? $newOdometer - (int) $previousOdometer
+                : 0;
+
+            $diesel = (float) ($row->diesel_consumption ?? 0);
+
+            $kmPerLiter = $diesel > 0 && $totalKmRun > 0
+                ? $totalKmRun / $diesel
+                : 0;
+
+            $baseChangeOilKm = $lastChangeOilKm ?: $newOdometer;
+            $nextChangeOil = $baseChangeOilKm + $changeOilEvery;
+            $remainingKm = $nextChangeOil - $newOdometer;
+
+            $previousOdometers[$currentBusId] = $newOdometer;
+
+            return [
+                'id' => (int) $row->id,
+                'garage' => $row->garage,
+                'bus_name' => $row->bus_name,
+                'body_number' => $row->body_number,
+                'plate_number' => $row->plate_number,
+                'date' => $row->date,
+                'time' => $row->time,
+                'driver_name' => $row->driver_name ?: 'N/A',
+                'previous_odometer' => $previousOdometer,
+                'new_odometer' => $newOdometer,
+                'total_km_run' => $totalKmRun,
+                'diesel_consumption' => $diesel,
+                'km_per_liter' => $kmPerLiter,
+                'remaining_change_oil' => $remainingKm,
+            ];
+        });
+    }
+
+    private function findPreviousSubmission(
+        int $busDetailId,
+        string $date,
+        string $time,
+        bool $lockForUpdate = false
+    ): ?OdometerSubmission {
+        $query = OdometerSubmission::query()
+            ->where('bus_detail_id', $busDetailId)
+            ->where(function ($query) use ($date, $time) {
+                $query->whereDate('date', '<', $date)
+                    ->orWhere(function ($q) use ($date, $time) {
+                        $q->whereDate('date', $date)
+                            ->whereTime('time', '<', $time);
+                    });
+            })
+            ->orderByDesc('date')
+            ->orderByDesc('time')
+            ->orderByDesc('id');
+
+        if ($lockForUpdate) {
+            $query->lockForUpdate();
+        }
+
+        return $query->first();
+    }
+
+    private function findNextSubmission(
+        int $busDetailId,
+        string $date,
+        string $time,
+        bool $lockForUpdate = false
+    ): ?OdometerSubmission {
+        $query = OdometerSubmission::query()
+            ->where('bus_detail_id', $busDetailId)
+            ->where(function ($query) use ($date, $time) {
+                $query->whereDate('date', '>', $date)
+                    ->orWhere(function ($q) use ($date, $time) {
+                        $q->whereDate('date', $date)
+                            ->whereTime('time', '>', $time);
+                    });
+            })
+            ->orderBy('date')
+            ->orderBy('time')
+            ->orderBy('id');
+
+        if ($lockForUpdate) {
+            $query->lockForUpdate();
+        }
+
+        return $query->first();
     }
 }
