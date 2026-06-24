@@ -75,6 +75,6 @@ class BusController extends Controller
 
         return redirect()
             ->route('fleet.buses.index', $request->query())
-            ->with('success', 'Bus information updated successfully.');
+            ->with('success', "Bus {$bus->bus_no} updated successfully.");
     }
 }
