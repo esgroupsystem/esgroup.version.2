@@ -574,23 +574,34 @@
         </div>
 
         {{-- ODOMETER DETAILS --}}
-        <div class="card shadow-sm border-0 mb-4">
-            <div class="card-header bg-white border-bottom">
+        <div class="card shadow-sm border-0 mb-4 odometer-card">
+            <div class="card-header bg-white border-bottom odometer-card-header">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
-                        <h5 class="mb-1 text-900">
-                            <span class="fas fa-list me-2 text-primary"></span>
-                            Odometer Encoding Details
-                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="odometer-title-icon">
+                                <span class="fas fa-list"></span>
+                            </span>
 
-                        <small class="text-muted">
-                            Detailed bus odometer records with previous reading, new reading, KM run, diesel used, and KM/L.
+                            <h5 class="mb-0 text-900 fw-bold">
+                                Odometer Encoding Details
+                            </h5>
+                        </div>
+
+                        <small class="text-muted d-block mt-1">
+                            Previous ODO, New ODO, KM Run, Diesel Used, and KM/L records.
                         </small>
                     </div>
 
-                    <span class="badge bg-light text-dark border">
-                        {{ $odometerCount }} record(s)
-                    </span>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <span class="badge odometer-count-badge">
+                            {{ $odometerCount }} record(s)
+                        </span>
+
+                        <span class="badge bg-primary-subtle text-primary">
+                            {{ $periodLabel }}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -610,16 +621,16 @@
                 </div>
             @else
                 <div class="card-body p-0">
-                    <div class="table-responsive scrollbar">
-                        <table class="table table-hover mb-0 align-middle modern-table">
+                    <div class="table-responsive scrollbar odometer-table-wrap">
+                        <table class="table table-hover table-sm mb-0 align-middle compact-odometer-table">
                             <thead>
                                 <tr>
-                                    <th class="ps-3">Date Deployed</th>
-                                    <th>Bus Details</th>
+                                    <th class="ps-3">Date</th>
+                                    <th>Bus</th>
                                     <th>Time</th>
                                     <th>Driver</th>
-                                    <th class="text-end">Previous ODO</th>
-                                    <th class="text-end">New ODO</th>
+                                    <th class="text-end">Previous</th>
+                                    <th class="text-end">New</th>
                                     <th class="text-end">KM Run</th>
                                     <th class="text-end">Diesel</th>
                                     <th class="text-center">KM/L</th>
@@ -631,67 +642,84 @@
                                 @foreach ($records as $row)
                                     @php
                                         $kmPerLiterClass = 'success';
+                                        $kmPerLiterLabel = 'Good';
 
                                         if (($row['km_per_liter'] ?? 0) <= 0) {
                                             $kmPerLiterClass = 'secondary';
+                                            $kmPerLiterLabel = 'No Data';
                                         } elseif (($row['km_per_liter'] ?? 0) < 3) {
                                             $kmPerLiterClass = 'danger';
+                                            $kmPerLiterLabel = 'Low';
                                         } elseif (($row['km_per_liter'] ?? 0) < 5) {
                                             $kmPerLiterClass = 'warning';
+                                            $kmPerLiterLabel = 'Monitor';
                                         }
                                     @endphp
 
                                     <tr>
-                                        <td class="ps-3 text-nowrap">
+                                        <td class="ps-3 text-nowrap odometer-date-cell">
                                             <div class="fw-semibold text-900">
                                                 {{ \Carbon\Carbon::parse($row['date'])->format('M d, Y') }}
                                             </div>
                                         </td>
 
-                                        <td>
-                                            <div class="fw-bold text-900">
-                                                {{ $row['body_number'] ?? 'N/A' }}
-                                            </div>
+                                        <td class="odometer-bus-cell">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="bus-avatar">
+                                                    {{ substr($row['body_number'] ?? 'NA', -2) }}
+                                                </div>
 
-                                            <div class="fw-semibold text-primary">
-                                                {{ $row['bus_name'] ?? ($row['name'] ?? 'No Bus Name') }}
-                                            </div>
+                                                <div class="min-w-0">
+                                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                        <span class="fw-bold text-900">
+                                                            {{ $row['body_number'] ?? 'N/A' }}
+                                                        </span>
 
-                                            <small class="text-muted">
-                                                {{ $row['plate_number'] ?? '-' }} |
-                                                {{ $row['garage'] ?? '-' }}
-                                            </small>
+                                                        <span class="bus-company text-primary">
+                                                            {{ $row['bus_name'] ?? ($row['name'] ?? 'No Bus Name') }}
+                                                        </span>
+                                                    </div>
+
+                                                    <div class="bus-meta text-muted">
+                                                        {{ $row['plate_number'] ?? '-' }} · {{ $row['garage'] ?? '-' }}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </td>
 
                                         <td class="text-nowrap">
-                                            {{ \Carbon\Carbon::parse($row['time'])->format('g:i A') }}
+                                            <span class="odometer-soft-pill">
+                                                {{ \Carbon\Carbon::parse($row['time'])->format('g:i A') }}
+                                            </span>
                                         </td>
 
                                         <td>
-                                            <span class="fw-semibold">
+                                            <span class="driver-name">
                                                 {{ strtoupper($row['driver_name']) }}
                                             </span>
                                         </td>
 
-                                        <td class="text-end text-muted">
+                                        <td class="text-end text-muted numeric-cell">
                                             {{ $row['previous_odometer'] ? number_format($row['previous_odometer']) : '-' }}
                                         </td>
 
-                                        <td class="text-end fw-bold text-900">
+                                        <td class="text-end fw-bold text-900 numeric-cell">
                                             {{ number_format($row['new_odometer']) }}
                                         </td>
 
-                                        <td class="text-end fw-semibold">
-                                            {{ number_format($row['total_km_run']) }}
+                                        <td class="text-end numeric-cell">
+                                            <span class="km-run-value">
+                                                {{ number_format($row['total_km_run']) }}
+                                            </span>
                                         </td>
 
-                                        <td class="text-end">
-                                            {{ number_format($row['diesel_consumption'], 2) }} L
+                                        <td class="text-end numeric-cell">
+                                            {{ number_format($row['diesel_consumption'], 2) }}
+                                            <span class="text-muted">L</span>
                                         </td>
 
                                         <td class="text-center">
-                                            <span
-                                                class="badge rounded-pill bg-{{ $kmPerLiterClass }}-subtle text-{{ $kmPerLiterClass }}">
+                                            <span class="km-liter-badge km-liter-{{ $kmPerLiterClass }}">
                                                 {{ number_format($row['km_per_liter'], 2) }}
                                             </span>
                                         </td>
@@ -704,7 +732,7 @@
                                                 @csrf
                                                 @method('DELETE')
 
-                                                <button type="submit" class="btn btn-sm btn-falcon-danger"
+                                                <button type="submit" class="btn odometer-delete-btn"
                                                     title="Delete Odometer">
                                                     <span class="fas fa-trash-alt"></span>
                                                 </button>
@@ -720,17 +748,20 @@
                                         Total / Average
                                     </td>
 
-                                    <td class="text-end fw-bold">
+                                    <td class="text-end fw-bold numeric-cell">
                                         {{ number_format($totalKm) }}
                                     </td>
 
-                                    <td class="text-end fw-bold">
-                                        {{ number_format($totalLiters, 2) }} L
+                                    <td class="text-end fw-bold numeric-cell">
+                                        {{ number_format($totalLiters, 2) }}
+                                        <span class="text-muted">L</span>
                                     </td>
 
-                                    <td class="text-center pe-3 fw-bold">
+                                    <td class="text-center fw-bold">
                                         {{ number_format($averageKmPerLiter, 2) }}
                                     </td>
+
+                                    <td></td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -739,7 +770,7 @@
             @endif
 
             @if ($submissions->hasPages())
-                <div class="card-footer bg-white border-top py-3">
+                <div class="card-footer bg-white border-top py-2">
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <small class="text-muted">
                             Showing {{ $submissions->firstItem() }} to {{ $submissions->lastItem() }}
@@ -1205,6 +1236,211 @@
 
         .modal-header .modal-title {
             color: #344050;
+        }
+
+        .odometer-card {
+            border-radius: 14px;
+            overflow: hidden;
+        }
+
+        .odometer-card-header {
+            padding: .85rem 1rem;
+        }
+
+        .odometer-title-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 9px;
+            background: rgba(44, 123, 229, .12);
+            color: #2c7be5;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+        }
+
+        .odometer-count-badge {
+            background: #f6f9fc;
+            color: #344050;
+            border: 1px solid #d8e2ef;
+            font-weight: 700;
+        }
+
+        .odometer-table-wrap {
+            max-height: 620px;
+            overflow: auto;
+        }
+
+        .compact-odometer-table {
+            min-width: 1180px;
+            font-size: 13px;
+        }
+
+        .compact-odometer-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f8fafc;
+            color: #5e6e82;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            border-bottom: 1px solid #edf2f9;
+            padding: .55rem .75rem;
+            white-space: nowrap;
+        }
+
+        .compact-odometer-table tbody td {
+            padding: .48rem .75rem;
+            border-bottom: 1px solid #edf2f9;
+            vertical-align: middle;
+        }
+
+        .compact-odometer-table tbody tr:hover {
+            background: #fbfdff;
+        }
+
+        .compact-odometer-table tfoot td {
+            background: #f8fafc;
+            color: #344050;
+            border-top: 1px solid #d8e2ef;
+            padding: .65rem .75rem;
+        }
+
+        .odometer-date-cell {
+            width: 120px;
+        }
+
+        .odometer-bus-cell {
+            min-width: 260px;
+        }
+
+        .bus-avatar {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: #edf2f9;
+            color: #2c7be5;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        .bus-company {
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .bus-meta {
+            font-size: 11px;
+            line-height: 1.2;
+        }
+
+        .odometer-soft-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 72px;
+            padding: .22rem .45rem;
+            border-radius: 999px;
+            background: #f6f9fc;
+            color: #5e6e82;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .driver-name {
+            color: #344050;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .02em;
+        }
+
+        .numeric-cell {
+            font-variant-numeric: tabular-nums;
+            white-space: nowrap;
+        }
+
+        .km-run-value {
+            color: #2c7be5;
+            font-weight: 800;
+        }
+
+        .km-liter-badge {
+            display: inline-flex;
+            min-width: 52px;
+            justify-content: center;
+            align-items: center;
+            padding: .24rem .45rem;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .km-liter-success {
+            background: rgba(0, 210, 122, .12);
+            color: #00864e;
+        }
+
+        .km-liter-warning {
+            background: rgba(246, 195, 67, .20);
+            color: #9d6500;
+        }
+
+        .km-liter-danger {
+            background: rgba(230, 55, 87, .12);
+            color: #e63757;
+        }
+
+        .km-liter-secondary {
+            background: rgba(116, 129, 148, .14);
+            color: #748194;
+        }
+
+        .odometer-delete-btn {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border-radius: 8px;
+            border: 1px solid #ffd6df;
+            background: #fff;
+            color: #e63757;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .odometer-delete-btn:hover {
+            background: #fff0f3;
+            color: #c8233f;
+            border-color: #ffb8c7;
+        }
+
+        .min-w-0 {
+            min-width: 0;
+        }
+
+        @media (max-width: 768px) {
+            .compact-odometer-table {
+                min-width: 1080px;
+                font-size: 12px;
+            }
+
+            .compact-odometer-table tbody td {
+                padding: .42rem .6rem;
+            }
+
+            .bus-avatar {
+                width: 30px;
+                height: 30px;
+                border-radius: 8px;
+            }
         }
 
         @media (max-width: 768px) {
