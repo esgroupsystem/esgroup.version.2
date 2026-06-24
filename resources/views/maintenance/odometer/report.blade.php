@@ -665,10 +665,6 @@
 
                                         <td class="odometer-bus-cell">
                                             <div class="d-flex align-items-center gap-2">
-                                                <div class="bus-avatar">
-                                                    {{ substr($row['body_number'] ?? 'NA', -2) }}
-                                                </div>
-
                                                 <div class="min-w-0">
                                                     <div class="d-flex align-items-center gap-2 flex-wrap">
                                                         <span class="fw-bold text-900">
