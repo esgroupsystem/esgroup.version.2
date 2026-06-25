@@ -16,15 +16,16 @@ class StoreBusRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'bus_no' => trim((string) $this->bus_no),
-            'plate_no' => $this->plate_no ? trim((string) $this->plate_no) : null,
-            'company' => $this->company ? trim((string) $this->company) : null,
-            'garage' => $this->garage ? trim((string) $this->garage) : null,
-            'chassis_number' => $this->chassis_number ? trim((string) $this->chassis_number) : null,
-            'engine_number' => $this->engine_number ? trim((string) $this->engine_number) : null,
-            'case_number' => $this->case_number ? trim((string) $this->case_number) : null,
+            'bus_no' => mb_strtoupper(trim((string) $this->bus_no)),
+            'plate_no' => $this->plate_no ? mb_strtoupper(trim((string) $this->plate_no)) : null,
+            'company' => $this->company ? mb_strtoupper(trim((string) $this->company)) : null,
+            'garage' => $this->garage ? mb_strtoupper(trim((string) $this->garage)) : null,
+            'chassis_number' => $this->chassis_number ? mb_strtoupper(trim((string) $this->chassis_number)) : null,
+            'engine_number' => $this->engine_number ? mb_strtoupper(trim((string) $this->engine_number)) : null,
+            'case_number' => $this->case_number ? mb_strtoupper(trim((string) $this->case_number)) : null,
             'operational_status' => $this->operational_status ?: Bus::STATUS_ACTIVE,
             'sale_status' => $this->sale_status ?: Bus::SALE_NOT_FOR_SALE,
+            'monitoring_remarks' => $this->monitoring_remarks ? trim((string) $this->monitoring_remarks) : null,
         ]);
     }
 

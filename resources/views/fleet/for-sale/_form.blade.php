@@ -48,6 +48,8 @@
         @method($method)
     @endif
 
+    <input type="hidden" name="bus_id" id="bus_id" value="{{ old('bus_id', $forSaleRecord->bus_id) }}">
+
     <div class="row g-3">
 
         {{-- UNIT IDENTIFICATION --}}
@@ -60,14 +62,57 @@
                         </div>
                         <div>
                             <h6 class="mb-0 fw-semibold">Unit Identification</h6>
-                            <small class="text-muted">Bus number, plate number, company, and garage details.</small>
+                            <small class="text-muted">
+                                Select the exact bus record. This prevents wrong syncing when bus numbers are
+                                duplicated.
+                            </small>
                         </div>
                     </div>
                 </div>
 
                 <div class="for-sale-section-body">
                     <div class="row g-3">
-                        <div class="col-lg-3 col-md-6">
+
+                        <div class="col-lg-4 col-md-6">
+                            <label class="form-label fw-semibold">
+                                Select Existing Bus
+                            </label>
+
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <span class="fas fa-search"></span>
+                                </span>
+
+                                <select id="bus_selector" class="form-select @error('bus_id') is-invalid @enderror">
+                                    <option value="">Manual Entry / New Bus</option>
+
+                                    @foreach ($buses as $bus)
+                                        <option value="{{ $bus->id }}" @selected((int) old('bus_id', $forSaleRecord->bus_id) === (int) $bus->id)>
+                                            {{ $bus->bus_no }}
+                                            @if ($bus->plate_no)
+                                                | {{ $bus->plate_no }}
+                                            @endif
+                                            @if ($bus->company)
+                                                | {{ $bus->company }}
+                                            @endif
+                                            @if ($bus->garage)
+                                                | {{ $bus->garage }}
+                                            @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            @error('bus_id')
+                                <div class="invalid-feedback d-block">{{ $message }}</div>
+                            @enderror
+
+                            <small class="text-muted">
+                                Use this when the bus already exists in Bus Monitoring.
+                            </small>
+                        </div>
+
+                        <div class="col-lg-2 col-md-6">
                             <label class="form-label fw-semibold">
                                 Bus Number <span class="text-danger">*</span>
                             </label>
@@ -76,37 +121,27 @@
                                 <span class="input-group-text">
                                     <span class="fas fa-hashtag"></span>
                                 </span>
-                                <input type="text" name="bus_no" list="busNumberList"
+
+                                <input type="text" name="bus_no" id="bus_no"
                                     value="{{ old('bus_no', $forSaleRecord->bus_no) }}"
                                     class="form-control @error('bus_no') is-invalid @enderror"
                                     placeholder="Example: 4720035">
                             </div>
 
-                            <datalist id="busNumberList">
-                                @foreach ($buses as $bus)
-                                    <option value="{{ $bus->bus_no }}">
-                                        {{ $bus->plate_no }} / {{ $bus->company }} / {{ $bus->garage }}
-                                    </option>
-                                @endforeach
-                            </datalist>
-
                             @error('bus_no')
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
-
-                            <small class="text-muted">
-                                Select or type a valid bus number.
-                            </small>
                         </div>
 
-                        <div class="col-lg-3 col-md-6">
+                        <div class="col-lg-2 col-md-6">
                             <label class="form-label fw-semibold">Plate Number</label>
 
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <span class="fas fa-id-card"></span>
                                 </span>
-                                <input type="text" name="plate_no"
+
+                                <input type="text" name="plate_no" id="plate_no"
                                     value="{{ old('plate_no', $forSaleRecord->plate_no) }}"
                                     class="form-control for-sale-readonly @error('plate_no') is-invalid @enderror"
                                     placeholder="Example: NFZ 4739" readonly>
@@ -117,14 +152,15 @@
                             @enderror
                         </div>
 
-                        <div class="col-lg-3 col-md-6">
+                        <div class="col-lg-2 col-md-6">
                             <label class="form-label fw-semibold">Company</label>
 
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <span class="fas fa-building"></span>
                                 </span>
-                                <input type="text" name="company"
+
+                                <input type="text" name="company" id="company"
                                     value="{{ old('company', $forSaleRecord->company) }}"
                                     class="form-control for-sale-readonly @error('company') is-invalid @enderror"
                                     placeholder="Example: JELL" readonly>
@@ -135,14 +171,15 @@
                             @enderror
                         </div>
 
-                        <div class="col-lg-3 col-md-6">
+                        <div class="col-lg-2 col-md-6">
                             <label class="form-label fw-semibold">Garage</label>
 
                             <div class="input-group">
                                 <span class="input-group-text">
                                     <span class="fas fa-warehouse"></span>
                                 </span>
-                                <input type="text" name="garage"
+
+                                <input type="text" name="garage" id="garage"
                                     value="{{ old('garage', $forSaleRecord->garage) }}"
                                     class="form-control for-sale-readonly @error('garage') is-invalid @enderror"
                                     placeholder="Example: BALINTAWAK" readonly>
@@ -152,6 +189,7 @@
                                 <div class="invalid-feedback d-block">{{ $message }}</div>
                             @enderror
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -167,8 +205,9 @@
                         </div>
                         <div>
                             <h6 class="mb-0 fw-semibold">Status and Location</h6>
-                            <small class="text-muted">Current status, storage area, and unit location
-                                monitoring.</small>
+                            <small class="text-muted">
+                                Current status, storage area, and unit location monitoring.
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -184,6 +223,7 @@
                                 <span class="input-group-text">
                                     <span class="fas fa-signal"></span>
                                 </span>
+
                                 <select name="status" class="form-select @error('status') is-invalid @enderror">
                                     @foreach ($status_options as $value => $label)
                                         <option value="{{ $value }}" @selected(old('status', $forSaleRecord->status ?? \App\Models\Bus::STATUS_ACTIVE) === $value)>
@@ -205,6 +245,7 @@
                                 <span class="input-group-text">
                                     <span class="fas fa-map-marker-alt"></span>
                                 </span>
+
                                 <input type="text" name="storage_area"
                                     value="{{ old('storage_area', $forSaleRecord->storage_area) }}"
                                     class="form-control @error('storage_area') is-invalid @enderror"
@@ -223,6 +264,7 @@
                                 <span class="input-group-text">
                                     <span class="fas fa-location-arrow"></span>
                                 </span>
+
                                 <input type="text" name="unit_location"
                                     value="{{ old('unit_location', $forSaleRecord->unit_location) }}"
                                     class="form-control @error('unit_location') is-invalid @enderror"
@@ -241,6 +283,7 @@
                                 <span class="input-group-text">
                                     <span class="fas fa-tasks"></span>
                                 </span>
+
                                 <input type="text" name="progress"
                                     value="{{ old('progress', $forSaleRecord->progress) }}"
                                     class="form-control @error('progress') is-invalid @enderror"
@@ -280,6 +323,7 @@
                                 <span class="input-group-text">
                                     <span class="fas fa-calendar-alt"></span>
                                 </span>
+
                                 <input type="date" name="breakdown_start_date"
                                     value="{{ old('breakdown_start_date', $forSaleRecord->breakdown_start_date?->format('Y-m-d')) }}"
                                     class="form-control @error('breakdown_start_date') is-invalid @enderror">
@@ -297,6 +341,7 @@
                                 <span class="input-group-text">
                                     <span class="fas fa-calendar-check"></span>
                                 </span>
+
                                 <input type="date" name="breakdown_end_date"
                                     value="{{ old('breakdown_end_date', $forSaleRecord->breakdown_end_date?->format('Y-m-d')) }}"
                                     class="form-control @error('breakdown_end_date') is-invalid @enderror">
@@ -314,6 +359,7 @@
                                 <span class="input-group-text">
                                     <span class="fas fa-table-columns"></span>
                                 </span>
+
                                 <input type="text" name="column_11"
                                     value="{{ old('column_11', $forSaleRecord->column_11) }}"
                                     class="form-control @error('column_11') is-invalid @enderror"
@@ -332,6 +378,7 @@
                                 <span class="input-group-text">
                                     <span class="fas fa-clock"></span>
                                 </span>
+
                                 <input type="text"
                                     value="{{ number_format($forSaleRecord->exists ? $forSaleRecord->live_days_in_breakdown : 0) }}"
                                     class="form-control for-sale-readonly fw-semibold" readonly>
@@ -405,35 +452,51 @@
     document.addEventListener('DOMContentLoaded', function() {
         const buses = @json($buses_json);
 
-        const busNoInput = document.querySelector('[name="bus_no"]');
+        const selector = document.getElementById('bus_selector');
+        const busIdInput = document.getElementById('bus_id');
+        const busNoInput = document.getElementById('bus_no');
+        const plateInput = document.getElementById('plate_no');
+        const companyInput = document.getElementById('company');
+        const garageInput = document.getElementById('garage');
 
-        if (!busNoInput) {
+        if (!selector || !busIdInput || !busNoInput) {
             return;
         }
 
-        busNoInput.addEventListener('change', function() {
-            const busNo = this.value.trim().toUpperCase();
-            const bus = buses[busNo];
+        function fillBusDetails(busId) {
+            const bus = buses[String(busId)];
+
+            busIdInput.value = busId || '';
 
             if (!bus) {
                 return;
             }
 
-            const plateInput = document.querySelector('[name="plate_no"]');
-            const companyInput = document.querySelector('[name="company"]');
-            const garageInput = document.querySelector('[name="garage"]');
+            busNoInput.value = bus.bus_no || '';
 
-            if (plateInput && !plateInput.value) {
-                plateInput.value = bus.plate_no ?? '';
+            if (plateInput) {
+                plateInput.value = bus.plate_no || '';
             }
 
-            if (companyInput && !companyInput.value) {
-                companyInput.value = bus.company ?? '';
+            if (companyInput) {
+                companyInput.value = bus.company || '';
             }
 
-            if (garageInput && !garageInput.value) {
-                garageInput.value = bus.garage ?? '';
+            if (garageInput) {
+                garageInput.value = bus.garage || '';
             }
+        }
+
+        selector.addEventListener('change', function() {
+            fillBusDetails(this.value);
+        });
+
+        busNoInput.addEventListener('input', function() {
+            if (selector.value) {
+                return;
+            }
+
+            busIdInput.value = '';
         });
     });
 </script>

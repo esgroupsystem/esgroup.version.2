@@ -11,6 +11,10 @@ use InvalidArgumentException;
 
 class BusService
 {
+    public function __construct(
+        private readonly BusForSaleSyncService $busForSaleSyncService
+    ) {}
+
     public function getMonitoringDashboard(array $filters = []): array
     {
         $filters = $this->normalizeFilters($filters);
@@ -469,24 +473,43 @@ class BusService
     private function forSaleMatchRaw(string $busReference, string $forSaleReference): string
     {
         $busId = $this->qualifiedColumn($busReference, 'id');
-        $busNo = $this->qualifiedColumn($busReference, 'bus_no');
-
         $forSaleBusId = $this->qualifiedColumn($forSaleReference, 'bus_id');
-        $forSaleBusNo = $this->qualifiedColumn($forSaleReference, 'bus_no');
 
-        return "
-            (
-                ({$forSaleBusId} IS NOT NULL AND {$forSaleBusId} = {$busId})
-                OR
-                (
-                    {$forSaleBusNo} IS NOT NULL
-                    AND {$forSaleBusNo} != ''
-                    AND {$busNo} IS NOT NULL
-                    AND {$busNo} != ''
-                    AND UPPER(TRIM({$forSaleBusNo})) = UPPER(TRIM({$busNo}))
-                )
-            )
-        ";
+        return "{$forSaleBusId} IS NOT NULL AND {$forSaleBusId} = {$busId}";
+    }
+
+    private function normalizeBusData(array $data): array
+    {
+        return [
+            'bus_no' => $this->uppercase($data['bus_no'] ?? null),
+            'plate_no' => $this->uppercase($data['plate_no'] ?? null),
+            'company' => $this->uppercase($data['company'] ?? null),
+            'garage' => $this->uppercase($data['garage'] ?? null),
+            'chassis_number' => $this->uppercase($data['chassis_number'] ?? null),
+            'engine_number' => $this->uppercase($data['engine_number'] ?? null),
+            'case_number' => $this->uppercase($data['case_number'] ?? null),
+            'operational_status' => $data['operational_status'] ?? Bus::STATUS_ACTIVE,
+            'sale_status' => $data['sale_status'] ?? Bus::SALE_NOT_FOR_SALE,
+            'monitoring_remarks' => $this->nullableString($data['monitoring_remarks'] ?? null),
+        ];
+    }
+
+    private function uppercase(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return null;
+        }
+
+        return mb_strtoupper($value);
+    }
+
+    private function nullableString(?string $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : $value;
     }
 
     private function forSaleBusIds(): Collection
@@ -672,22 +695,43 @@ class BusService
 
     public function createBus(array $data): Bus
     {
-        $data['status_updated_at'] = now();
+        return DB::transaction(function () use ($data): Bus {
+            $data = $this->normalizeBusData($data);
+            $data['status_updated_at'] = now();
 
-        return Bus::create($data);
+            $bus = Bus::query()->create($data);
+
+            $this->busForSaleSyncService->syncFromBus($bus);
+
+            return $bus->fresh(['currentForSaleRecord']);
+        });
     }
 
     public function updateBus(Bus $bus, array $data): Bus
     {
-        $bus->fill($data);
+        return DB::transaction(function () use ($bus, $data): Bus {
+            $data = $this->normalizeBusData($data);
 
-        if ($bus->isDirty(['operational_status', 'sale_status'])) {
-            $bus->status_updated_at = now();
-        }
+            $bus->fill($data);
 
-        $bus->save();
+            if ($bus->isDirty([
+                'bus_no',
+                'plate_no',
+                'company',
+                'garage',
+                'operational_status',
+                'sale_status',
+                'monitoring_remarks',
+            ])) {
+                $bus->status_updated_at = now();
+            }
 
-        return $bus->refresh();
+            $bus->save();
+
+            $this->busForSaleSyncService->syncFromBus($bus);
+
+            return $bus->fresh(['currentForSaleRecord']);
+        });
     }
 
     private function busTable(): string

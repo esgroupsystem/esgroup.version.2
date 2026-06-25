@@ -61,6 +61,11 @@ class Bus extends Model
         return $this->hasMany(BusForSaleRecord::class);
     }
 
+    public function forSaleRecord(): HasOne
+    {
+        return $this->hasOne(BusForSaleRecord::class);
+    }
+
     public function currentForSaleRecord(): HasOne
     {
         return $this->hasOne(BusForSaleRecord::class)->latestOfMany();

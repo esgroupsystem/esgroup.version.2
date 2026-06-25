@@ -11,6 +11,10 @@ use Illuminate\Support\Facades\DB;
 
 class ForSaleUnitService
 {
+    public function __construct(
+        private readonly BusForSaleSyncService $busForSaleSyncService
+    ) {}
+
     public function getIndexData(array $filters = []): array
     {
         $records = $this->filteredQuery($filters)
@@ -34,23 +38,34 @@ class ForSaleUnitService
 
     public function getFormData(): array
     {
+        $buses = Bus::query()
+            ->orderBy('bus_no')
+            ->orderBy('plate_no')
+            ->orderBy('company')
+            ->orderBy('garage')
+            ->get([
+                'id',
+                'bus_no',
+                'plate_no',
+                'company',
+                'garage',
+            ]);
+
         return [
-            'buses_json' => Bus::query()
-                ->get(['bus_no', 'plate_no', 'company', 'garage'])
-                ->mapWithKeys(function ($bus) {
-                    return [
-                        strtoupper($bus->bus_no) => [
-                            'plate_no' => $bus->plate_no,
-                            'company' => $bus->company,
-                            'garage' => $bus->garage,
-                        ],
-                    ];
-                }),
+            'buses_json' => $buses->mapWithKeys(function (Bus $bus): array {
+                return [
+                    (string) $bus->id => [
+                        'id' => $bus->id,
+                        'bus_no' => $bus->bus_no,
+                        'plate_no' => $bus->plate_no,
+                        'company' => $bus->company,
+                        'garage' => $bus->garage,
+                    ],
+                ];
+            })->toArray(),
 
             'status_options' => BusForSaleRecord::statusOptions(),
-            'buses' => Bus::query()
-                ->orderBy('bus_no')
-                ->get(['id', 'bus_no', 'plate_no', 'company', 'garage']),
+            'buses' => $buses,
         ];
     }
 
@@ -60,9 +75,12 @@ class ForSaleUnitService
             $data = $this->normalizeData($validated);
             $data['days_in_breakdown'] = $this->computeDaysInBreakdown($data);
 
-            $record = BusForSaleRecord::query()->create($data);
+            $record = $this->existingRecordForData($data) ?? new BusForSaleRecord;
 
-            $this->syncBusFromRecord($record);
+            $record->fill($data);
+            $record->save();
+
+            $this->busForSaleSyncService->syncFromForSaleRecord($record);
 
             return $record->fresh(['bus']);
         });
@@ -74,9 +92,10 @@ class ForSaleUnitService
             $data = $this->normalizeData($validated);
             $data['days_in_breakdown'] = $this->computeDaysInBreakdown($data);
 
-            $record->update($data);
+            $record->fill($data);
+            $record->save();
 
-            $this->syncBusFromRecord($record);
+            $this->busForSaleSyncService->syncFromForSaleRecord($record);
 
             return $record->fresh(['bus']);
         });
@@ -104,6 +123,17 @@ class ForSaleUnitService
                 ]);
             }
         });
+    }
+
+    private function existingRecordForData(array $data): ?BusForSaleRecord
+    {
+        if (empty($data['bus_id'])) {
+            return null;
+        }
+
+        return BusForSaleRecord::query()
+            ->where('bus_id', $data['bus_id'])
+            ->first();
     }
 
     private function filteredQuery(array $filters): Builder
@@ -159,40 +189,10 @@ class ForSaleUnitService
         ];
     }
 
-    private function syncBusFromRecord(BusForSaleRecord $record): void
-    {
-        $bus = Bus::query()
-            ->where('bus_no', $record->bus_no)
-            ->first();
-
-        if (! $bus) {
-            $bus = new Bus([
-                'bus_no' => $record->bus_no,
-            ]);
-        }
-
-        $bus->fill([
-            'plate_no' => $record->plate_no,
-            'company' => $record->company,
-            'garage' => $record->garage,
-            'operational_status' => $record->status,
-            'sale_status' => Bus::SALE_FOR_SALE,
-            'monitoring_remarks' => $record->remarks,
-            'status_updated_at' => now(),
-        ]);
-
-        $bus->save();
-
-        if ($record->bus_id !== $bus->id) {
-            $record->updateQuietly([
-                'bus_id' => $bus->id,
-            ]);
-        }
-    }
-
     private function normalizeData(array $data): array
     {
         return [
+            'bus_id' => $this->nullableInteger($data['bus_id'] ?? null),
             'bus_no' => $this->uppercase($data['bus_no'] ?? null),
             'plate_no' => $this->uppercase($data['plate_no'] ?? null),
             'company' => $this->uppercase($data['company'] ?? null),
@@ -270,6 +270,15 @@ class ForSaleUnitService
         $value = trim((string) $value);
 
         return $value === '' ? null : $value;
+    }
+
+    private function nullableInteger(mixed $value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (int) $value;
     }
 
     private function filled(array $filters, string $key): bool
