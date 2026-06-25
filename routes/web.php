@@ -4,6 +4,7 @@ use App\Http\Controllers\Accounting\AccountingController;
 use App\Http\Controllers\AllBusController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\BusDetailController;
+use App\Http\Controllers\Chairman\HrDataController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Fleet\BusController;
@@ -112,6 +113,22 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         Route::get('/change-password', 'changePasswordForm')->name('change.password.form');
         Route::post('/change-password', 'changePasswordUpdate')->name('change.password.update');
     });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Chairman Access Only
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware(['auth'])
+        ->prefix('chairman')
+        ->name('chairman.')
+        ->controller(HrDataController::class)
+        ->group(function () {
+            Route::get('/hr-data', 'index')
+                ->middleware('permission:chairman.view')
+                ->name('hr-data.index');
+        });
 
     /*
     |--------------------------------------------------------------------------

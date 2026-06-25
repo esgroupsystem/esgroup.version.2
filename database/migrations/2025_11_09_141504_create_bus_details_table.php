@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->id();
             $table->string('garage')->nullable(false);
             $table->string('name')->nullable(false);
-            $table->string('body_number')->unique();
+            $table->string('body_number')->nullable();
             $table->string('plate_number')->nullable();
             $table->timestamps();
         });

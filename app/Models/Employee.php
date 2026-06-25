@@ -82,4 +82,14 @@ class Employee extends Model
     {
         return $this->hasMany(\App\Models\Claim::class);
     }
+
+    public function employeeLeaves()
+    {
+        return $this->hasMany(EmployeeLeave::class);
+    }
+
+    public function latestHistory()
+    {
+        return $this->hasOne(EmployeeHistory::class)->latestOfMany();
+    }
 }

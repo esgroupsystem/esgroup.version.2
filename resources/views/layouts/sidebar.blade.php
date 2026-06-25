@@ -50,6 +50,15 @@
                             </li>
                         @endcan
 
+                        @can('chairman.view')
+                            <li class="nav-item">
+                                <a class="nav-link {{ request()->is('chairman/hr-data') ? 'active' : '' }}"
+                                    href="{{ route('chairman.hr-data.index') }}">
+                                    All Data
+                                </a>
+                            </li>
+                        @endcan
+
                         {{-- HR Dashboard --}}
                         @can('hr-dashboard.view')
                             <li class="nav-item">
