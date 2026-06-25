@@ -198,16 +198,6 @@ class DailyAttendanceSummaryService
             });
 
         if ($this->columnExists($table, 'work_date')) {
-            $permanentSchedule = (clone $baseQuery)
-                ->whereNull('work_date')
-                ->latest('updated_at')
-                ->latest('id')
-                ->first();
-
-            if ($permanentSchedule) {
-                return $permanentSchedule;
-            }
-
             $exactDateSchedule = (clone $baseQuery)
                 ->whereDate('work_date', $workDate->toDateString())
                 ->latest('updated_at')
@@ -216,6 +206,16 @@ class DailyAttendanceSummaryService
 
             if ($exactDateSchedule) {
                 return $exactDateSchedule;
+            }
+
+            $permanentSchedule = (clone $baseQuery)
+                ->whereNull('work_date')
+                ->latest('updated_at')
+                ->latest('id')
+                ->first();
+
+            if ($permanentSchedule) {
+                return $permanentSchedule;
             }
         }
 

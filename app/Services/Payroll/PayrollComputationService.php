@@ -206,19 +206,23 @@ class PayrollComputationService
 
         $monthlyCycleBasis = $this->monthlyCycleGovernmentBasis($payroll, $first, $currentGovernmentBasis);
 
-        $basisMode = config('payroll.government_basis', []);
-        $sssBasis = ($basisMode['sss'] ?? 'actual_cycle_basic') === 'fixed_monthly_basic'
-            ? $rates['monthly_rate']
-            : $monthlyCycleBasis['amount'];
-        $philHealthBasis = ($basisMode['philhealth'] ?? 'fixed_monthly_basic') === 'actual_cycle_basic'
-            ? $monthlyCycleBasis['amount']
-            : $rates['monthly_rate'];
-        $pagibigBasis = ($basisMode['pagibig'] ?? 'actual_cycle_basic') === 'fixed_monthly_basic'
-            ? $rates['monthly_rate']
-            : $monthlyCycleBasis['amount'];
+        /*
+         | Government deductions follow the employee salary profile.
+         | Tax is disabled by company policy.
+         |
+         | Monthly employees: use fixed monthly salary as the statutory basis.
+         | Daily/hourly employees: use the resolved monthly-cycle basis.
+         */
+        $governmentBasis = $isMonthlyEmployee
+            ? (float) $rates['monthly_rate']
+            : (float) $monthlyCycleBasis['amount'];
+
+        $sssBasis = $governmentBasis;
+        $philHealthBasis = $governmentBasis;
+        $pagibigBasis = $governmentBasis;
 
         $governmentRaw = $this->governmentDeductionService->compute([
-            'monthly_basic' => $monthlyCycleBasis['amount'],
+            'monthly_basic' => $governmentBasis,
             'sss_monthly_basic' => $sssBasis,
             'philhealth_monthly_basic' => $philHealthBasis,
             'pagibig_monthly_basic' => $pagibigBasis,
@@ -229,8 +233,26 @@ class PayrollComputationService
         $governmentRaw['philhealth_basis'] = $philHealthBasis;
         $governmentRaw['pagibig_basis'] = $pagibigBasis;
 
-        $government = $this->governmentDeductionService->applyDeductionSchedule($governmentRaw, $cutoffType);
+        $governmentSchedules = [
+            'sss' => $this->profileSchedule($rates['salary_model'], 'sss')
+                ?? config('payroll.government_deduction_schedule.sss', 'first_cutoff'),
+
+            'philhealth' => $this->profileSchedule($rates['salary_model'], 'philhealth')
+                ?? config('payroll.government_deduction_schedule.philhealth', 'second_cutoff'),
+
+            'pagibig' => $this->profileSchedule($rates['salary_model'], 'pagibig')
+                ?? config('payroll.government_deduction_schedule.pagibig', 'second_cutoff'),
+        ];
+
+        $government = $this->governmentDeductionService->applyDeductionSchedule(
+            $governmentRaw,
+            $cutoffType,
+            $governmentSchedules,
+            $taxableCompensation
+        );
+
         $government = $this->applyEmployeeGovernmentProfileIfConfigured($government, $governmentRaw, $rates, $cutoffType);
+        $government = $this->refreshGovernmentTotals($government);
 
         $netPay = round(
             $grossPay
@@ -608,7 +630,7 @@ class PayrollComputationService
             return $this->refreshGovernmentTotals($government);
         }
 
-        $scheduleMeta = [];
+        $scheduleMeta = $government['schedule_meta'] ?? [];
 
         foreach (['sss', 'philhealth', 'pagibig'] as $key) {
             $schedule = $this->profileSchedule($salary, $key);
@@ -621,49 +643,73 @@ class PayrollComputationService
             $employerField = $key.'_employer';
 
             if ($employeeAmount !== null || $schedule !== null) {
-                $government[$employeeField] = $matchesCutoff ? round((float) ($employeeAmount ?? $government[$employeeField] ?? 0), 2) : 0.00;
+                $government[$employeeField] = $matchesCutoff
+                    ? round((float) ($employeeAmount ?? $government[$employeeField] ?? 0), 2)
+                    : 0.00;
             }
 
             if ($employerAmount !== null || $schedule !== null) {
-                $government[$employerField] = $matchesCutoff ? round((float) ($employerAmount ?? $government[$employerField] ?? 0), 2) : 0.00;
+                $government[$employerField] = $matchesCutoff
+                    ? round((float) ($employerAmount ?? $government[$employerField] ?? 0), 2)
+                    : 0.00;
             }
 
             $scheduleMeta[$key] = [
-                'schedule' => $schedule ?? 'computed/default',
+                'schedule' => $schedule ?? data_get($scheduleMeta, $key.'.schedule', 'computed/default'),
                 'matched_cutoff' => $matchesCutoff,
                 'profile_employee_amount' => $employeeAmount,
                 'profile_employer_amount' => $employerAmount,
                 'raw_employee_before_profile' => $governmentRaw[$employeeField] ?? null,
                 'raw_employer_before_profile' => $governmentRaw[$employerField] ?? null,
+                'final_employee_share' => round((float) ($government[$employeeField] ?? 0), 2),
+                'final_employer_share' => round((float) ($government[$employerField] ?? 0), 2),
             ];
         }
 
+        $scheduleMeta['withholding_tax'] = [
+            'schedule' => 'none',
+            'matched_cutoff' => false,
+            'final_employee_share' => 0.00,
+            'remarks' => 'Disabled by company policy. Tax is not deducted in payroll.',
+        ];
+
         $government['schedule_meta'] = $scheduleMeta;
+        $government['withholding_tax'] = 0.00;
 
         return $this->refreshGovernmentTotals($government);
     }
 
-    protected function profileSchedule(object $salary, string $key): ?string
+    protected function profileSchedule(?object $salary, string $key): ?string
     {
+        if (! $salary) {
+            return null;
+        }
+
         $candidates = match ($key) {
             'sss' => [
+                'sss_contribution_cutoff',
                 'sss_deduction_schedule',
                 'sss_schedule',
                 'sss_cutoff_schedule',
                 'sss_contribution_schedule',
             ],
+
             'philhealth' => [
+                'philhealth_contribution_cutoff',
                 'philhealth_deduction_schedule',
                 'philhealth_schedule',
                 'philhealth_cutoff_schedule',
                 'philhealth_contribution_schedule',
             ],
+
             'pagibig' => [
+                'pagibig_contribution_cutoff',
                 'pagibig_deduction_schedule',
                 'pagibig_schedule',
                 'pagibig_cutoff_schedule',
                 'pagibig_contribution_schedule',
             ],
+
             default => [],
         };
 
@@ -748,16 +794,16 @@ class PayrollComputationService
             'philhealth_employer',
             'pagibig_employee',
             'pagibig_employer',
-            'withholding_tax',
         ] as $key) {
             $government[$key] = round((float) ($government[$key] ?? 0), 2);
         }
 
+        $government['withholding_tax'] = 0.00;
+
         $government['total_employee_government_deductions'] = round(
             $government['sss_employee']
             + $government['philhealth_employee']
-            + $government['pagibig_employee']
-            + $government['withholding_tax'],
+            + $government['pagibig_employee'],
             2
         );
 
@@ -1103,15 +1149,19 @@ class PayrollComputationService
 
     protected function employeeGroupKey(object $row): string
     {
-        if (! empty($row->biometric_employee_id)) {
-            return 'BIO:'.$row->biometric_employee_id;
-        }
-
         if (! empty($row->employee_no)) {
-            return 'EMP:'.$row->employee_no;
+            return 'EMP:'.trim((string) $row->employee_no);
         }
 
-        return 'NAME:'.mb_strtoupper((string) ($row->employee_name ?: 'UNKNOWN'));
+        if (! empty($row->crosschex_id)) {
+            return 'CROSSCHEX:'.trim((string) $row->crosschex_id);
+        }
+
+        if (! empty($row->biometric_employee_id)) {
+            return 'BIO:'.trim((string) $row->biometric_employee_id);
+        }
+
+        return 'NAME:'.mb_strtoupper(trim((string) ($row->employee_name ?: 'UNKNOWN')));
     }
 
     protected function scheduledWorkingDays(Collection $rows): float

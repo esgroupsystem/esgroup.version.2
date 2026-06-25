@@ -17,7 +17,7 @@ class PayrollDeductionService
 
     private const WORKING_DAYS_PER_MONTH = 22;
 
-    private const HOURS_PER_DAY = 8;
+    private const HOURS_PER_DAY = 9;
 
     private const MINUTES_PER_HOUR = 60;
 
