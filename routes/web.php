@@ -1253,7 +1253,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->name('for-sale-units.create');
 
             Route::post('/for-sale-units', [ForSaleUnitController::class, 'store'])
-                ->middleware('permission:fleet.manage,create')
+                ->middleware('permission:fleet.manage.create')
                 ->name('for-sale-units.store');
 
             Route::get('/for-sale-units/{forSaleRecord}/edit', [ForSaleUnitController::class, 'edit'])
