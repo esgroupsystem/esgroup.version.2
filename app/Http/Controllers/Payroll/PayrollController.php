@@ -10,6 +10,7 @@ use App\Models\Payroll;
 use App\Models\PayrollItem;
 use App\Services\Payroll\DailyAttendanceSummaryService;
 use App\Services\Payroll\PayrollComputationService;
+use App\Services\Payroll\PayrollPayslipService;
 use App\Services\Payroll\PayrollPeriodService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
@@ -24,6 +25,7 @@ class PayrollController extends Controller
     public function __construct(
         protected PayrollPeriodService $periodService,
         protected PayrollComputationService $payrollComputationService,
+        protected PayrollPayslipService $payrollPayslipService,
     ) {}
 
     public function index(Request $request)
@@ -185,14 +187,12 @@ class PayrollController extends Controller
 
     public function exportPdf(Payroll $payroll)
     {
-        $payroll->load(['items', 'generator', 'finalizer']);
+        $data = $this->payrollPayslipService->build($payroll);
 
-        $totals = $this->totals($payroll);
+        $pdf = Pdf::loadView('payroll.payrolls.payslip-pdf', $data)
+            ->setPaper('a4', 'portrait');
 
-        $pdf = Pdf::loadView('payroll.payrolls.pdf', compact('payroll', 'totals'))
-            ->setPaper('a4', 'landscape');
-
-        return $pdf->download($payroll->payroll_number.'.pdf');
+        return $pdf->stream($payroll->payroll_number.'-payslips.pdf');
     }
 
     protected function totals(Payroll $payroll): array

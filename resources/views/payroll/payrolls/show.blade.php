@@ -6,8 +6,8 @@
     @php
         $items = collect($payroll->items ?? []);
 
-        $money = fn ($value) => '₱ ' . number_format((float) $value, 2);
-        $num = fn ($value, $decimals = 2) => number_format((float) $value, $decimals);
+        $money = fn($value) => '₱ ' . number_format((float) $value, 2);
+        $num = fn($value, $decimals = 2) => number_format((float) $value, $decimals);
 
         $totalEmployees = (int) data_get($totals, 'employees', $items->count());
 
@@ -20,23 +20,16 @@
         $totalLeavePay = (float) data_get($totals, 'leave_pay', $items->sum('leave_pay'));
         $totalOtherAdditions = (float) data_get($totals, 'other_additions', $items->sum('other_additions'));
 
-        $totalAdditions = $totalHolidayPay
-            + $totalRestDayPay
-            + $totalOvertimePay
-            + $totalLeavePay
-            + $totalOtherAdditions;
+        $totalAdditions =
+            $totalHolidayPay + $totalRestDayPay + $totalOvertimePay + $totalLeavePay + $totalOtherAdditions;
 
         $totalGovernmentDeductions = (float) data_get(
             $totals,
             'total_employee_government_deductions',
-            $items->sum('total_employee_government_deductions')
+            $items->sum('total_employee_government_deductions'),
         );
 
-        $totalOtherDeductions = (float) data_get(
-            $totals,
-            'other_deductions',
-            $items->sum('other_deductions')
-        );
+        $totalOtherDeductions = (float) data_get($totals, 'other_deductions', $items->sum('other_deductions'));
 
         $totalDeductions = $totalGovernmentDeductions + $totalOtherDeductions;
         $totalNetPay = (float) data_get($totals, 'net_pay', $items->sum('net_pay'));
@@ -44,39 +37,43 @@
         $totalPayableDays = (float) $items->sum('total_payable_days');
         $totalPayableHours = (float) $items->sum('total_payable_hours');
 
-        $employeesWithAdditions = $items->filter(function ($item) {
-            return (
-                (float) ($item->holiday_pay ?? 0)
-                + (float) ($item->rest_day_pay ?? 0)
-                + (float) ($item->overtime_pay ?? 0)
-                + (float) ($item->leave_pay ?? 0)
-                + (float) ($item->other_additions ?? 0)
-            ) > 0;
-        })->count();
+        $employeesWithAdditions = $items
+            ->filter(function ($item) {
+                return (float) ($item->holiday_pay ?? 0) +
+                    (float) ($item->rest_day_pay ?? 0) +
+                    (float) ($item->overtime_pay ?? 0) +
+                    (float) ($item->leave_pay ?? 0) +
+                    (float) ($item->other_additions ?? 0) >
+                    0;
+            })
+            ->count();
 
-        $employeesWithDeductions = $items->filter(function ($item) {
-            return (
-                (float) ($item->total_employee_government_deductions ?? 0)
-                + (float) ($item->other_deductions ?? 0)
-            ) > 0;
-        })->count();
+        $employeesWithDeductions = $items
+            ->filter(function ($item) {
+                return (float) ($item->total_employee_government_deductions ?? 0) +
+                    (float) ($item->other_deductions ?? 0) >
+                    0;
+            })
+            ->count();
 
-        $employeesNeedsChecking = $items->filter(function ($item) {
-            $regularPay = (float) ($item->regular_pay ?? 0);
-            $grossPay = (float) ($item->gross_pay ?? 0);
-            $netPay = (float) ($item->net_pay ?? 0);
-            $payableDays = (float) ($item->total_payable_days ?? 0);
-            $payableHours = (float) ($item->total_payable_hours ?? 0);
+        $employeesNeedsChecking = $items
+            ->filter(function ($item) {
+                $regularPay = (float) ($item->regular_pay ?? 0);
+                $grossPay = (float) ($item->gross_pay ?? 0);
+                $netPay = (float) ($item->net_pay ?? 0);
+                $payableDays = (float) ($item->total_payable_days ?? 0);
+                $payableHours = (float) ($item->total_payable_hours ?? 0);
 
-            $deductions = (float) ($item->total_employee_government_deductions ?? 0)
-                + (float) ($item->other_deductions ?? 0);
+                $deductions =
+                    (float) ($item->total_employee_government_deductions ?? 0) + (float) ($item->other_deductions ?? 0);
 
-            return $regularPay <= 0
-                || $grossPay <= 0
-                || $netPay <= 0
-                || ($payableDays <= 0 && $payableHours <= 0)
-                || ($grossPay > 0 && $deductions > ($grossPay * 0.60));
-        })->count();
+                return $regularPay <= 0 ||
+                    $grossPay <= 0 ||
+                    $netPay <= 0 ||
+                    ($payableDays <= 0 && $payableHours <= 0) ||
+                    ($grossPay > 0 && $deductions > $grossPay * 0.6);
+            })
+            ->count();
 
         $statusTone = match ($payroll->status) {
             'finalized' => 'success',
@@ -259,6 +256,7 @@
             }
 
             @media (max-width: 767.98px) {
+
                 .payroll-action-group,
                 .payroll-action-group .btn,
                 .payroll-action-group form,
@@ -340,9 +338,10 @@
                                 Excel
                             </a>
 
-                            <a href="{{ route('payroll.export.pdf', $payroll) }}" class="btn btn-falcon-danger btn-sm">
+                            <a href="{{ route('payroll.export.pdf', $payroll) }}" target="_blank" rel="noopener"
+                                class="btn btn-falcon-danger btn-sm">
                                 <i class="fas fa-file-pdf me-1"></i>
-                                PDF
+                                Payslips PDF
                             </a>
 
                             <a href="{{ route('payroll.index') }}" class="btn btn-falcon-default btn-sm">
@@ -351,9 +350,8 @@
                             </a>
 
                             @if ($payroll->status !== 'finalized')
-                                <form method="POST"
-                                      action="{{ route('payroll.finalize', $payroll) }}"
-                                      onsubmit="return confirm('Finalize this payroll?')">
+                                <form method="POST" action="{{ route('payroll.finalize', $payroll) }}"
+                                    onsubmit="return confirm('Finalize this payroll?')">
                                     @csrf
 
                                     <button type="submit" class="btn btn-falcon-primary btn-sm">
@@ -452,7 +450,8 @@
                                 <div class="col-6">
                                     <div class="payroll-mini-card">
                                         <div class="label">For Review</div>
-                                        <div class="value {{ $employeesNeedsChecking > 0 ? 'text-danger' : 'text-success' }}">
+                                        <div
+                                            class="value {{ $employeesNeedsChecking > 0 ? 'text-danger' : 'text-success' }}">
                                             {{ number_format($employeesNeedsChecking) }}
                                         </div>
                                     </div>
@@ -501,7 +500,7 @@
 
                                 <div class="payroll-progress">
                                     <div class="payroll-progress-bar bg-success"
-                                         style="width: {{ min($netRate, 100) }}%;"></div>
+                                        style="width: {{ min($netRate, 100) }}%;"></div>
                                 </div>
                             </div>
 
@@ -513,7 +512,7 @@
 
                                 <div class="payroll-progress">
                                     <div class="payroll-progress-bar bg-danger"
-                                         style="width: {{ min($deductionRate, 100) }}%;"></div>
+                                        style="width: {{ min($deductionRate, 100) }}%;"></div>
                                 </div>
                             </div>
 
@@ -612,11 +611,12 @@
                                         $itemLeavePay = (float) ($item->leave_pay ?? 0);
                                         $itemOtherAdditions = (float) ($item->other_additions ?? 0);
 
-                                        $itemAdditions = $itemHolidayPay
-                                            + $itemRestDayPay
-                                            + $itemOvertimePay
-                                            + $itemLeavePay
-                                            + $itemOtherAdditions;
+                                        $itemAdditions =
+                                            $itemHolidayPay +
+                                            $itemRestDayPay +
+                                            $itemOvertimePay +
+                                            $itemLeavePay +
+                                            $itemOtherAdditions;
 
                                         $itemGovernment = (float) ($item->total_employee_government_deductions ?? 0);
                                         $itemOtherDeductions = (float) ($item->other_deductions ?? 0);
@@ -646,7 +646,7 @@
                                             $auditBadges[] = ['label' => 'No Payable', 'tone' => 'warning'];
                                         }
 
-                                        if ($itemGrossPay > 0 && $itemTotalDeductions > ($itemGrossPay * 0.60)) {
+                                        if ($itemGrossPay > 0 && $itemTotalDeductions > $itemGrossPay * 0.6) {
                                             $auditBadges[] = ['label' => 'High Deduct.', 'tone' => 'warning'];
                                         }
 
@@ -654,8 +654,12 @@
                                             $auditBadges[] = ['label' => 'Additions', 'tone' => 'info'];
                                         }
 
-                                        $hasDanger = collect($auditBadges)->contains(fn ($badge) => $badge['tone'] === 'danger');
-                                        $hasWarning = collect($auditBadges)->contains(fn ($badge) => $badge['tone'] === 'warning');
+                                        $hasDanger = collect($auditBadges)->contains(
+                                            fn($badge) => $badge['tone'] === 'danger',
+                                        );
+                                        $hasWarning = collect($auditBadges)->contains(
+                                            fn($badge) => $badge['tone'] === 'warning',
+                                        );
 
                                         if (empty($auditBadges)) {
                                             $auditBadges[] = ['label' => 'OK', 'tone' => 'success'];
@@ -760,7 +764,8 @@
                                         <td class="text-end">
                                             <div class="payroll-audit-badges">
                                                 @foreach ($auditBadges as $badge)
-                                                    <span class="badge badge-subtle-{{ $badge['tone'] }} text-{{ $badge['tone'] }}">
+                                                    <span
+                                                        class="badge badge-subtle-{{ $badge['tone'] }} text-{{ $badge['tone'] }}">
                                                         {{ $badge['label'] }}
                                                     </span>
                                                 @endforeach
@@ -769,7 +774,7 @@
 
                                         <td class="text-end">
                                             <a href="{{ route('payroll.items.show', [$payroll, $item]) }}"
-                                               class="btn btn-falcon-primary btn-sm">
+                                                class="btn btn-falcon-primary btn-sm">
                                                 View
                                             </a>
                                         </td>
