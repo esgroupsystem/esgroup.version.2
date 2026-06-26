@@ -38,15 +38,27 @@ return [
     |
     */
 
-    'monthly_working_days' => 22,
+    'monthly_working_days' => 26,
 
     /*
     |--------------------------------------------------------------------------
-    | Holiday Rules
+    | Holiday Qualification Rule
     |--------------------------------------------------------------------------
+    |
+    | Company rule:
+    | Only the day BEFORE the holiday is checked.
+    | The day AFTER the holiday is not required.
+    |
+    | Paid holiday if previous day is:
+    | - worked / has time-in
+    | - rest day / day off
+    | - holiday
+    | - approved leave
+    |
     */
 
-    'holiday_requires_before_after_work' => true,
+    'holiday_requires_before_work_only' => true,
+    'holiday_requires_before_after_work' => false,
 
     'holiday' => [
         'regular_worked_multiplier' => 2.00,
@@ -71,7 +83,7 @@ return [
 
     'government_basis' => [
         'sss' => 'actual_cycle_basic',
-        'philhealth' => 'fixed_monthly_basic',
+        'philhealth' => 'actual_cycle_basic',
         'pagibig' => 'actual_cycle_basic',
     ],
 
@@ -87,9 +99,24 @@ return [
     */
 
     'government_deduction_schedule' => [
-        'sss' => 'first',
-        'philhealth' => 'first',
-        'pagibig' => 'second',
-        'withholding_tax' => 'per_cutoff',
+        'sss' => 'first_cutoff',
+        'philhealth' => 'first_cutoff',
+        'pagibig' => 'first_cutoff',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Monthly Employee Salary Divisor
+    |--------------------------------------------------------------------------
+    |
+    | Company rule:
+    | Monthly salary is divided by 26 paid days.
+    |
+    | Example:
+    | 25,000 / 26 = 961.5384615385
+    |
+    */
+
+    'monthly_salary_divisor' => 26,
+    'monthly_cutoff_paid_days' => 13,
 ];

@@ -27,6 +27,7 @@
 
                 $baseCutoffPay = (float) data_get($payArchitecture, 'base_cutoff_pay', $item->regular_pay);
                 $payModel = (string) data_get($payArchitecture, 'money_model', $item->rate_type);
+
                 $attendanceDeductedFromGross = (bool) data_get(
                     $item->meta,
                     'attendance_deductions_are_deducted_from_monthly_base',
@@ -41,30 +42,60 @@
                 $grossPay = (float) $item->gross_pay;
                 $netPay = (float) $item->net_pay;
 
+                $totalAdditions = round(
+                    (float) $item->other_additions + $holidayPay + $restDayPay + $leavePay + $overtimePay,
+                    2,
+                );
+
                 $workedHoursTotal = (float) ($summaries->sum('worked_minutes') / 60);
-                $overtimeHoursTotal = (float) ($summaries->sum('overtime_minutes') / 60);
                 $lateMinutesTotal = (int) $summaries->sum('late_minutes');
                 $undertimeMinutesTotal = (int) $summaries->sum('undertime_minutes');
-                $payableDaysTotal = (float) $summaries->sum('payable_days');
-                $payableHoursTotal = (float) $summaries->sum('payable_hours');
 
                 $totalHolidayWorked = (int) data_get(
                     $holidayBreakdown,
                     'worked_days',
                     data_get($holidayBreakdown, 'total_holiday_worked', 0),
                 );
+
                 $totalRestDayWorked = (int) data_get(
                     $restDayBreakdown,
                     'worked_days',
-                    data_get($holidayBreakdown, 'total_rest_day_worked', 0),
+                    data_get($restDayBreakdown, 'total_rest_day_worked', 0),
                 );
+
+                $divisorMeta = data_get($item->meta, 'pay_architecture.monthly_divisor_meta');
+
+                $monthlyRate = (float) data_get($divisorMeta, 'monthly_rate', 0);
+                $monthlyDivisor = (float) data_get($divisorMeta, 'monthly_salary_divisor', 0);
+                $cutoffPaidDays = (float) data_get($divisorMeta, 'monthly_cutoff_paid_days', 0);
+                $dailyRate = (float) data_get($divisorMeta, 'daily_rate_display', 0);
+
+                if ($dailyRate <= 0 && $monthlyRate > 0 && $monthlyDivisor > 0) {
+                    $dailyRate = round($monthlyRate / $monthlyDivisor, 2);
+                }
+
+                $monthlyCycleLabel =
+                    $divisorMeta && $monthlyRate > 0 && $monthlyDivisor > 0 && $cutoffPaidDays > 0
+                        ? 'Monthly: ' .
+                            $money($monthlyRate) .
+                            ' ÷ ' .
+                            $monthlyDivisor .
+                            ' days × ' .
+                            $cutoffPaidDays .
+                            ' days'
+                        : 'Monthly: salary computation';
+
+                $dailyRateLabel = $dailyRate > 0 ? 'Daily: ' . $money($dailyRate) . ' / day' : null;
             @endphp
 
             <div class="card shadow-sm border-0 mb-3">
                 <div class="card-header bg-body-tertiary border-bottom">
                     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
                         <div>
-                            <h4 class="mb-1 text-dark">{{ $item->employee_name }}</h4>
+                            <h4 class="mb-1 text-dark">
+                                {{ $item->employee_name }}
+                            </h4>
+
                             <div class="text-muted small d-flex flex-wrap gap-3">
                                 <span>
                                     <i class="fas fa-calendar-alt me-1 text-primary"></i>
@@ -93,7 +124,8 @@
                         </div>
 
                         <a href="{{ route('payroll.show', $payroll) }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-1"></i> Back to Payroll
+                            <i class="fas fa-arrow-left me-1"></i>
+                            Back to Payroll
                         </a>
                     </div>
                 </div>
@@ -102,16 +134,36 @@
                     <div class="row g-3">
                         <div class="col-md-6 col-xl-2">
                             <div class="border rounded-3 p-3 h-100 bg-primary-subtle border-primary">
-                                <small class="text-primary fw-semibold d-block mb-1">Regular Base Pay</small>
-                                <h4 class="mb-0 text-primary">{{ $money($item->regular_pay) }}</h4>
-                                <small class="text-muted">Monthly: salary ÷ 2</small>
+                                <small class="text-primary fw-semibold d-block mb-1">
+                                    Regular Base Pay
+                                </small>
+
+                                <h4 class="mb-0 text-primary">
+                                    {{ $money($item->regular_pay) }}
+                                </h4>
+
+                                <small class="text-muted d-block">
+                                    {{ $monthlyCycleLabel }}
+                                </small>
+
+                                @if ($dailyRateLabel)
+                                    <small class="text-muted d-block">
+                                        {{ $dailyRateLabel }}
+                                    </small>
+                                @endif
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl-2">
                             <div class="border rounded-3 p-3 h-100 bg-warning-subtle border-warning">
-                                <small class="text-warning fw-semibold d-block mb-1">Attendance Loss</small>
-                                <h4 class="mb-0 text-warning">{{ $money($attendanceDeduction) }}</h4>
+                                <small class="text-warning fw-semibold d-block mb-1">
+                                    Attendance Loss
+                                </small>
+
+                                <h4 class="mb-0 text-warning">
+                                    {{ $money($attendanceDeduction) }}
+                                </h4>
+
                                 <small class="text-muted">
                                     {{ $attendanceDeductedFromGross ? 'Deducted from gross' : 'Already reflected in hours' }}
                                 </small>
@@ -120,46 +172,85 @@
 
                         <div class="col-md-6 col-xl-2">
                             <div class="border rounded-3 p-3 h-100">
-                                <small class="text-muted d-block mb-1">Additions</small>
+                                <small class="text-muted d-block mb-1">
+                                    Additions
+                                </small>
+
                                 <h4 class="mb-0 text-dark">
-                                    {{ $money($item->other_additions + $holidayPay + $restDayPay + $leavePay + $overtimePay) }}
+                                    {{ $money($totalAdditions) }}
                                 </h4>
-                                <small class="text-muted">Allowance, holiday, rest, leave, OT</small>
+
+                                <small class="text-muted">
+                                    Allowance, holiday, rest, leave, OT
+                                </small>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl-2">
                             <div class="border rounded-3 p-3 h-100 bg-info-subtle border-info">
-                                <small class="text-info fw-semibold d-block mb-1">Gross Pay</small>
-                                <h4 class="mb-0 text-info">{{ $money($grossPay) }}</h4>
-                                <small class="text-muted">Before gov./loan deductions</small>
+                                <small class="text-info fw-semibold d-block mb-1">
+                                    Gross Pay
+                                </small>
+
+                                <h4 class="mb-0 text-info">
+                                    {{ $money($grossPay) }}
+                                </h4>
+
+                                <small class="text-muted">
+                                    Before gov./loan deductions
+                                </small>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl-2">
                             <div class="border rounded-3 p-3 h-100 bg-danger-subtle border-danger">
-                                <small class="text-danger fw-semibold d-block mb-1">Gov. + Loans</small>
-                                <h4 class="mb-0 text-danger">{{ $money($totalCashDeductionsAfterGross) }}</h4>
-                                <small class="text-muted">After gross pay</small>
+                                <small class="text-danger fw-semibold d-block mb-1">
+                                    Gov. + Loans
+                                </small>
+
+                                <h4 class="mb-0 text-danger">
+                                    {{ $money($totalCashDeductionsAfterGross) }}
+                                </h4>
+
+                                <small class="text-muted">
+                                    After gross pay
+                                </small>
                             </div>
                         </div>
 
                         <div class="col-md-6 col-xl-2">
                             <div class="border rounded-3 p-3 h-100 bg-success-subtle border-success">
-                                <small class="text-success fw-semibold d-block mb-1">Net Pay</small>
-                                <h3 class="mb-0 text-success">{{ $money($netPay) }}</h3>
-                                <small class="text-muted">Final payable</small>
+                                <small class="text-success fw-semibold d-block mb-1">
+                                    Net Pay
+                                </small>
+
+                                <h3 class="mb-0 text-success">
+                                    {{ $money($netPay) }}
+                                </h3>
+
+                                <small class="text-muted">
+                                    Final payable
+                                </small>
                             </div>
                         </div>
                     </div>
 
                     <div class="alert alert-info border-0 mt-3 mb-0">
                         <strong>Payroll formula:</strong>
+
                         @if ($attendanceDeductedFromGross)
-                            Regular Base Pay {{ $money($item->regular_pay) }}
-                            − Attendance Loss {{ $money($attendanceDeduction) }}
-                            + Additions
-                            {{ $money($item->other_additions + $holidayPay + $restDayPay + $leavePay + $overtimePay) }}
+                            @if ($divisorMeta && $monthlyRate > 0 && $monthlyDivisor > 0 && $cutoffPaidDays > 0)
+                                Regular Base Pay =
+                                {{ $money($monthlyRate) }}
+                                ÷ {{ number_format($monthlyDivisor, 0) }} days
+                                × {{ number_format($cutoffPaidDays, 0) }} days
+                                = {{ $money($item->regular_pay) }}.
+                            @else
+                                Regular Base Pay {{ $money($item->regular_pay) }}.
+                            @endif
+
+                            Then deduct Attendance Loss {{ $money($attendanceDeduction) }}
+                            + Additions {{ $money($totalAdditions) }}
                             = Gross Pay {{ $money($grossPay) }}.
                             Then deduct Government and Loans/Other.
                         @else
@@ -179,99 +270,159 @@
                                 Payroll Formula
                             </h6>
                         </div>
+
                         <div class="card-body">
                             <table class="table table-sm align-middle mb-0">
                                 <tbody>
                                     <tr>
                                         <td class="text-muted">Regular Base Pay</td>
-                                        <td class="text-end fw-bold">{{ $money($item->regular_pay) }}</td>
+                                        <td class="text-end fw-bold">
+                                            {{ $money($item->regular_pay) }}
+                                        </td>
                                     </tr>
+
                                     <tr>
                                         <td class="text-muted">Late Deduction</td>
-                                        <td class="text-end text-warning">- {{ $money($item->late_deduction) }}</td>
+                                        <td class="text-end text-warning">
+                                            - {{ $money($item->late_deduction) }}
+                                        </td>
                                     </tr>
+
                                     <tr>
                                         <td class="text-muted">Undertime Deduction</td>
-                                        <td class="text-end text-warning">- {{ $money($item->undertime_deduction) }}</td>
+                                        <td class="text-end text-warning">
+                                            - {{ $money($item->undertime_deduction) }}
+                                        </td>
                                     </tr>
+
                                     <tr>
                                         <td class="text-muted">Absence Deduction</td>
-                                        <td class="text-end text-danger">- {{ $money($item->absence_deduction) }}</td>
+                                        <td class="text-end text-danger">
+                                            - {{ $money($item->absence_deduction) }}
+                                        </td>
                                     </tr>
+
                                     <tr class="table-light">
                                         <td class="fw-bold">Total Attendance Loss</td>
-                                        <td class="text-end fw-bold text-danger">- {{ $money($attendanceDeduction) }}</td>
+                                        <td class="text-end fw-bold text-danger">
+                                            - {{ $money($attendanceDeduction) }}
+                                        </td>
                                     </tr>
+
                                     <tr>
                                         <td class="text-muted">Allowance This Cutoff</td>
-                                        <td class="text-end text-primary">+ {{ $money($allowancePerCutoff) }}</td>
+                                        <td class="text-end text-primary">
+                                            + {{ $money($allowancePerCutoff) }}
+                                        </td>
                                     </tr>
+
                                     <tr>
                                         <td class="text-muted">Holiday Pay</td>
-                                        <td class="text-end text-info">+ {{ $money($holidayPay) }}</td>
+                                        <td class="text-end text-info">
+                                            + {{ $money($holidayPay) }}
+                                        </td>
                                     </tr>
+
                                     <tr>
                                         <td class="text-muted">Rest Day Pay</td>
-                                        <td class="text-end text-warning">+ {{ $money($restDayPay) }}</td>
+                                        <td class="text-end text-warning">
+                                            + {{ $money($restDayPay) }}
+                                        </td>
                                     </tr>
+
                                     <tr>
                                         <td class="text-muted">Leave Pay</td>
-                                        <td class="text-end text-secondary">+ {{ $money($leavePay) }}</td>
+                                        <td class="text-end text-secondary">
+                                            + {{ $money($leavePay) }}
+                                        </td>
                                     </tr>
+
                                     <tr>
                                         <td class="text-muted">Overtime Pay</td>
-                                        <td class="text-end text-info">+ {{ $money($overtimePay) }}</td>
+                                        <td class="text-end text-info">
+                                            + {{ $money($overtimePay) }}
+                                        </td>
                                     </tr>
+
                                     <tr class="table-info">
                                         <td class="fw-bold">Gross Pay</td>
-                                        <td class="text-end fw-bold">{{ $money($grossPay) }}</td>
+                                        <td class="text-end fw-bold">
+                                            {{ $money($grossPay) }}
+                                        </td>
                                     </tr>
+
                                     <tr>
                                         <td class="text-muted">Salary / Loan Deductions</td>
-                                        <td class="text-end text-danger">- {{ $money($salaryDeduction) }}</td>
+                                        <td class="text-end text-danger">
+                                            - {{ $money($salaryDeduction) }}
+                                        </td>
                                     </tr>
+
                                     <tr>
                                         <td class="text-muted">Government Deduction</td>
-                                        <td class="text-end text-danger">- {{ $money($governmentDeduction) }}</td>
+                                        <td class="text-end text-danger">
+                                            - {{ $money($governmentDeduction) }}
+                                        </td>
                                     </tr>
+
                                     <tr class="table-success">
                                         <td class="fw-bold">Net Pay</td>
-                                        <td class="text-end fw-bold text-success fs-6">{{ $money($netPay) }}</td>
+                                        <td class="text-end fw-bold text-success fs-6">
+                                            {{ $money($netPay) }}
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
 
                             @if (!empty($attendanceBreakdown))
                                 <hr>
+
                                 <div class="row g-3">
                                     <div class="col-md-4">
                                         <div class="border rounded-3 p-3 h-100">
                                             <small class="text-muted d-block">Late</small>
+
                                             <div class="fw-semibold">
                                                 {{ number_format((float) data_get($attendanceBreakdown, 'late_minutes', 0), 0) }}
-                                                min</div>
-                                            <small class="text-muted">Rate:
-                                                {{ $money(data_get($attendanceBreakdown, 'late_rate_per_minute', 0)) }}/min</small>
+                                                min
+                                            </div>
+
+                                            <small class="text-muted">
+                                                Rate:
+                                                {{ $money(data_get($attendanceBreakdown, 'late_rate_per_minute', 0)) }}/min
+                                            </small>
                                         </div>
                                     </div>
+
                                     <div class="col-md-4">
                                         <div class="border rounded-3 p-3 h-100">
                                             <small class="text-muted d-block">Undertime</small>
+
                                             <div class="fw-semibold">
                                                 {{ number_format((float) data_get($attendanceBreakdown, 'undertime_minutes', 0), 0) }}
-                                                min</div>
-                                            <small class="text-muted">Rate:
-                                                {{ $money(data_get($attendanceBreakdown, 'undertime_rate_per_minute', 0)) }}/min</small>
+                                                min
+                                            </div>
+
+                                            <small class="text-muted">
+                                                Rate:
+                                                {{ $money(data_get($attendanceBreakdown, 'undertime_rate_per_minute', 0)) }}/min
+                                            </small>
                                         </div>
                                     </div>
+
                                     <div class="col-md-4">
                                         <div class="border rounded-3 p-3 h-100">
                                             <small class="text-muted d-block">Absence</small>
+
                                             <div class="fw-semibold">
                                                 {{ number_format((float) data_get($attendanceBreakdown, 'absent_days', 0), 0) }}
-                                                day(s)</div>
-                                            <small class="text-muted">Rate:
-                                                {{ $money(data_get($attendanceBreakdown, 'absence_rate_per_day', 0)) }}/day</small>
+                                                day(s)
+                                            </div>
+
+                                            <small class="text-muted">
+                                                Rate:
+                                                {{ $money(data_get($attendanceBreakdown, 'absence_rate_per_day', 0)) }}/day
+                                            </small>
                                         </div>
                                     </div>
                                 </div>
@@ -288,27 +439,28 @@
                                 Government Deductions
                             </h6>
                         </div>
+
                         <div class="card-body">
                             <div class="d-flex justify-content-between border-bottom py-2">
                                 <span class="text-muted">SSS Employee</span>
                                 <strong>{{ $money($item->sss_employee) }}</strong>
                             </div>
+
                             <div class="d-flex justify-content-between border-bottom py-2">
                                 <span class="text-muted">PhilHealth Employee</span>
                                 <strong>{{ $money($item->philhealth_employee) }}</strong>
                             </div>
+
                             <div class="d-flex justify-content-between border-bottom py-2">
                                 <span class="text-muted">Pag-IBIG Employee</span>
                                 <strong>{{ $money($item->pagibig_employee) }}</strong>
                             </div>
-                            <div class="d-flex justify-content-between border-bottom py-2">
-                                <span class="text-muted">Tax</span>
-                                <strong>{{ $money($item->withholding_tax) }}</strong>
-                            </div>
 
                             <div class="d-flex justify-content-between align-items-center mt-3">
                                 <span class="fw-semibold text-muted">Total</span>
-                                <span class="fw-bold text-danger fs-6">{{ $money($governmentDeduction) }}</span>
+                                <span class="fw-bold text-danger fs-6">
+                                    {{ $money($governmentDeduction) }}
+                                </span>
                             </div>
 
                             <hr>
@@ -329,27 +481,33 @@
                                 Attendance Audit
                             </h6>
                         </div>
+
                         <div class="card-body">
                             <div class="d-flex justify-content-between border-bottom py-2">
                                 <span class="text-muted">Payable Days</span>
                                 <strong>{{ number_format($item->total_payable_days, 2) }}</strong>
                             </div>
+
                             <div class="d-flex justify-content-between border-bottom py-2">
                                 <span class="text-muted">Payable Hours</span>
                                 <strong>{{ number_format($item->total_payable_hours, 2) }}</strong>
                             </div>
+
                             <div class="d-flex justify-content-between border-bottom py-2">
                                 <span class="text-muted">Worked Hours</span>
                                 <strong>{{ number_format($workedHoursTotal, 2) }}</strong>
                             </div>
+
                             <div class="d-flex justify-content-between border-bottom py-2">
                                 <span class="text-muted">Late / UT</span>
                                 <strong>{{ $lateMinutesTotal }} / {{ $undertimeMinutesTotal }} min</strong>
                             </div>
+
                             <div class="d-flex justify-content-between border-bottom py-2">
                                 <span class="text-muted">Holiday Worked</span>
                                 <strong>{{ $totalHolidayWorked }}</strong>
                             </div>
+
                             <div class="d-flex justify-content-between py-2">
                                 <span class="text-muted">Rest Day Worked</span>
                                 <strong>{{ $totalRestDayWorked }}</strong>
@@ -359,118 +517,9 @@
                 </div>
             </div>
 
-            <div class="card shadow-sm border-0">
-                <div class="card-header bg-body-tertiary border-bottom">
-                    <h6 class="mb-0">
-                        <i class="fas fa-calendar-check me-2 text-primary"></i>
-                        Daily Attendance Breakdown
-                    </h6>
-                    <small class="text-muted">
-                        Audit table only. For monthly employees, regular pay is not payable hours × hourly rate.
-                    </small>
-                </div>
-
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-bordered align-middle mb-0">
-                            <thead class="table-light">
-                                <tr class="text-nowrap">
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Schedule</th>
-                                    <th>Actual</th>
-                                    <th class="text-center">Late</th>
-                                    <th class="text-center">UT</th>
-                                    <th class="text-center">Worked</th>
-                                    <th class="text-center">OT</th>
-                                    <th class="text-center">Payable</th>
-                                    <th style="min-width: 260px;">Remarks</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($summaries as $row)
-                                    @php
-                                        $status = strtolower($row->attendance_status ?? 'n/a');
-
-                                        $badgeClass = match ($status) {
-                                            'present', 'adjusted_present' => 'success',
-                                            'late', 'undertime', 'late_undertime', 'half_day' => 'warning',
-                                            'absent', 'holiday_unpaid', 'incomplete_log', 'no_schedule' => 'danger',
-                                            'rest_day', 'rest day', 'rest_day_worked' => 'secondary',
-                                            'holiday', 'holiday_worked' => 'info',
-                                            'leave' => 'primary',
-                                            default => 'dark',
-                                        };
-                                    @endphp
-
-                                    <tr>
-                                        <td class="text-nowrap fw-semibold">
-                                            {{ optional($row->work_date)->format('M d, Y') }}
-                                        </td>
-                                        <td class="text-nowrap">
-                                            <span class="badge bg-{{ $badgeClass }}">
-                                                {{ strtoupper(str_replace('_', ' ', $row->attendance_status ?? 'N/A')) }}
-                                            </span>
-                                        </td>
-                                        <td class="text-nowrap">
-                                            {{ $row->scheduled_time_in ? \Carbon\Carbon::parse($row->scheduled_time_in)->format('h:i A') : '--' }}
-                                            -
-                                            {{ $row->scheduled_time_out ? \Carbon\Carbon::parse($row->scheduled_time_out)->format('h:i A') : '--' }}
-                                        </td>
-                                        <td class="text-nowrap">
-                                            {{ $row->actual_time_in ? \Carbon\Carbon::parse($row->actual_time_in)->format('h:i A') : '--' }}
-                                            -
-                                            {{ $row->actual_time_out ? \Carbon\Carbon::parse($row->actual_time_out)->format('h:i A') : '--' }}
-                                        </td>
-                                        <td class="text-center text-warning fw-semibold">{{ $row->late_minutes ?? 0 }} min
-                                        </td>
-                                        <td class="text-center text-warning fw-semibold">
-                                            {{ $row->undertime_minutes ?? 0 }} min</td>
-                                        <td class="text-center">{{ number_format(($row->worked_minutes ?? 0) / 60, 2) }}
-                                            hr</td>
-                                        <td class="text-center text-info fw-semibold">
-                                            {{ number_format(($row->overtime_minutes ?? 0) / 60, 2) }} hr</td>
-                                        <td class="text-center">
-                                            <div class="fw-semibold">{{ number_format($row->payable_days ?? 0, 2) }} day
-                                            </div>
-                                            <small class="text-muted">{{ number_format($row->payable_hours ?? 0, 2) }}
-                                                hr</small>
-                                        </td>
-                                        <td>
-                                            <span class="text-muted">{{ $row->remarks ?: '—' }}</span>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="10" class="text-center text-muted py-5">
-                                            <i class="fas fa-folder-open fa-2x mb-2 d-block text-muted"></i>
-                                            No daily attendance summary found for this employee.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-
-                            @if ($summaries->isNotEmpty())
-                                <tfoot class="table-light">
-                                    <tr class="fw-bold">
-                                        <th colspan="4" class="text-end">TOTAL</th>
-                                        <th class="text-center text-warning">{{ $lateMinutesTotal }} min</th>
-                                        <th class="text-center text-warning">{{ $undertimeMinutesTotal }} min</th>
-                                        <th class="text-center">{{ number_format($workedHoursTotal, 2) }} hr</th>
-                                        <th class="text-center text-info">{{ number_format($overtimeHoursTotal, 2) }} hr
-                                        </th>
-                                        <th class="text-center">
-                                            <div>{{ number_format($payableDaysTotal, 2) }} day</div>
-                                            <small>{{ number_format($payableHoursTotal, 2) }} hr</small>
-                                        </th>
-                                        <th></th>
-                                    </tr>
-                                </tfoot>
-                            @endif
-                        </table>
-                    </div>
-                </div>
-            </div>
+            @include('payroll.items.partials.attendance-audit-table', [
+                'summaries' => $summaries,
+            ])
 
         </div>
     </div>

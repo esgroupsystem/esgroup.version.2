@@ -376,13 +376,13 @@ class DailyAttendanceSummaryService
                 $payableDays = self::FULL_DAY_PAYABLE_DAYS;
                 $payableHours = self::FULL_DAY_PAYABLE_HOURS;
 
-                $remarks[] = 'Paid holiday. Before/after holiday rule qualified.';
+                $remarks[] = 'Paid holiday. Previous day qualified. After-holiday record is not required.';
             } else {
                 $attendanceStatus = 'holiday_unpaid';
                 $payableDays = 0.00;
                 $payableHours = 0.00;
 
-                $remarks[] = 'Holiday unpaid. Employee has no qualifying record before and after holiday.';
+                $remarks[] = 'Holiday unpaid. Previous day did not qualify.';
             }
         } elseif ($isLeave) {
             $attendanceStatus = 'leave';
@@ -731,56 +731,81 @@ class DailyAttendanceSummaryService
         Carbon $holidayDate,
         ?PayrollAttendanceAdjustment $holidayAdjustment = null
     ): bool {
+        /*
+         | Company holiday rule:
+         | Only the day BEFORE the holiday is checked.
+         | The day AFTER the holiday is not required.
+         */
         if ($this->adjustmentQualifiesForPay($holidayAdjustment)) {
             return true;
         }
 
-        $beforeDate = $holidayDate->copy()->subDay();
-        $afterDate = $holidayDate->copy()->addDay();
+        if (! config('payroll.holiday_requires_before_work_only', true)) {
+            return true;
+        }
 
-        return $this->isHolidayBoundaryDateQualified($person, $beforeDate)
-            && $this->isHolidayBoundaryDateQualified($person, $afterDate);
+        return $this->isHolidayPreviousDateQualified(
+            $person,
+            $holidayDate->copy()->subDay()
+        );
     }
 
-    protected function isHolidayBoundaryDateQualified(array $person, Carbon $date): bool
+    protected function isHolidayPreviousDateQualified(array $person, Carbon $date): bool
     {
         $schedule = $this->resolveScheduleForPersonDate($person, $date);
         $holiday = $this->resolveHoliday($date);
 
+        /*
+         | Holiday before holiday:
+         | Work -> Holiday -> Holiday = paid.
+         */
         if ($holiday) {
             return true;
         }
 
+        /*
+         | Day off before holiday:
+         | Dayoff -> Holiday = paid.
+         */
         if ($schedule && $this->scheduleIndicatesRestDay($schedule->status, $schedule->day_off, $date)) {
             return true;
         }
 
+        /*
+         | Leave before holiday:
+         | Leave -> Holiday = paid.
+         */
         if ($schedule && $this->scheduleIndicatesLeave($schedule->status)) {
             return true;
         }
 
         $adjustment = PayrollAttendanceAdjustment::query()
             ->whereDate('work_date', $date->toDateString())
-            ->where(function ($query) use ($person) {
+            ->where(function ($query) use ($person): void {
                 $this->applyAdjustmentPersonMatch($query, $person);
             })
             ->latest('id')
             ->first();
 
-        if ($adjustment) {
+        /*
+         | Paid adjustment / official business / adjusted present before holiday.
+         */
+        if ($this->adjustmentQualifiesForPay($adjustment)) {
             return true;
         }
 
+        /*
+         | Work before holiday:
+         | Any biometric record/time-in qualifies.
+         | No need to require the day after holiday.
+         */
         $logs = $this->logsForPersonDate($person, $date, $schedule);
-        $remarks = [];
 
-        [$actualTimeIn, $actualTimeOut] = $this->resolveBiometricActualInOut(
-            $logs,
-            $this->biometricTimeColumn(),
-            $remarks
-        );
+        if ($logs->isNotEmpty()) {
+            return true;
+        }
 
-        return $actualTimeIn && $actualTimeOut && $actualTimeOut->gt($actualTimeIn);
+        return false;
     }
 
     protected function adjustmentQualifiesForPay(?PayrollAttendanceAdjustment $adjustment): bool
