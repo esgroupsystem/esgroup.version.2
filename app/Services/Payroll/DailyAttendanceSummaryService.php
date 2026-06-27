@@ -22,9 +22,9 @@ class DailyAttendanceSummaryService
 
     private const HALF_DAY_PAYABLE_DAYS = 0.50;
 
-    private const FULL_DAY_PAYABLE_HOURS = 9.00;
+    private const FULL_DAY_PAYABLE_HOURS = 8.00;
 
-    private const HALF_DAY_PAYABLE_HOURS = 4.50;
+    private const HALF_DAY_PAYABLE_HOURS = 4.00;
 
     private const DEFAULT_GRACE_MINUTES = 15;
 
@@ -427,14 +427,14 @@ class DailyAttendanceSummaryService
                 $payableDays = self::FULL_DAY_PAYABLE_DAYS;
                 $payableHours = self::FULL_DAY_PAYABLE_HOURS;
 
-                $remarks[] = 'Flexible shift completed 9 worked hours.';
+                $remarks[] = 'Flexible shift completed 9 clock hours / 8 paid hours.';
             } else {
                 $attendanceStatus = 'undertime';
                 $undertimeMinutes = max(0, self::FULL_DAY_MINUTES - $workedMinutes);
 
                 [$payableDays, $payableHours] = $this->payUnitsFromMinutes($workedMinutes);
 
-                $remarks[] = 'Flexible shift below 9 worked hours. Payable hours based on actual worked minutes.';
+                $remarks[] = 'Flexible shift below 9 clock hours. Payable hours converted using 8 paid hours per day.';
             }
         } else {
             [$lateMinutes, $undertimeMinutes] = $this->computeRegularShiftDeductions(
@@ -475,7 +475,7 @@ class DailyAttendanceSummaryService
 
                 [$payableDays, $payableHours] = $this->payUnitsFromMinutes($payableMinutes);
 
-                $remarks[] = 'Late/undertime deducted from 9-hour regular shift.';
+                $remarks[] = 'Late/undertime deducted from 8 paid hours while schedule remains 9 clock hours including lunch.';
             }
         }
 
@@ -674,11 +674,8 @@ class DailyAttendanceSummaryService
             $scheduledOut->addDay();
         }
 
-        $allowedIn = $scheduledIn->copy()->addMinutes($graceMinutes);
-
-        if ($actualTimeIn->gt($allowedIn)) {
-            $lateMinutes = (int) $allowedIn->diffInMinutes($actualTimeIn);
-        }
+        $rawLateMinutes = (int) $scheduledIn->diffInMinutes($actualTimeIn, false);
+        $lateMinutes = $this->roundedLateDeductionMinutes($rawLateMinutes, $graceMinutes);
 
         if ($actualTimeOut->lt($scheduledOut)) {
             $undertimeMinutes = (int) $actualTimeOut->diffInMinutes($scheduledOut);
@@ -687,13 +684,27 @@ class DailyAttendanceSummaryService
         return [$lateMinutes, $undertimeMinutes];
     }
 
+    protected function roundedLateDeductionMinutes(int $rawLateMinutes, int $graceMinutes): int
+    {
+        if ($rawLateMinutes <= $graceMinutes) {
+            return 0;
+        }
+
+        $blockMinutes = max(1, (int) config('payroll.attendance.late_deduction_block_minutes', 30));
+
+        return (int) (ceil($rawLateMinutes / $blockMinutes) * $blockMinutes);
+    }
+
     protected function payUnitsFromMinutes(int $minutes): array
     {
-        $payableMinutes = max(0, min(self::FULL_DAY_MINUTES, $minutes));
+        $payableClockMinutes = max(0, min(self::FULL_DAY_MINUTES, $minutes));
+        $deductedMinutes = max(0, self::FULL_DAY_MINUTES - $payableClockMinutes);
+        $paidMinutes = max(0, ((int) config('payroll.attendance.paid_minutes_per_day', 480)) - $deductedMinutes);
+        $paidHours = round($paidMinutes / 60, 2);
 
         return [
-            round($payableMinutes / self::FULL_DAY_MINUTES, 2),
-            round($payableMinutes / 60, 2),
+            round($paidHours / self::FULL_DAY_PAYABLE_HOURS, 2),
+            $paidHours,
         ];
     }
 
@@ -849,14 +860,14 @@ class DailyAttendanceSummaryService
 
         if (str_contains($type, 'special') || str_contains($type, 'non') || str_contains($type, '30')) {
             return [
-                self::SPECIAL_HOLIDAY_WORKED_PAY_DAYS,
-                'Special / non-regular holiday +30% = 1.30 pay units',
+                1.00,
+                'Special holiday work detected. Payroll will add only +30% premium after approved adjustment validation.',
             ];
         }
 
         return [
-            self::REGULAR_HOLIDAY_WORKED_PAY_DAYS,
-            'Regular holiday double pay = 2.00 pay units',
+            1.00,
+            'Regular holiday work detected. Payroll will add only +100% premium after approved adjustment validation.',
         ];
     }
 

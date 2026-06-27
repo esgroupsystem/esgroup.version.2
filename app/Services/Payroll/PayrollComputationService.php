@@ -82,8 +82,9 @@ class PayrollComputationService
                 'generated_at' => now('Asia/Manila'),
                 'status' => 'draft',
                 'meta' => [
-                    'hours_per_day' => $this->hoursPerDay(),
-                    'minutes_per_day' => $this->minutesPerDay(),
+                    'paid_hours_per_day' => $this->hoursPerDay(),
+                    'paid_minutes_per_day' => $this->minutesPerDay(),
+                    'scheduled_clock_minutes_per_day' => $this->scheduledClockMinutesPerDay(),
                     'late_grace_minutes' => (int) config('payroll.attendance.late_grace_minutes', 15),
                     'contribution_cycle_start' => $contribution['cycle_start']->toDateString(),
                     'contribution_cycle_end' => $contribution['cycle_end']->toDateString(),
@@ -152,10 +153,7 @@ class PayrollComputationService
         );
 
         $baseCutoffPay = $isMonthlyEmployee
-            ? round(
-                (float) $rates['daily_rate'] * (float) ($rates['monthly_cutoff_paid_days'] ?? 13),
-                2
-            )
+            ? round((float) $rates['monthly_rate'] / 2, 2)
             : round($regularPayableHours * (float) $rates['hourly_rate'], 2);
 
         $regularPay = $baseCutoffPay;
@@ -194,31 +192,6 @@ class PayrollComputationService
 
         $taxableCompensation = $grossPay;
 
-        /*
-         | Government contribution basis:
-         |
-         | The company monthly government cycle is:
-         | - 2nd cutoff: 26th to 10th
-         | - 1st cutoff: 11th to 25th
-         |
-         | Monthly contribution basis must be:
-         | previous 2nd cutoff paid basic salary
-         | + current 1st cutoff paid basic salary
-         |
-         | Excluded from basis:
-         | - allowance
-         | - loans
-         | - manual deductions
-         | - other additions
-         | - other deductions
-         | - SSS loan
-         | - Pag-IBIG loan
-         | - vale
-         |
-         | Included:
-         | - paid basic salary only
-         | - attendance-adjusted salary
-         */
         $currentGovernmentBasis = round(
             max(0, $regularPay - $attendanceDeductionForNet)
             + $holiday['government_basis']
@@ -254,10 +227,8 @@ class PayrollComputationService
             $fixedMonthlyBasic
         );
 
-        $governmentBasis = $actualCycleBasic;
-
         $governmentRaw = $this->governmentDeductionService->compute([
-            'monthly_basic' => $governmentBasis,
+            'monthly_basic' => $actualCycleBasic,
             'sss_monthly_basic' => $sssBasis,
             'philhealth_monthly_basic' => $philHealthBasis,
             'pagibig_monthly_basic' => $pagibigBasis,
@@ -306,11 +277,11 @@ class PayrollComputationService
             'crosschex_id' => $first->crosschex_id ?? null,
             'rate_type' => $rates['rate_type'],
             'monthly_rate' => $rates['monthly_rate'],
-            'daily_rate' => $rates['daily_rate'],
-            'hourly_rate' => $rates['hourly_rate'],
-            'minute_rate' => $rates['minute_rate'],
+            'daily_rate' => round((float) $rates['daily_rate'], 2),
+            'hourly_rate' => round((float) $rates['hourly_rate'], 2),
+            'minute_rate' => round((float) $rates['minute_rate'], 4),
             'total_scheduled_days' => $this->scheduledWorkingDays($rows),
-            'total_worked_days' => round($totalWorkedMinutes / $this->minutesPerDay(), 2),
+            'total_worked_days' => round($totalWorkedMinutes / $this->scheduledClockMinutesPerDay(), 2),
             'total_payable_days' => round($totalSummaryPayableHours / $this->hoursPerDay(), 2),
             'total_payable_hours' => $totalSummaryPayableHours,
             'total_worked_minutes' => $totalWorkedMinutes,
@@ -346,22 +317,22 @@ class PayrollComputationService
             'meta' => [
                 'pay_architecture' => [
                     'money_model' => $isMonthlyEmployee
-                    ? 'monthly_26_day_divisor_less_attendance_loss'
-                    : 'hourly_payable_hours',
-
+                        ? 'monthly_salary_divided_by_2_less_attendance_loss'
+                        : 'hourly_payable_hours',
+                    'monthly_salary' => round((float) $rates['monthly_rate'], 2),
+                    'cutoff_basic_pay_formula' => $isMonthlyEmployee ? 'monthly_salary / 2' : 'payable_hours * hourly_rate',
                     'base_cutoff_pay' => $baseCutoffPay,
                     'regular_payable_hours_for_audit' => $regularPayableHours,
                     'summary_payable_hours_for_audit' => $totalSummaryPayableHours,
                     'attendance_loss_deducted_from_gross' => $attendanceDeductionForNet,
-
                     'monthly_divisor_meta' => $rates['monthly_divisor_meta'] ?? null,
-
                     'regular_pay_note' => $isMonthlyEmployee
-                        ? 'Regular pay is monthly salary divided by 26 days, then multiplied by 13 paid cutoff days.'
+                        ? 'Regular pay is fixed monthly salary divided by 2. Daily/hourly/minute rates are used only for deductions and premiums.'
                         : 'Regular pay is payable hours multiplied by hourly rate.',
                 ],
                 'hours_per_day' => $this->hoursPerDay(),
-                'minutes_per_day' => $this->minutesPerDay(),
+                'paid_minutes_per_day' => $this->minutesPerDay(),
+                'scheduled_clock_minutes_per_day' => $this->scheduledClockMinutesPerDay(),
                 'attendance_deductions_are_deducted_from_monthly_base' => $isMonthlyEmployee,
                 'government_schedule' => $government['schedule_meta'] ?? config('payroll.government_deduction_schedule'),
                 'government_raw_before_schedule' => $governmentRaw,
@@ -425,99 +396,42 @@ class PayrollComputationService
         foreach ($rows->filter(fn ($row): bool => $this->isHolidayRow($row)) as $row) {
             $date = $this->dateString($row->work_date);
             $holidayType = $this->holidayType($row);
-            $hasWork = $this->hasWorkRecord($row);
             $isRegular = str_contains($holidayType, 'regular');
+            $hasWork = $this->hasValidTimeInOut($row);
+            $hasHolidayAdjustment = $this->hasApprovedHolidayAdjustment($employeeReference, Carbon::parse($date));
+            $previousDayQualified = $this->isEligibleForHolidayNotWorked($employeeReference, Carbon::parse($date));
 
-            $workedFraction = min(
-                1,
-                max(
-                    $this->payableHours($row) / $this->hoursPerDay(),
-                    ((int) ($row->worked_minutes ?? 0)) / $this->minutesPerDay()
-                )
-            );
+            $premiumMultiplier = $isRegular
+                ? (float) config('payroll.holiday.regular_worked_premium', 1.00)
+                : (float) config('payroll.holiday.special_worked_premium', 0.30);
 
-            $eligible = $hasWork || $this->isEligibleForHolidayNotWorked(
-                $employeeReference,
-                Carbon::parse($date)
-            );
-
-            $multiplier = 0.0;
+            $workedHours = $this->premiumPayHours($row);
             $amount = 0.0;
             $remarks = null;
 
-            if ($hasWork) {
+            if ($hasWork && $hasHolidayAdjustment && $previousDayQualified) {
                 $workedDays++;
-
-                if ($isMonthlyEmployee) {
-                    /*
-                     | Monthly employees already have the basic day pay inside
-                     | the fixed 13-day cutoff base.
-                     |
-                     | Therefore, only add the holiday premium:
-                     | Regular holiday worked: add 100% extra
-                     | Special holiday worked: add 30% extra
-                     */
-                    $fullMultiplier = $isRegular
-                        ? (float) config('payroll.holiday.regular_worked_multiplier', 2.00)
-                        : (float) config('payroll.holiday.special_worked_multiplier', 1.30);
-
-                    $multiplier = max(0, $fullMultiplier - 1.00);
-                    $remarks = $isRegular
-                        ? 'Monthly employee: base day pay is already included; added regular holiday premium only.'
-                        : 'Monthly employee: base day pay is already included; added special holiday premium only.';
-                } else {
-                    /*
-                     | Daily/hourly employees are paid using the full holiday rate.
-                     */
-                    $multiplier = $isRegular
-                        ? (float) config('payroll.holiday.regular_worked_multiplier', 2.00)
-                        : (float) config('payroll.holiday.special_worked_multiplier', 1.30);
-
-                    $remarks = $this->holidayRemarks($hasWork, $eligible, $isRegular);
-                }
+                $payableHours += $workedHours;
 
                 $amount = round(
-                    (float) $rates['daily_rate'] * $multiplier * max($workedFraction, 0.01),
+                    $workedHours * (float) $rates['hourly_rate'] * $premiumMultiplier,
                     2
                 );
 
-                $payableHours += max(
-                    $this->payableHours($row),
-                    $this->hoursPerDay() * max($workedFraction, 0)
-                );
-            } elseif ($eligible) {
-                if ($isMonthlyEmployee) {
-                    /*
-                     | Monthly employees already receive the paid regular holiday
-                     | through the fixed cutoff base.
-                     |
-                     | Do not add another daily rate here or it becomes double pay.
-                     */
-                    $multiplier = 0.00;
-                    $amount = 0.00;
-
-                    if ($isRegular) {
-                        $paidNotWorkedDays++;
-                    }
-
-                    $remarks = $isRegular
-                        ? 'Monthly employee: regular holiday not worked is already included in base pay.'
-                        : 'Special holiday not worked has no additional pay by default.';
-                } else {
-                    $multiplier = $isRegular
-                        ? (float) config('payroll.holiday.regular_not_worked_multiplier', 1.00)
-                        : (float) config('payroll.holiday.special_not_worked_multiplier', 0.00);
-
-                    $amount = round((float) $rates['daily_rate'] * $multiplier, 2);
-
-                    if ($amount > 0) {
-                        $paidNotWorkedDays++;
-                    }
-
-                    $remarks = $this->holidayRemarks($hasWork, $eligible, $isRegular);
-                }
+                $remarks = $isRegular
+                    ? 'Paid regular holiday worked premium only: holiday hours * hourly rate * 1.00.'
+                    : 'Paid special holiday worked premium only: holiday hours * hourly rate * 0.30.';
+            } elseif ($hasWork && ! $hasHolidayAdjustment) {
+                $remarks = 'No holiday premium. Employee has time-in/out but no approved/plotted payroll adjustment for holiday work.';
+            } elseif ($hasWork && ! $previousDayQualified) {
+                $remarks = 'No holiday premium. Employee did not work or qualify on the day before the holiday.';
+            } elseif ($previousDayQualified && $isRegular) {
+                $paidNotWorkedDays++;
+                $remarks = $isMonthlyEmployee
+                    ? 'Regular holiday not worked: no extra addition because monthly cutoff basic pay is already fixed at monthly salary / 2.'
+                    : 'Regular holiday not worked: no extra addition under the selected company formula.';
             } else {
-                $remarks = $this->holidayRemarks($hasWork, $eligible, $isRegular);
+                $remarks = 'Holiday unpaid. Previous day did not qualify and no approved holiday work adjustment exists.';
             }
 
             $holidayPay += $amount;
@@ -526,9 +440,11 @@ class PayrollComputationService
             $details[] = [
                 'date' => $date,
                 'holiday_type' => $holidayType,
-                'has_work_record' => $hasWork,
-                'before_after_eligible' => $eligible,
-                'multiplier' => $multiplier,
+                'has_valid_time_in_out' => $hasWork,
+                'has_approved_holiday_adjustment' => $hasHolidayAdjustment,
+                'previous_day_qualified' => $previousDayQualified,
+                'paid_hours' => round($workedHours, 2),
+                'premium_multiplier' => $premiumMultiplier,
                 'amount' => $amount,
                 'remarks' => $remarks,
             ];
@@ -553,14 +469,18 @@ class PayrollComputationService
         $multiplier = (float) config('payroll.holiday.rest_day_worked_multiplier', 1.30);
 
         foreach ($restRows as $row) {
-            $fraction = min(1, max($this->payableHours($row) / $this->hoursPerDay(), ((int) ($row->worked_minutes ?? 0)) / $this->minutesPerDay()));
-            $amount = round($rates['daily_rate'] * $multiplier * max($fraction, 0.01), 2);
+            $hours = $this->premiumPayHours($row);
+            $amount = round($hours * (float) $rates['hourly_rate'] * $multiplier, 2);
+
             $pay += $amount;
-            $payableHours += max($this->payableHours($row), $this->hoursPerDay() * max($fraction, 0));
+            $payableHours += $hours;
+
             $details[] = [
                 'date' => $this->dateString($row->work_date),
+                'hours' => round($hours, 2),
                 'multiplier' => $multiplier,
                 'amount' => $amount,
+                'formula' => 'rest_day_hours * hourly_rate * 1.30',
             ];
         }
 
@@ -577,42 +497,34 @@ class PayrollComputationService
     {
         $monthlyRate = round((float) ($rates['monthly_rate'] ?? 0), 2);
 
-        $monthlyDivisor = (float) config('payroll.monthly_salary_divisor', 26);
-        $cutoffPaidDays = (float) config('payroll.monthly_cutoff_paid_days', 13);
-
-        if ($monthlyDivisor <= 0) {
-            $monthlyDivisor = 26;
-        }
-
-        if ($cutoffPaidDays <= 0) {
-            $cutoffPaidDays = $monthlyDivisor / 2;
-        }
-
-        $dailyRate = $monthlyRate / $monthlyDivisor;
-        $hourlyRate = $dailyRate / $this->hoursPerDay();
-        $minuteRate = $dailyRate / $this->minutesPerDay();
+        $dailyRate = $monthlyRate > 0 ? ($monthlyRate * 12) / 365 : 0.0;
+        $hourlyRate = $dailyRate > 0 ? $dailyRate / $this->hoursPerDay() : 0.0;
+        $minuteRate = $hourlyRate > 0 ? $hourlyRate / 60 : 0.0;
 
         $rates['daily_rate'] = round($dailyRate, 6);
         $rates['hourly_rate'] = round($hourlyRate, 6);
         $rates['minute_rate'] = round($minuteRate, 6);
 
+        $rates['ot_rate_per_hour'] = round($hourlyRate * (float) config('payroll.overtime.regular_multiplier', 1.25), 6);
         $rates['late_deduction_per_minute'] = round($minuteRate, 6);
         $rates['undertime_deduction_per_minute'] = round($minuteRate, 6);
         $rates['absent_deduction_per_day'] = round($dailyRate, 6);
 
-        $rates['monthly_salary_divisor'] = $monthlyDivisor;
-        $rates['monthly_cutoff_paid_days'] = $cutoffPaidDays;
-
         $rates['monthly_divisor_meta'] = [
             'monthly_rate' => round($monthlyRate, 2),
-            'monthly_salary_divisor' => $monthlyDivisor,
-            'monthly_cutoff_paid_days' => $cutoffPaidDays,
+            'cutoff_basic_pay' => round($monthlyRate / 2, 2),
             'daily_rate' => round($dailyRate, 6),
             'daily_rate_display' => round($dailyRate, 2),
             'hourly_rate' => round($hourlyRate, 6),
+            'hourly_rate_display' => round($hourlyRate, 2),
             'minute_rate' => round($minuteRate, 6),
-            'formula' => 'monthly_rate / 26',
-            'cutoff_base_formula' => 'daily_rate * 13',
+            'minute_rate_display' => round($minuteRate, 2),
+            'paid_hours_per_day' => $this->hoursPerDay(),
+            'scheduled_clock_hours_per_day' => round($this->scheduledClockMinutesPerDay() / 60, 2),
+            'daily_rate_formula' => 'monthly_salary * 12 / 365',
+            'hourly_rate_formula' => 'daily_rate / 8',
+            'minute_rate_formula' => 'hourly_rate / 60',
+            'cutoff_base_formula' => 'monthly_salary / 2',
         ];
 
         return $rates;
@@ -692,40 +604,18 @@ class PayrollComputationService
         }
 
         $rateType = strtolower((string) ($salary->rate_type ?? 'daily'));
-        $basicSalary = (float) ($salary->basic_salary ?? $salary->monthly_rate ?? $salary->daily_rate ?? 0);
-
-        /*
-         | Company payroll standard:
-         | 9 hours = 1 payroll day.
-         | For monthly employees, the money base is salary / 2 per cutoff.
-         | The daily divisor is only used for absence/late/UT rates and premium pay basis.
-         */
-        $monthlyWorkingDays = (float) (
-            $salary->monthly_working_days
-            ?? $salary->working_days_per_month
-            ?? config('payroll.monthly_working_days', 22)
-        );
+        $basicSalary = (float) ($salary->basic_salary ?? 0);
 
         if ($rateType === 'monthly') {
             $monthlyRate = $basicSalary;
-
-            $fallbackDailyRate = $monthlyWorkingDays > 0
-                ? $monthlyRate / $monthlyWorkingDays
-                : 0;
-
-            $dailyRate = (float) (
-                $salary->daily_rate
-                ?? $salary->regular_daily_rate
-                ?? $salary->absent_deduction_per_day
-                ?? $fallbackDailyRate
-            );
+            $dailyRate = $monthlyRate > 0 ? ($monthlyRate * 12) / 365 : 0.0;
         } else {
             $dailyRate = $basicSalary;
-            $monthlyRate = $dailyRate * $monthlyWorkingDays;
+            $monthlyRate = $dailyRate > 0 ? ($dailyRate * 365) / 12 : 0.0;
         }
 
-        $hourlyRate = $dailyRate > 0 ? $dailyRate / $this->hoursPerDay() : 0;
-        $minuteRate = $dailyRate > 0 ? $dailyRate / $this->minutesPerDay() : 0;
+        $hourlyRate = $dailyRate > 0 ? $dailyRate / $this->hoursPerDay() : 0.0;
+        $minuteRate = $hourlyRate > 0 ? $hourlyRate / 60 : 0.0;
 
         return [
             'employee_id' => $salary->employee_id ?? null,
@@ -734,13 +624,13 @@ class PayrollComputationService
             'salary_model' => $salary,
             'monthly_rate' => round($monthlyRate, 2),
             'daily_rate' => round($dailyRate, 6),
-            'hourly_rate' => round((float) ($salary->hourly_rate ?? $hourlyRate), 6),
-            'minute_rate' => round((float) ($salary->minute_rate ?? $minuteRate), 6),
+            'hourly_rate' => round($hourlyRate, 6),
+            'minute_rate' => round($minuteRate, 6),
             'allowance' => round((float) ($salary->allowance ?? $salary->regular_allowance ?? 0), 2),
-            'ot_rate_per_hour' => round((float) ($salary->ot_rate_per_hour ?? $salary->overtime_rate_per_hour ?? ($hourlyRate * 1.25)), 6),
-            'late_deduction_per_minute' => round((float) ($salary->late_deduction_per_minute ?? $salary->late_rate_per_minute ?? $minuteRate), 6),
-            'undertime_deduction_per_minute' => round((float) ($salary->undertime_deduction_per_minute ?? $salary->undertime_rate_per_minute ?? $minuteRate), 6),
-            'absent_deduction_per_day' => round((float) ($salary->absent_deduction_per_day ?? $salary->absence_rate_per_day ?? $dailyRate), 2),
+            'ot_rate_per_hour' => round($hourlyRate * (float) config('payroll.overtime.regular_multiplier', 1.25), 6),
+            'late_deduction_per_minute' => round($minuteRate, 6),
+            'undertime_deduction_per_minute' => round($minuteRate, 6),
+            'absent_deduction_per_day' => round($dailyRate, 6),
             'simple_deductions' => [
                 'sss_loan' => round((float) ($salary->sss_loan ?? 0), 2),
                 'pagibig_loan' => round((float) ($salary->pagibig_loan ?? 0), 2),
@@ -1120,29 +1010,25 @@ class PayrollComputationService
 
     protected function computeAttendanceDeductions(Collection $rows, array $rates, int $lateMinutes, int $undertimeMinutes, float $absentDays): array
     {
-        /*
-         | IMPORTANT:
-         | Do NOT subtract the 15-minute grace period again here.
-         | DailyAttendanceSummaryService already stores grace-adjusted late_minutes.
-         | Payroll must use those stored late_minutes so Attendance Summary and Payroll match.
-         */
         $lateRate = (float) ($rates['late_deduction_per_minute'] ?? $rates['minute_rate']);
         $undertimeRate = (float) ($rates['undertime_deduction_per_minute'] ?? $rates['minute_rate']);
         $absentRate = (float) ($rates['absent_deduction_per_day'] ?? $rates['daily_rate']);
         $graceMinutes = $this->effectiveLateGraceMinutes($rows);
+        $lateBlockMinutes = $this->lateDeductionBlockMinutes();
 
         return [
             'late_minutes' => max(0, $lateMinutes),
             'late_grace_minutes' => $graceMinutes,
+            'late_deduction_block_minutes' => $lateBlockMinutes,
             'late_rate_per_minute' => round($lateRate, 6),
             'late_deduction' => round(max(0, $lateMinutes) * $lateRate, 2),
             'undertime_minutes' => max(0, $undertimeMinutes),
             'undertime_rate_per_minute' => round($undertimeRate, 6),
             'undertime_deduction' => round(max(0, $undertimeMinutes) * $undertimeRate, 2),
             'absent_days' => $absentDays,
-            'absence_rate_per_day' => round($absentRate, 2),
+            'absence_rate_per_day' => round($absentRate, 6),
             'absence_deduction' => round($absentDays * $absentRate, 2),
-            'note' => 'Payroll late minutes are computed with the company 15-minute grace period using schedule and actual time-in. If time fields are missing, payroll falls back to saved summary late_minutes.',
+            'note' => 'Monthly cutoff basic pay is monthly salary / 2. Absence uses monthly salary * 12 / 365. Late uses 15-minute grace, then rounds up to 30-minute deduction blocks. Undertime uses exact minutes.',
         ];
     }
 
@@ -1350,9 +1236,9 @@ class PayrollComputationService
             return false;
         }
 
-        $dateColumn = $this->columnExists('holidays', 'holiday_date') ? 'holiday_date' : 'date';
+        $dateColumn = $this->holidayDateColumn();
 
-        if (! $this->columnExists('holidays', $dateColumn)) {
+        if (! $dateColumn) {
             return false;
         }
 
@@ -1453,9 +1339,9 @@ class PayrollComputationService
             return false;
         }
 
-        $dateColumn = $this->columnExists('holidays', 'holiday_date') ? 'holiday_date' : 'date';
+        $dateColumn = $this->holidayDateColumn();
 
-        if (! $this->columnExists('holidays', $dateColumn)) {
+        if (! $dateColumn) {
             return false;
         }
 
@@ -1469,9 +1355,9 @@ class PayrollComputationService
         }
 
         if (class_exists(Holiday::class) && ! empty($row->work_date)) {
-            $dateColumn = $this->columnExists('holidays', 'holiday_date') ? 'holiday_date' : 'date';
+            $dateColumn = $this->holidayDateColumn();
 
-            if ($this->columnExists('holidays', $dateColumn)) {
+            if ($dateColumn) {
                 $holiday = Holiday::query()->whereDate($dateColumn, $this->dateString($row->work_date))->first();
 
                 if ($holiday) {
@@ -1526,15 +1412,23 @@ class PayrollComputationService
 
     protected function payableHours(object $row): float
     {
-        if (isset($row->payable_hours)) {
-            return max(0, (float) $row->payable_hours);
+        if ($this->isAbsent($row) || $this->statusIs($row, 'no_schedule') || $this->statusIs($row, 'holiday_unpaid')) {
+            return 0.0;
         }
 
-        if (isset($row->payable_days)) {
-            return max(0, (float) $row->payable_days * $this->hoursPerDay());
+        if ($this->statusIs($row, 'leave')) {
+            return $this->hoursPerDay();
         }
 
-        return max(0, ((int) ($row->worked_minutes ?? 0)) / 60);
+        if ($this->isHolidayRow($row) || $this->isRestDayRow($row)) {
+            return $this->premiumPayHours($row);
+        }
+
+        $lateMinutes = $this->payrollLateMinutesForRow($row);
+        $undertimeMinutes = max(0, (int) ($row->undertime_minutes ?? 0));
+        $deductedMinutes = min($this->minutesPerDay(), $lateMinutes + $undertimeMinutes);
+
+        return round(max(0, $this->minutesPerDay() - $deductedMinutes) / 60, 2);
     }
 
     protected function isAbsent(object $row): bool
@@ -1587,24 +1481,16 @@ class PayrollComputationService
         $actualIn = $this->parsePayrollDateTime($row->actual_time_in ?? ($row->time_in ?? null), $row->work_date ?? null);
 
         if (! $scheduledIn || ! $actualIn) {
-            return max(0, (int) ($row->late_minutes ?? 0));
+            return $this->roundLateDeductionMinutes(max(0, (int) ($row->late_minutes ?? 0)), 0);
         }
 
-        /*
-         | If the actual time was stored as time-only and becomes earlier than
-         | scheduled because of an overnight parsing edge case, move it forward.
-         */
         if ($actualIn->lt($scheduledIn->copy()->subHours(12))) {
             $actualIn->addDay();
         }
 
         $rawLateMinutes = $scheduledIn->diffInMinutes($actualIn, false);
 
-        if ($rawLateMinutes <= 0) {
-            return 0;
-        }
-
-        return max(0, $rawLateMinutes - $this->lateGraceMinutes($row));
+        return $this->roundLateDeductionMinutes((int) $rawLateMinutes, $this->lateGraceMinutes($row));
     }
 
     protected function lateGraceMinutes(?object $row = null): int
@@ -1645,12 +1531,124 @@ class PayrollComputationService
 
     protected function hoursPerDay(): float
     {
-        return (float) config('payroll.attendance.hours_per_day', config('payroll.hours_per_day', 9));
+        return (float) config('payroll.attendance.paid_hours_per_day', config('payroll.hours_per_day', 8));
     }
 
     protected function minutesPerDay(): int
     {
-        return (int) config('payroll.attendance.minutes_per_day', config('payroll.minutes_per_day', 540));
+        return (int) config('payroll.attendance.paid_minutes_per_day', config('payroll.minutes_per_day', 480));
+    }
+
+    protected function scheduledClockMinutesPerDay(): int
+    {
+        return (int) config('payroll.attendance.scheduled_minutes_per_day', 540);
+    }
+
+    protected function lateDeductionBlockMinutes(): int
+    {
+        return max(1, (int) config('payroll.attendance.late_deduction_block_minutes', 30));
+    }
+
+    protected function roundLateDeductionMinutes(int $rawLateMinutes, int $graceMinutes): int
+    {
+        if ($rawLateMinutes <= $graceMinutes) {
+            return 0;
+        }
+
+        $block = $this->lateDeductionBlockMinutes();
+
+        return (int) (ceil($rawLateMinutes / $block) * $block);
+    }
+
+    protected function hasValidTimeInOut(object $row): bool
+    {
+        $timeIn = $this->parsePayrollDateTime($row->actual_time_in ?? ($row->time_in ?? null), $row->work_date ?? null);
+        $timeOut = $this->parsePayrollDateTime($row->actual_time_out ?? ($row->time_out ?? null), $row->work_date ?? null);
+
+        return $timeIn && $timeOut && $timeOut->gt($timeIn);
+    }
+
+    protected function premiumPayHours(object $row): float
+    {
+        $workedMinutes = max(0, (int) ($row->worked_minutes ?? 0));
+
+        if ($workedMinutes <= 0 && isset($row->payable_hours)) {
+            return min($this->hoursPerDay(), max(0, (float) $row->payable_hours));
+        }
+
+        if ($workedMinutes <= 0) {
+            return 0.0;
+        }
+
+        $scheduledClockMinutes = max(1, $this->scheduledClockMinutesPerDay());
+        $fraction = min(1, $workedMinutes / $scheduledClockMinutes);
+
+        return round($this->hoursPerDay() * $fraction, 2);
+    }
+
+    protected function hasApprovedHolidayAdjustment(object $employeeReference, Carbon $holidayDate): bool
+    {
+        if (! class_exists(PayrollAttendanceAdjustment::class)) {
+            return false;
+        }
+
+        $query = PayrollAttendanceAdjustment::query()
+            ->whereDate('work_date', $holidayDate->toDateString());
+
+        $matched = false;
+        $query->where(function ($q) use ($employeeReference, &$matched): void {
+            if (! empty($employeeReference->biometric_employee_id)) {
+                $q->orWhere('biometric_employee_id', $employeeReference->biometric_employee_id);
+                $matched = true;
+            }
+
+            if (! empty($employeeReference->employee_no)) {
+                $q->orWhere('employee_no', $employeeReference->employee_no);
+                $matched = true;
+            }
+
+            if (! empty($employeeReference->employee_name)) {
+                $q->orWhere('employee_name', $employeeReference->employee_name);
+                $matched = true;
+            }
+        });
+
+        if (! $matched) {
+            return false;
+        }
+
+        if ($this->columnExists('payroll_attendance_adjustments', 'status')) {
+            $query->where('status', 'approved');
+        } elseif ($this->columnExists('payroll_attendance_adjustments', 'is_approved')) {
+            $query->where('is_approved', true);
+        }
+
+        return $query->where(function ($q): void {
+            $q->where('is_paid', true)
+                ->orWhere('adjustment_type', PayrollAttendanceAdjustment::TYPE_CHANGE_SCHEDULE)
+                ->orWhere('adjustment_type', PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS)
+                ->orWhere('adjustment_type', PayrollAttendanceAdjustment::TYPE_OFFSET)
+                ->orWhere('adjustment_type', 'holiday_work')
+                ->orWhere('adjustment_type', 'holiday')
+                ->orWhere('adjustment_type', 'overtime')
+                ->orWhereNotNull('adjusted_time_in')
+                ->orWhereNotNull('adjusted_time_out');
+        })->exists();
+    }
+
+    protected function holidayDateColumn(): ?string
+    {
+        if (! class_exists(Holiday::class)) {
+            return null;
+        }
+
+        foreach (['observed_date', 'holiday_date', 'actual_date', 'date', 'work_date'] as $column) {
+            if ($this->columnExists('holidays', $column)) {
+                return $column;
+            }
+        }
+
+        return null;
     }
 
     protected function columnExists(string $table, string $column): bool

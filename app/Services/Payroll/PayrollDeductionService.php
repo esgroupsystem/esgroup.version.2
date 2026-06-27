@@ -15,9 +15,11 @@ class PayrollDeductionService
 
     public const SCHEDULE_EVERY = 'every_cutoff';
 
-    private const WORKING_DAYS_PER_MONTH = 22;
+    private const ANNUAL_MONTHS = 12;
 
-    private const HOURS_PER_DAY = 9;
+    private const ANNUAL_DAYS = 365;
+
+    private const PAID_HOURS_PER_DAY = 8;
 
     private const MINUTES_PER_HOUR = 60;
 
@@ -31,11 +33,13 @@ class PayrollDeductionService
             ];
         }
 
+        $rateType = strtolower(trim($rateType));
+
         $dailyRate = $rateType === 'monthly'
-            ? $basicSalary / self::WORKING_DAYS_PER_MONTH
+            ? ($basicSalary * self::ANNUAL_MONTHS) / self::ANNUAL_DAYS
             : $basicSalary;
 
-        $hourlyRate = $dailyRate / self::HOURS_PER_DAY;
+        $hourlyRate = $dailyRate / self::PAID_HOURS_PER_DAY;
         $perMinuteRate = $hourlyRate / self::MINUTES_PER_HOUR;
 
         return [
@@ -55,7 +59,7 @@ class PayrollDeductionService
 
         return $salary->rate_type === 'monthly'
             ? round($basicSalary, 2)
-            : round($basicSalary * self::WORKING_DAYS_PER_MONTH, 2);
+            : round(($basicSalary * self::ANNUAL_DAYS) / self::ANNUAL_MONTHS, 2);
     }
 
     public function salaryPreview(PayrollEmployeeSalary $salary): array

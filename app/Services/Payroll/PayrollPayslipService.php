@@ -432,7 +432,7 @@ class PayrollPayslipService
         }
 
         if (isset($row->payable_hours)) {
-            return round(max(0, (float) $row->payable_hours) / 9, 2);
+            return round(max(0, (float) $row->payable_hours) / (float) config('payroll.attendance.paid_hours_per_day', 8), 2);
         }
 
         return 0.00;

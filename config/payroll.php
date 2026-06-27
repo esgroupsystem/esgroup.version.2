@@ -2,43 +2,65 @@
 
 return [
     /*
-     | Attendance payroll rules
-     | 9 hours = 1 paid day. First 15 minutes late is free.
-     */
+    |--------------------------------------------------------------------------
+    | Attendance payroll rules
+    |--------------------------------------------------------------------------
+    |
+    | Company standard:
+    | - Employee stays in the workplace for 9 clock hours.
+    | - Only 8 hours are paid work hours because 1 hour is lunch.
+    | - Payroll rates use 8 paid hours.
+    | - Attendance schedule validation still uses 9 clock hours.
+    |
+    */
+
     'attendance' => [
-        'hours_per_day' => 9,
-        'minutes_per_day' => 540,
+        'scheduled_hours_per_day' => 9,
+        'scheduled_minutes_per_day' => 540,
+        'paid_hours_per_day' => 8,
+        'paid_minutes_per_day' => 480,
         'late_grace_minutes' => 15,
+        'late_deduction_block_minutes' => 30,
     ],
 
     /*
-    |--------------------------------------------------------------------------
-    | Payroll Unit Standard
-    |--------------------------------------------------------------------------
-    |
-    | One payroll day is 9 hours / 540 minutes.
-    | Attendance summary uses this only for payable-day and audit conversion.
-    | Monthly salary computation uses monthly salary / 2 per cutoff.
-    |
+    | Old root keys retained for old views/services that still call config().
     */
-
-    'hours_per_day' => 9,
-    'minutes_per_day' => 540,
+    'late_grace_minutes' => 15,
+    'hours_per_day' => 8,
+    'minutes_per_day' => 480,
+    'scheduled_hours_per_day' => 9,
+    'scheduled_minutes_per_day' => 540,
 
     /*
     |--------------------------------------------------------------------------
-    | Monthly Salary Divisor
+    | Salary Rate Standard
     |--------------------------------------------------------------------------
     |
-    | Used only to derive daily absence rate when the employee salary profile
-    | has no explicit absent_deduction_per_day value.
+    | Monthly salary basic cutoff pay is always monthly_salary / 2.
+    | Do not compute monthly cutoff basic pay using daily_rate * days in month.
     |
-    | Example:
-    | 19,000 / 22 = 863.64 per absent day.
+    | Daily rate is used only for deductions and premiums:
+    | daily_rate = monthly_salary * 12 / 365
+    | hourly_rate = daily_rate / 8
+    | minute_rate = hourly_rate / 60
     |
     */
 
+    'salary_rate' => [
+        'monthly_cutoff_divisor' => 2,
+        'annual_months' => 12,
+        'annual_days' => 365,
+        'paid_hours_per_day' => 8,
+        'minutes_per_hour' => 60,
+    ],
+
+    /*
+    | Retained legacy keys. These are no longer used for monthly cutoff basic pay.
+    */
     'monthly_working_days' => 26,
+    'monthly_salary_divisor' => 26,
+    'monthly_cutoff_paid_days' => 13,
 
     /*
     |--------------------------------------------------------------------------
@@ -46,14 +68,11 @@ return [
     |--------------------------------------------------------------------------
     |
     | Company rule:
-    | Only the day BEFORE the holiday is checked.
-    | The day AFTER the holiday is not required.
-    |
-    | Paid holiday if previous day is:
-    | - worked / has time-in
-    | - rest day / day off
-    | - holiday
-    | - approved leave
+    | - Only check the day before the holiday.
+    | - Employee must have work/time-in on the previous day, or previous day must
+    |   be rest day/day off, holiday, or approved paid leave/adjustment.
+    | - Holiday worked premium requires valid time-in/out and approved payroll
+    |   attendance adjustment for that holiday date.
     |
     */
 
@@ -61,24 +80,27 @@ return [
     'holiday_requires_before_after_work' => false,
 
     'holiday' => [
+        'regular_worked_premium' => 1.00,
+        'special_worked_premium' => 0.30,
+        'rest_day_worked_multiplier' => 1.30,
+
+        /*
+         | Legacy values retained for old screens/reports.
+         */
         'regular_worked_multiplier' => 2.00,
         'regular_not_worked_multiplier' => 1.00,
         'special_worked_multiplier' => 1.30,
         'special_not_worked_multiplier' => 0.00,
-        'rest_day_worked_multiplier' => 1.30,
+    ],
+
+    'overtime' => [
+        'regular_multiplier' => 1.25,
     ],
 
     /*
     |--------------------------------------------------------------------------
     | Government Contribution Basis
     |--------------------------------------------------------------------------
-    |
-    | actual_cycle_basic:
-    |   Uses previous 2nd cutoff + current 1st cutoff cycle basis when applicable.
-    |
-    | fixed_monthly_basic:
-    |   Uses the fixed monthly basic salary from employee salary profile.
-    |
     */
 
     'government_basis' => [
@@ -87,36 +109,9 @@ return [
         'pagibig' => 'actual_cycle_basic',
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Default Government Deduction Schedule
-    |--------------------------------------------------------------------------
-    |
-    | Employee salary profile schedule overrides these defaults when the profile
-    | has sss_deduction_schedule, pagibig_deduction_schedule, or
-    | philhealth_deduction_schedule.
-    |
-    */
-
     'government_deduction_schedule' => [
         'sss' => 'first_cutoff',
         'philhealth' => 'first_cutoff',
         'pagibig' => 'first_cutoff',
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Monthly Employee Salary Divisor
-    |--------------------------------------------------------------------------
-    |
-    | Company rule:
-    | Monthly salary is divided by 26 paid days.
-    |
-    | Example:
-    | 25,000 / 26 = 961.5384615385
-    |
-    */
-
-    'monthly_salary_divisor' => 26,
-    'monthly_cutoff_paid_days' => 13,
 ];

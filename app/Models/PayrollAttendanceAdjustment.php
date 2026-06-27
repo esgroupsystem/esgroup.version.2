@@ -17,12 +17,18 @@ class PayrollAttendanceAdjustment extends Model
 
     public const TYPE_OFFICIAL_BUSINESS = 'official_business';
 
+    public const TYPE_HOLIDAY_WORK = 'holiday_work';
+
+    public const TYPE_OVERTIME = 'overtime';
+
     public const TYPES = [
         self::TYPE_SICK_LEAVE => 'Sick Leave',
         self::TYPE_MEDICAL_LEAVE => 'Medical Leave',
         self::TYPE_CHANGE_SCHEDULE => 'Change Schedule',
         self::TYPE_OFFSET => 'Offset',
         self::TYPE_OFFICIAL_BUSINESS => 'Official Business',
+        self::TYPE_HOLIDAY_WORK => 'Holiday Work',
+        self::TYPE_OVERTIME => 'Overtime',
     ];
 
     protected $fillable = [

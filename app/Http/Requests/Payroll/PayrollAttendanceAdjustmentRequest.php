@@ -91,8 +91,8 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
             'date_from.required' => 'Date from is required for Sick Leave and Medical Leave.',
             'date_to.required' => 'Date to is required for Sick Leave and Medical Leave.',
             'work_date.required' => 'Work date is required for this adjustment type.',
-            'adjusted_time_in.required' => 'Time in is required for Change Schedule and Official Business.',
-            'adjusted_time_out.required' => 'Time out is required for Change Schedule and Official Business.',
+            'adjusted_time_in.required' => 'Time in is required for Change Schedule, Official Business, Holiday Work, and Overtime.',
+            'adjusted_time_out.required' => 'Time out is required for Change Schedule, Official Business, Holiday Work, and Overtime.',
             'adjusted_time_out.after' => 'Time out must be later than time in.',
             'offset_source_date.required' => 'Please select the biometric proof date for offset.',
             'offset_source_date.different' => 'Offset proof date and transfer date must not be the same.',
@@ -117,6 +117,8 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
         return in_array($this->adjustment_type, [
             PayrollAttendanceAdjustment::TYPE_CHANGE_SCHEDULE,
             PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS,
+            PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK,
+            PayrollAttendanceAdjustment::TYPE_OVERTIME,
         ], true);
     }
 }
