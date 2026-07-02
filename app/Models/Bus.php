@@ -16,6 +16,11 @@ class Bus extends Model
 
     public const STATUS_ON_HOLD_PLATE_REGISTRATION = 'on_hold_plate_registration';
 
+    // NEW
+    public const STATUS_FOR_RENTAL_CHARTER = 'for_rental_charter';
+
+    public const STATUS_INACTIVE = 'inactive';
+
     public const SALE_NOT_FOR_SALE = 'not_for_sale';
 
     public const SALE_FOR_SALE = 'for_sale';
@@ -45,6 +50,8 @@ class Bus extends Model
             self::STATUS_MECHANICAL_BREAKDOWN => 'Mechanical Breakdown',
             self::STATUS_ACCIDENT_RELATED_BREAKDOWN => 'Accident Related Breakdown',
             self::STATUS_ON_HOLD_PLATE_REGISTRATION => 'On Hold due to Plate Reg.',
+            self::STATUS_FOR_RENTAL_CHARTER => 'For Rental/Charter',
+            self::STATUS_INACTIVE => 'Inactive',
         ];
     }
 
@@ -88,6 +95,8 @@ class Bus extends Model
             self::STATUS_MECHANICAL_BREAKDOWN => 'badge-subtle-warning text-warning',
             self::STATUS_ACCIDENT_RELATED_BREAKDOWN => 'badge-subtle-danger text-danger',
             self::STATUS_ON_HOLD_PLATE_REGISTRATION => 'badge-subtle-info text-info',
+            self::STATUS_FOR_RENTAL_CHARTER => 'badge-subtle-primary text-primary',
+            self::STATUS_INACTIVE => 'badge-subtle-secondary text-secondary',
             default => 'badge-subtle-secondary text-secondary',
         };
     }

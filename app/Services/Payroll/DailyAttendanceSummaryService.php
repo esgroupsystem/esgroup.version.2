@@ -111,6 +111,7 @@ class DailyAttendanceSummaryService
 
         PayrollAttendanceAdjustment::query()
             ->whereDate('work_date', $workDate->toDateString())
+            ->where('adjustment_type', '!=', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)
             ->get()
             ->each(function ($row) use ($people) {
                 $this->putPerson($people, [
@@ -176,6 +177,12 @@ class DailyAttendanceSummaryService
             ->latest('id')
             ->first();
 
+        $globalDisasterAdjustment = $this->globalDisasterAdjustmentForDate($workDate);
+
+        if ($globalDisasterAdjustment && $logs->isNotEmpty()) {
+            $adjustment = $globalDisasterAdjustment;
+        }
+
         $holiday = $this->resolveHoliday($workDate);
 
         return $this->storeSummary(
@@ -186,6 +193,20 @@ class DailyAttendanceSummaryService
             $adjustment,
             $holiday
         );
+    }
+
+    protected function globalDisasterAdjustmentForDate(Carbon $workDate): ?PayrollAttendanceAdjustment
+    {
+        return PayrollAttendanceAdjustment::query()
+            ->whereDate('work_date', $workDate->toDateString())
+            ->where('adjustment_type', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)
+            ->latest('id')
+            ->first();
+    }
+
+    protected function isTyphoonDisasterAdjustment(?PayrollAttendanceAdjustment $adjustment): bool
+    {
+        return $adjustment?->adjustment_type === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
     }
 
     protected function resolveScheduleForPersonDate(array $person, Carbon $workDate): ?EmployeePlottingSchedule
@@ -264,8 +285,9 @@ class DailyAttendanceSummaryService
         $adjustmentReason = $adjustment?->reason;
         $adjustmentIsPaid = $this->adjustmentQualifiesForPay($adjustment);
 
-        $ignoreLate = (bool) ($adjustment?->ignore_late ?? false);
-        $ignoreUndertime = (bool) ($adjustment?->ignore_undertime ?? false);
+        $isTyphoonDisasterAdjustment = $this->isTyphoonDisasterAdjustment($adjustment);
+        $ignoreLate = (bool) ($adjustment?->ignore_late ?? false) || $isTyphoonDisasterAdjustment;
+        $ignoreUndertime = (bool) ($adjustment?->ignore_undertime ?? false) || $isTyphoonDisasterAdjustment;
 
         $lateMinutes = 0;
         $undertimeMinutes = 0;
@@ -353,7 +375,16 @@ class DailyAttendanceSummaryService
 
         $isAutomaticHalfDay = $this->isAutomaticHalfDay($actualTimeIn, $actualTimeOut);
 
-        if ($isHoliday) {
+        if ($isTyphoonDisasterAdjustment && $hasRawBiometrics) {
+            $attendanceStatus = 'adjusted_present';
+            $workedMinutes = max($workedMinutes, self::FULL_DAY_MINUTES);
+            $lateMinutes = 0;
+            $undertimeMinutes = 0;
+            $payableDays = self::FULL_DAY_PAYABLE_DAYS;
+            $payableHours = self::FULL_DAY_PAYABLE_HOURS;
+
+            $remarks[] = 'Typhoon / Disaster adjustment applied. Employee has time-in on this date, so the whole day is paid and late/undertime are ignored.';
+        } elseif ($isHoliday) {
             [$holidayWorkedPayDays, $holidayRateLabel] = $this->holidayWorkedPayDays($holidayType);
             $holidayQualified = $this->isHolidayPayQualified($person, $workDate, $adjustment);
 
@@ -667,21 +698,61 @@ class DailyAttendanceSummaryService
             return [$lateMinutes, $undertimeMinutes];
         }
 
-        $scheduledIn = Carbon::parse($workDate->toDateString().' '.$scheduledTimeIn, 'Asia/Manila');
-        $scheduledOut = Carbon::parse($workDate->toDateString().' '.$scheduledTimeOut, 'Asia/Manila');
+        $scheduledIn = Carbon::parse(
+            $workDate->toDateString().' '.$scheduledTimeIn,
+            'Asia/Manila'
+        );
+
+        $scheduledOut = Carbon::parse(
+            $workDate->toDateString().' '.$scheduledTimeOut,
+            'Asia/Manila'
+        );
 
         if ($scheduledOut->lessThanOrEqualTo($scheduledIn)) {
             $scheduledOut->addDay();
         }
 
+        if ($actualTimeOut->lessThanOrEqualTo($actualTimeIn)) {
+            $actualTimeOut->addDay();
+        }
+
         $rawLateMinutes = (int) $scheduledIn->diffInMinutes($actualTimeIn, false);
-        $lateMinutes = $this->roundedLateDeductionMinutes($rawLateMinutes, $graceMinutes);
+
+        $lateMinutes = $this->roundedLateDeductionMinutes(
+            $rawLateMinutes,
+            $graceMinutes
+        );
 
         if ($actualTimeOut->lt($scheduledOut)) {
-            $undertimeMinutes = (int) $actualTimeOut->diffInMinutes($scheduledOut);
+            $rawUndertimeMinutes = (int) ceil($actualTimeOut->floatDiffInMinutes($scheduledOut));
+
+            $undertimeMinutes = $this->roundedUndertimeDeductionMinutes($rawUndertimeMinutes);
         }
 
         return [$lateMinutes, $undertimeMinutes];
+    }
+
+    protected function roundedUndertimeDeductionMinutes(int $rawUndertimeMinutes): int
+    {
+        if ($rawUndertimeMinutes <= 0) {
+            return 0;
+        }
+
+        $graceMinutes = max(
+            0,
+            (int) config('payroll.attendance.undertime_grace_minutes', 5)
+        );
+
+        if ($rawUndertimeMinutes <= $graceMinutes) {
+            return 0;
+        }
+
+        $blockMinutes = max(
+            1,
+            (int) config('payroll.attendance.undertime_deduction_block_minutes', 30)
+        );
+
+        return (int) (ceil($rawUndertimeMinutes / $blockMinutes) * $blockMinutes);
     }
 
     protected function roundedLateDeductionMinutes(int $rawLateMinutes, int $graceMinutes): int
@@ -829,6 +900,10 @@ class DailyAttendanceSummaryService
             return true;
         }
 
+        if ($this->isTyphoonDisasterAdjustment($adjustment)) {
+            return true;
+        }
+
         $adjustmentType = strtolower((string) ($adjustment->adjustment_type ?? ''));
         $adjustedDayType = strtolower((string) ($adjustment->adjusted_day_type ?? ''));
 
@@ -843,6 +918,8 @@ class DailyAttendanceSummaryService
             'rest day',
             'day_off',
             'day off',
+            'typhoon',
+            'disaster',
         ];
 
         foreach ($paidKeywords as $keyword) {

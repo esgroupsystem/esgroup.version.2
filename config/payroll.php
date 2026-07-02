@@ -19,14 +19,27 @@ return [
         'scheduled_minutes_per_day' => 540,
         'paid_hours_per_day' => 8,
         'paid_minutes_per_day' => 480,
+
         'late_grace_minutes' => 15,
         'late_deduction_block_minutes' => 30,
+
+        /*
+         | Undertime rule:
+         | Schedule 7:00 AM - 4:00 PM
+         | 3:14 PM out = 46 minutes raw undertime = 60 minutes deduction
+         | 3:44 PM out = 16 minutes raw undertime = 30 minutes deduction
+         | 3:55 PM out = 5 minutes raw undertime = 0 minutes deduction
+         */
+        'undertime_grace_minutes' => 5,
+        'undertime_deduction_block_minutes' => 30,
     ],
 
     /*
     | Old root keys retained for old views/services that still call config().
     */
     'late_grace_minutes' => 15,
+    'undertime_grace_minutes' => 5,
+    'undertime_deduction_block_minutes' => 30,
     'hours_per_day' => 8,
     'minutes_per_day' => 480,
     'scheduled_hours_per_day' => 9,

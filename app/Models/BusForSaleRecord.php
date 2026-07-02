@@ -44,6 +44,8 @@ class BusForSaleRecord extends Model
             Bus::STATUS_MECHANICAL_BREAKDOWN => 'Mechanical Breakdown',
             Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN => 'Accident Related Breakdown',
             Bus::STATUS_ON_HOLD_PLATE_REGISTRATION => 'On Hold due to Plate Reg.',
+            Bus::STATUS_FOR_RENTAL_CHARTER => 'For Rental/Charter',
+            Bus::STATUS_INACTIVE => 'Inactive',
         ];
     }
 

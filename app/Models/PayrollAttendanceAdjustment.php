@@ -21,6 +21,12 @@ class PayrollAttendanceAdjustment extends Model
 
     public const TYPE_OVERTIME = 'overtime';
 
+    public const TYPE_TYPHOON_DISASTER = 'typhoon_disaster';
+
+    public const GLOBAL_DISASTER_BIOMETRIC_ID = 'GLOBAL-DISASTER';
+
+    public const GLOBAL_DISASTER_EMPLOYEE_NAME = 'ALL EMPLOYEES';
+
     public const TYPES = [
         self::TYPE_SICK_LEAVE => 'Sick Leave',
         self::TYPE_MEDICAL_LEAVE => 'Medical Leave',
@@ -29,6 +35,7 @@ class PayrollAttendanceAdjustment extends Model
         self::TYPE_OFFICIAL_BUSINESS => 'Official Business',
         self::TYPE_HOLIDAY_WORK => 'Holiday Work',
         self::TYPE_OVERTIME => 'Overtime',
+        self::TYPE_TYPHOON_DISASTER => 'Typhoon / Disaster - All Employees',
     ];
 
     protected $fillable = [
@@ -95,6 +102,10 @@ class PayrollAttendanceAdjustment extends Model
 
     public function getAdjustedTimeLabelAttribute(): string
     {
+        if ($this->adjustment_type === self::TYPE_TYPHOON_DISASTER) {
+            return 'Whole day paid for employees with time-in';
+        }
+
         if (! $this->adjusted_time_in && ! $this->adjusted_time_out) {
             return 'No manual time';
         }
@@ -115,5 +126,10 @@ class PayrollAttendanceAdjustment extends Model
         return $this->offset_source_date->format('M d, Y').' | '
             .($this->offset_source_time_in ?? '--:--').' - '
             .($this->offset_source_time_out ?? '--:--');
+    }
+
+    public function isGlobalDisasterAdjustment(): bool
+    {
+        return $this->adjustment_type === self::TYPE_TYPHOON_DISASTER;
     }
 }

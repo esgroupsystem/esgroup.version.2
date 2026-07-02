@@ -23,14 +23,42 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
                 'work_date' => $this->date_from,
             ]);
         }
+
+        if ($this->adjustment_type === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER) {
+            $this->merge([
+                'biometric_employee_id' => PayrollAttendanceAdjustment::GLOBAL_DISASTER_BIOMETRIC_ID,
+                'employee_no' => null,
+                'employee_name' => PayrollAttendanceAdjustment::GLOBAL_DISASTER_EMPLOYEE_NAME,
+                'date_from' => null,
+                'date_to' => null,
+                'adjusted_time_in' => null,
+                'adjusted_time_out' => null,
+                'offset_source_date' => null,
+                'is_paid' => true,
+                'ignore_late' => true,
+                'ignore_undertime' => true,
+            ]);
+        }
     }
 
     public function rules(): array
     {
         return [
-            'biometric_employee_id' => ['required', 'string', 'max:100'],
+            'biometric_employee_id' => [
+                Rule::requiredIf(! $this->isGlobalDisasterType()),
+                'nullable',
+                'string',
+                'max:100',
+            ],
+
             'employee_no' => ['nullable', 'string', 'max:100'],
-            'employee_name' => ['required', 'string', 'max:255'],
+
+            'employee_name' => [
+                Rule::requiredIf(! $this->isGlobalDisasterType()),
+                'nullable',
+                'string',
+                'max:255',
+            ],
 
             'adjustment_type' => [
                 'required',
@@ -79,7 +107,12 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
             'is_paid' => ['nullable', 'boolean'],
             'ignore_late' => ['nullable', 'boolean'],
             'ignore_undertime' => ['nullable', 'boolean'],
-            'reason' => ['nullable', 'string', 'max:5000'],
+            'reason' => [
+                Rule::requiredIf($this->isGlobalDisasterType()),
+                'nullable',
+                'string',
+                'max:5000',
+            ],
             'remarks' => ['nullable', 'string', 'max:5000'],
         ];
     }
@@ -88,6 +121,7 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
     {
         return [
             'biometric_employee_id.required' => 'Please select an employee from biometrics.',
+            'employee_name.required' => 'Please select an employee from biometrics.',
             'date_from.required' => 'Date from is required for Sick Leave and Medical Leave.',
             'date_to.required' => 'Date to is required for Sick Leave and Medical Leave.',
             'work_date.required' => 'Work date is required for this adjustment type.',
@@ -96,6 +130,7 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
             'adjusted_time_out.after' => 'Time out must be later than time in.',
             'offset_source_date.required' => 'Please select the biometric proof date for offset.',
             'offset_source_date.different' => 'Offset proof date and transfer date must not be the same.',
+            'reason.required' => 'Please enter the typhoon/disaster name or reason.',
         ];
     }
 
@@ -110,6 +145,11 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
     private function isOffsetType(): bool
     {
         return $this->adjustment_type === PayrollAttendanceAdjustment::TYPE_OFFSET;
+    }
+
+    private function isGlobalDisasterType(): bool
+    {
+        return $this->adjustment_type === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
     }
 
     private function requiresManualTime(): bool

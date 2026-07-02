@@ -645,6 +645,19 @@ class BusService
                 'On Hold',
             ],
 
+            Bus::STATUS_FOR_RENTAL_CHARTER => [
+                Bus::STATUS_FOR_RENTAL_CHARTER,
+                'For Rental/Charter',
+                'Rental',
+                'Charter',
+            ],
+
+            Bus::STATUS_INACTIVE => [
+                Bus::STATUS_INACTIVE,
+                'Inactive',
+                'Not Active',
+            ],
+
             default => [$status, $normalized],
         };
     }

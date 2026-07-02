@@ -21,8 +21,8 @@
                                 Payroll Attendance Adjustments
                             </h4>
                             <p class="mb-0 text-600">
-                                Manage Sick Leave, Medical Leave, Change Schedule, Offset, and Official Business
-                                adjustments.
+                                Manage Sick Leave, Medical Leave, Change Schedule, Offset, Official Business,
+                                Overtime, Holiday Work, and Typhoon / Disaster adjustments.
                             </p>
                         </div>
 
@@ -106,6 +106,23 @@
                         </div>
                     </div>
                 </div>
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-xl me-3">
+                                    <div class="avatar-name rounded-circle bg-danger-subtle text-danger">
+                                        <span class="fas fa-cloud-showers-heavy"></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="mb-0">{{ number_format($stats['disasters'] ?? 0) }}</h4>
+                                    <small class="text-600">Typhoon / Disaster</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="card border-0 shadow-sm">
@@ -167,12 +184,22 @@
                                 @forelse ($adjustments as $item)
                                     <tr>
                                         <td>
-                                            <div class="fw-semibold text-900">{{ $item->employee_name }}</div>
-                                            <div class="fs-10 text-600">
-                                                Emp No: {{ $item->employee_no ?: 'N/A' }}
-                                                |
-                                                Bio ID: {{ $item->biometric_employee_id ?: 'N/A' }}
-                                            </div>
+                                            @if ($item->adjustment_type === 'typhoon_disaster')
+                                                <div class="fw-semibold text-danger">
+                                                    <span class="fas fa-users me-1"></span>
+                                                    All employees with time-in
+                                                </div>
+                                                <div class="fs-10 text-600">
+                                                    No employee selection required
+                                                </div>
+                                            @else
+                                                <div class="fw-semibold text-900">{{ $item->employee_name }}</div>
+                                                <div class="fs-10 text-600">
+                                                    Emp No: {{ $item->employee_no ?: 'N/A' }}
+                                                    |
+                                                    Bio ID: {{ $item->biometric_employee_id ?: 'N/A' }}
+                                                </div>
+                                            @endif
                                         </td>
 
                                         <td>
@@ -182,6 +209,8 @@
                                                     'change_schedule' => 'info',
                                                     'offset' => 'warning',
                                                     'official_business' => 'primary',
+                                                    'holiday_work', 'overtime' => 'dark',
+                                                    'typhoon_disaster' => 'danger',
                                                     default => 'secondary',
                                                 };
                                             @endphp

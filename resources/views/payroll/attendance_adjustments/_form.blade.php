@@ -2,6 +2,7 @@
     $adjustment = $payrollAttendanceAdjustment ?? null;
 
     $selectedType = old('adjustment_type', $adjustment->adjustment_type ?? '');
+    $isGlobalDisaster = $selectedType === \App\Models\PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
 
     $workDate = old('work_date', $adjustment?->work_date ? $adjustment->work_date->format('Y-m-d') : '');
 
@@ -47,15 +48,14 @@
                 <div class="row g-3">
                     <div class="col-md-7">
                         <label class="form-label fw-semibold">Biometrics Employee</label>
-                        <select name="employee_picker" id="employee_picker" class="form-select" required>
+                        <select name="employee_picker" id="employee_picker" class="form-select">
                             <option value="">Select employee</option>
 
                             @foreach ($people as $person)
                                 <option value="{{ $person->biometric_employee_id }}"
                                     data-biometric-id="{{ $person->biometric_employee_id }}"
                                     data-employee-no="{{ $person->employee_no }}"
-                                    data-employee-name="{{ $person->employee_name }}"
-                                    @selected(old('biometric_employee_id', $adjustment->biometric_employee_id ?? '') == $person->biometric_employee_id)>
+                                    data-employee-name="{{ $person->employee_name }}" @selected(old('biometric_employee_id', $adjustment->biometric_employee_id ?? '') == $person->biometric_employee_id)>
                                     {{ $person->employee_name }}
                                 </option>
                             @endforeach
@@ -79,6 +79,10 @@
                         @error('biometric_employee_id')
                             <small class="text-danger">{{ $message }}</small>
                         @enderror
+
+                        <div id="employee_picker_help" class="fs-10 text-600 mt-1">
+                            Required for individual adjustments. Automatically skipped for Typhoon / Disaster.
+                        </div>
 
                         @error('employee_name')
                             <small class="text-danger d-block">{{ $message }}</small>
@@ -161,6 +165,23 @@
                             <small class="text-danger">{{ $message }}</small>
                         @enderror
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border shadow-none mb-3 adjustment-section" data-section="disaster">
+            <div class="card-header bg-danger-subtle">
+                <h6 class="mb-0 text-danger">
+                    <span class="fas fa-cloud-showers-heavy me-2"></span>
+                    Typhoon / Disaster Adjustment for All Employees
+                </h6>
+            </div>
+
+            <div class="card-body">
+                <div class="alert alert-danger-subtle border-0 mb-0">
+                    This adjustment does not require employee selection. The system will pay a whole day only for
+                    employees who have at least one biometric time-in on the selected work date. Employees with no
+                    time-in on that date will not be paid by this adjustment.
                 </div>
             </div>
         </div>
@@ -252,7 +273,7 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Reason</label>
                     <textarea name="reason" rows="3" class="form-control"
-                        placeholder="Example: Employee submitted approved OB form / Medical certificate / Offset request.">{{ old('reason', $adjustment->reason ?? '') }}</textarea>
+                        placeholder="Example: Typhoon Egay early dismissal / Employee submitted approved OB form / Medical certificate / Offset request.">{{ old('reason', $adjustment->reason ?? '') }}</textarea>
 
                     @error('reason')
                         <small class="text-danger">{{ $message }}</small>
@@ -322,7 +343,8 @@
                     <strong>Guide:</strong><br>
                     Sick Leave and Medical Leave do not need time.<br>
                     Offset requires biometric proof.<br>
-                    OB and Change Schedule need manual time in/out.
+                    OB and Change Schedule need manual time in/out.<br>
+                    Typhoon / Disaster pays all employees with time-in as whole day.
                 </div>
             </div>
         </div>
@@ -857,11 +879,20 @@
 
         function syncSelectedEmployee() {
             const picker = el('employee_picker');
+            const typeSelect = el('adjustment_type');
             const biometricIdInput = el('biometric_employee_id');
             const employeeNoInput = el('employee_no');
             const employeeNameInput = el('employee_name');
 
             if (!picker || !biometricIdInput || !employeeNoInput || !employeeNameInput) {
+                return;
+            }
+
+            if (typeSelect && typeSelect.value === 'typhoon_disaster') {
+                biometricIdInput.value = '';
+                employeeNoInput.value = '';
+                employeeNameInput.value = '';
+                resetOffsetProofHiddenFields();
                 return;
             }
 
@@ -911,6 +942,20 @@
             }
         }
 
+        function setEmployeePickerMode(isRequired, message) {
+            const picker = el('employee_picker');
+            const help = el('employee_picker_help');
+
+            if (picker) {
+                picker.required = isRequired;
+                picker.disabled = !isRequired;
+            }
+
+            if (help) {
+                help.textContent = message;
+            }
+        }
+
         function refreshAdjustmentFields() {
             const typeSelect = el('adjustment_type');
             const workDateLabel = el('work_date_label');
@@ -929,6 +974,13 @@
 
             hideAllSections();
 
+            setEmployeePickerMode(
+                type !== 'typhoon_disaster',
+                type === 'typhoon_disaster' ?
+                'Employee selection is skipped. This applies to all employees with time-in on the selected date.' :
+                'Required for individual adjustments. Automatically skipped for Typhoon / Disaster.'
+            );
+
             if (type === 'sick_leave' || type === 'medical_leave') {
                 showSection('leave');
 
@@ -941,7 +993,8 @@
                 }
             }
 
-            if (type === 'change_schedule' || type === 'official_business') {
+            if (type === 'change_schedule' || type === 'official_business' || type === 'holiday_work' || type ===
+                'overtime') {
                 showSection('single-date');
                 showSection('manual-time');
 
@@ -979,6 +1032,20 @@
                 }
             }
 
+            if (type === 'typhoon_disaster') {
+                showSection('single-date');
+                showSection('disaster');
+
+                if (workDateLabel) {
+                    workDateLabel.textContent = 'Typhoon / Disaster Date';
+                }
+
+                if (workDateInput) {
+                    workDateInput.required = true;
+                }
+            }
+
+            syncSelectedEmployee();
             resetOffsetProofHiddenFields();
         }
 

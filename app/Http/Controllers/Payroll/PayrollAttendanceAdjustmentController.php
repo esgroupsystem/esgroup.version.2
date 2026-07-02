@@ -7,6 +7,7 @@ use App\Http\Requests\Payroll\PayrollAttendanceAdjustmentRequest;
 use App\Models\MirasolBiometricsLog;
 use App\Models\PayrollAttendanceAdjustment;
 use App\Services\Payroll\BiometricsProofService;
+use App\Services\Payroll\DailyAttendanceSummaryService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -18,7 +19,8 @@ use Illuminate\View\View;
 class PayrollAttendanceAdjustmentController extends Controller
 {
     public function __construct(
-        private readonly BiometricsProofService $biometricsProofService
+        private readonly BiometricsProofService $biometricsProofService,
+        private readonly DailyAttendanceSummaryService $dailyAttendanceSummaryService
     ) {}
 
     public function index(Request $request): View
@@ -30,8 +32,8 @@ class PayrollAttendanceAdjustmentController extends Controller
 
         $query = PayrollAttendanceAdjustment::query()
             ->with('encoder')
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
+            ->when($search, function ($query) use ($search): void {
+                $query->where(function ($q) use ($search): void {
                     $q->where('employee_name', 'like', "%{$search}%")
                         ->orWhere('employee_no', 'like', "%{$search}%")
                         ->orWhere('biometric_employee_id', 'like', "%{$search}%")
@@ -41,10 +43,10 @@ class PayrollAttendanceAdjustmentController extends Controller
                 });
             })
             ->when($type, fn ($query) => $query->where('adjustment_type', $type))
-            ->when($dateFrom, function ($query) use ($dateFrom) {
+            ->when($dateFrom, function ($query) use ($dateFrom): void {
                 $query->whereDate(DB::raw('COALESCE(date_from, work_date)'), '>=', $dateFrom);
             })
-            ->when($dateTo, function ($query) use ($dateTo) {
+            ->when($dateTo, function ($query) use ($dateTo): void {
                 $query->whereDate(DB::raw('COALESCE(date_to, work_date)'), '<=', $dateTo);
             });
 
@@ -63,7 +65,12 @@ class PayrollAttendanceAdjustmentController extends Controller
                 ->whereIn('adjustment_type', [
                     PayrollAttendanceAdjustment::TYPE_CHANGE_SCHEDULE,
                     PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS,
+                    PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK,
+                    PayrollAttendanceAdjustment::TYPE_OVERTIME,
                 ])
+                ->count(),
+            'disasters' => (clone $query)
+                ->where('adjustment_type', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)
                 ->count(),
         ];
 
@@ -100,7 +107,9 @@ class PayrollAttendanceAdjustmentController extends Controller
             return back()
                 ->withInput()
                 ->withErrors([
-                    'work_date' => 'An adjustment already exists for this employee within the selected date.',
+                    'work_date' => $this->isGlobalDisasterType($validated)
+                        ? 'A Typhoon / Disaster adjustment already exists for this work date.'
+                        : 'An adjustment already exists for this employee within the selected date.',
                 ]);
         }
 
@@ -129,11 +138,13 @@ class PayrollAttendanceAdjustmentController extends Controller
             ]);
         }
 
-        PayrollAttendanceAdjustment::create($payload);
+        $adjustment = PayrollAttendanceAdjustment::create($payload);
+
+        $this->rebuildAffectedSummary($adjustment);
 
         return redirect()
             ->route('payroll-attendance-adjustments.index')
-            ->with('success', 'Payroll attendance adjustment saved successfully.');
+            ->with('success', $this->successMessage($adjustment, 'saved'));
     }
 
     public function edit(PayrollAttendanceAdjustment $payrollAttendanceAdjustment): View
@@ -155,10 +166,13 @@ class PayrollAttendanceAdjustmentController extends Controller
             return back()
                 ->withInput()
                 ->withErrors([
-                    'work_date' => 'Another adjustment already exists for this employee within the selected date.',
+                    'work_date' => $this->isGlobalDisasterType($validated)
+                        ? 'Another Typhoon / Disaster adjustment already exists for this work date.'
+                        : 'Another adjustment already exists for this employee within the selected date.',
                 ]);
         }
 
+        $oldWorkDate = $payrollAttendanceAdjustment->work_date?->toDateString();
         $payload = $this->buildPayload($validated, $request);
 
         if ($validated['adjustment_type'] === PayrollAttendanceAdjustment::TYPE_OFFSET) {
@@ -185,15 +199,24 @@ class PayrollAttendanceAdjustmentController extends Controller
         }
 
         $payrollAttendanceAdjustment->update($payload);
+        $payrollAttendanceAdjustment->refresh();
+
+        $this->rebuildAffectedSummary($payrollAttendanceAdjustment, $oldWorkDate);
 
         return redirect()
             ->route('payroll-attendance-adjustments.index')
-            ->with('success', 'Payroll attendance adjustment updated successfully.');
+            ->with('success', $this->successMessage($payrollAttendanceAdjustment, 'updated'));
     }
 
     public function destroy(PayrollAttendanceAdjustment $payrollAttendanceAdjustment): RedirectResponse
     {
+        $oldWorkDate = $payrollAttendanceAdjustment->work_date?->toDateString();
+
         $payrollAttendanceAdjustment->delete();
+
+        if ($oldWorkDate) {
+            $this->dailyAttendanceSummaryService->buildForDate($oldWorkDate);
+        }
 
         return redirect()
             ->route('payroll-attendance-adjustments.index')
@@ -238,15 +261,25 @@ class PayrollAttendanceAdjustmentController extends Controller
             PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE,
         ], true);
 
+        $isGlobalDisaster = $type === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
+
         $requiresManualTime = in_array($type, [
             PayrollAttendanceAdjustment::TYPE_CHANGE_SCHEDULE,
             PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS,
+            PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK,
+            PayrollAttendanceAdjustment::TYPE_OVERTIME,
         ], true);
 
         return [
-            'biometric_employee_id' => $validated['biometric_employee_id'],
-            'employee_no' => $validated['employee_no'] ?? null,
-            'employee_name' => $validated['employee_name'],
+            'biometric_employee_id' => $isGlobalDisaster
+                ? PayrollAttendanceAdjustment::GLOBAL_DISASTER_BIOMETRIC_ID
+                : $validated['biometric_employee_id'],
+
+            'employee_no' => $isGlobalDisaster ? null : ($validated['employee_no'] ?? null),
+
+            'employee_name' => $isGlobalDisaster
+                ? PayrollAttendanceAdjustment::GLOBAL_DISASTER_EMPLOYEE_NAME
+                : $validated['employee_name'],
 
             'work_date' => $isLeave ? $validated['date_from'] : $validated['work_date'],
             'date_from' => $isLeave ? $validated['date_from'] : null,
@@ -265,15 +298,15 @@ class PayrollAttendanceAdjustmentController extends Controller
             'offset_source_time_out' => null,
             'offset_source_logs' => null,
 
-            'is_paid' => $request->boolean('is_paid'),
-            'ignore_late' => $request->boolean('ignore_late'),
-            'ignore_undertime' => $request->boolean('ignore_undertime'),
+            'is_paid' => $isGlobalDisaster ? true : $request->boolean('is_paid'),
+            'ignore_late' => $isGlobalDisaster ? true : $request->boolean('ignore_late'),
+            'ignore_undertime' => $isGlobalDisaster ? true : $request->boolean('ignore_undertime'),
 
             'reason' => $validated['reason'] ?? null,
             'remarks' => $validated['remarks'] ?? null,
 
             'encoded_by' => auth()->id(),
-            'encoded_at' => now(),
+            'encoded_at' => now('Asia/Manila'),
         ];
     }
 
@@ -285,6 +318,9 @@ class PayrollAttendanceAdjustmentController extends Controller
             PayrollAttendanceAdjustment::TYPE_CHANGE_SCHEDULE => 'change_schedule',
             PayrollAttendanceAdjustment::TYPE_OFFSET => 'offset',
             PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS => 'official_business',
+            PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK => 'holiday_work',
+            PayrollAttendanceAdjustment::TYPE_OVERTIME => 'overtime',
+            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER => 'typhoon_disaster',
             default => 'adjustment',
         };
     }
@@ -292,7 +328,7 @@ class PayrollAttendanceAdjustmentController extends Controller
     private function getBiometricsPeople()
     {
         $logs = MirasolBiometricsLog::query()
-            ->select([
+            ->select($this->existingBiometricColumns([
                 'id',
                 'employee_id',
                 'employee_no',
@@ -301,28 +337,28 @@ class PayrollAttendanceAdjustmentController extends Controller
                 'crosschex_account_name',
                 'crosschex_account',
                 'check_time',
-            ])
-            ->where(function ($query) {
+            ]))
+            ->where(function ($query): void {
                 $query->whereNotNull('employee_name')
                     ->orWhereNotNull('crosschex_account_name')
                     ->orWhereNotNull('crosschex_account')
                     ->orWhereNotNull('employee_no')
                     ->orWhereNotNull('employee_id');
             })
-            ->orderByDesc('check_time')
+            ->orderByDesc(Schema::hasColumn((new MirasolBiometricsLog)->getTable(), 'check_time') ? 'check_time' : 'id')
             ->get();
 
         return $logs
             ->map(function (MirasolBiometricsLog $log) {
                 $employeeName = $this->firstFilledValue([
-                    $log->employee_name,
-                    $log->crosschex_account_name,
-                    $log->crosschex_account,
+                    $log->employee_name ?? null,
+                    $log->crosschex_account_name ?? null,
+                    $log->crosschex_account ?? null,
                 ]);
 
                 $employeeNo = $this->firstFilledValue([
-                    $log->employee_no,
-                    $log->employee_id,
+                    $log->employee_no ?? null,
+                    $log->employee_id ?? null,
                 ]);
 
                 if (empty($employeeName)) {
@@ -334,7 +370,7 @@ class PayrollAttendanceAdjustmentController extends Controller
                     'biometric_employee_id' => $employeeNo ?: $employeeName,
                     'employee_no' => $employeeNo,
                     'employee_name' => $employeeName,
-                    'last_check_time' => $log->check_time,
+                    'last_check_time' => $log->check_time ?? null,
                     'total_logs' => 1,
                 ];
             })
@@ -357,16 +393,23 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     private function hasDuplicateAdjustment(array $validated, ?int $ignoreId = null): bool
     {
-        $dateFrom = $validated['date_from'] ?? $validated['work_date'];
-        $dateTo = $validated['date_to'] ?? $validated['work_date'];
-
         $query = PayrollAttendanceAdjustment::query();
 
         if ($ignoreId) {
             $query->where('id', '!=', $ignoreId);
         }
 
-        $query->where(function ($q) use ($validated) {
+        if ($this->isGlobalDisasterType($validated)) {
+            return $query
+                ->where('adjustment_type', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)
+                ->whereDate('work_date', $validated['work_date'])
+                ->exists();
+        }
+
+        $dateFrom = $validated['date_from'] ?? $validated['work_date'];
+        $dateTo = $validated['date_to'] ?? $validated['work_date'];
+
+        $query->where(function ($q) use ($validated): void {
             $q->where('biometric_employee_id', $validated['biometric_employee_id']);
 
             if (! empty($validated['employee_no'])) {
@@ -376,12 +419,39 @@ class PayrollAttendanceAdjustmentController extends Controller
             $q->orWhere('employee_name', $validated['employee_name']);
         });
 
-        $query->where(function ($q) use ($dateFrom, $dateTo) {
+        $query->where(function ($q) use ($dateFrom, $dateTo): void {
             $q->whereRaw('COALESCE(date_from, work_date) <= ?', [$dateTo])
                 ->whereRaw('COALESCE(date_to, work_date) >= ?', [$dateFrom]);
         });
 
         return $query->exists();
+    }
+
+    private function rebuildAffectedSummary(PayrollAttendanceAdjustment $adjustment, ?string $oldWorkDate = null): void
+    {
+        $newWorkDate = $adjustment->work_date?->toDateString();
+
+        if ($oldWorkDate && $oldWorkDate !== $newWorkDate) {
+            $this->dailyAttendanceSummaryService->buildForDate($oldWorkDate);
+        }
+
+        if ($newWorkDate) {
+            $this->dailyAttendanceSummaryService->buildForDate($newWorkDate);
+        }
+    }
+
+    private function successMessage(PayrollAttendanceAdjustment $adjustment, string $action): string
+    {
+        if ($adjustment->adjustment_type === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER) {
+            return 'Typhoon / Disaster adjustment '.$action.'. All employees with time-in on the selected date will be paid as whole day after summary rebuild.';
+        }
+
+        return 'Payroll attendance adjustment '.$action.' successfully.';
+    }
+
+    private function isGlobalDisasterType(array $validated): bool
+    {
+        return ($validated['adjustment_type'] ?? null) === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
     }
 
     private function findOffsetProof(
@@ -392,7 +462,7 @@ class PayrollAttendanceAdjustmentController extends Controller
     ): ?array {
         $logs = MirasolBiometricsLog::query()
             ->whereDate('check_time', $offsetSourceDate)
-            ->where(function ($query) use ($biometricEmployeeId, $employeeNo, $employeeName) {
+            ->where(function ($query) use ($biometricEmployeeId, $employeeNo, $employeeName): void {
                 if (! empty($employeeNo)) {
                     $query->where('employee_no', $employeeNo)
                         ->orWhere('employee_id', $employeeNo);
@@ -471,6 +541,17 @@ class PayrollAttendanceAdjustmentController extends Controller
         }
 
         return 'created_at';
+    }
+
+    private function existingBiometricColumns(array $columns): array
+    {
+        $table = (new MirasolBiometricsLog)->getTable();
+
+        return collect($columns)
+            ->filter(fn (string $column): bool => Schema::hasColumn($table, $column))
+            ->unique()
+            ->values()
+            ->toArray();
     }
 
     private function firstFilledValue(array $values): ?string

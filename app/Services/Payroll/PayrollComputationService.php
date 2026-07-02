@@ -112,7 +112,7 @@ class PayrollComputationService
 
         $totalWorkedMinutes = (int) $rows->sum(fn ($row): int => (int) ($row->worked_minutes ?? 0));
         $totalLateMinutes = $this->totalPayrollLateMinutes($rows);
-        $totalUndertimeMinutes = (int) $rows->sum(fn ($row): int => (int) ($row->undertime_minutes ?? 0));
+        $totalUndertimeMinutes = (int) $rows->sum(fn ($row): int => $this->payrollUndertimeMinutesForRow($row));
         $totalAbsentDays = (float) $rows->filter(fn ($row): bool => $this->isAbsent($row))->count();
         $totalLeaveDays = (int) $rows->filter(fn ($row): bool => $this->statusIs($row, 'leave'))->count();
 
@@ -1015,6 +1015,8 @@ class PayrollComputationService
         $absentRate = (float) ($rates['absent_deduction_per_day'] ?? $rates['daily_rate']);
         $graceMinutes = $this->effectiveLateGraceMinutes($rows);
         $lateBlockMinutes = $this->lateDeductionBlockMinutes();
+        $undertimeGraceMinutes = $this->undertimeGraceMinutes();
+        $undertimeBlockMinutes = $this->undertimeDeductionBlockMinutes();
 
         return [
             'late_minutes' => max(0, $lateMinutes),
@@ -1023,12 +1025,14 @@ class PayrollComputationService
             'late_rate_per_minute' => round($lateRate, 6),
             'late_deduction' => round(max(0, $lateMinutes) * $lateRate, 2),
             'undertime_minutes' => max(0, $undertimeMinutes),
+            'undertime_grace_minutes' => $undertimeGraceMinutes,
+            'undertime_deduction_block_minutes' => $undertimeBlockMinutes,
             'undertime_rate_per_minute' => round($undertimeRate, 6),
             'undertime_deduction' => round(max(0, $undertimeMinutes) * $undertimeRate, 2),
             'absent_days' => $absentDays,
             'absence_rate_per_day' => round($absentRate, 6),
             'absence_deduction' => round($absentDays * $absentRate, 2),
-            'note' => 'Monthly cutoff basic pay is monthly salary / 2. Absence uses monthly salary * 12 / 365. Late uses 15-minute grace, then rounds up to 30-minute deduction blocks. Undertime uses exact minutes.',
+            'note' => 'Monthly cutoff basic pay is monthly salary / 2. Absence uses monthly salary * 12 / 365. Late uses grace and deduction blocks. Undertime uses 5-minute grace, then rounds up to 30-minute deduction blocks.',
         ];
     }
 
@@ -1425,7 +1429,7 @@ class PayrollComputationService
         }
 
         $lateMinutes = $this->payrollLateMinutesForRow($row);
-        $undertimeMinutes = max(0, (int) ($row->undertime_minutes ?? 0));
+        $undertimeMinutes = $this->payrollUndertimeMinutesForRow($row);
         $deductedMinutes = min($this->minutesPerDay(), $lateMinutes + $undertimeMinutes);
 
         return round(max(0, $this->minutesPerDay() - $deductedMinutes) / 60, 2);
@@ -1502,6 +1506,62 @@ class PayrollComputationService
         }
 
         return max(0, (int) config('payroll.attendance.late_grace_minutes', config('payroll.late_grace_minutes', 15)));
+    }
+
+    protected function payrollUndertimeMinutesForRow(object $row): int
+    {
+        if ($this->isAbsent($row) || $this->isRestDayRow($row) || $this->statusIs($row, 'leave')) {
+            return 0;
+        }
+
+        $scheduledIn = $this->parsePayrollDateTime($row->scheduled_time_in ?? null, $row->work_date ?? null);
+        $scheduledOut = $this->parsePayrollDateTime($row->scheduled_time_out ?? null, $row->work_date ?? null);
+        $actualOut = $this->parsePayrollDateTime($row->actual_time_out ?? ($row->time_out ?? null), $row->work_date ?? null);
+
+        if (! $scheduledOut || ! $actualOut) {
+            return $this->roundUndertimeDeductionMinutes(max(0, (int) ($row->undertime_minutes ?? 0)));
+        }
+
+        if ($scheduledIn && $scheduledOut->lessThanOrEqualTo($scheduledIn)) {
+            $scheduledOut->addDay();
+        }
+
+        if ($scheduledIn && $actualOut->lt($scheduledIn->copy()->subHours(12))) {
+            $actualOut->addDay();
+        }
+
+        if ($actualOut->greaterThanOrEqualTo($scheduledOut)) {
+            return 0;
+        }
+
+        $rawUndertimeMinutes = (int) $actualOut->diffInMinutes($scheduledOut);
+
+        return $this->roundUndertimeDeductionMinutes($rawUndertimeMinutes);
+    }
+
+    protected function undertimeGraceMinutes(): int
+    {
+        return max(0, (int) config('payroll.attendance.undertime_grace_minutes', config('payroll.undertime_grace_minutes', 5)));
+    }
+
+    protected function undertimeDeductionBlockMinutes(): int
+    {
+        return max(1, (int) config('payroll.attendance.undertime_deduction_block_minutes', config('payroll.undertime_deduction_block_minutes', 30)));
+    }
+
+    protected function roundUndertimeDeductionMinutes(int $rawUndertimeMinutes): int
+    {
+        if ($rawUndertimeMinutes <= 0) {
+            return 0;
+        }
+
+        if ($rawUndertimeMinutes <= $this->undertimeGraceMinutes()) {
+            return 0;
+        }
+
+        $block = $this->undertimeDeductionBlockMinutes();
+
+        return (int) (ceil($rawUndertimeMinutes / $block) * $block);
     }
 
     protected function parsePayrollDateTime(mixed $value, mixed $workDate = null): ?Carbon
