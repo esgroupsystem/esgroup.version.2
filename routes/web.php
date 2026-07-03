@@ -3,6 +3,8 @@
 use App\Http\Controllers\Accounting\AccountingController;
 use App\Http\Controllers\AllBusController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Biometrics\BiometricCompanyController;
+use App\Http\Controllers\Biometrics\EmployeeBiometricController;
 use App\Http\Controllers\BusDetailController;
 use App\Http\Controllers\Chairman\HrDataController;
 use App\Http\Controllers\ClaimController;
@@ -1284,6 +1286,32 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::delete('/for-sale-units/{forSaleRecord}', [ForSaleUnitController::class, 'destroy'])
                 ->middleware('permission:fleet.manage.delete')
                 ->name('for-sale-units.destroy');
+        });
+
+    Route::middleware(['auth'])
+        ->prefix('biometrics')
+        ->name('biometrics.')
+        ->controller(EmployeeBiometricController::class)
+        ->group(function (): void {
+            Route::get('/employees', 'index')
+                ->middleware('permission:biometrics.view')
+                ->name('employees.index');
+
+            Route::post('/employees/sync', 'sync')
+                ->middleware('permission:biometrics.sync')
+                ->name('employees.sync');
+
+            Route::get('/employees/{employeeBiometric}/edit', 'edit')
+                ->middleware('permission:biometrics.edit')
+                ->name('employees.edit');
+
+            Route::put('/employees/{employeeBiometric}', 'update')
+                ->middleware('permission:biometrics.update')
+                ->name('employees.update');
+
+            Route::post('/companies', 'store')
+                ->middleware('permission:biometrics.create')
+                ->name('companies.store');
         });
 
 });

@@ -430,6 +430,23 @@
                         </div>
                     </li>
 
+                    @can('biometrics.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('biometrics.employees.*') ? 'active' : '' }}"
+                                href="{{ route('biometrics.employees.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-fingerprint"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">
+                                        Employees
+                                    </span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
+
+
                     @can('payroll-plotting.view')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->is('payroll-plotting*') ? 'active' : '' }}"
