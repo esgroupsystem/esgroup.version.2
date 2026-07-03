@@ -170,7 +170,10 @@ class RoleController extends Controller
 
             return back()->with(
                 'success',
-                'Route permissions synced successfully. New permissions created: '.$result['created_count']
+                'Permissions synced. Created: '.
+                $result['created_count'].
+                ' | Deleted: '.
+                $result['deleted_count']
             );
         } catch (\Throwable $e) {
             Log::error('Role permission sync error', [
