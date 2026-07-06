@@ -11,34 +11,39 @@ use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\StockMovement;
 use App\Services\Maintenance\PartsOutRollbackService;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
 use Throwable;
 
 class PartsOutController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View|string
     {
         $search = trim((string) $request->search);
 
-        $partsOuts = PartsOut::with(['vehicle', 'creator', 'location']);
+        $partsOuts = PartsOut::query()
+            ->with(['vehicle', 'creator', 'location'])
+            ->withCount('items');
 
         $this->restrictLocation($partsOuts);
 
         $partsOuts = $partsOuts
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
+            ->when($search !== '', function (Builder $query) use ($search): void {
+                $query->where(function (Builder $q) use ($search): void {
                     $q->where('parts_out_number', 'like', "%{$search}%")
                         ->orWhere('mechanic_name', 'like', "%{$search}%")
                         ->orWhere('requested_by', 'like', "%{$search}%")
                         ->orWhere('job_order_no', 'like', "%{$search}%")
                         ->orWhere('issued_date', 'like', "%{$search}%")
-                        ->orWhereHas('location', function ($locationQuery) use ($search) {
+                        ->orWhereHas('location', function (Builder $locationQuery) use ($search): void {
                             $locationQuery->where('name', 'like', "%{$search}%");
                         })
-                        ->orWhereHas('vehicle', function ($vehicleQuery) use ($search) {
+                        ->orWhereHas('vehicle', function (Builder $vehicleQuery) use ($search): void {
                             $vehicleQuery->where('plate_number', 'like', "%{$search}%")
                                 ->orWhere('body_number', 'like', "%{$search}%")
                                 ->orWhere('name', 'like', "%{$search}%")
@@ -51,23 +56,23 @@ class PartsOutController extends Controller
             ->withQueryString();
 
         if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'html' => view('maintenance.parts_out.table', compact('partsOuts'))->render(),
-            ]);
+            return view('maintenance.parts_out.table', compact('partsOuts'))->render();
         }
 
         return view('maintenance.parts_out.index', compact('partsOuts', 'search'));
     }
 
-    public function create()
+    public function create(): View
     {
-        $vehicles = BusDetail::orderBy('plate_number')->get();
+        $vehicles = BusDetail::query()
+            ->orderBy('plate_number')
+            ->get();
 
         $locationId = $this->userLocationId();
 
         $locations = Location::query()
-            ->when($locationId, function ($query) use ($locationId) {
+            ->where('is_active', 1)
+            ->when($locationId, function (Builder $query) use ($locationId): void {
                 $query->where('id', $locationId);
             })
             ->orderBy('name')
@@ -78,25 +83,31 @@ class PartsOutController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        abort_unless(
+            $request->user()->can('parts-out.create'),
+            403,
+            'You are not authorized to create Parts Out transactions.'
+        );
+
         $validated = $request->validate([
-            'vehicle_id' => 'nullable|exists:bus_details,id',
-            'location_id' => 'required|exists:locations,id',
-            'mechanic_name' => 'required|string|max:255',
-            'requested_by' => 'nullable|string|max:255',
-            'issued_date' => 'required|date',
-            'job_order_no' => 'nullable|string|max:255',
-            'odometer' => 'nullable|string|max:255',
-            'purpose' => 'nullable|string',
-            'remarks' => 'nullable|string',
+            'vehicle_id' => ['nullable', 'exists:bus_details,id'],
+            'location_id' => ['required', 'exists:locations,id'],
+            'mechanic_name' => ['required', 'string', 'max:255'],
+            'requested_by' => ['nullable', 'string', 'max:255'],
+            'issued_date' => ['required', 'date'],
+            'job_order_no' => ['nullable', 'string', 'max:255'],
+            'odometer' => ['nullable', 'string', 'max:255'],
+            'purpose' => ['nullable', 'string'],
+            'remarks' => ['nullable', 'string'],
 
-            'product_id' => 'required|array|min:1',
-            'product_id.*' => 'required|integer|exists:products,id|distinct',
+            'product_id' => ['required', 'array', 'min:1'],
+            'product_id.*' => ['required', 'integer', 'exists:products,id', 'distinct'],
 
-            'qty_used' => 'required|array|min:1',
-            'qty_used.*' => 'required|integer|min:1',
+            'qty_used' => ['required', 'array', 'min:1'],
+            'qty_used.*' => ['required', 'integer', 'min:1'],
 
-            'item_remarks' => 'nullable|array',
-            'item_remarks.*' => 'nullable|string',
+            'item_remarks' => ['nullable', 'array'],
+            'item_remarks.*' => ['nullable', 'string', 'max:1000'],
         ]);
 
         if (count($validated['product_id']) !== count($validated['qty_used'])) {
@@ -105,116 +116,115 @@ class PartsOutController extends Controller
                 ->with('error', 'Product count and quantity count do not match.');
         }
 
-        $locationId = $this->userLocationId();
+        $userLocationId = $this->userLocationId();
 
-        if ($locationId && (int) $validated['location_id'] !== (int) $locationId) {
+        if ($userLocationId && (int) $validated['location_id'] !== (int) $userLocationId) {
             return back()
                 ->withInput()
                 ->with('error', 'You are only allowed to issue parts from your assigned garage.');
         }
 
-        DB::beginTransaction();
-
         try {
-            $location = Location::findOrFail($validated['location_id']);
+            $partsOut = DB::transaction(function () use ($validated): PartsOut {
+                $location = Location::query()
+                    ->whereKey($validated['location_id'])
+                    ->firstOrFail();
 
-            $partsOut = PartsOut::create([
-                'parts_out_number' => 'TEMP',
-                'vehicle_id' => $validated['vehicle_id'] ?? null,
-                'location_id' => $validated['location_id'],
-                'mechanic_name' => $validated['mechanic_name'],
-                'requested_by' => $validated['requested_by'] ?? null,
-                'issued_date' => $validated['issued_date'],
-                'job_order_no' => $validated['job_order_no'] ?? null,
-                'odometer' => $validated['odometer'] ?? null,
-                'purpose' => $validated['purpose'] ?? null,
-                'remarks' => $validated['remarks'] ?? null,
-                'status' => 'posted',
-                'created_by' => Auth::id(),
-            ]);
-
-            $partsOutNumber = 'POUT-'
-                .now()->format('Y')
-                .'-'
-                .str_pad((string) $partsOut->id, 5, '0', STR_PAD_LEFT);
-
-            $partsOut->update([
-                'parts_out_number' => $partsOutNumber,
-            ]);
-
-            foreach ($validated['product_id'] as $index => $productId) {
-                $qtyUsed = (int) $validated['qty_used'][$index];
-
-                $product = Product::lockForUpdate()->findOrFail($productId);
-
-                $productStock = ProductStock::lockForUpdate()->firstOrCreate(
-                    [
-                        'product_id' => $product->id,
-                        'location_id' => $validated['location_id'],
-                    ],
-                    [
-                        'qty' => 0,
-                    ]
-                );
-
-                $stockBefore = (int) $productStock->qty;
-
-                if ($stockBefore < $qtyUsed) {
-                    throw new \Exception(
-                        "Insufficient stock for {$product->product_name} at {$location->name}. "
-                        ."Available: {$stockBefore}, Requested: {$qtyUsed}."
-                    );
-                }
-
-                $stockAfter = $stockBefore - $qtyUsed;
-
-                PartsOutItem::create([
-                    'parts_out_id' => $partsOut->id,
-                    'product_id' => $product->id,
-                    'qty_used' => $qtyUsed,
-                    'stock_before' => $stockBefore,
-                    'stock_after' => $stockAfter,
-                    'remarks' => $validated['item_remarks'][$index] ?? null,
-                ]);
-
-                $productStock->update([
-                    'qty' => $stockAfter,
-                ]);
-
-                $product->update([
-                    'stock_qty' => ProductStock::where('product_id', $product->id)->sum('qty'),
-                ]);
-
-                StockMovement::create([
-                    'product_id' => $product->id,
+                $partsOut = PartsOut::query()->create([
+                    'parts_out_number' => 'TEMP',
+                    'vehicle_id' => $validated['vehicle_id'] ?? null,
                     'location_id' => $validated['location_id'],
-                    'reference_type' => 'parts_out',
-                    'reference_id' => $partsOut->id,
-                    'movement_type' => 'out',
-                    'qty' => $qtyUsed,
-                    'stock_before' => $stockBefore,
-                    'stock_after' => $stockAfter,
-                    'transaction_date' => $validated['issued_date'],
-                    'remarks' => 'Parts Out #'.$partsOutNumber,
+                    'mechanic_name' => $validated['mechanic_name'],
+                    'requested_by' => $validated['requested_by'] ?? null,
+                    'issued_date' => $validated['issued_date'],
+                    'job_order_no' => $validated['job_order_no'] ?? null,
+                    'odometer' => $validated['odometer'] ?? null,
+                    'purpose' => $validated['purpose'] ?? null,
+                    'remarks' => $validated['remarks'] ?? null,
+                    'status' => 'posted',
                     'created_by' => Auth::id(),
                 ]);
-            }
 
-            DB::commit();
+                $partsOutNumber = $this->generatePartsOutNumber($partsOut);
+
+                $partsOut->update([
+                    'parts_out_number' => $partsOutNumber,
+                ]);
+
+                foreach ($validated['product_id'] as $index => $productId) {
+                    $qtyUsed = (int) $validated['qty_used'][$index];
+
+                    $product = Product::query()
+                        ->whereKey($productId)
+                        ->lockForUpdate()
+                        ->firstOrFail();
+
+                    $productStock = ProductStock::query()
+                        ->where('product_id', $product->id)
+                        ->where('location_id', $validated['location_id'])
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (! $productStock) {
+                        throw new \RuntimeException(
+                            "No stock record found for {$product->product_name} at {$location->name}."
+                        );
+                    }
+
+                    $stockBefore = (int) $productStock->qty;
+
+                    if ($stockBefore < $qtyUsed) {
+                        throw new \RuntimeException(
+                            "Insufficient stock for {$product->product_name} at {$location->name}. Available: {$stockBefore}, Requested: {$qtyUsed}."
+                        );
+                    }
+
+                    $stockAfter = $stockBefore - $qtyUsed;
+
+                    PartsOutItem::query()->create([
+                        'parts_out_id' => $partsOut->id,
+                        'product_id' => $product->id,
+                        'qty_used' => $qtyUsed,
+                        'stock_before' => $stockBefore,
+                        'stock_after' => $stockAfter,
+                        'remarks' => $validated['item_remarks'][$index] ?? null,
+                    ]);
+
+                    $productStock->update([
+                        'qty' => $stockAfter,
+                    ]);
+
+                    $this->syncProductTotalStock((int) $product->id);
+
+                    StockMovement::query()->create([
+                        'product_id' => $product->id,
+                        'location_id' => $validated['location_id'],
+                        'reference_type' => 'parts_out',
+                        'reference_id' => $partsOut->id,
+                        'movement_type' => 'out',
+                        'qty' => $qtyUsed,
+                        'stock_before' => $stockBefore,
+                        'stock_after' => $stockAfter,
+                        'transaction_date' => $validated['issued_date'],
+                        'remarks' => 'Parts Out #'.$partsOutNumber,
+                        'created_by' => Auth::id(),
+                    ]);
+                }
+
+                return $partsOut;
+            }, 3);
 
             return redirect()
                 ->route('parts-out.show', $partsOut->id)
-                ->with('success', 'Parts Out transaction saved successfully.');
+                ->with('success', 'Parts Out transaction saved successfully. Stock quantities were deducted.');
         } catch (Throwable $e) {
-            DB::rollBack();
-
             return back()
                 ->withInput()
                 ->with('error', $e->getMessage());
         }
     }
 
-    public function show(PartsOut $partsOut)
+    public function show(PartsOut $partsOut): View
     {
         $partsOut->load(['vehicle', 'creator', 'location', 'items.product']);
 
@@ -227,7 +237,7 @@ class PartsOutController extends Controller
         return view('maintenance.parts_out.show', compact('partsOut'));
     }
 
-    public function searchProducts(Request $request)
+    public function searchProducts(Request $request): JsonResponse
     {
         $search = trim((string) $request->get('search', ''));
         $locationId = (int) $request->get('location_id');
@@ -249,16 +259,17 @@ class PartsOutController extends Controller
             ->values()
             ->all();
 
-        $products = Product::with([
-            'category',
-            'stocks' => function ($query) use ($locationId) {
-                $query->where('location_id', $locationId);
-            },
-        ])
-            ->when(! empty($excludeIds), function ($query) use ($excludeIds) {
+        $products = Product::query()
+            ->with([
+                'category',
+                'stocks' => function ($query) use ($locationId): void {
+                    $query->where('location_id', $locationId);
+                },
+            ])
+            ->when(! empty($excludeIds), function (Builder $query) use ($excludeIds): void {
                 $query->whereNotIn('id', $excludeIds);
             })
-            ->where(function ($query) use ($search) {
+            ->where(function (Builder $query) use ($search): void {
                 $query->where('product_name', 'like', "%{$search}%")
                     ->orWhere('part_number', 'like', "%{$search}%")
                     ->orWhere('supplier_name', 'like', "%{$search}%")
@@ -267,7 +278,7 @@ class PartsOutController extends Controller
             ->orderBy('product_name')
             ->limit(20)
             ->get()
-            ->map(function ($product) {
+            ->map(function (Product $product): array {
                 $stockRow = $product->stocks->first();
                 $stockQty = $stockRow ? (int) $stockRow->qty : 0;
 
@@ -282,7 +293,7 @@ class PartsOutController extends Controller
                     'stock' => $stockQty,
                 ];
             })
-            ->filter(fn ($product) => $product['stock'] > 0)
+            ->filter(fn (array $product): bool => $product['stock'] > 0)
             ->values();
 
         return response()->json($products);
@@ -293,7 +304,13 @@ class PartsOutController extends Controller
         PartsOut $partsOut,
         PartsOutRollbackService $rollbackService
     ): RedirectResponse {
-        $request->validate([
+        abort_unless(
+            $request->user()->can('parts-out.rollback'),
+            403,
+            'You are not authorized to rollback Parts Out transactions.'
+        );
+
+        $validated = $request->validate([
             'rollback_reason' => ['nullable', 'string', 'max:1000'],
         ]);
 
@@ -306,24 +323,44 @@ class PartsOutController extends Controller
         try {
             $rollbackService->rollback(
                 partsOutId: $partsOut->id,
-                reason: $request->input('rollback_reason')
+                reason: $validated['rollback_reason'] ?? null
             );
 
             return redirect()
-                ->route('parts-out.index')
-                ->with('success', 'Parts Out transaction rolled back successfully. Stock has been returned and the record was removed from vehicle history.');
+                ->route('parts-out.show', $partsOut->id)
+                ->with('success', 'Parts Out transaction rolled back successfully. Stock has been returned.');
         } catch (Throwable $e) {
             return back()
                 ->with('error', $e->getMessage());
         }
     }
 
-    private function userLocationId()
+    private function generatePartsOutNumber(PartsOut $partsOut): string
     {
-        return Auth::user()->location_id ?? null;
+        return 'POUT-'.now()->format('Y').'-'.str_pad((string) $partsOut->id, 5, '0', STR_PAD_LEFT);
     }
 
-    private function restrictLocation($query)
+    private function syncProductTotalStock(int $productId): void
+    {
+        $totalStock = ProductStock::query()
+            ->where('product_id', $productId)
+            ->sum('qty');
+
+        Product::query()
+            ->whereKey($productId)
+            ->update([
+                'stock_qty' => $totalStock,
+            ]);
+    }
+
+    private function userLocationId(): ?int
+    {
+        $locationId = Auth::user()->location_id ?? null;
+
+        return $locationId ? (int) $locationId : null;
+    }
+
+    private function restrictLocation(Builder $query): Builder
     {
         $locationId = $this->userLocationId();
 
