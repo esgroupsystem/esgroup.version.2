@@ -59,13 +59,9 @@
                             </span>
                         @endif
                     </td>
-
-                    {{-- Mechanic --}}
                     <td>
                         {{ $row->mechanic_name ?? '—' }}
                     </td>
-
-                    {{-- Date --}}
                     <td>
                         @if ($row->issued_date)
                             {{ \Carbon\Carbon::parse($row->issued_date)->format('M d, Y') }}
@@ -73,50 +69,39 @@
                             —
                         @endif
                     </td>
-
-                    {{-- Job Order --}}
                     <td>
                         {{ $row->job_order_no ?? '—' }}
                     </td>
-
-                    {{-- Status --}}
                     <td>
                         <span
                             class="badge bg-{{ $statusClass }}-subtle text-{{ $statusClass }} border border-{{ $statusClass }}-subtle">
                             {{ $statusLabel }}
                         </span>
                     </td>
-
-                    {{-- Encoded By --}}
                     <td>
                         {{ $row->creator->full_name ?? ($row->creator->name ?? '—') }}
                     </td>
-
-                    {{-- Action --}}
                     <td class="text-center">
                         <div class="d-flex justify-content-center gap-1">
-
-                            {{-- View Details --}}
                             <a href="{{ route('parts-out.show', $row->id) }}" class="btn btn-falcon-info btn-sm"
                                 data-bs-toggle="tooltip" title="View Details">
                                 <span class="fas fa-eye"></span>
                             </a>
-
-                            {{-- Rollback --}}
                             @if ($row->status === 'posted')
-                                <form action="{{ route('parts-out.rollback', $row->id) }}" method="POST"
-                                    class="d-inline"
-                                    onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock and remove this record from Vehicle History.');">
-                                    @csrf
-                                    @method('PATCH')
+                                @can('parts-out.rollback')
+                                    <form action="{{ route('parts-out.rollback', $row) }}" method="POST" class="d-inline"
+                                        onsubmit="return confirm('Are you sure you want to rollback this Parts Out? This will return all used quantities back to stock and remove this record from Vehicle History.');">
+                                        @csrf
+                                        @method('PATCH')
 
-                                    <input type="hidden" name="rollback_reason" value="Rollback from Parts Out table">
+                                        <input type="hidden" name="rollback_reason" value="Rollback from Parts Out table">
 
-                                    <button type="submit" class="btn btn-falcon-warning btn-sm"
-                                        data-bs-toggle="tooltip" title="Rollback">
-                                        <span class="fas fa-undo"></span>
-                                    </button>
-                                </form>
+                                        <button type="submit" class="btn btn-falcon-warning btn-sm"
+                                            data-bs-toggle="tooltip" title="Rollback">
+                                            <span class="fas fa-undo"></span>
+                                        </button>
+                                    </form>
+                                @endcan
                             @endif
 
                         </div>

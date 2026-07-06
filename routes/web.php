@@ -1114,7 +1114,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:parts-out.view')
                     ->name('print');
 
-                Route::post('/{partsOut}/rollback', 'rollback')
+                Route::patch('/{partsOut}/rollback', 'rollback')
                     ->middleware('permission:parts-out.rollback')
                     ->name('rollback');
             });
