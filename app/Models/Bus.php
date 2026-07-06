@@ -108,4 +108,21 @@ class Bus extends Model
             default => 'badge-subtle-secondary text-secondary',
         };
     }
+
+    public function jobOrderMaintenances(): HasMany
+    {
+        return $this->hasMany(JobOrderMaintenance::class);
+    }
+
+    public function latestJobOrderMaintenance(): HasOne
+    {
+        return $this->hasOne(JobOrderMaintenance::class)->latestOfMany();
+    }
+
+    public function latestJobOrderMaintenanceWithOdometer(): HasOne
+    {
+        return $this->hasOne(JobOrderMaintenance::class)
+            ->whereNotNull('odometer_reading')
+            ->latestOfMany();
+    }
 }

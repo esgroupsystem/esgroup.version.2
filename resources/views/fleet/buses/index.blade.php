@@ -260,10 +260,24 @@
                 $forSaleBusNumbers->contains(strtoupper(trim((string) $bus->bus_no)));
         };
 
-        $netActiveCount = function ($items) use ($isForSaleBus): int {
+        $activeStatusValues = [
+            \App\Models\Bus::STATUS_ACTIVE,
+            'Active',
+            'ACTIVE',
+            'active',
+            'Running',
+            'RUNNING',
+            'running',
+            'Running Condition',
+            'RUNNING CONDITION',
+            'running_condition',
+        ];
+
+        $netActiveCount = function ($items) use ($isForSaleBus, $activeStatusValues): int {
             return collect($items)
-                ->filter(function ($bus) use ($isForSaleBus): bool {
-                    return $bus->operational_status === \App\Models\Bus::STATUS_ACTIVE && !$isForSaleBus($bus);
+                ->filter(function ($bus) use ($isForSaleBus, $activeStatusValues): bool {
+                    return in_array((string) $bus->operational_status, $activeStatusValues, true) &&
+                        !$isForSaleBus($bus);
                 })
                 ->count();
         };
@@ -271,7 +285,6 @@
         $forSaleCount = function ($items) use ($isForSaleBus): int {
             return collect($items)->filter(fn($bus): bool => $isForSaleBus($bus))->count();
         };
-
 
         $resolveRouteUrl = function (array $routeNames, string $fallback): string {
             foreach ($routeNames as $routeName) {
@@ -283,19 +296,25 @@
             return $fallback;
         };
 
-        $manageForSaleUrl = $resolveRouteUrl([
-            'fleet.bus-for-sale-records.index',
-            'fleet.bus-for-sale.index',
-            'fleet.for-sale.index',
-            'fleet.buses.for-sale.index',
-        ], '#for-sale-monitoring');
+        $manageForSaleUrl = $resolveRouteUrl(
+            [
+                'fleet.bus-for-sale-records.index',
+                'fleet.bus-for-sale.index',
+                'fleet.for-sale.index',
+                'fleet.buses.for-sale.index',
+            ],
+            '#for-sale-monitoring',
+        );
 
-        $addForSaleUrl = $resolveRouteUrl([
-            'fleet.bus-for-sale-records.create',
-            'fleet.bus-for-sale.create',
-            'fleet.for-sale.create',
-            'fleet.buses.for-sale.create',
-        ], '#for-sale-monitoring');
+        $addForSaleUrl = $resolveRouteUrl(
+            [
+                'fleet.bus-for-sale-records.create',
+                'fleet.bus-for-sale.create',
+                'fleet.for-sale.create',
+                'fleet.buses.for-sale.create',
+            ],
+            '#for-sale-monitoring',
+        );
     @endphp
 
     <div class="container-fluid">
@@ -503,7 +522,8 @@
                     </div>
 
                     <div class="col-xl-4 col-md-6">
-                        <a href="{{ route('fleet.buses.index') }}" class="fleet-action-card fleet-action-muted-card h-100">
+                        <a href="{{ route('fleet.buses.index') }}"
+                            class="fleet-action-card fleet-action-muted-card h-100">
                             <span class="fleet-action-main">
                                 <span class="fleet-action-icon">
                                     <span class="fas fa-filter"></span>

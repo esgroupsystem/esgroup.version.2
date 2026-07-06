@@ -23,6 +23,7 @@ use App\Http\Controllers\IT_Department\CctvController;
 use App\Http\Controllers\IT_Department\TicketController;
 use App\Http\Controllers\Maintenance\CategoryController;
 use App\Http\Controllers\Maintenance\ItemsController;
+use App\Http\Controllers\Maintenance\JobOrderMaintenanceController;
 use App\Http\Controllers\Maintenance\OdometerReportController;
 use App\Http\Controllers\Maintenance\PartsOutController;
 use App\Http\Controllers\Maintenance\PurchaseReceiveController;
@@ -1118,7 +1119,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->name('rollback');
             });
 
-            Route::prefix('receivings')
+        Route::prefix('receivings')
             ->name('receivings.')
             ->controller(ReceivingController::class)
             ->group(function () {
@@ -1345,6 +1346,36 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/companies', 'store')
                 ->middleware('permission:biometrics.create')
                 ->name('companies.store');
+        });
+
+    Route::prefix('maintenance/job-orders')
+        ->name('maintenance.job-orders.')
+        ->controller(JobOrderMaintenanceController::class)
+        ->middleware(['auth'])
+        ->group(function () {
+            Route::get('/', 'index')
+                ->middleware('permission:job-orders.view')
+                ->name('index');
+
+            Route::get('/create', 'create')
+                ->middleware('permission:job-orders.create')
+                ->name('create');
+
+            Route::post('/', 'store')
+                ->middleware('permission:job-orders.create')
+                ->name('store');
+
+            Route::get('/{jobOrderMaintenance}', 'show')
+                ->middleware('permission:job-orders.view')
+                ->name('show');
+
+            Route::get('/{jobOrderMaintenance}/edit-status', 'editStatus')
+                ->middleware('permission:job-orders.update-status')
+                ->name('edit-status');
+
+            Route::patch('/{jobOrderMaintenance}/status', 'updateStatus')
+                ->middleware('permission:job-orders.update-status')
+                ->name('update-status');
         });
 
 });

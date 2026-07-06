@@ -590,6 +590,20 @@
                     </li>
                 @endcan
 
+                @can('buses.view')
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('maintenance.job-orders.*') ? 'active' : '' }}"
+                            href="{{ route('maintenance.job-orders.index') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="nav-link-icon">
+                                    <span class="fas fa-clipboard-list"></span>
+                                </span>
+                                <span class="nav-link-text ps-1">Maintenance Job Orders</span>
+                            </div>
+                        </a>
+                    </li>
+                @endcan
+
 
                 @can('buses.view')
                     <li class="nav-item">
