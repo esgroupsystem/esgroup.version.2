@@ -951,8 +951,42 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
     Route::middleware(['auth'])->group(function () {
 
-        Route::resource('allbus', AllBusController::class)
-            ->parameters(['allbus' => 'bus']);
+        Route::prefix('allbus')
+            ->name('allbus.')
+            ->controller(AllBusController::class)
+            ->group(function () {
+                Route::get('/', 'index')
+                    ->name('index')
+                    ->middleware('permission:allbus.view');
+
+                Route::get('/create', 'create')
+                    ->name('create')
+                    ->middleware('permission:allbus.create');
+
+                Route::post('/', 'store')
+                    ->name('store')
+                    ->middleware('permission:allbus.create');
+
+                Route::get('/{bus}', 'show')
+                    ->name('show')
+                    ->middleware('permission:allbus.view');
+
+                Route::get('/{bus}/edit', 'edit')
+                    ->name('edit')
+                    ->middleware('permission:allbus.edit');
+
+                Route::put('/{bus}', 'update')
+                    ->name('update')
+                    ->middleware('permission:allbus.edit');
+
+                Route::patch('/{bus}', 'update')
+                    ->name('update.patch')
+                    ->middleware('permission:allbus.edit');
+
+                Route::delete('/{bus}', 'destroy')
+                    ->name('destroy')
+                    ->middleware('permission:allbus.delete');
+            });
 
         Route::prefix('request')
             ->name('request.')
