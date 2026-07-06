@@ -79,20 +79,40 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Action (Optional)</label>
 
-                        <div class="form-check">
-                            <input class="form-check-input action-checkbox" type="checkbox" name="disciplinary_action[]"
-                                value="Salary Deduction Authorization" id="actionSDA">
-                            <label class="form-check-label" for="actionSDA">
-                                Salary Deduction Authorization (SDA)
-                            </label>
-                        </div>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input action-checkbox" type="checkbox"
+                                        name="disciplinary_action[]" value="Salary Deduction Authorization"
+                                        id="actionSDA">
 
-                        <div class="form-check">
-                            <input class="form-check-input action-checkbox" type="checkbox" name="disciplinary_action[]"
-                                value="Suspension" id="actionSuspension">
-                            <label class="form-check-label" for="actionSuspension">
-                                Suspension
-                            </label>
+                                    <label class="form-check-label" for="actionSDA">
+                                        Salary Deduction Authorization
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input action-checkbox" type="checkbox"
+                                        name="disciplinary_action[]" value="Suspension" id="actionSuspension">
+
+                                    <label class="form-check-label" for="actionSuspension">
+                                        Suspension
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input action-checkbox" type="checkbox"
+                                        name="disciplinary_action[]" value="Final Warning" id="actionFinalWarning">
+
+                                    <label class="form-check-label" for="actionFinalWarning">
+                                        Final Warning
+                                    </label>
+                                </div>
+                            </div>
                         </div>
 
                         <small class="text-muted">You may select multiple actions.</small>

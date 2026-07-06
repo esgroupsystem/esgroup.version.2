@@ -1,13 +1,45 @@
 @php
+    $normalizeActions = function ($actions) {
+        if (blank($actions)) {
+            return [];
+        }
+
+        if (is_string($actions)) {
+            $decoded = json_decode($actions, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $actions = $decoded;
+            } else {
+                $actions = [$actions];
+            }
+        }
+
+        if (!is_array($actions)) {
+            return [];
+        }
+
+        return collect($actions)->filter()->map(fn($action) => trim((string) $action))->unique()->values()->all();
+    };
+
+    $groupHasAction = function ($group, string $action) use ($normalizeActions) {
+        $actions = $normalizeActions($group['actions'] ?? []);
+
+        if (!empty($actions)) {
+            return in_array($action, $actions, true);
+        }
+
+        return collect($group['records'] ?? [])
+            ->flatMap(fn($record) => $normalizeActions($record->disciplinary_action ?? []))
+            ->contains($action);
+    };
+
     $totalViolations = $groupedIrHistories->sum('count');
 
-    $suspensionCount = $groupedIrHistories
-        ->filter(fn($g) => in_array('Suspension', $g['actions'] ?? [], true))
-        ->count();
+    $suspensionCount = $groupedIrHistories->filter(fn($g) => $groupHasAction($g, 'Suspension'))->count();
 
-    $sdaCount = $groupedIrHistories
-        ->filter(fn($g) => in_array('Salary Deduction Authorization', $g['actions'] ?? [], true))
-        ->count();
+    $sdaCount = $groupedIrHistories->filter(fn($g) => $groupHasAction($g, 'Salary Deduction Authorization'))->count();
+
+    $finalWarningCount = $groupedIrHistories->filter(fn($g) => $groupHasAction($g, 'Final Warning'))->count();
 
     $remarksCount = $groupedIrHistories
         ->filter(function ($g) {
@@ -166,7 +198,7 @@
                     Violation Histories
                 </h6>
                 <small class="text-600">
-                    IR cases, offenses, actions, SDA, suspension, and remarks.
+                    IR cases, offenses, actions, SDA, suspension, final warning, and remarks.
                 </small>
             </div>
 
@@ -181,7 +213,7 @@
     @if ($groupedIrHistories->isNotEmpty())
         <div class="card-body border-bottom py-2">
             <div class="row g-2">
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md">
                     <div class="card violation-summary-card bg-primary-subtle border-0 h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center justify-content-between">
@@ -195,7 +227,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md">
                     <div class="card violation-summary-card bg-danger-subtle border-0 h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center justify-content-between">
@@ -209,7 +241,7 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md">
                     <div class="card violation-summary-card bg-warning-subtle border-0 h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center justify-content-between">
@@ -223,7 +255,35 @@
                     </div>
                 </div>
 
-                <div class="col-6 col-md-3">
+                <div class="col-6 col-md">
+                    <div class="card violation-summary-card bg-danger-subtle border-0 h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h5 class="mb-0 text-danger">{{ $suspensionCount }}</h5>
+                                    <p class="mb-0 text-700">Suspension</p>
+                                </div>
+                                <span class="fas fa-ban text-danger opacity-50"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md">
+                    <div class="card violation-summary-card bg-secondary-subtle border-0 h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <h5 class="mb-0 text-secondary">{{ $finalWarningCount }}</h5>
+                                    <p class="mb-0 text-700">Final Warning</p>
+                                </div>
+                                <span class="fas fa-exclamation-circle text-secondary opacity-50"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-6 col-md">
                     <div class="card violation-summary-card bg-info-subtle border-0 h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center justify-content-between">
@@ -246,18 +306,19 @@
                 $first = $group['first_record'];
                 $records = collect($group['records'] ?? []);
 
-                $actions = $group['actions'] ?? [];
+                $actions = $normalizeActions($group['actions'] ?? []);
 
-                if (is_string($actions)) {
-                    $actions = $actions ? [$actions] : [];
-                }
-
-                if (!is_array($actions)) {
-                    $actions = [];
+                if (empty($actions)) {
+                    $actions = $records
+                        ->flatMap(fn($record) => $normalizeActions($record->disciplinary_action ?? []))
+                        ->unique()
+                        ->values()
+                        ->all();
                 }
 
                 $hasSus = in_array('Suspension', $actions, true);
                 $hasSda = in_array('Salary Deduction Authorization', $actions, true);
+                $hasFinalWarning = in_array('Final Warning', $actions, true);
 
                 $safeIrKey = md5((string) ($group['ir_number'] ?? $first->id));
 
@@ -293,6 +354,10 @@
 
                             @if ($hasSus)
                                 <span class="badge badge-subtle-danger">Suspension</span>
+                            @endif
+
+                            @if ($hasFinalWarning)
+                                <span class="badge badge-subtle-secondary">Final Warning</span>
                             @endif
 
                             @if (filled($remarksText))
@@ -383,10 +448,18 @@
                                     </strong>
                                 </div>
                             @endif
+
+                            @if ($hasFinalWarning)
+                                <div class="col-md-4">
+                                    <span class="text-600">Final Warning:</span>
+                                    <strong class="text-secondary">Yes</strong>
+                                </div>
+                            @endif
                         </div>
                     </div>
 
-                    <div class="btn-group violation-action-group flex-shrink-0" role="group" aria-label="IR Actions">
+                    <div class="btn-group violation-action-group flex-shrink-0" role="group"
+                        aria-label="IR Actions">
                         <button type="button" class="btn btn-sm btn-falcon-default" data-bs-toggle="modal"
                             data-bs-target="#{{ $viewModalId }}" title="View IR Details">
                             <span class="fas fa-eye"></span>
@@ -422,7 +495,7 @@
                                     IR Details: {{ $group['ir_number'] ?: 'NO-IR' }}
                                 </h6>
                                 <small class="text-600">
-                                    Complete violation, action, SDA, suspension, and remarks.
+                                    Complete violation, action, SDA, suspension, final warning, and remarks.
                                 </small>
                             </div>
 
@@ -465,6 +538,13 @@
                                     </tbody>
                                 </table>
                             </div>
+
+                            @if ($hasFinalWarning)
+                                <div class="alert alert-secondary border-0 py-2 mb-3">
+                                    <span class="fas fa-exclamation-circle me-1"></span>
+                                    This IR case is marked as <strong>Final Warning</strong>.
+                                </div>
+                            @endif
 
                             <h6 class="text-900 mb-2">
                                 <span class="fas fa-list-ul text-primary me-1"></span>
@@ -591,7 +671,8 @@
                 aria-labelledby="{{ $editModalId }}Label" aria-hidden="true">
                 <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                     <form action="{{ route('employees.staff.history.update', [$employee->id, $first->id]) }}"
-                        method="POST" class="modal-content border-0 shadow-lg violation-edit-form">
+                        method="POST"
+                        class="modal-content border-0 shadow-lg violation-edit-form violation-action-form">
                         @csrf
                         @method('PUT')
 
@@ -602,7 +683,7 @@
                                     Edit IR Case
                                 </h6>
                                 <small class="text-white-50">
-                                    Update violation details, action, remarks, SDA, and suspension.
+                                    Update violation details, action, remarks, SDA, suspension, and final warning.
                                 </small>
                             </div>
 
@@ -702,7 +783,7 @@
                                 <label class="form-label fw-semibold mb-2">Disciplinary Action</label>
 
                                 <div class="row g-2">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="form-check">
                                             <input class="form-check-input action-checkbox js-action-sda"
                                                 type="checkbox" name="disciplinary_action[]"
@@ -715,7 +796,7 @@
                                         </div>
                                     </div>
 
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="form-check">
                                             <input class="form-check-input action-checkbox js-action-suspension"
                                                 type="checkbox" name="disciplinary_action[]" value="Suspension"
@@ -725,6 +806,20 @@
                                             <label class="form-check-label"
                                                 for="actionSuspension_{{ $safeIrKey }}">
                                                 Suspension
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-4">
+                                        <div class="form-check">
+                                            <input class="form-check-input action-checkbox" type="checkbox"
+                                                name="disciplinary_action[]" value="Final Warning"
+                                                id="actionFinalWarning_{{ $safeIrKey }}"
+                                                @checked($hasFinalWarning)>
+
+                                            <label class="form-check-label"
+                                                for="actionFinalWarning_{{ $safeIrKey }}">
+                                                Final Warning
                                             </label>
                                         </div>
                                     </div>
@@ -834,6 +929,222 @@
     </div>
 </div>
 
+{{-- ADD MODAL --}}
+<div class="modal fade" id="addHistoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <form action="{{ route('employees.staff.history.store', $employee->id) }}" method="POST"
+            class="modal-content border-0 shadow-lg violation-action-form">
+            @csrf
+
+            <div class="modal-header bg-primary text-white py-2">
+                <div>
+                    <h6 class="modal-title mb-0">
+                        <span class="fas fa-plus me-2"></span>
+                        Add Violation
+                    </h6>
+                    <small class="text-white-50">
+                        Encode IR number, offense details, actions, SDA, suspension, and final warning.
+                    </small>
+                </div>
+
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <input type="hidden" name="title" value="Violations">
+
+                <div class="row g-2 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">IR Number</label>
+                        <input type="text" name="ir_number" class="form-control" value="{{ old('ir_number') }}"
+                            placeholder="IR-2026-0001" required>
+                    </div>
+                </div>
+
+                <div id="violationFields">
+                    <div class="border rounded-3 p-2 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0 text-900">
+                                <span class="fas fa-list-ul text-primary me-1"></span>
+                                Violation Details
+                            </h6>
+
+                            <button type="button" id="addViolationBtn" class="btn btn-sm btn-outline-primary">
+                                <span class="fas fa-plus me-1"></span>
+                                Add
+                            </button>
+                        </div>
+
+                        <div id="violationsContainer">
+                            <div class="violation-row border rounded-2 mb-2 bg-body-tertiary">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0 violation-title text-900">Violation #1</h6>
+
+                                    <button type="button"
+                                        class="btn btn-sm btn-falcon-danger removeViolation d-none">
+                                        <span class="fas fa-trash"></span>
+                                    </button>
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="form-label fw-semibold">Offense Section</label>
+                                    <select name="offense_id[]" class="form-select offenseSelect" required>
+                                        <option value="">-- Select Offense Section --</option>
+
+                                        @foreach ($offenses ?? [] as $o)
+                                            <option value="{{ $o->id }}"
+                                                data-description="{{ e($o->offense_description) }}">
+                                                {{ $o->section }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label class="form-label fw-semibold">Description</label>
+                                    <textarea name="description[]" class="form-control offenseDescription" rows="2"
+                                        placeholder="Description will auto-fill after selecting section."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <small class="text-muted">
+                            Selecting a section will auto-fill the description.
+                        </small>
+                    </div>
+
+                    <div class="border rounded-3 p-2 mb-3 bg-info-subtle">
+                        <label class="form-label fw-semibold">
+                            Remarks / Other Description
+                            <span class="text-muted">(Optional)</span>
+                        </label>
+
+                        <textarea name="remarks" class="form-control" rows="2"
+                            placeholder="Employee explanation, HR notes, or follow-up details...">{{ old('remarks') }}</textarea>
+                    </div>
+
+                    <div class="border rounded-3 p-2 mb-3">
+                        <label class="form-label fw-semibold mb-2">Disciplinary Action</label>
+
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input action-checkbox js-action-sda" type="checkbox"
+                                        name="disciplinary_action[]" value="Salary Deduction Authorization"
+                                        id="actionSDA" @checked(in_array('Salary Deduction Authorization', old('disciplinary_action', []), true))>
+
+                                    <label class="form-check-label" for="actionSDA">
+                                        Salary Deduction Authorization
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input action-checkbox js-action-suspension"
+                                        type="checkbox" name="disciplinary_action[]" value="Suspension"
+                                        id="actionSuspension" @checked(in_array('Suspension', old('disciplinary_action', []), true))>
+
+                                    <label class="form-check-label" for="actionSuspension">
+                                        Suspension
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input action-checkbox" type="checkbox"
+                                        name="disciplinary_action[]" value="Final Warning" id="actionFinalWarning"
+                                        @checked(in_array('Final Warning', old('disciplinary_action', []), true))>
+
+                                    <label class="form-check-label" for="actionFinalWarning">
+                                        Final Warning
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <small class="text-muted">You may select multiple actions.</small>
+                    </div>
+
+                    <div id="sdaFieldsWrapper" class="sda-fields-wrapper border rounded-3 p-2 mb-3 d-none">
+                        <h6 class="text-warning-emphasis mb-2">
+                            <span class="fas fa-file-invoice-dollar me-1"></span>
+                            SDA Details
+                        </h6>
+
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">SDA Total Amount</label>
+                                <input type="number" step="0.01" min="0" name="sda_amount"
+                                    class="form-control js-sda-required" value="{{ old('sda_amount') }}"
+                                    placeholder="Enter total deduction amount" disabled>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Deduction Terms / Per Cutoff</label>
+                                <input type="number" min="0" step="0.01" name="sda_terms"
+                                    class="form-control js-sda-required" value="{{ old('sda_terms') }}"
+                                    placeholder="e.g. 500.00" disabled>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Deduction Start Date</label>
+                                <input type="date" name="sda_start_date" class="form-control js-sda-required"
+                                    value="{{ old('sda_start_date') }}" disabled>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">
+                                    Deduction End Date <span class="text-muted">(Optional)</span>
+                                </label>
+                                <input type="date" name="sda_end_date" class="form-control js-sda-optional"
+                                    value="{{ old('sda_end_date') }}" disabled>
+                                <small class="text-muted">Leave blank if ongoing.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="suspension-dates-wrapper border rounded-3 p-2 mb-3 d-none">
+                        <h6 class="text-danger-emphasis mb-2">
+                            <span class="fas fa-ban me-1"></span>
+                            Suspension Details
+                        </h6>
+
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Suspension Start Date</label>
+                                <input type="date" name="suspension_start_date"
+                                    class="form-control js-suspension-required"
+                                    value="{{ old('suspension_start_date') }}" disabled>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Suspension End Date</label>
+                                <input type="date" name="suspension_end_date"
+                                    class="form-control js-suspension-optional"
+                                    value="{{ old('suspension_end_date') }}" disabled>
+                                <small class="text-muted">Leave blank if still suspended.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer bg-body-tertiary py-2">
+                <button type="button" class="btn btn-sm btn-falcon-secondary" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <button type="submit" class="btn btn-sm btn-falcon-primary">
+                    <span class="fas fa-save me-1"></span>
+                    Save Violation
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @once
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -841,7 +1152,8 @@
                 const rows = container.querySelectorAll('.violation-row');
 
                 rows.forEach(function(row, index) {
-                    const title = row.querySelector('.violation-number');
+                    const title = row.querySelector('.violation-number') || row.querySelector(
+                        '.violation-title');
                     const removeBtn = row.querySelector('.removeViolation');
 
                     if (title) {
@@ -858,7 +1170,7 @@
                 });
             }
 
-            function toggleFields(form) {
+            function toggleDisciplinaryFields(form) {
                 const sdaCheckbox = form.querySelector('.js-action-sda');
                 const suspensionCheckbox = form.querySelector('.js-action-suspension');
 
@@ -881,11 +1193,19 @@
                 sdaRequiredFields.forEach(function(field) {
                     field.disabled = !hasSda;
                     field.required = hasSda;
+
+                    if (!hasSda) {
+                        field.value = '';
+                    }
                 });
 
                 sdaOptionalFields.forEach(function(field) {
                     field.disabled = !hasSda;
                     field.required = false;
+
+                    if (!hasSda) {
+                        field.value = '';
+                    }
                 });
 
                 if (suspensionWrapper) {
@@ -895,16 +1215,24 @@
                 suspensionRequiredFields.forEach(function(field) {
                     field.disabled = !hasSuspension;
                     field.required = hasSuspension;
+
+                    if (!hasSuspension) {
+                        field.value = '';
+                    }
                 });
 
                 suspensionOptionalFields.forEach(function(field) {
                     field.disabled = !hasSuspension;
                     field.required = false;
+
+                    if (!hasSuspension) {
+                        field.value = '';
+                    }
                 });
             }
 
-            document.querySelectorAll('.violation-edit-form').forEach(function(form) {
-                toggleFields(form);
+            document.querySelectorAll('.violation-action-form').forEach(function(form) {
+                toggleDisciplinaryFields(form);
             });
 
             document.addEventListener('change', function(event) {
@@ -924,19 +1252,62 @@
                     event.target.classList.contains('js-action-sda') ||
                     event.target.classList.contains('js-action-suspension')
                 ) {
-                    const form = event.target.closest('.violation-edit-form');
+                    const form = event.target.closest('form');
 
                     if (form) {
-                        toggleFields(form);
+                        toggleDisciplinaryFields(form);
                     }
                 }
             });
 
             document.addEventListener('click', function(event) {
-                const addBtn = event.target.closest('.addViolationBtn');
+                const addViolationBtn = event.target.closest('#addViolationBtn');
 
-                if (addBtn) {
-                    const targetSelector = addBtn.getAttribute('data-target');
+                if (addViolationBtn) {
+                    const container = document.querySelector('#violationsContainer');
+
+                    if (!container) {
+                        return;
+                    }
+
+                    const firstRow = container.querySelector('.violation-row');
+
+                    if (!firstRow) {
+                        return;
+                    }
+
+                    const newRow = firstRow.cloneNode(true);
+
+                    newRow.querySelectorAll('select').forEach(function(select) {
+                        select.selectedIndex = 0;
+                    });
+
+                    newRow.querySelectorAll('textarea').forEach(function(textarea) {
+                        textarea.value = '';
+                    });
+
+                    newRow.querySelectorAll('input').forEach(function(input) {
+                        if (input.type === 'checkbox' || input.type === 'radio') {
+                            input.checked = false;
+                        } else {
+                            input.value = '';
+                        }
+                    });
+
+                    const removeBtn = newRow.querySelector('.removeViolation');
+
+                    if (removeBtn) {
+                        removeBtn.classList.remove('d-none');
+                    }
+
+                    container.appendChild(newRow);
+                    updateViolationNumbers(container);
+                }
+
+                const editAddBtn = event.target.closest('.addViolationBtn');
+
+                if (editAddBtn) {
+                    const targetSelector = editAddBtn.getAttribute('data-target');
                     const container = document.querySelector(targetSelector);
 
                     if (!container) {
@@ -981,7 +1352,8 @@
 
                 if (removeBtn) {
                     const row = removeBtn.closest('.violation-row');
-                    const container = removeBtn.closest('.violation-fields');
+                    const container = removeBtn.closest('#violationsContainer') || removeBtn.closest(
+                        '.violation-fields');
 
                     if (!row || !container) {
                         return;
