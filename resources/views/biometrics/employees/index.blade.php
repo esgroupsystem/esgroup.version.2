@@ -8,16 +8,20 @@
 
         $totalCount = (int) ($counts['total'] ?? 0);
         $activeCount = (int) ($counts['active'] ?? 0);
+        $payrollActiveCount = (int) ($counts['payroll_active'] ?? 0);
         $inactiveCount = (int) ($counts['inactive'] ?? 0);
         $withoutCompanyCount = (int) ($counts['without_company'] ?? 0);
 
         $activePercent = $totalCount > 0 ? round(($activeCount / $totalCount) * 100) : 0;
+        $payrollActivePercent = $totalCount > 0 ? round(($payrollActiveCount / $totalCount) * 100) : 0;
         $inactivePercent = $totalCount > 0 ? round(($inactiveCount / $totalCount) * 100) : 0;
         $withoutCompanyPercent = $totalCount > 0 ? round(($withoutCompanyCount / $totalCount) * 100) : 0;
 
         $hasActiveFilters =
             filled($filters['search'] ?? null) ||
             filled($filters['employment_status'] ?? null) ||
+            filled($filters['payroll_active'] ?? null) ||
+            filled($filters['group_name'] ?? null) ||
             filled($filters['biometric_company_id'] ?? null);
     @endphp
 
@@ -103,6 +107,11 @@
                                             <span class="bio-header-pill bio-header-pill-success">
                                                 <span class="fas fa-user-check"></span>
                                                 {{ number_format($activeCount) }} active
+                                            </span>
+
+                                            <span class="bio-header-pill bio-header-pill-info">
+                                                <span class="fas fa-money-check-alt"></span>
+                                                {{ number_format($payrollActiveCount) }} payroll included
                                             </span>
 
                                             <span class="bio-header-pill bio-header-pill-warning">
@@ -306,7 +315,7 @@
                 <div class="card-body">
                     <form method="GET" action="{{ route('biometrics.employees.index') }}">
                         <div class="row g-3 align-items-end">
-                            <div class="col-xl-4 col-lg-5">
+                            <div class="col-xl-3 col-lg-5">
                                 <label class="form-label fw-semibold" for="search">Search Employee</label>
 
                                 <div class="input-group">
@@ -324,7 +333,7 @@
                                 </div>
                             </div>
 
-                            <div class="col-xl-3 col-lg-3">
+                            <div class="col-xl-2 col-lg-3">
                                 <label class="form-label fw-semibold" for="employment_status">Status</label>
 
                                 <select name="employment_status" id="employment_status" class="form-select">
@@ -340,7 +349,39 @@
                                 <div class="form-text">Active or inactive records.</div>
                             </div>
 
-                            <div class="col-xl-3 col-lg-4">
+                            <div class="col-xl-2 col-lg-3">
+                                <label class="form-label fw-semibold" for="payroll_active">Payroll</label>
+
+                                <select name="payroll_active" id="payroll_active" class="form-select">
+                                    <option value="">All</option>
+                                    <option value="1" @selected((string) ($filters['payroll_active'] ?? '') === '1')>
+                                        Included
+                                    </option>
+                                    <option value="0" @selected((string) ($filters['payroll_active'] ?? '') === '0')>
+                                        Excluded
+                                    </option>
+                                </select>
+
+                                <div class="form-text">Included or excluded from payroll workflow.</div>
+                            </div>
+
+                            <div class="col-xl-2 col-lg-3">
+                                <label class="form-label fw-semibold" for="group_name">Group</label>
+
+                                <select name="group_name" id="group_name" class="form-select">
+                                    <option value="">All Groups</option>
+
+                                    @foreach (($groups ?? []) as $group)
+                                        <option value="{{ $group }}" @selected(($filters['group_name'] ?? '') === $group)>
+                                            {{ $group }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <div class="form-text">Filter by company group or department.</div>
+                            </div>
+
+                            <div class="col-xl-2 col-lg-4">
                                 <label class="form-label fw-semibold" for="biometric_company_id">Company</label>
 
                                 <select name="biometric_company_id" id="biometric_company_id" class="form-select">
@@ -468,8 +509,10 @@
                             <thead>
                                 <tr>
                                     <th class="ps-3 bio-sticky-col bio-employee-col">Employee</th>
+                                    <th class="text-nowrap">Group</th>
                                     <th class="text-nowrap">Company</th>
                                     <th class="text-nowrap">Status</th>
+                                    <th class="text-center text-nowrap">Payroll</th>
                                     <th class="bio-source-col">Source Biometrics</th>
                                     <th class="bio-device-col">Device</th>
                                     <th class="text-nowrap">Last Check</th>
@@ -482,6 +525,10 @@
                                 @forelse ($employeeBiometrics as $employeeBiometric)
                                     @php
                                         $isActive = $employeeBiometric->employment_status === 'active';
+                                        $isPayrollIncluded = $isActive && (bool) ($employeeBiometric->is_payroll_active ?? true);
+                                        $canonicalBioId = $employeeBiometric->id;
+                                        $legacyBioId = $employeeBiometric->legacy_biometric_employee_id ?? $employeeBiometric->source_employee_id ?? $employeeBiometric->source_crosschex_id ?? $employeeBiometric->source_employee_no ?? null;
+                                        $groupName = $employeeBiometric->group_name ?? null;
 
                                         $statusClass = $isActive ? 'success' : 'secondary';
                                         $statusIcon = $isActive ? 'fa-check' : 'fa-ban';
@@ -526,9 +573,31 @@
                                                             <span class="fas fa-fingerprint"></span>
                                                             Source: {{ $sourceNo }}
                                                         </span>
+
+                                                        <span class="bio-meta-pill">
+                                                            <span class="fas fa-key"></span>
+                                                            Bio ID: {{ $canonicalBioId }}
+                                                        </span>
+
+                                                        <span class="bio-meta-pill">
+                                                            <span class="fas fa-archive"></span>
+                                                            Legacy: {{ $legacyBioId ?: 'N/A' }}
+                                                        </span>
                                                     </div>
                                                 </div>
                                             </div>
+                                        </td>
+
+                                        <td>
+                                            @if ($groupName)
+                                                <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
+                                                    {{ $groupName }}
+                                                </span>
+                                            @else
+                                                <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-2">
+                                                    Ungrouped
+                                                </span>
+                                            @endif
                                         </td>
 
                                         <td>
@@ -557,6 +626,20 @@
                                                 <span class="bio-status-badge bio-status-inactive">
                                                     <span class="fas fa-ban"></span>
                                                     Inactive
+                                                </span>
+                                            @endif
+                                        </td>
+
+                                        <td class="text-center">
+                                            @if ($isPayrollIncluded)
+                                                <span class="badge bg-success">
+                                                    <span class="fas fa-check me-1"></span>
+                                                    Included
+                                                </span>
+                                            @else
+                                                <span class="badge bg-danger">
+                                                    <span class="fas fa-ban me-1"></span>
+                                                    Excluded
                                                 </span>
                                             @endif
                                         </td>
@@ -621,7 +704,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center py-6">
+                                        <td colspan="10" class="text-center py-6">
                                             <div class="bio-empty-state">
                                                 <div class="bio-empty-icon">
                                                     <span class="fas fa-fingerprint"></span>
@@ -723,9 +806,7 @@
     @endsection
 
     @push('styles')
-
         @include('biometrics.employees.styles')
-        
     @endpush
 
     @push('scripts')
@@ -746,5 +827,4 @@
                 });
             });
         </script>
-    </div>
 @endpush

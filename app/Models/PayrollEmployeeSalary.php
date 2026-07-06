@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PayrollEmployeeSalary extends Model
 {
     protected $fillable = [
+        'employee_biometric_id',
+        'employee_id',
         'biometric_employee_id',
         'employee_no',
         'employee_name',
@@ -29,9 +33,6 @@ class PayrollEmployeeSalary extends Model
         'undertime_deduction_per_minute',
         'absent_deduction_per_day',
 
-        /*
-         | Old fields retained so old reports will not immediately break.
-         */
         'sss_loan',
         'pagibig_loan',
         'vale',
@@ -67,6 +68,9 @@ class PayrollEmployeeSalary extends Model
     ];
 
     protected $casts = [
+        'employee_biometric_id' => 'integer',
+        'employee_id' => 'integer',
+
         'basic_salary' => 'decimal:2',
         'allowance' => 'decimal:2',
         'sim_load_allowance' => 'decimal:2',
@@ -104,6 +108,11 @@ class PayrollEmployeeSalary extends Model
         'is_active' => 'boolean',
     ];
 
+    public function employeeBiometric(): BelongsTo
+    {
+        return $this->belongsTo(EmployeeBiometric::class, 'employee_biometric_id');
+    }
+
     public function otherDeductions(): HasMany
     {
         return $this->hasMany(PayrollEmployeeSalaryOtherDeduction::class, 'payroll_employee_salary_id')
@@ -115,5 +124,17 @@ class PayrollEmployeeSalary extends Model
         return $this->hasMany(PayrollEmployeeSalaryOtherDeduction::class, 'payroll_employee_salary_id')
             ->where('is_active', true)
             ->orderBy('name');
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeForPayrollActiveEmployees(Builder $query): Builder
+    {
+        return $query->whereHas('employeeBiometric', function (Builder $query): void {
+            $query->payrollActive();
+        });
     }
 }

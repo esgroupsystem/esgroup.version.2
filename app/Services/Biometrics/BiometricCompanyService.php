@@ -3,18 +3,17 @@
 namespace App\Services\Biometrics;
 
 use App\Models\BiometricCompany;
+use Illuminate\Support\Facades\DB;
 
 class BiometricCompanyService
 {
-    /**
-     * @param  array<string, mixed>  $data
-     */
     public function create(array $data): BiometricCompany
     {
-        return BiometricCompany::query()->create([
-            'name' => $data['name'],
-            'is_active' => true,
-            'remarks' => $data['remarks'] ?? null,
-        ]);
+        return DB::transaction(function () use ($data): BiometricCompany {
+            return BiometricCompany::query()->create([
+                'name' => trim((string) $data['name']),
+                'remarks' => $data['remarks'] ?? null,
+            ]);
+        });
     }
 }

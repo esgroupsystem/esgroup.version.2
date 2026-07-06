@@ -13,7 +13,7 @@
                                 Edit Payroll Attendance Adjustment
                             </h5>
                             <p class="mb-0 fs-10 text-600">
-                                Update the approved adjustment record.
+                                Update the approved adjustment record using the canonical biometric employee reference.
                             </p>
                         </div>
 

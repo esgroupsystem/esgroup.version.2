@@ -3,7 +3,6 @@
 use App\Http\Controllers\Accounting\AccountingController;
 use App\Http\Controllers\AllBusController;
 use App\Http\Controllers\Auth\AuthController;
-use App\Http\Controllers\Biometrics\BiometricCompanyController;
 use App\Http\Controllers\Biometrics\EmployeeBiometricController;
 use App\Http\Controllers\BusDetailController;
 use App\Http\Controllers\Chairman\HrDataController;
@@ -1119,7 +1118,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->name('rollback');
             });
 
-        Route::prefix('receivings')
+            Route::prefix('receivings')
             ->name('receivings.')
             ->controller(ReceivingController::class)
             ->group(function () {

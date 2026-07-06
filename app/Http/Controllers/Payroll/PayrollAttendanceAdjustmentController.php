@@ -4,23 +4,23 @@ namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Payroll\PayrollAttendanceAdjustmentRequest;
-use App\Models\MirasolBiometricsLog;
+use App\Models\EmployeeBiometric;
 use App\Models\PayrollAttendanceAdjustment;
+use App\Services\Biometrics\EmployeeBiometricIdentityService;
 use App\Services\Payroll\BiometricsProofService;
 use App\Services\Payroll\DailyAttendanceSummaryService;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class PayrollAttendanceAdjustmentController extends Controller
 {
     public function __construct(
         private readonly BiometricsProofService $biometricsProofService,
-        private readonly DailyAttendanceSummaryService $dailyAttendanceSummaryService
+        private readonly DailyAttendanceSummaryService $dailyAttendanceSummaryService,
+        private readonly EmployeeBiometricIdentityService $identityService
     ) {}
 
     public function index(Request $request): View
@@ -29,9 +29,10 @@ class PayrollAttendanceAdjustmentController extends Controller
         $type = $request->type;
         $dateFrom = $request->date_from;
         $dateTo = $request->date_to;
+        $groupName = trim((string) $request->group_name);
 
         $query = PayrollAttendanceAdjustment::query()
-            ->with('encoder')
+            ->with(['encoder', 'employeeBiometric'])
             ->when($search, function ($query) use ($search): void {
                 $query->where(function ($q) use ($search): void {
                     $q->where('employee_name', 'like', "%{$search}%")
@@ -39,10 +40,17 @@ class PayrollAttendanceAdjustmentController extends Controller
                         ->orWhere('biometric_employee_id', 'like', "%{$search}%")
                         ->orWhere('adjustment_type', 'like', "%{$search}%")
                         ->orWhere('reason', 'like', "%{$search}%")
-                        ->orWhere('remarks', 'like', "%{$search}%");
+                        ->orWhere('remarks', 'like', "%{$search}%")
+                        ->orWhereHas('employeeBiometric', function ($employeeQuery) use ($search): void {
+                            $employeeQuery
+                                ->where('display_name', 'like', "%{$search}%")
+                                ->orWhere('display_employee_no', 'like', "%{$search}%")
+                                ->orWhere('group_name', 'like', "%{$search}%");
+                        });
                 });
             })
             ->when($type, fn ($query) => $query->where('adjustment_type', $type))
+            ->when($groupName !== '', fn ($query) => $query->whereHas('employeeBiometric', fn ($employeeQuery) => $employeeQuery->where('group_name', $groupName)))
             ->when($dateFrom, function ($query) use ($dateFrom): void {
                 $query->whereDate(DB::raw('COALESCE(date_from, work_date)'), '>=', $dateFrom);
             })
@@ -80,15 +88,18 @@ class PayrollAttendanceAdjustmentController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('payroll.attendance_adjustments.index', [
-            'adjustments' => $adjustments,
-            'stats' => $stats,
-            'types' => PayrollAttendanceAdjustment::TYPES,
-            'search' => $search,
-            'type' => $type,
-            'dateFrom' => $dateFrom,
-            'dateTo' => $dateTo,
-        ]);
+        $groups = $this->groups();
+
+        return view('payroll.attendance_adjustments.index', compact(
+            'adjustments',
+            'stats',
+            'search',
+            'type',
+            'dateFrom',
+            'dateTo',
+            'groupName',
+            'groups'
+        ))->with('types', PayrollAttendanceAdjustment::TYPES);
     }
 
     public function create(): View
@@ -96,6 +107,7 @@ class PayrollAttendanceAdjustmentController extends Controller
         return view('payroll.attendance_adjustments.create', [
             'people' => $this->getBiometricsPeople(),
             'types' => PayrollAttendanceAdjustment::TYPES,
+            'groups' => $this->groups(),
         ]);
     }
 
@@ -117,7 +129,8 @@ class PayrollAttendanceAdjustmentController extends Controller
 
         if ($validated['adjustment_type'] === PayrollAttendanceAdjustment::TYPE_OFFSET) {
             $proof = $this->biometricsProofService->findOffsetProof(
-                $validated['biometric_employee_id'],
+                (int) $validated['employee_biometric_id'],
+                $validated['biometric_employee_id'] ?? null,
                 $validated['employee_no'] ?? null,
                 $validated['employee_name'],
                 $validated['offset_source_date']
@@ -150,9 +163,10 @@ class PayrollAttendanceAdjustmentController extends Controller
     public function edit(PayrollAttendanceAdjustment $payrollAttendanceAdjustment): View
     {
         return view('payroll.attendance_adjustments.edit', [
-            'payrollAttendanceAdjustment' => $payrollAttendanceAdjustment,
+            'payrollAttendanceAdjustment' => $payrollAttendanceAdjustment->load('employeeBiometric'),
             'people' => $this->getBiometricsPeople(),
             'types' => PayrollAttendanceAdjustment::TYPES,
+            'groups' => $this->groups(),
         ]);
     }
 
@@ -177,7 +191,8 @@ class PayrollAttendanceAdjustmentController extends Controller
 
         if ($validated['adjustment_type'] === PayrollAttendanceAdjustment::TYPE_OFFSET) {
             $proof = $this->biometricsProofService->findOffsetProof(
-                $validated['biometric_employee_id'],
+                (int) $validated['employee_biometric_id'],
+                $validated['biometric_employee_id'] ?? null,
                 $validated['employee_no'] ?? null,
                 $validated['employee_name'],
                 $validated['offset_source_date']
@@ -226,14 +241,16 @@ class PayrollAttendanceAdjustmentController extends Controller
     public function offsetProof(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'biometric_employee_id' => ['required', 'string'],
+            'employee_biometric_id' => ['required', 'integer', 'exists:employee_biometrics,id'],
+            'biometric_employee_id' => ['nullable', 'string'],
             'employee_no' => ['nullable', 'string'],
             'employee_name' => ['required', 'string'],
             'offset_source_date' => ['required', 'date'],
         ]);
 
         $proof = $this->biometricsProofService->findOffsetProof(
-            $validated['biometric_employee_id'],
+            (int) $validated['employee_biometric_id'],
+            $validated['biometric_employee_id'] ?? null,
             $validated['employee_no'] ?? null,
             $validated['employee_name'],
             $validated['offset_source_date']
@@ -270,16 +287,28 @@ class PayrollAttendanceAdjustmentController extends Controller
             PayrollAttendanceAdjustment::TYPE_OVERTIME,
         ], true);
 
+        $snapshot = [
+            'employee_biometric_id' => null,
+            'biometric_employee_id' => PayrollAttendanceAdjustment::GLOBAL_DISASTER_BIOMETRIC_ID,
+            'employee_no' => null,
+            'employee_name' => PayrollAttendanceAdjustment::GLOBAL_DISASTER_EMPLOYEE_NAME,
+            'crosschex_id' => null,
+        ];
+
+        if (! $isGlobalDisaster) {
+            $employee = EmployeeBiometric::query()
+                ->payrollActive()
+                ->findOrFail((int) $validated['employee_biometric_id']);
+
+            $snapshot = $this->identityService->snapshot($employee);
+        }
+
         return [
-            'biometric_employee_id' => $isGlobalDisaster
-                ? PayrollAttendanceAdjustment::GLOBAL_DISASTER_BIOMETRIC_ID
-                : $validated['biometric_employee_id'],
-
-            'employee_no' => $isGlobalDisaster ? null : ($validated['employee_no'] ?? null),
-
-            'employee_name' => $isGlobalDisaster
-                ? PayrollAttendanceAdjustment::GLOBAL_DISASTER_EMPLOYEE_NAME
-                : $validated['employee_name'],
+            'employee_biometric_id' => $snapshot['employee_biometric_id'],
+            'biometric_employee_id' => $snapshot['biometric_employee_id'],
+            'employee_no' => $snapshot['employee_no'],
+            'employee_name' => $snapshot['employee_name'],
+            'crosschex_id' => $snapshot['crosschex_id'],
 
             'work_date' => $isLeave ? $validated['date_from'] : $validated['work_date'],
             'date_from' => $isLeave ? $validated['date_from'] : null,
@@ -327,67 +356,25 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     private function getBiometricsPeople()
     {
-        $logs = MirasolBiometricsLog::query()
-            ->select($this->existingBiometricColumns([
-                'id',
-                'employee_id',
-                'employee_no',
-                'crosschex_id',
-                'employee_name',
-                'crosschex_account_name',
-                'crosschex_account',
-                'check_time',
-            ]))
-            ->where(function ($query): void {
-                $query->whereNotNull('employee_name')
-                    ->orWhereNotNull('crosschex_account_name')
-                    ->orWhereNotNull('crosschex_account')
-                    ->orWhereNotNull('employee_no')
-                    ->orWhereNotNull('employee_id');
-            })
-            ->orderByDesc(Schema::hasColumn((new MirasolBiometricsLog)->getTable(), 'check_time') ? 'check_time' : 'id')
-            ->get();
-
-        return $logs
-            ->map(function (MirasolBiometricsLog $log) {
-                $employeeName = $this->firstFilledValue([
-                    $log->employee_name ?? null,
-                    $log->crosschex_account_name ?? null,
-                    $log->crosschex_account ?? null,
-                ]);
-
-                $employeeNo = $this->firstFilledValue([
-                    $log->employee_no ?? null,
-                    $log->employee_id ?? null,
-                ]);
-
-                if (empty($employeeName)) {
-                    return null;
-                }
+        return EmployeeBiometric::query()
+            ->payrollActive()
+            ->orderBy('group_name')
+            ->orderByRaw("COALESCE(NULLIF(display_name, ''), NULLIF(source_employee_name, ''), NULLIF(source_crosschex_account_name, '')) ASC")
+            ->get()
+            ->map(function (EmployeeBiometric $employee) {
+                $snapshot = $this->identityService->snapshot($employee);
 
                 return (object) [
-                    'identity_key' => $this->makeEmployeeDropdownKey($employeeNo, $employeeName),
-                    'biometric_employee_id' => $employeeNo ?: $employeeName,
-                    'employee_no' => $employeeNo,
-                    'employee_name' => $employeeName,
-                    'last_check_time' => $log->check_time ?? null,
-                    'total_logs' => 1,
+                    'employee_biometric_id' => $employee->id,
+                    'biometric_employee_id' => $snapshot['biometric_employee_id'],
+                    'employee_no' => $snapshot['employee_no'],
+                    'employee_name' => $snapshot['employee_name'],
+                    'crosschex_id' => $snapshot['crosschex_id'],
+                    'group_name' => $employee->group_name,
+                    'last_check_time' => $employee->last_check_time,
+                    'total_logs' => $employee->total_logs,
                 ];
             })
-            ->filter()
-            ->groupBy('identity_key')
-            ->map(function ($group) {
-                $latest = $group
-                    ->sortByDesc(function ($person) {
-                        return $person->last_check_time?->timestamp ?? 0;
-                    })
-                    ->first();
-
-                $latest->total_logs = $group->count();
-
-                return $latest;
-            })
-            ->sortBy('employee_name', SORT_NATURAL | SORT_FLAG_CASE)
             ->values();
     }
 
@@ -409,15 +396,7 @@ class PayrollAttendanceAdjustmentController extends Controller
         $dateFrom = $validated['date_from'] ?? $validated['work_date'];
         $dateTo = $validated['date_to'] ?? $validated['work_date'];
 
-        $query->where(function ($q) use ($validated): void {
-            $q->where('biometric_employee_id', $validated['biometric_employee_id']);
-
-            if (! empty($validated['employee_no'])) {
-                $q->orWhere('employee_no', $validated['employee_no']);
-            }
-
-            $q->orWhere('employee_name', $validated['employee_name']);
-        });
+        $query->where('employee_biometric_id', (int) $validated['employee_biometric_id']);
 
         $query->where(function ($q) use ($dateFrom, $dateTo): void {
             $q->whereRaw('COALESCE(date_from, work_date) <= ?', [$dateTo])
@@ -443,7 +422,7 @@ class PayrollAttendanceAdjustmentController extends Controller
     private function successMessage(PayrollAttendanceAdjustment $adjustment, string $action): string
     {
         if ($adjustment->adjustment_type === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER) {
-            return 'Typhoon / Disaster adjustment '.$action.'. All employees with time-in on the selected date will be paid as whole day after summary rebuild.';
+            return 'Typhoon / Disaster adjustment '.$action.'. All active biometric employees with time-in on the selected date will be paid as whole day after summary rebuild.';
         }
 
         return 'Payroll attendance adjustment '.$action.' successfully.';
@@ -454,134 +433,14 @@ class PayrollAttendanceAdjustmentController extends Controller
         return ($validated['adjustment_type'] ?? null) === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
     }
 
-    private function findOffsetProof(
-        string $biometricEmployeeId,
-        ?string $employeeNo,
-        string $employeeName,
-        string $offsetSourceDate
-    ): ?array {
-        $logs = MirasolBiometricsLog::query()
-            ->whereDate('check_time', $offsetSourceDate)
-            ->where(function ($query) use ($biometricEmployeeId, $employeeNo, $employeeName): void {
-                if (! empty($employeeNo)) {
-                    $query->where('employee_no', $employeeNo)
-                        ->orWhere('employee_id', $employeeNo);
-                } else {
-                    $query->where('employee_no', $biometricEmployeeId)
-                        ->orWhere('employee_id', $biometricEmployeeId)
-                        ->orWhere('employee_name', $employeeName)
-                        ->orWhere('crosschex_account_name', $employeeName)
-                        ->orWhere('crosschex_account', $employeeName);
-                }
-            })
-            ->orderBy('check_time')
-            ->get();
-
-        if ($logs->isEmpty()) {
-            return null;
-        }
-
-        $times = $logs
-            ->pluck('check_time')
-            ->filter()
-            ->map(fn ($value) => Carbon::parse($value))
-            ->sort()
-            ->values();
-
-        if ($times->isEmpty()) {
-            return null;
-        }
-
-        $firstLog = $logs->first();
-
-        return [
-            'date' => Carbon::parse($offsetSourceDate)->format('Y-m-d'),
-            'employee_name' => $firstLog->employee_name
-                ?: $firstLog->crosschex_account_name
-                ?: $firstLog->crosschex_account
-                ?: $employeeName,
-            'employee_no' => $firstLog->employee_no ?: $firstLog->employee_id,
-            'biometric_employee_id' => $firstLog->employee_no ?: $firstLog->employee_id ?: $biometricEmployeeId,
-            'time_in' => $times->first()->format('H:i'),
-            'time_out' => $times->last()->format('H:i'),
-            'count' => $logs->count(),
-            'logs' => $logs->map(function ($log) {
-                return [
-                    'id' => $log->id,
-                    'employee_id' => $log->employee_id,
-                    'employee_no' => $log->employee_no,
-                    'employee_name' => $log->employee_name
-                        ?: $log->crosschex_account_name
-                        ?: $log->crosschex_account,
-                    'check_time' => optional($log->check_time)->format('Y-m-d H:i:s'),
-                    'state' => $log->state,
-                    'device_name' => $log->device_name,
-                ];
-            })->values()->toArray(),
-        ];
-    }
-
-    private function biometricDateTimeColumn(): string
+    private function groups()
     {
-        $table = (new MirasolBiometricsLog)->getTable();
-
-        foreach ([
-            'log_datetime',
-            'attendance_datetime',
-            'punch_time',
-            'scan_time',
-            'recorded_at',
-            'datetime',
-            'date_time',
-            'created_at',
-        ] as $column) {
-            if (Schema::hasColumn($table, $column)) {
-                return $column;
-            }
-        }
-
-        return 'created_at';
-    }
-
-    private function existingBiometricColumns(array $columns): array
-    {
-        $table = (new MirasolBiometricsLog)->getTable();
-
-        return collect($columns)
-            ->filter(fn (string $column): bool => Schema::hasColumn($table, $column))
-            ->unique()
-            ->values()
-            ->toArray();
-    }
-
-    private function firstFilledValue(array $values): ?string
-    {
-        foreach ($values as $value) {
-            if ($value === null) {
-                continue;
-            }
-
-            $value = trim((string) $value);
-
-            if ($value !== '') {
-                return $value;
-            }
-        }
-
-        return null;
-    }
-
-    private function makeEmployeeDropdownKey(?string $employeeNo, string $employeeName): string
-    {
-        if (! empty($employeeNo)) {
-            return 'employee-no:'.$this->normalizeEmployeeKey($employeeNo);
-        }
-
-        return 'employee-name:'.$this->normalizeEmployeeKey($employeeName);
-    }
-
-    private function normalizeEmployeeKey(string $value): string
-    {
-        return strtolower(trim(preg_replace('/\s+/', ' ', $value)));
+        return EmployeeBiometric::query()
+            ->payrollActive()
+            ->whereNotNull('group_name')
+            ->where('group_name', '!=', '')
+            ->distinct()
+            ->orderBy('group_name')
+            ->pluck('group_name');
     }
 }

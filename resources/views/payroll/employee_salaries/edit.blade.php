@@ -12,8 +12,7 @@
                             Edit Employee Salary Profile
                         </h5>
                         <p class="mb-0 text-muted small">
-                            Update rates, statutory deduction cutoff, allowance release, loan schedules, and cash advance
-                            rules.
+                            Update rates, statutory deduction cutoff, allowance release, loan schedules, and cash advance rules.
                         </p>
                     </div>
 

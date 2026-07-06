@@ -3,10 +3,12 @@
 namespace App\Services\Payroll;
 
 use App\Models\DailyAttendanceSummary;
+use App\Models\EmployeeBiometric;
 use App\Models\EmployeePlottingSchedule;
 use App\Models\Holiday;
 use App\Models\MirasolBiometricsLog;
 use App\Models\PayrollAttendanceAdjustment;
+use App\Services\Biometrics\EmployeeBiometricIdentityService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -42,6 +44,10 @@ class DailyAttendanceSummaryService
     private array $columnCache = [];
 
     private ?string $biometricTimeColumnCache = null;
+
+    public function __construct(
+        private readonly EmployeeBiometricIdentityService $identityService
+    ) {}
 
     public function buildForDate(string|Carbon $date): void
     {
@@ -81,31 +87,78 @@ class DailyAttendanceSummaryService
     {
         $people = collect();
 
-        EmployeePlottingSchedule::query()
-            ->where(function ($query) {
-                $query->whereNotNull('employee_no')
-                    ->orWhereNotNull('biometric_employee_id')
-                    ->orWhereNotNull('crosschex_id');
-            })
+        EmployeeBiometric::query()
+            ->payrollActive()
             ->get()
-            ->each(function ($row) use ($people) {
+            ->each(function (EmployeeBiometric $employee) use ($people): void {
+                $snapshot = $this->identityService->snapshot($employee);
+
                 $this->putPerson($people, [
-                    'crosschex_id' => $this->cleanString($row->crosschex_id ?? null),
-                    'biometric_employee_id' => $this->cleanString($row->biometric_employee_id ?? null),
-                    'employee_no' => $this->cleanString($row->employee_no ?? null),
-                    'employee_name' => $this->cleanString($row->employee_name ?? null),
+                    'employee_biometric_id' => $employee->id,
+                    'crosschex_id' => $snapshot['crosschex_id'],
+                    'biometric_employee_id' => $snapshot['biometric_employee_id'],
+                    'employee_no' => $snapshot['employee_no'],
+                    'employee_name' => $snapshot['employee_name'],
+                    'source_employee_id' => $this->cleanString($employee->source_employee_id),
+                    'source_employee_no' => $this->cleanString($employee->source_employee_no),
+                    'source_crosschex_id' => $this->cleanString($employee->source_crosschex_id),
+                    'source_key' => $this->cleanString($employee->source_key),
+                ]);
+            });
+
+        EmployeePlottingSchedule::query()
+            ->whereNotNull('employee_biometric_id')
+            ->get()
+            ->each(function (EmployeePlottingSchedule $row) use ($people): void {
+                $employee = $this->identityService->resolveFromModel($row, true);
+
+                if (! $employee) {
+                    return;
+                }
+
+                $snapshot = $this->identityService->snapshot($employee);
+
+                $this->putPerson($people, [
+                    'employee_biometric_id' => $employee->id,
+                    'crosschex_id' => $snapshot['crosschex_id'],
+                    'biometric_employee_id' => $snapshot['biometric_employee_id'],
+                    'employee_no' => $snapshot['employee_no'],
+                    'employee_name' => $snapshot['employee_name'],
+                    'source_employee_id' => $this->cleanString($employee->source_employee_id),
+                    'source_employee_no' => $this->cleanString($employee->source_employee_no),
+                    'source_crosschex_id' => $this->cleanString($employee->source_crosschex_id),
+                    'source_key' => $this->cleanString($employee->source_key),
                 ]);
             });
 
         MirasolBiometricsLog::query()
             ->whereDate($this->biometricTimeColumn(), $workDate->toDateString())
             ->get()
-            ->each(function ($row) use ($people) {
+            ->each(function (MirasolBiometricsLog $row) use ($people): void {
+                $employee = $this->identityService->resolve(
+                    biometricEmployeeId: $this->cleanString($row->employee_id ?? null),
+                    employeeNo: $this->cleanString($row->employee_no ?? null),
+                    employeeName: $this->cleanString($row->employee_name ?? null),
+                    crosschexId: $this->cleanString($row->crosschex_id ?? null),
+                    onlyPayrollActive: true
+                );
+
+                if (! $employee) {
+                    return;
+                }
+
+                $snapshot = $this->identityService->snapshot($employee);
+
                 $this->putPerson($people, [
-                    'crosschex_id' => $this->cleanString($row->crosschex_id ?? null),
-                    'biometric_employee_id' => $this->cleanString($row->employee_id ?? null),
-                    'employee_no' => $this->cleanString($row->employee_no ?? null),
-                    'employee_name' => $this->cleanString($row->employee_name ?? null),
+                    'employee_biometric_id' => $employee->id,
+                    'crosschex_id' => $snapshot['crosschex_id'],
+                    'biometric_employee_id' => $snapshot['biometric_employee_id'],
+                    'employee_no' => $snapshot['employee_no'],
+                    'employee_name' => $snapshot['employee_name'],
+                    'source_employee_id' => $this->cleanString($employee->source_employee_id),
+                    'source_employee_no' => $this->cleanString($employee->source_employee_no),
+                    'source_crosschex_id' => $this->cleanString($employee->source_crosschex_id),
+                    'source_key' => $this->cleanString($employee->source_key),
                 ]);
             });
 
@@ -113,18 +166,29 @@ class DailyAttendanceSummaryService
             ->whereDate('work_date', $workDate->toDateString())
             ->where('adjustment_type', '!=', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)
             ->get()
-            ->each(function ($row) use ($people) {
+            ->each(function (PayrollAttendanceAdjustment $row) use ($people): void {
+                $employee = $this->identityService->resolveFromModel($row, true);
+
+                if (! $employee) {
+                    return;
+                }
+
+                $snapshot = $this->identityService->snapshot($employee);
+
                 $this->putPerson($people, [
-                    'crosschex_id' => $this->cleanString($row->crosschex_id ?? null),
-                    'biometric_employee_id' => $this->cleanString($row->biometric_employee_id ?? null),
-                    'employee_no' => $this->cleanString($row->employee_no ?? null),
-                    'employee_name' => $this->cleanString($row->employee_name ?? null),
+                    'employee_biometric_id' => $employee->id,
+                    'crosschex_id' => $snapshot['crosschex_id'],
+                    'biometric_employee_id' => $snapshot['biometric_employee_id'],
+                    'employee_no' => $snapshot['employee_no'],
+                    'employee_name' => $snapshot['employee_name'],
+                    'source_employee_id' => $this->cleanString($employee->source_employee_id),
+                    'source_employee_no' => $this->cleanString($employee->source_employee_no),
+                    'source_crosschex_id' => $this->cleanString($employee->source_crosschex_id),
+                    'source_key' => $this->cleanString($employee->source_key),
                 ]);
             });
 
-        return $people
-            ->filter(fn (array $person) => count($this->personIdentityValues($person)) > 0)
-            ->values();
+        return $people->values();
     }
 
     protected function putPerson(Collection $people, array $newPerson): void
@@ -155,10 +219,15 @@ class DailyAttendanceSummaryService
         $existingPerson = $people->get($existingKey);
 
         $people->put($existingKey, [
+            'employee_biometric_id' => $existingPerson['employee_biometric_id'] ?: ($newPerson['employee_biometric_id'] ?? null),
             'crosschex_id' => $existingPerson['crosschex_id'] ?: ($newPerson['crosschex_id'] ?? ''),
             'biometric_employee_id' => $existingPerson['biometric_employee_id'] ?: ($newPerson['biometric_employee_id'] ?? ''),
             'employee_no' => $existingPerson['employee_no'] ?: ($newPerson['employee_no'] ?? ''),
             'employee_name' => $existingPerson['employee_name'] ?: ($newPerson['employee_name'] ?? ''),
+            'source_employee_id' => $existingPerson['source_employee_id'] ?? ($newPerson['source_employee_id'] ?? ''),
+            'source_employee_no' => $existingPerson['source_employee_no'] ?? ($newPerson['source_employee_no'] ?? ''),
+            'source_crosschex_id' => $existingPerson['source_crosschex_id'] ?? ($newPerson['source_crosschex_id'] ?? ''),
+            'source_key' => $existingPerson['source_key'] ?? ($newPerson['source_key'] ?? ''),
         ]);
     }
 
@@ -526,6 +595,9 @@ class DailyAttendanceSummaryService
             $overtimeMinutes = $workedMinutes - self::FULL_DAY_MINUTES;
         }
 
+        $employeeBiometricId = ! empty($person['employee_biometric_id'])
+            ? (int) $person['employee_biometric_id']
+            : null;
         $employeeNo = $this->cleanString($person['employee_no'] ?? null);
         $biometricEmployeeId = $this->cleanString($person['biometric_employee_id'] ?? null);
 
@@ -533,7 +605,9 @@ class DailyAttendanceSummaryService
             'work_date' => $workDate->toDateString(),
         ];
 
-        if ($employeeNo !== '') {
+        if ($employeeBiometricId !== null && $this->columnExists((new DailyAttendanceSummary)->getTable(), 'employee_biometric_id')) {
+            $summaryKeys['employee_biometric_id'] = $employeeBiometricId;
+        } elseif ($employeeNo !== '') {
             $summaryKeys['employee_no'] = $employeeNo;
         } else {
             $summaryKeys['biometric_employee_id'] = $biometricEmployeeId;
@@ -542,6 +616,7 @@ class DailyAttendanceSummaryService
         return DailyAttendanceSummary::updateOrCreate(
             $summaryKeys,
             [
+                'employee_biometric_id' => $employeeBiometricId,
                 'biometric_employee_id' => $biometricEmployeeId,
                 'employee_no' => $employeeNo,
                 'employee_name' => $this->cleanString($person['employee_name'] ?? null),
@@ -1055,9 +1130,14 @@ class DailyAttendanceSummaryService
     protected function applySchedulePersonMatch(Builder $query, array $person): void
     {
         $identities = $this->personIdentityValues($person);
+        $employeeBiometricId = ! empty($person['employee_biometric_id']) ? (int) $person['employee_biometric_id'] : null;
         $table = (new EmployeePlottingSchedule)->getTable();
 
-        $query->where(function ($q) use ($identities, $table) {
+        $query->where(function ($q) use ($identities, $table, $employeeBiometricId): void {
+            if ($employeeBiometricId !== null && $this->columnExists($table, 'employee_biometric_id')) {
+                $q->orWhere('employee_biometric_id', $employeeBiometricId);
+            }
+
             foreach ($identities as $identity) {
                 if ($this->columnExists($table, 'employee_no')) {
                     $q->orWhereRaw('TRIM(employee_no) = ?', [$identity]);
@@ -1079,7 +1159,7 @@ class DailyAttendanceSummaryService
         $identities = $this->personIdentityValues($person);
         $table = (new MirasolBiometricsLog)->getTable();
 
-        $query->where(function ($q) use ($identities, $table) {
+        $query->where(function ($q) use ($identities, $table): void {
             foreach ($identities as $identity) {
                 if ($this->columnExists($table, 'employee_id')) {
                     $q->orWhereRaw('TRIM(employee_id) = ?', [$identity]);
@@ -1103,9 +1183,14 @@ class DailyAttendanceSummaryService
     protected function applyAdjustmentPersonMatch(Builder $query, array $person): void
     {
         $identities = $this->personIdentityValues($person);
+        $employeeBiometricId = ! empty($person['employee_biometric_id']) ? (int) $person['employee_biometric_id'] : null;
         $table = (new PayrollAttendanceAdjustment)->getTable();
 
-        $query->where(function ($q) use ($identities, $table) {
+        $query->where(function ($q) use ($identities, $table, $employeeBiometricId): void {
+            if ($employeeBiometricId !== null && $this->columnExists($table, 'employee_biometric_id')) {
+                $q->orWhere('employee_biometric_id', $employeeBiometricId);
+            }
+
             foreach ($identities as $identity) {
                 if ($this->columnExists($table, 'employee_no')) {
                     $q->orWhereRaw('TRIM(employee_no) = ?', [$identity]);
@@ -1125,6 +1210,10 @@ class DailyAttendanceSummaryService
     protected function personIdentityValues(array $person): array
     {
         return collect([
+            $person['source_employee_id'] ?? null,
+            $person['source_employee_no'] ?? null,
+            $person['source_crosschex_id'] ?? null,
+            $person['source_key'] ?? null,
             $person['employee_no'] ?? null,
             $person['biometric_employee_id'] ?? null,
             $person['crosschex_id'] ?? null,
@@ -1138,6 +1227,10 @@ class DailyAttendanceSummaryService
 
     protected function makePersonKey(array $person): string
     {
+        if (! empty($person['employee_biometric_id'])) {
+            return 'EMPLOYEE_BIOMETRIC:'.(int) $person['employee_biometric_id'];
+        }
+
         $identities = $this->personIdentityValues($person);
 
         return 'PERSON:'.($identities[0] ?? md5(json_encode($person)));

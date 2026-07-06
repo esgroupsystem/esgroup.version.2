@@ -15,6 +15,7 @@ class PayrollPayslipService
     public function build(Payroll $payroll): array
     {
         $payroll->load([
+            'items.employeeBiometric',
             'items' => fn ($query) => $query->orderBy('employee_name'),
             'generator',
             'finalizer',
@@ -74,6 +75,7 @@ class PayrollPayslipService
         return [
             'item' => $item,
             'employee_name' => $item->employee_name ?: 'Unknown Employee',
+            'employee_biometric_id' => $item->employee_biometric_id ?: null,
             'employee_no' => $item->employee_no ?: '—',
             'biometric_employee_id' => $item->biometric_employee_id ?: '—',
             'period_ending' => Carbon::parse($payroll->period_end)->format('F d, Y'),
@@ -410,16 +412,20 @@ class PayrollPayslipService
 
     protected function employeeGroupKey(object $row): string
     {
+        if (! empty($row->employee_biometric_id)) {
+            return 'EMPLOYEE_BIOMETRIC:'.(int) $row->employee_biometric_id;
+        }
+
+        if (! empty($row->biometric_employee_id)) {
+            return 'LEGACY_BIO:'.trim((string) $row->biometric_employee_id);
+        }
+
         if (! empty($row->employee_no)) {
-            return 'EMP:'.trim((string) $row->employee_no);
+            return 'EMPLOYEE_NO:'.trim((string) $row->employee_no);
         }
 
         if (! empty($row->crosschex_id)) {
             return 'CROSSCHEX:'.trim((string) $row->crosschex_id);
-        }
-
-        if (! empty($row->biometric_employee_id)) {
-            return 'BIO:'.trim((string) $row->biometric_employee_id);
         }
 
         return 'NAME:'.mb_strtoupper(trim((string) ($row->employee_name ?: 'UNKNOWN')));

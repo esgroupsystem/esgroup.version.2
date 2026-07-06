@@ -26,6 +26,7 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
 
         if ($this->adjustment_type === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER) {
             $this->merge([
+                'employee_biometric_id' => null,
                 'biometric_employee_id' => PayrollAttendanceAdjustment::GLOBAL_DISASTER_BIOMETRIC_ID,
                 'employee_no' => null,
                 'employee_name' => PayrollAttendanceAdjustment::GLOBAL_DISASTER_EMPLOYEE_NAME,
@@ -44,13 +45,14 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'biometric_employee_id' => [
+            'employee_biometric_id' => [
                 Rule::requiredIf(! $this->isGlobalDisasterType()),
                 'nullable',
-                'string',
-                'max:100',
+                'integer',
+                'exists:employee_biometrics,id',
             ],
 
+            'biometric_employee_id' => ['nullable', 'string', 'max:100'],
             'employee_no' => ['nullable', 'string', 'max:100'],
 
             'employee_name' => [
@@ -120,7 +122,8 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'biometric_employee_id.required' => 'Please select an employee from biometrics.',
+            'employee_biometric_id.required' => 'Please select an active employee from biometrics.',
+            'employee_biometric_id.exists' => 'The selected biometric employee does not exist.',
             'employee_name.required' => 'Please select an employee from biometrics.',
             'date_from.required' => 'Date from is required for Sick Leave and Medical Leave.',
             'date_to.required' => 'Date to is required for Sick Leave and Medical Leave.',

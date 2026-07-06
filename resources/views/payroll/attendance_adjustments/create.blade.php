@@ -13,7 +13,7 @@
                                 New Payroll Attendance Adjustment
                             </h5>
                             <p class="mb-0 fs-10 text-600">
-                                Select the adjustment type first. The required fields will change automatically.
+                                Select a payroll-active biometric employee. The form saves employee_biometric_id and keeps old identifiers as snapshots.
                             </p>
                         </div>
 

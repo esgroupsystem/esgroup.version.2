@@ -72,6 +72,42 @@
                 ->toArray() ?? [],
         ),
     )->values();
+    $resolvePerson = function ($person) {
+        $canonicalId = $person->employee_biometric_id ?? $person->id ?? null;
+
+        $legacyId = $person->biometric_employee_id
+            ?? $person->legacy_biometric_employee_id
+            ?? $person->source_employee_id
+            ?? $person->source_crosschex_id
+            ?? $person->source_employee_no
+            ?? null;
+
+        $employeeNo = $person->employee_no
+            ?? $person->effective_employee_no
+            ?? $person->display_employee_no
+            ?? $person->source_employee_no
+            ?? $person->source_employee_id
+            ?? null;
+
+        $employeeName = $person->employee_name
+            ?? $person->effective_name
+            ?? $person->display_name
+            ?? $person->source_employee_name
+            ?? $person->source_crosschex_account_name
+            ?? 'Unknown Employee';
+
+        $crosschexId = $person->crosschex_id
+            ?? $person->source_crosschex_id
+            ?? null;
+
+        return [
+            'canonical_id' => $canonicalId,
+            'legacy_id' => $legacyId,
+            'employee_no' => $employeeNo,
+            'employee_name' => $employeeName,
+            'crosschex_id' => $crosschexId,
+        ];
+    };
 @endphp
 
 <div class="row g-3">
@@ -88,17 +124,28 @@
                             style="z-index: 1050; max-height: 280px; overflow-y: auto;">
                             <div class="list-group list-group-flush">
                                 @foreach ($people as $person)
+                                    @php($resolvedPerson = $resolvePerson($person))
+
+                                    @continue(empty($resolvedPerson['canonical_id']))
+
                                     <button type="button"
                                         class="list-group-item list-group-item-action employee-option"
-                                        data-biometric="{{ $person->biometric_employee_id }}"
-                                        data-empno="{{ $person->employee_no }}" data-name="{{ $person->employee_name }}"
-                                        data-crosschex="{{ $person->crosschex_id }}"
-                                        data-search="{{ strtolower(trim(($person->employee_name ?? '') . ' ' . ($person->employee_no ?? '') . ' ' . ($person->crosschex_id ?? ''))) }}">
-                                        <div class="fw-semibold text-dark">{{ $person->employee_name }}</div>
+                                        data-employee-biometric-id="{{ $resolvedPerson['canonical_id'] }}"
+                                        data-biometric="{{ $resolvedPerson['legacy_id'] }}"
+                                        data-empno="{{ $resolvedPerson['employee_no'] }}"
+                                        data-name="{{ $resolvedPerson['employee_name'] }}"
+                                        data-crosschex="{{ $resolvedPerson['crosschex_id'] }}"
+                                        data-search="{{ strtolower(trim(($resolvedPerson['canonical_id'] ?? '') . ' ' . ($resolvedPerson['employee_name'] ?? '') . ' ' . ($resolvedPerson['employee_no'] ?? '') . ' ' . ($resolvedPerson['legacy_id'] ?? '') . ' ' . ($resolvedPerson['crosschex_id'] ?? ''))) }}">
+                                        <div class="fw-semibold text-dark">{{ $resolvedPerson['employee_name'] }}</div>
                                         <div class="small text-muted">
-                                            {{ $person->employee_no ?: 'No Employee No' }}
-                                            @if ($person->crosschex_id)
-                                                | CrossChex: {{ $person->crosschex_id }}
+                                            Bio ID: {{ $resolvedPerson['canonical_id'] }}
+                                            |
+                                            {{ $resolvedPerson['employee_no'] ?: 'No Employee No' }}
+                                            @if ($resolvedPerson['legacy_id'])
+                                                | Legacy: {{ $resolvedPerson['legacy_id'] }}
+                                            @endif
+                                            @if ($resolvedPerson['crosschex_id'])
+                                                | CrossChex: {{ $resolvedPerson['crosschex_id'] }}
                                             @endif
                                         </div>
                                     </button>
@@ -111,9 +158,17 @@
                         </div>
                     </div>
 
+                    <input type="hidden" name="employee_biometric_id" id="employee_biometric_id"
+                        value="{{ old('employee_biometric_id') }}">
+
                     <input type="hidden" name="biometric_employee_id" id="biometric_employee_id"
                         value="{{ old('biometric_employee_id') }}">
+
                     <input type="hidden" name="crosschex_id" id="crosschex_id" value="{{ old('crosschex_id') }}">
+
+                    @error('employee_biometric_id')
+                        <div class="text-danger small mt-2">{{ $message }}</div>
+                    @enderror
 
                     @error('biometric_employee_id')
                         <div class="text-danger small mt-2">{{ $message }}</div>
@@ -123,8 +178,16 @@
         </div>
     @else
         <div class="col-md-4">
-            <label class="form-label">Biometric Employee ID</label>
+            <label class="form-label">Canonical Bio ID</label>
+            <input type="text" class="form-control" value="{{ $salary->employee_biometric_id }}" readonly>
+            <input type="hidden" name="employee_biometric_id" id="employee_biometric_id" value="{{ $salary->employee_biometric_id }}">
+            <div class="form-text">employee_biometric_id → employee_biometrics.id</div>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Legacy Biometric ID</label>
             <input type="text" class="form-control" value="{{ $salary->biometric_employee_id }}" readonly>
+            <input type="hidden" name="biometric_employee_id" id="biometric_employee_id" value="{{ $salary->biometric_employee_id }}">
         </div>
 
         <div class="col-md-4">
@@ -1127,6 +1190,7 @@
             const options = Array.from(document.querySelectorAll('.employee-option'));
             const noResult = input('employeeNoResult');
 
+            const employeeBiometricInput = input('employee_biometric_id');
             const biometricInput = input('biometric_employee_id');
             const employeeNoInput = input('employee_no');
             const employeeNameInput = input('employee_name');
@@ -1141,6 +1205,10 @@
             }
 
             function clearSelectedFields() {
+                if (employeeBiometricInput) {
+                    employeeBiometricInput.value = '';
+                }
+
                 biometricInput.value = '';
                 employeeNoInput.value = '';
                 employeeNameInput.value = '';
@@ -1173,6 +1241,10 @@
                     const empno = option.dataset.empno || '';
 
                     picker.value = name + (empno ? ' | ' + empno : '');
+                    if (employeeBiometricInput) {
+                        employeeBiometricInput.value = option.dataset.employeeBiometricId || '';
+                    }
+
                     biometricInput.value = option.dataset.biometric || '';
                     employeeNoInput.value = empno;
                     employeeNameInput.value = name;

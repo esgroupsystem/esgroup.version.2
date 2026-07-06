@@ -108,7 +108,7 @@ class PayrollController extends Controller
 
     public function show(Payroll $payroll)
     {
-        $payroll->load(['items.paymentLogs', 'generator', 'finalizer']);
+        $payroll->load(['items.employeeBiometric', 'items.paymentLogs', 'generator', 'finalizer']);
 
         $totals = $this->totals($payroll);
 
@@ -119,14 +119,19 @@ class PayrollController extends Controller
     {
         abort_if((int) $item->payroll_id !== (int) $payroll->id, 404);
 
-        $item->load('paymentLogs');
+        $item->load(['employeeBiometric', 'paymentLogs']);
 
         $summaries = DailyAttendanceSummary::query()
+            ->with('employeeBiometric')
             ->whereBetween('work_date', [
                 $payroll->period_start->toDateString(),
                 $payroll->period_end->toDateString(),
             ])
             ->where(function ($query) use ($item): void {
+                if (! empty($item->employee_biometric_id)) {
+                    $query->orWhere('employee_biometric_id', (int) $item->employee_biometric_id);
+                }
+
                 if (! empty($item->biometric_employee_id)) {
                     $query->orWhere('biometric_employee_id', $item->biometric_employee_id);
                 }
@@ -180,7 +185,7 @@ class PayrollController extends Controller
     public function exportExcel(Payroll $payroll): BinaryFileResponse
     {
         return Excel::download(
-            new PayrollItemsExport($payroll->load('items')),
+            new PayrollItemsExport($payroll->load('items.employeeBiometric')),
             $payroll->payroll_number.'.xlsx'
         );
     }

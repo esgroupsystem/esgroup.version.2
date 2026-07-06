@@ -22,7 +22,7 @@
                             </h4>
                             <p class="mb-0 text-600">
                                 Manage Sick Leave, Medical Leave, Change Schedule, Offset, Official Business,
-                                Overtime, Holiday Work, and Typhoon / Disaster adjustments.
+                                Overtime, Holiday Work, and Typhoon / Disaster adjustments using employee_biometric_id as the canonical payroll employee key.
                             </p>
                         </div>
 
@@ -197,7 +197,9 @@
                                                 <div class="fs-10 text-600">
                                                     Emp No: {{ $item->employee_no ?: 'N/A' }}
                                                     |
-                                                    Bio ID: {{ $item->biometric_employee_id ?: 'N/A' }}
+                                                    Bio ID: {{ $item->employee_biometric_id ?: 'N/A' }}
+                                                    |
+                                                    Legacy: {{ $item->biometric_employee_id ?: 'N/A' }}
                                                 </div>
                                             @endif
                                         </td>

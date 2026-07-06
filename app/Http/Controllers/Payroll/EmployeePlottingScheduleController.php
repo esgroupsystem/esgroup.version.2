@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
+use App\Models\EmployeeBiometric;
 use App\Models\EmployeePlottingSchedule;
-use App\Models\MirasolBiometricsLog;
+use App\Services\Biometrics\EmployeeBiometricIdentityService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,39 +14,45 @@ use Illuminate\View\View;
 
 class EmployeePlottingScheduleController extends Controller
 {
+    public function __construct(
+        private readonly EmployeeBiometricIdentityService $identityService
+    ) {}
+
     /**
-     * Display one permanent schedule row per employee.
+     * Display one permanent schedule row per active biometric employee.
      */
     public function index(Request $request): View
     {
         $search = trim((string) $request->query('search', ''));
         $status = trim((string) $request->query('status', ''));
         $shift = trim((string) $request->query('shift', ''));
+        $groupName = trim((string) $request->query('group_name', ''));
 
-        $employees = MirasolBiometricsLog::query()
-            ->selectRaw("\n                MIN(employee_id) AS biometric_employee_id,\n                TRIM(employee_no) AS employee_no,\n                MIN(NULLIF(TRIM(employee_name), '')) AS employee_name\n            ")
-            ->whereNotNull('employee_no')
-            ->whereRaw("TRIM(employee_no) <> ''")
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($query) use ($search) {
-                    $query->where('employee_no', 'like', "%{$search}%")
-                        ->orWhere('employee_name', 'like', "%{$search}%")
-                        ->orWhere('employee_id', 'like', "%{$search}%");
+        $employees = EmployeeBiometric::query()
+            ->with('company')
+            ->payrollActive()
+            ->group($groupName)
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query
+                        ->where('display_employee_no', 'like', "%{$search}%")
+                        ->orWhere('display_name', 'like', "%{$search}%")
+                        ->orWhere('source_employee_no', 'like', "%{$search}%")
+                        ->orWhere('source_employee_id', 'like', "%{$search}%")
+                        ->orWhere('source_employee_name', 'like', "%{$search}%")
+                        ->orWhere('source_crosschex_id', 'like', "%{$search}%")
+                        ->orWhere('group_name', 'like', "%{$search}%");
                 });
             })
-            ->groupBy(DB::raw('TRIM(employee_no)'))
-            ->orderByRaw("MIN(NULLIF(TRIM(employee_name), '')) ASC")
+            ->orderBy('group_name')
+            ->orderByRaw("COALESCE(NULLIF(display_name, ''), NULLIF(source_employee_name, ''), NULLIF(source_crosschex_account_name, '')) ASC")
             ->paginate(25)
             ->withQueryString();
 
-        $employeeNos = $employees->getCollection()
-            ->pluck('employee_no')
-            ->map(fn ($employeeNo) => trim((string) $employeeNo))
-            ->filter()
-            ->values();
+        $employeeIds = $employees->getCollection()->pluck('id')->values();
 
         $scheduleQuery = EmployeePlottingSchedule::query()
-            ->whereIn('employee_no', $employeeNos);
+            ->whereIn('employee_biometric_id', $employeeIds);
 
         if (Schema::hasColumn((new EmployeePlottingSchedule)->getTable(), 'work_date')) {
             $scheduleQuery->whereNull('work_date');
@@ -53,36 +60,46 @@ class EmployeePlottingScheduleController extends Controller
 
         $schedules = $scheduleQuery
             ->get()
-            ->keyBy(fn ($schedule) => trim((string) $schedule->employee_no));
+            ->keyBy(fn (EmployeePlottingSchedule $schedule): int => (int) $schedule->employee_biometric_id);
 
         if ($status !== '') {
             $employees->setCollection(
-                $employees->getCollection()->filter(function ($employee) use ($schedules, $status) {
-                    $employeeNo = trim((string) $employee->employee_no);
-                    $schedule = $schedules->get($employeeNo);
+                $employees->getCollection()
+                    ->filter(function (EmployeeBiometric $employee) use ($schedules, $status): bool {
+                        $schedule = $schedules->get($employee->id);
 
-                    return ($schedule?->status ?? 'scheduled') === $status;
-                })->values()
+                        return ($schedule?->status ?? 'scheduled') === $status;
+                    })
+                    ->values()
             );
         }
 
         if ($shift !== '') {
             $employees->setCollection(
-                $employees->getCollection()->filter(function ($employee) use ($schedules, $shift) {
-                    $employeeNo = trim((string) $employee->employee_no);
-                    $schedule = $schedules->get($employeeNo);
+                $employees->getCollection()
+                    ->filter(function (EmployeeBiometric $employee) use ($schedules, $shift): bool {
+                        $schedule = $schedules->get($employee->id);
 
-                    return ($schedule?->shift_name ?? 'Regular Shift') === $shift;
-                })->values()
+                        return ($schedule?->shift_name ?? 'Regular Shift') === $shift;
+                    })
+                    ->values()
             );
         }
+
+        $groups = EmployeeBiometric::query()
+            ->payrollActive()
+            ->whereNotNull('group_name')
+            ->where('group_name', '!=', '')
+            ->distinct()
+            ->orderBy('group_name')
+            ->pluck('group_name');
 
         $stats = [
             'visible_employees' => $employees->count(),
             'saved_permanent' => $schedules->count(),
             'scheduled' => $schedules->where('status', 'scheduled')->count(),
             'rest_day' => $schedules->where('status', 'rest_day')->count(),
-            'inactive' => $schedules->where('status', 'inactive')->count(),
+            'inactive' => EmployeeBiometric::query()->inactive()->count(),
             'regular' => $schedules->where('shift_name', 'Regular Shift')->count(),
             'flexible' => $schedules->where('shift_name', 'Flexible Shift')->count(),
         ];
@@ -93,20 +110,20 @@ class EmployeePlottingScheduleController extends Controller
             'search',
             'status',
             'shift',
+            'groupName',
+            'groups',
             'stats'
         ));
     }
 
     /**
-     * Save one permanent schedule per employee.
+     * Save one permanent schedule per active biometric employee.
      */
     public function save(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'schedule' => ['nullable', 'array'],
-            'schedule.*.biometric_employee_id' => ['nullable'],
-            'schedule.*.employee_no' => ['required', 'string', 'max:100'],
-            'schedule.*.employee_name' => ['nullable', 'string', 'max:255'],
+            'schedule.*.employee_biometric_id' => ['required', 'integer', 'exists:employee_biometrics,id'],
             'schedule.*.status' => ['required', 'string', 'in:scheduled,rest_day,inactive'],
             'schedule.*.shift_name' => ['required', 'string', 'in:Regular Shift,Flexible Shift'],
             'schedule.*.time_in' => ['nullable', 'date_format:H:i'],
@@ -141,24 +158,33 @@ class EmployeePlottingScheduleController extends Controller
             }
         }
 
-        DB::transaction(function () use ($rows) {
+        DB::transaction(function () use ($rows): void {
             foreach ($rows as $row) {
-                $employeeNo = trim((string) ($row['employee_no'] ?? ''));
+                $employee = EmployeeBiometric::query()
+                    ->whereKey((int) $row['employee_biometric_id'])
+                    ->first();
 
-                if ($employeeNo === '') {
+                if (! $employee) {
                     continue;
                 }
+
+                $snapshot = $this->identityService->snapshot($employee);
 
                 $status = $row['status'] ?? 'scheduled';
                 $shiftName = $row['shift_name'] ?? 'Regular Shift';
                 $isFlexible = $shiftName === 'Flexible Shift';
                 $isNonWorkingStatus = in_array($status, ['rest_day', 'inactive'], true);
 
+                if ($status === 'inactive') {
+                    $employee->markPayrollInactive($row['remarks'] ?? 'Marked inactive from schedule plotting.');
+                }
+
                 $payload = [
-                    'crosschex_id' => null,
-                    'biometric_employee_id' => trim((string) ($row['biometric_employee_id'] ?? '')) ?: null,
-                    'employee_no' => $employeeNo,
-                    'employee_name' => $row['employee_name'] ?? '',
+                    'employee_biometric_id' => $employee->id,
+                    'crosschex_id' => $snapshot['crosschex_id'],
+                    'biometric_employee_id' => $snapshot['biometric_employee_id'],
+                    'employee_no' => $snapshot['employee_no'],
+                    'employee_name' => $snapshot['employee_name'],
                     'work_date' => null,
                     'shift_name' => $shiftName,
                     'time_in' => ($isFlexible || $isNonWorkingStatus) ? null : ($row['time_in'] ?? null),
@@ -169,13 +195,9 @@ class EmployeePlottingScheduleController extends Controller
                     'remarks' => $row['remarks'] ?? null,
                 ];
 
-                /*
-                 * Important:
-                 * Delete old cutoff/date plotting rows for this employee first.
-                 * This guarantees only one permanent schedule controls payroll summary.
-                 */
                 EmployeePlottingSchedule::query()
-                    ->where('employee_no', $employeeNo)
+                    ->where('employee_biometric_id', $employee->id)
+                    ->whereNull('work_date')
                     ->delete();
 
                 EmployeePlottingSchedule::query()->create($payload);
@@ -183,7 +205,7 @@ class EmployeePlottingScheduleController extends Controller
         });
 
         return redirect()
-            ->route('payroll-plotting.index', $request->only(['search', 'status', 'shift']))
+            ->route('payroll-plotting.index', $request->only(['search', 'status', 'shift', 'group_name']))
             ->with('success', 'Permanent schedule saved successfully. Please rebuild Attendance Summary before payroll checking.');
     }
 }

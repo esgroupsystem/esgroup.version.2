@@ -35,6 +35,7 @@ class AttendanceSummaryController extends Controller
         $stats = $this->buildStats(clone $baseQuery);
 
         $summaries = (clone $baseQuery)
+            ->with('employeeBiometric')
             ->orderBy('work_date')
             ->orderBy('employee_name')
             ->paginate(25)
@@ -48,6 +49,9 @@ class AttendanceSummaryController extends Controller
             ))->render();
         }
 
+        $statusOptions = $this->statusOptions();
+        $dayTypeOptions = $this->dayTypeOptions();
+
         return view('payroll.attendance_summary.index', compact(
             'summaries',
             'stats',
@@ -57,7 +61,9 @@ class AttendanceSummaryController extends Controller
             'cutoffLabel',
             'search',
             'status',
-            'dayType'
+            'dayType',
+            'statusOptions',
+            'dayTypeOptions'
         ));
     }
 
@@ -173,6 +179,7 @@ class AttendanceSummaryController extends Controller
         ?string $dayType = null
     ) {
         return DailyAttendanceSummary::query()
+            ->with('employeeBiometric')
             ->whereBetween('work_date', [
                 $startDate->toDateString(),
                 $endDate->toDateString(),
@@ -182,6 +189,11 @@ class AttendanceSummaryController extends Controller
                     $q->where('employee_name', 'like', "%{$search}%")
                         ->orWhere('employee_no', 'like', "%{$search}%")
                         ->orWhere('biometric_employee_id', 'like', "%{$search}%")
+                        ->orWhereHas('employeeBiometric', function ($employeeQuery) use ($search) {
+                            $employeeQuery->where('display_name', 'like', "%{$search}%")
+                                ->orWhere('display_employee_no', 'like', "%{$search}%")
+                                ->orWhere('group_name', 'like', "%{$search}%");
+                        })
                         ->orWhere('attendance_status', 'like', "%{$search}%")
                         ->orWhere('shift_name', 'like', "%{$search}%")
                         ->orWhere('holiday_name', 'like', "%{$search}%")

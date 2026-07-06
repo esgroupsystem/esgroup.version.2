@@ -2,28 +2,40 @@
 
 namespace App\Services\Payroll;
 
+use App\Models\EmployeeBiometric;
 use App\Models\MirasolBiometricsLog;
+use App\Services\Biometrics\EmployeeBiometricIdentityService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Schema;
 
 class BiometricsProofService
 {
+    public function __construct(
+        private readonly EmployeeBiometricIdentityService $identityService
+    ) {}
+
     public function findOffsetProof(
-        string $biometricEmployeeId,
+        int $employeeBiometricId,
+        ?string $biometricEmployeeId,
         ?string $employeeNo,
         string $employeeName,
         string $offsetSourceDate
     ): ?array {
-        $model = new MirasolBiometricsLog;
-        $table = $model->getTable();
+        $employee = EmployeeBiometric::query()->find($employeeBiometricId);
 
+        if (! $employee) {
+            return null;
+        }
+
+        $table = (new MirasolBiometricsLog)->getTable();
         $timeColumn = $this->biometricDateTimeColumn();
 
-        $startDateTime = Carbon::parse($offsetSourceDate)->startOfDay();
-        $endDateTime = Carbon::parse($offsetSourceDate)->endOfDay();
+        $startDateTime = Carbon::parse($offsetSourceDate, 'Asia/Manila')->startOfDay();
+        $endDateTime = Carbon::parse($offsetSourceDate, 'Asia/Manila')->endOfDay();
 
         $identityFilters = $this->buildIdentityFilters(
             $table,
+            $employee,
             $biometricEmployeeId,
             $employeeNo,
             $employeeName
@@ -52,7 +64,7 @@ class BiometricsProofService
                 $startDateTime->toDateTimeString(),
                 $endDateTime->toDateTimeString(),
             ])
-            ->where(function ($query) use ($identityFilters) {
+            ->where(function ($query) use ($identityFilters): void {
                 foreach ($identityFilters as $filter) {
                     $query->orWhere($filter['column'], $filter['value']);
                 }
@@ -69,7 +81,7 @@ class BiometricsProofService
             ->map(function (MirasolBiometricsLog $log) use ($timeColumn) {
                 $value = $log->{$timeColumn};
 
-                return $value ? Carbon::parse($value) : null;
+                return $value ? Carbon::parse($value, 'Asia/Manila') : null;
             })
             ->filter()
             ->sort()
@@ -80,31 +92,18 @@ class BiometricsProofService
         }
 
         $firstLog = $logs->first();
+        $snapshot = $this->identityService->snapshot($employee);
 
         return [
-            'date' => Carbon::parse($offsetSourceDate)->format('Y-m-d'),
-            'employee_name' => $this->firstFilledValue([
-                $firstLog->employee_name ?? null,
-                $firstLog->crosschex_account_name ?? null,
-                $firstLog->crosschex_account ?? null,
-                $employeeName,
-            ]),
-            'employee_no' => $this->firstFilledValue([
-                $firstLog->employee_no ?? null,
-                $firstLog->employee_id ?? null,
-                $firstLog->crosschex_id ?? null,
-                $employeeNo,
-            ]),
-            'biometric_employee_id' => $this->firstFilledValue([
-                $firstLog->employee_no ?? null,
-                $firstLog->employee_id ?? null,
-                $firstLog->crosschex_id ?? null,
-                $biometricEmployeeId,
-            ]),
+            'date' => Carbon::parse($offsetSourceDate, 'Asia/Manila')->format('Y-m-d'),
+            'employee_biometric_id' => $employee->id,
+            'employee_name' => $snapshot['employee_name'],
+            'employee_no' => $snapshot['employee_no'],
+            'biometric_employee_id' => $snapshot['biometric_employee_id'],
             'time_in' => $times->first()->format('H:i'),
             'time_out' => $times->last()->format('H:i'),
             'count' => $logs->count(),
-            'logs' => $logs->map(function (MirasolBiometricsLog $log) use ($timeColumn) {
+            'logs' => $logs->map(function (MirasolBiometricsLog $log) use ($timeColumn, $firstLog) {
                 $checkTime = $log->{$timeColumn};
 
                 return [
@@ -116,9 +115,10 @@ class BiometricsProofService
                         $log->employee_name ?? null,
                         $log->crosschex_account_name ?? null,
                         $log->crosschex_account ?? null,
+                        $firstLog->employee_name ?? null,
                     ]),
                     'check_time' => $checkTime
-                        ? Carbon::parse($checkTime)->format('Y-m-d H:i:s')
+                        ? Carbon::parse($checkTime, 'Asia/Manila')->format('Y-m-d H:i:s')
                         : null,
                     'state' => $log->state ?? null,
                     'device_name' => $log->device_name ?? null,
@@ -129,37 +129,66 @@ class BiometricsProofService
 
     private function buildIdentityFilters(
         string $table,
-        string $biometricEmployeeId,
+        EmployeeBiometric $employee,
+        ?string $biometricEmployeeId,
         ?string $employeeNo,
         string $employeeName
     ): array {
+        $snapshot = $this->identityService->snapshot($employee);
+
+        $identifierValues = collect([
+            $employee->source_employee_id,
+            $employee->source_employee_no,
+            $employee->source_crosschex_id,
+            $employee->source_crosschex_account,
+            $employee->source_key,
+            $snapshot['biometric_employee_id'],
+            $snapshot['employee_no'],
+            $biometricEmployeeId,
+            $employeeNo,
+        ])
+            ->map(fn ($value) => $this->identityService->clean($value))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $nameValues = collect([
+            $employee->display_name,
+            $employee->source_employee_name,
+            $employee->source_crosschex_account_name,
+            $employee->source_crosschex_account,
+            $snapshot['employee_name'],
+            $employeeName,
+        ])
+            ->map(fn ($value) => $this->identityService->clean($value))
+            ->filter()
+            ->unique()
+            ->values();
+
         $filters = [];
 
-        $employeeNo = trim((string) $employeeNo);
-        $biometricEmployeeId = trim($biometricEmployeeId);
-        $employeeName = trim($employeeName);
-
         foreach (['employee_no', 'employee_id', 'crosschex_id'] as $column) {
-            if (Schema::hasColumn($table, $column) && $employeeNo !== '') {
-                $filters[] = [
-                    'column' => $column,
-                    'value' => $employeeNo,
-                ];
+            if (! Schema::hasColumn($table, $column)) {
+                continue;
             }
 
-            if (Schema::hasColumn($table, $column) && $biometricEmployeeId !== '') {
+            foreach ($identifierValues as $value) {
                 $filters[] = [
                     'column' => $column,
-                    'value' => $biometricEmployeeId,
+                    'value' => $value,
                 ];
             }
         }
 
         foreach (['employee_name', 'crosschex_account_name', 'crosschex_account'] as $column) {
-            if (Schema::hasColumn($table, $column) && $employeeName !== '') {
+            if (! Schema::hasColumn($table, $column)) {
+                continue;
+            }
+
+            foreach ($nameValues as $value) {
                 $filters[] = [
                     'column' => $column,
-                    'value' => $employeeName,
+                    'value' => $value,
                 ];
             }
         }
@@ -205,13 +234,9 @@ class BiometricsProofService
     private function firstFilledValue(array $values): ?string
     {
         foreach ($values as $value) {
-            if ($value === null) {
-                continue;
-            }
+            $value = $this->identityService->clean($value);
 
-            $value = trim((string) $value);
-
-            if ($value !== '') {
+            if ($value !== null) {
                 return $value;
             }
         }

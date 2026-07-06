@@ -214,6 +214,20 @@
                 padding-bottom: .72rem;
             }
 
+            .bio-row-excluded {
+                background: #f9fbfd;
+                opacity: .82;
+            }
+
+            .bio-row-excluded .bio-sticky-col {
+                background: #f9fbfd !important;
+            }
+
+            .bio-employee-avatar-muted {
+                background: #edf2f9;
+                color: #748194;
+            }
+
             .bio-table tbody tr:hover {
                 background: rgba(44, 123, 229, .035);
             }

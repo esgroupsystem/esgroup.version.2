@@ -4,6 +4,9 @@
     $selectedType = old('adjustment_type', $adjustment->adjustment_type ?? '');
     $isGlobalDisaster = $selectedType === \App\Models\PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
 
+    $selectedEmployeeBiometricId = old('employee_biometric_id', $adjustment?->employee_biometric_id ?? '');
+    $selectedLegacyBiometricId = old('biometric_employee_id', $adjustment?->biometric_employee_id ?? '');
+
     $workDate = old('work_date', $adjustment?->work_date ? $adjustment->work_date->format('Y-m-d') : '');
 
     $dateFrom = old('date_from', $adjustment?->date_from ? $adjustment->date_from->format('Y-m-d') : $workDate);
@@ -18,6 +21,44 @@
     $isPaid = old('is_paid', $adjustment->is_paid ?? true);
     $ignoreLate = old('ignore_late', $adjustment->ignore_late ?? true);
     $ignoreUndertime = old('ignore_undertime', $adjustment->ignore_undertime ?? true);
+
+    $resolvePerson = function ($person) {
+        $canonicalId = $person->employee_biometric_id ?? $person->id ?? null;
+
+        $legacyId = $person->biometric_employee_id
+            ?? $person->legacy_biometric_employee_id
+            ?? $person->source_employee_id
+            ?? $person->source_crosschex_id
+            ?? $person->source_employee_no
+            ?? null;
+
+        $employeeNo = $person->employee_no
+            ?? $person->effective_employee_no
+            ?? $person->display_employee_no
+            ?? $person->source_employee_no
+            ?? $person->source_employee_id
+            ?? null;
+
+        $employeeName = $person->employee_name
+            ?? $person->effective_name
+            ?? $person->display_name
+            ?? $person->source_employee_name
+            ?? $person->source_crosschex_account_name
+            ?? 'Unknown Employee';
+
+        $crosschexId = $person->crosschex_id
+            ?? $person->source_crosschex_id
+            ?? null;
+
+        return [
+            'canonical_id' => $canonicalId,
+            'legacy_id' => $legacyId,
+            'employee_no' => $employeeNo,
+            'employee_name' => $employeeName,
+            'crosschex_id' => $crosschexId,
+        ];
+    };
+
 @endphp
 
 @if ($errors->any())
@@ -49,20 +90,34 @@
                     <div class="col-md-7">
                         <label class="form-label fw-semibold">Biometrics Employee</label>
                         <select name="employee_picker" id="employee_picker" class="form-select">
-                            <option value="">Select employee</option>
+                            <option value="">Select payroll-active employee</option>
 
                             @foreach ($people as $person)
-                                <option value="{{ $person->biometric_employee_id }}"
-                                    data-biometric-id="{{ $person->biometric_employee_id }}"
-                                    data-employee-no="{{ $person->employee_no }}"
-                                    data-employee-name="{{ $person->employee_name }}" @selected(old('biometric_employee_id', $adjustment->biometric_employee_id ?? '') == $person->biometric_employee_id)>
-                                    {{ $person->employee_name }}
+                                @php($resolvedPerson = $resolvePerson($person))
+
+                                @continue(empty($resolvedPerson['canonical_id']))
+
+                                <option value="{{ $resolvedPerson['canonical_id'] }}"
+                                    data-employee-biometric-id="{{ $resolvedPerson['canonical_id'] }}"
+                                    data-biometric-id="{{ $resolvedPerson['legacy_id'] }}"
+                                    data-employee-no="{{ $resolvedPerson['employee_no'] }}"
+                                    data-employee-name="{{ $resolvedPerson['employee_name'] }}"
+                                    data-crosschex-id="{{ $resolvedPerson['crosschex_id'] }}"
+                                    @selected((string) $selectedEmployeeBiometricId === (string) $resolvedPerson['canonical_id'])>
+                                    {{ $resolvedPerson['employee_name'] }}
+                                    @if ($resolvedPerson['employee_no'])
+                                        | {{ $resolvedPerson['employee_no'] }}
+                                    @endif
+                                    | Bio ID: {{ $resolvedPerson['canonical_id'] }}
                                 </option>
                             @endforeach
                         </select>
 
+                        <input type="hidden" name="employee_biometric_id" id="employee_biometric_id"
+                            value="{{ $selectedEmployeeBiometricId }}">
+
                         <input type="hidden" name="biometric_employee_id" id="biometric_employee_id"
-                            value="{{ old('biometric_employee_id', $adjustment->biometric_employee_id ?? '') }}">
+                            value="{{ $selectedLegacyBiometricId }}">
 
                         <input type="hidden" name="employee_no" id="employee_no"
                             value="{{ old('employee_no', $adjustment->employee_no ?? '') }}">
@@ -70,11 +125,18 @@
                         <input type="hidden" name="employee_name" id="employee_name"
                             value="{{ old('employee_name', $adjustment->employee_name ?? '') }}">
 
+                        <input type="hidden" name="crosschex_id" id="crosschex_id"
+                            value="{{ old('crosschex_id', $adjustment->crosschex_id ?? '') }}">
+
                         <input type="hidden" name="offset_proof_verified" id="offset_proof_verified" value="0">
                         <input type="hidden" name="offset_proof_time_in" id="offset_proof_time_in" value="">
                         <input type="hidden" name="offset_proof_time_out" id="offset_proof_time_out" value="">
                         <input type="hidden" name="offset_proof_total_minutes" id="offset_proof_total_minutes"
                             value="">
+
+                        @error('employee_biometric_id')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
 
                         @error('biometric_employee_id')
                             <small class="text-danger">{{ $message }}</small>
@@ -1221,4 +1283,75 @@
             initPayrollAdjustmentForm();
         }
     })();
+</script>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        function syncCanonicalEmployeeBiometricId() {
+            const picker = document.getElementById('employee_picker');
+            const typeSelect = document.getElementById('adjustment_type');
+            const canonicalInput = document.getElementById('employee_biometric_id');
+            const legacyInput = document.getElementById('biometric_employee_id');
+            const crosschexInput = document.getElementById('crosschex_id');
+
+            if (!picker || !canonicalInput) {
+                return;
+            }
+
+            if (typeSelect && typeSelect.value === 'typhoon_disaster') {
+                canonicalInput.value = '';
+
+                if (legacyInput) {
+                    legacyInput.value = 'GLOBAL-DISASTER';
+                }
+
+                if (crosschexInput) {
+                    crosschexInput.value = '';
+                }
+
+                return;
+            }
+
+            const selected = picker.options[picker.selectedIndex];
+
+            if (!selected || !selected.value) {
+                canonicalInput.value = '';
+
+                if (crosschexInput) {
+                    crosschexInput.value = '';
+                }
+
+                return;
+            }
+
+            canonicalInput.value = selected.dataset.employeeBiometricId || selected.value || '';
+
+            if (crosschexInput) {
+                crosschexInput.value = selected.dataset.crosschexId || '';
+            }
+        }
+
+        const picker = document.getElementById('employee_picker');
+        const typeSelect = document.getElementById('adjustment_type');
+        const form = picker ? picker.closest('form') : null;
+
+        if (picker) {
+            picker.addEventListener('change', function() {
+                setTimeout(syncCanonicalEmployeeBiometricId, 0);
+            });
+        }
+
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function() {
+                setTimeout(syncCanonicalEmployeeBiometricId, 0);
+            });
+        }
+
+        if (form) {
+            form.addEventListener('submit', syncCanonicalEmployeeBiometricId);
+        }
+
+        setTimeout(syncCanonicalEmployeeBiometricId, 0);
+    });
 </script>

@@ -51,7 +51,12 @@ class PayrollComputationService
         }
 
         $summaries = DailyAttendanceSummary::query()
+            ->with('employeeBiometric')
             ->whereBetween('work_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->where(function ($query): void {
+                $query->whereHas('employeeBiometric', fn ($employeeQuery) => $employeeQuery->payrollActive())
+                    ->orWhereNull('employee_biometric_id');
+            })
             ->orderBy('employee_name')
             ->orderBy('work_date')
             ->get();
@@ -269,6 +274,7 @@ class PayrollComputationService
 
         $item = PayrollItem::create([
             'payroll_id' => $payroll->id,
+            'employee_biometric_id' => $first->employee_biometric_id ?? null,
             'employee_id' => $rates['employee_id'],
             'payroll_employee_salary_id' => $rates['salary_id'],
             'biometric_employee_id' => $first->biometric_employee_id ?? null,
@@ -576,7 +582,13 @@ class PayrollComputationService
         }
 
         $matched = false;
+
         $query->where(function ($q) use ($summary, &$matched): void {
+            if (! empty($summary->employee_biometric_id)) {
+                $q->orWhere('employee_biometric_id', (int) $summary->employee_biometric_id);
+                $matched = true;
+            }
+
             if (! empty($summary->biometric_employee_id)) {
                 $q->orWhere('biometric_employee_id', $summary->biometric_employee_id);
                 $matched = true;
@@ -587,8 +599,15 @@ class PayrollComputationService
                 $matched = true;
             }
 
+            if (! empty($summary->crosschex_id)) {
+                $q->orWhere('crosschex_id', $summary->crosschex_id);
+                $matched = true;
+            }
+
             if (! empty($summary->employee_name)) {
-                $q->orWhere('employee_name', $summary->employee_name);
+                $q->orWhereRaw('LOWER(TRIM(employee_name)) = ?', [
+                    mb_strtolower(trim((string) $summary->employee_name)),
+                ]);
                 $matched = true;
             }
         });
@@ -597,7 +616,10 @@ class PayrollComputationService
             return $this->emptyRatePayload();
         }
 
-        $salary = $query->latest('id')->first();
+        $salary = $query
+            ->orderByRaw('CASE WHEN employee_biometric_id IS NOT NULL THEN 0 ELSE 1 END')
+            ->latest('id')
+            ->first();
 
         if (! $salary) {
             return $this->emptyRatePayload();
@@ -618,6 +640,7 @@ class PayrollComputationService
         $minuteRate = $hourlyRate > 0 ? $hourlyRate / 60 : 0.0;
 
         return [
+            'employee_biometric_id' => $salary->employee_biometric_id ?? null,
             'employee_id' => $salary->employee_id ?? null,
             'salary_id' => $salary->id ?? null,
             'rate_type' => $rateType,
@@ -947,6 +970,10 @@ class PayrollComputationService
                 $previousItem = PayrollItem::query()
                     ->where('payroll_id', $previousPayroll->id)
                     ->where(function ($query) use ($summary): void {
+                        if (! empty($summary->employee_biometric_id)) {
+                            $query->orWhere('employee_biometric_id', (int) $summary->employee_biometric_id);
+                        }
+
                         if (! empty($summary->biometric_employee_id)) {
                             $query->orWhere('biometric_employee_id', $summary->biometric_employee_id);
                         }
@@ -1061,6 +1088,11 @@ class PayrollComputationService
 
         $matched = false;
         $query->where(function ($q) use ($summary, &$matched): void {
+            if (! empty($summary->employee_biometric_id)) {
+                $q->orWhere('employee_biometric_id', (int) $summary->employee_biometric_id);
+                $matched = true;
+            }
+
             if (! empty($summary->biometric_employee_id)) {
                 $q->orWhere('biometric_employee_id', $summary->biometric_employee_id);
                 $matched = true;
@@ -1117,6 +1149,7 @@ class PayrollComputationService
             PayrollReportLog::create([
                 'payroll_id' => $payroll->id,
                 'payroll_item_id' => $item->id,
+                'employee_biometric_id' => $item->employee_biometric_id,
                 'employee_id' => $item->employee_id,
                 'biometric_employee_id' => $item->biometric_employee_id,
                 'employee_no' => $item->employee_no,
@@ -1179,6 +1212,10 @@ class PayrollComputationService
         $row = DailyAttendanceSummary::query()
             ->whereDate('work_date', $date->toDateString())
             ->where(function ($query) use ($employeeReference): void {
+                if (! empty($employeeReference->employee_biometric_id)) {
+                    $query->orWhere('employee_biometric_id', (int) $employeeReference->employee_biometric_id);
+                }
+
                 if (! empty($employeeReference->biometric_employee_id)) {
                     $query->orWhere('biometric_employee_id', $employeeReference->biometric_employee_id);
                 }
@@ -1256,6 +1293,10 @@ class PayrollComputationService
         $row = DailyAttendanceSummary::query()
             ->whereDate('work_date', $date->toDateString())
             ->where(function ($query) use ($employeeReference): void {
+                if (! empty($employeeReference->employee_biometric_id)) {
+                    $query->orWhere('employee_biometric_id', (int) $employeeReference->employee_biometric_id);
+                }
+
                 if (! empty($employeeReference->biometric_employee_id)) {
                     $query->orWhere('biometric_employee_id', $employeeReference->biometric_employee_id);
                 }
@@ -1294,6 +1335,11 @@ class PayrollComputationService
 
         $matched = false;
         $query->where(function ($q) use ($summary, &$matched): void {
+            if (! empty($summary->employee_biometric_id)) {
+                $q->orWhere('employee_biometric_id', (int) $summary->employee_biometric_id);
+                $matched = true;
+            }
+
             if (! empty($summary->biometric_employee_id)) {
                 $q->orWhere('biometric_employee_id', $summary->biometric_employee_id);
                 $matched = true;
@@ -1392,16 +1438,20 @@ class PayrollComputationService
 
     protected function employeeGroupKey(object $row): string
     {
+        if (! empty($row->employee_biometric_id)) {
+            return 'EMPLOYEE_BIOMETRIC:'.(int) $row->employee_biometric_id;
+        }
+
+        if (! empty($row->biometric_employee_id)) {
+            return 'LEGACY_BIO:'.trim((string) $row->biometric_employee_id);
+        }
+
         if (! empty($row->employee_no)) {
-            return 'EMP:'.trim((string) $row->employee_no);
+            return 'EMPLOYEE_NO:'.trim((string) $row->employee_no);
         }
 
         if (! empty($row->crosschex_id)) {
             return 'CROSSCHEX:'.trim((string) $row->crosschex_id);
-        }
-
-        if (! empty($row->biometric_employee_id)) {
-            return 'BIO:'.trim((string) $row->biometric_employee_id);
         }
 
         return 'NAME:'.mb_strtoupper(trim((string) ($row->employee_name ?: 'UNKNOWN')));
@@ -1727,6 +1777,7 @@ class PayrollComputationService
         $minuteRate = 0;
 
         return [
+            'employee_biometric_id' => null,
             'employee_id' => null,
             'salary_id' => null,
             'salary_model' => null,

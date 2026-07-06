@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
-use App\Models\MirasolBiometricsLog;
+use App\Models\EmployeeBiometric;
 use App\Models\PayrollEmployeeSalary;
+use App\Services\Biometrics\EmployeeBiometricIdentityService;
 use App\Services\Payroll\PayrollDeductionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,29 +16,38 @@ use Illuminate\View\View;
 class PayrollEmployeeSalaryController extends Controller
 {
     public function __construct(
-        private readonly PayrollDeductionService $deductionService
+        private readonly PayrollDeductionService $deductionService,
+        private readonly EmployeeBiometricIdentityService $identityService
     ) {}
 
     public function index(Request $request): View
     {
         $search = trim((string) $request->search);
-
-        $canonicalSalaryIds = PayrollEmployeeSalary::query()
-            ->selectRaw('COALESCE(MAX(CASE WHEN basic_salary > 0 THEN id END), MIN(id))')
-            ->groupByRaw(
-                "COALESCE(NULLIF(employee_no, ''), NULLIF(crosschex_id, ''), NULLIF(biometric_employee_id, ''), CONCAT('name:', LOWER(TRIM(employee_name))))"
-            );
+        $groupName = trim((string) $request->group_name);
 
         $salaries = PayrollEmployeeSalary::query()
-            ->with('otherDeductions')
-            ->whereIn('id', $canonicalSalaryIds)
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
+            ->with(['otherDeductions', 'employeeBiometric'])
+            ->whereIn('id', function ($query): void {
+                $query->selectRaw('COALESCE(MAX(CASE WHEN basic_salary > 0 THEN id END), MIN(id))')
+                    ->from('payroll_employee_salaries')
+                    ->groupBy('employee_biometric_id');
+            })
+            ->when($search, function ($query) use ($search): void {
+                $query->where(function ($q) use ($search): void {
                     $q->where('employee_name', 'like', "%{$search}%")
                         ->orWhere('employee_no', 'like', "%{$search}%")
                         ->orWhere('biometric_employee_id', 'like', "%{$search}%")
-                        ->orWhere('crosschex_id', 'like', "%{$search}%");
+                        ->orWhere('crosschex_id', 'like', "%{$search}%")
+                        ->orWhereHas('employeeBiometric', function ($employeeQuery) use ($search): void {
+                            $employeeQuery
+                                ->where('display_name', 'like', "%{$search}%")
+                                ->orWhere('display_employee_no', 'like', "%{$search}%")
+                                ->orWhere('group_name', 'like', "%{$search}%");
+                        });
                 });
+            })
+            ->when($groupName !== '', function ($query) use ($groupName): void {
+                $query->whereHas('employeeBiometric', fn ($employeeQuery) => $employeeQuery->where('group_name', $groupName));
             })
             ->orderBy('employee_name')
             ->orderBy('employee_no')
@@ -50,7 +60,14 @@ class PayrollEmployeeSalaryController extends Controller
             return $salary;
         });
 
-        return view('payroll.employee_salaries.index', compact('salaries', 'search'));
+        $groups = EmployeeBiometric::query()
+            ->whereNotNull('group_name')
+            ->where('group_name', '!=', '')
+            ->distinct()
+            ->orderBy('group_name')
+            ->pluck('group_name');
+
+        return view('payroll.employee_salaries.index', compact('salaries', 'search', 'groupName', 'groups'));
     }
 
     public function create(): View
@@ -64,13 +81,17 @@ class PayrollEmployeeSalaryController extends Controller
     {
         $validated = $request->validate($this->rules());
 
+        $employee = EmployeeBiometric::query()
+            ->payrollActive()
+            ->findOrFail((int) $validated['employee_biometric_id']);
+
         $computed = $this->deductionService->computeRates(
             (float) $validated['basic_salary'],
             $validated['rate_type']
         );
 
-        DB::transaction(function () use ($validated, $computed) {
-            $salary = PayrollEmployeeSalary::create($this->payload($validated, $computed, true));
+        DB::transaction(function () use ($validated, $computed, $employee): void {
+            $salary = PayrollEmployeeSalary::create($this->payload($validated, $computed, $employee));
 
             $this->syncOtherDeductions($salary, $validated['other_deductions'] ?? []);
         });
@@ -82,10 +103,11 @@ class PayrollEmployeeSalaryController extends Controller
 
     public function edit(PayrollEmployeeSalary $payrollEmployeeSalary): View
     {
-        $payrollEmployeeSalary->load('otherDeductions');
+        $payrollEmployeeSalary->load(['otherDeductions', 'employeeBiometric']);
 
         return view('payroll.employee_salaries.edit', [
             'salary' => $payrollEmployeeSalary,
+            'people' => $this->biometricPeople(),
         ]);
     }
 
@@ -93,13 +115,16 @@ class PayrollEmployeeSalaryController extends Controller
     {
         $validated = $request->validate($this->rules($payrollEmployeeSalary));
 
+        $employee = EmployeeBiometric::query()
+            ->findOrFail((int) ($validated['employee_biometric_id'] ?? $payrollEmployeeSalary->employee_biometric_id));
+
         $computed = $this->deductionService->computeRates(
             (float) $validated['basic_salary'],
             $validated['rate_type']
         );
 
-        DB::transaction(function () use ($payrollEmployeeSalary, $validated, $computed) {
-            $payrollEmployeeSalary->update($this->payload($validated, $computed, false));
+        DB::transaction(function () use ($payrollEmployeeSalary, $validated, $computed, $employee): void {
+            $payrollEmployeeSalary->update($this->payload($validated, $computed, $employee));
 
             $this->syncOtherDeductions($payrollEmployeeSalary, $validated['other_deductions'] ?? []);
         });
@@ -120,38 +145,36 @@ class PayrollEmployeeSalaryController extends Controller
 
     public function syncFromBiometrics(): RedirectResponse
     {
-        $people = $this->biometricPeople();
+        $people = EmployeeBiometric::query()
+            ->payrollActive()
+            ->orderByRaw("COALESCE(NULLIF(display_name, ''), NULLIF(source_employee_name, ''), NULLIF(source_crosschex_account_name, '')) ASC")
+            ->get();
+
         $inserted = 0;
         $updated = 0;
         $skipped = 0;
 
-        foreach ($people as $person) {
-            $employeeNo = $this->cleanText($person->employee_no ?? null);
-            $employeeName = $this->cleanText($person->employee_name ?? null);
-            $crosschexId = $this->cleanText($person->crosschex_id ?? null);
-            $biometricEmployeeId = $this->cleanText($person->biometric_employee_id ?? null)
-                ?? $crosschexId
-                ?? $employeeNo;
+        foreach ($people as $employee) {
+            $snapshot = $this->identityService->snapshot($employee);
 
-            if (empty($employeeName) || empty($biometricEmployeeId)) {
+            if (empty($snapshot['employee_name'])) {
                 $skipped++;
 
                 continue;
             }
 
-            $existingSalary = $this->findExistingSalaryProfile(
-                $employeeNo,
-                $crosschexId,
-                $biometricEmployeeId,
-                $employeeName
-            );
+            $existingSalary = PayrollEmployeeSalary::query()
+                ->where('employee_biometric_id', $employee->id)
+                ->latest('id')
+                ->first();
 
             if ($existingSalary) {
                 $existingSalary->update([
-                    'employee_no' => $existingSalary->employee_no ?: $employeeNo,
-                    'employee_name' => $employeeName,
-                    'crosschex_id' => $existingSalary->crosschex_id ?: $crosschexId,
-                    'biometric_employee_id' => $existingSalary->biometric_employee_id ?: $biometricEmployeeId,
+                    'biometric_employee_id' => $existingSalary->biometric_employee_id ?: $snapshot['biometric_employee_id'],
+                    'employee_no' => $snapshot['employee_no'],
+                    'employee_name' => $snapshot['employee_name'],
+                    'crosschex_id' => $existingSalary->crosschex_id ?: $snapshot['crosschex_id'],
+                    'is_active' => $employee->is_payroll_active,
                 ]);
 
                 $updated++;
@@ -159,12 +182,7 @@ class PayrollEmployeeSalaryController extends Controller
                 continue;
             }
 
-            PayrollEmployeeSalary::create($this->defaultSalaryPayload(
-                $employeeNo,
-                $employeeName,
-                $crosschexId,
-                $biometricEmployeeId
-            ));
+            PayrollEmployeeSalary::create($this->defaultSalaryPayload($employee, $snapshot));
 
             $inserted++;
         }
@@ -173,83 +191,32 @@ class PayrollEmployeeSalaryController extends Controller
             ->route('payroll-employee-salaries.index')
             ->with(
                 'success',
-                "Biometrics sync completed. {$inserted} added, {$updated} updated, {$skipped} skipped. Duplicate employees will no longer be created."
+                "Biometrics sync completed. {$inserted} added, {$updated} updated, {$skipped} skipped. Only payroll-active biometric employees are included."
             );
     }
 
     private function biometricPeople()
     {
-        return MirasolBiometricsLog::query()
-            ->select([
-                'employee_no',
-                'employee_name',
-                'crosschex_id',
-            ])
-            ->whereNotNull('employee_name')
-            ->where('employee_name', '!=', '')
-            ->orderBy('employee_name')
-            ->orderByDesc('id')
+        return EmployeeBiometric::query()
+            ->payrollActive()
+            ->orderBy('group_name')
+            ->orderByRaw("COALESCE(NULLIF(display_name, ''), NULLIF(source_employee_name, ''), NULLIF(source_crosschex_account_name, '')) ASC")
             ->get()
-            ->map(function ($person) {
-                $person->employee_no = $this->cleanText($person->employee_no ?? null);
-                $person->employee_name = $this->cleanText($person->employee_name ?? null);
-                $person->crosschex_id = $this->cleanText($person->crosschex_id ?? null);
-                $person->biometric_employee_id = $person->crosschex_id ?: $person->employee_no;
+            ->map(function (EmployeeBiometric $employee) {
+                $snapshot = $this->identityService->snapshot($employee);
 
-                return $person;
-            })
-            ->filter(function ($person) {
-                return ! empty($person->employee_name)
-                    && (! empty($person->employee_no) || ! empty($person->crosschex_id));
-            })
-            ->unique(function ($person) {
-                if (! empty($person->employee_no)) {
-                    return 'empno:'.strtolower($person->employee_no);
-                }
-
-                if (! empty($person->crosschex_id)) {
-                    return 'crosschex:'.strtolower($person->crosschex_id);
-                }
-
-                return 'name:'.strtolower($person->employee_name);
+                return (object) [
+                    'employee_biometric_id' => $employee->id,
+                    'biometric_employee_id' => $snapshot['biometric_employee_id'],
+                    'employee_no' => $snapshot['employee_no'],
+                    'employee_name' => $snapshot['employee_name'],
+                    'crosschex_id' => $snapshot['crosschex_id'],
+                    'group_name' => $employee->group_name,
+                    'last_check_time' => $employee->last_check_time,
+                    'total_logs' => $employee->total_logs,
+                ];
             })
             ->values();
-    }
-
-    private function findExistingSalaryProfile(
-        ?string $employeeNo,
-        ?string $crosschexId,
-        ?string $biometricEmployeeId,
-        ?string $employeeName
-    ): ?PayrollEmployeeSalary {
-        return PayrollEmployeeSalary::query()
-            ->where(function ($query) use ($employeeNo, $crosschexId, $biometricEmployeeId, $employeeName) {
-                $hasIdentifier = false;
-
-                if (! empty($employeeNo)) {
-                    $hasIdentifier = true;
-                    $query->orWhere('employee_no', $employeeNo);
-                }
-
-                if (! empty($crosschexId)) {
-                    $hasIdentifier = true;
-                    $query->orWhere('crosschex_id', $crosschexId)
-                        ->orWhere('biometric_employee_id', $crosschexId);
-                }
-
-                if (! empty($biometricEmployeeId)) {
-                    $hasIdentifier = true;
-                    $query->orWhere('biometric_employee_id', $biometricEmployeeId);
-                }
-
-                if (! $hasIdentifier && ! empty($employeeName)) {
-                    $query->orWhereRaw('LOWER(TRIM(employee_name)) = ?', [strtolower($employeeName)]);
-                }
-            })
-            ->orderByDesc('is_active')
-            ->orderByDesc('basic_salary')
-            ->orderBy('id')
-            ->first();
     }
 
     private function rules(?PayrollEmployeeSalary $salary = null): array
@@ -263,20 +230,18 @@ class PayrollEmployeeSalaryController extends Controller
 
         $ignoreId = $salary?->id;
 
-        $rules = [
-            'employee_no' => [
-                'nullable',
-                'string',
-                'max:255',
-                Rule::unique('payroll_employee_salaries', 'employee_no')->ignore($ignoreId),
+        return [
+            'employee_biometric_id' => [
+                'required',
+                'integer',
+                'exists:employee_biometrics,id',
+                Rule::unique('payroll_employee_salaries', 'employee_biometric_id')->ignore($ignoreId),
             ],
+
+            'employee_no' => ['nullable', 'string', 'max:255'],
             'employee_name' => ['required', 'string', 'max:255'],
-            'crosschex_id' => [
-                'nullable',
-                'string',
-                'max:255',
-                Rule::unique('payroll_employee_salaries', 'crosschex_id')->ignore($ignoreId),
-            ],
+            'crosschex_id' => ['nullable', 'string', 'max:255'],
+            'biometric_employee_id' => ['nullable', 'string', 'max:255'],
 
             'rate_type' => ['required', Rule::in(['daily', 'monthly'])],
             'basic_salary' => ['required', 'numeric', 'min:0'],
@@ -326,28 +291,19 @@ class PayrollEmployeeSalaryController extends Controller
             'is_active' => ['nullable', 'boolean'],
             'remarks' => ['nullable', 'string'],
         ];
-
-        if ($salary === null) {
-            $rules['biometric_employee_id'] = [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('payroll_employee_salaries', 'biometric_employee_id'),
-            ];
-        }
-
-        return $rules;
     }
 
-    private function payload(array $validated, array $computed, bool $isCreate): array
+    private function payload(array $validated, array $computed, EmployeeBiometric $employee): array
     {
-        $employeeNo = $this->cleanText($validated['employee_no'] ?? null);
-        $crosschexId = $this->cleanText($validated['crosschex_id'] ?? null);
+        $snapshot = $this->identityService->snapshot($employee);
 
-        $payload = [
-            'employee_no' => $employeeNo,
-            'employee_name' => $this->cleanText($validated['employee_name']) ?? $validated['employee_name'],
-            'crosschex_id' => $crosschexId,
+        return [
+            'employee_biometric_id' => $employee->id,
+            'employee_no' => $snapshot['employee_no'],
+            'employee_name' => $this->cleanText($validated['employee_name'] ?? null)
+                ?: $snapshot['employee_name'],
+            'crosschex_id' => $snapshot['crosschex_id'],
+            'biometric_employee_id' => $snapshot['biometric_employee_id'],
 
             'rate_type' => $validated['rate_type'],
             'basic_salary' => $validated['basic_salary'],
@@ -400,30 +356,19 @@ class PayrollEmployeeSalaryController extends Controller
                 2
             ),
 
-            'is_active' => (bool) ($validated['is_active'] ?? false),
+            'is_active' => (bool) ($validated['is_active'] ?? true),
             'remarks' => $validated['remarks'] ?? null,
         ];
-
-        if ($isCreate) {
-            $payload['biometric_employee_id'] = $this->cleanText($validated['biometric_employee_id'])
-                ?? $crosschexId
-                ?? $employeeNo;
-        }
-
-        return $payload;
     }
 
-    private function defaultSalaryPayload(
-        ?string $employeeNo,
-        string $employeeName,
-        ?string $crosschexId,
-        string $biometricEmployeeId
-    ): array {
+    private function defaultSalaryPayload(EmployeeBiometric $employee, array $snapshot): array
+    {
         return [
-            'biometric_employee_id' => $biometricEmployeeId,
-            'employee_no' => $employeeNo,
-            'employee_name' => $employeeName,
-            'crosschex_id' => $crosschexId,
+            'employee_biometric_id' => $employee->id,
+            'biometric_employee_id' => $snapshot['biometric_employee_id'],
+            'employee_no' => $snapshot['employee_no'],
+            'employee_name' => $snapshot['employee_name'],
+            'crosschex_id' => $snapshot['crosschex_id'],
 
             'rate_type' => 'daily',
             'basic_salary' => 0,

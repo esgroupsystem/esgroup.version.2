@@ -25,6 +25,8 @@ class EmployeeBiometricController extends Controller
             'search' => trim((string) $request->query('search')),
             'employment_status' => trim((string) $request->query('employment_status')),
             'biometric_company_id' => trim((string) $request->query('biometric_company_id')),
+            'group_name' => trim((string) $request->query('group_name')),
+            'payroll_active' => trim((string) $request->query('payroll_active')),
         ];
 
         $employeeBiometrics = $this->employeeBiometricService->paginate($filters);
@@ -34,11 +36,13 @@ class EmployeeBiometricController extends Controller
             ->get();
 
         $counts = $this->employeeBiometricService->counts();
+        $groups = $this->employeeBiometricService->groups();
 
         return view('biometrics.employees.index', [
             'employeeBiometrics' => $employeeBiometrics,
             'companies' => $companies,
             'counts' => $counts,
+            'groups' => $groups,
             'filters' => $filters,
         ]);
     }
@@ -72,6 +76,7 @@ class EmployeeBiometricController extends Controller
         return view('biometrics.employees.edit', [
             'employeeBiometric' => $employeeBiometric->load('company'),
             'companies' => $companies,
+            'groups' => $this->employeeBiometricService->groups(),
         ]);
     }
 

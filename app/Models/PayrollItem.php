@@ -10,6 +10,7 @@ class PayrollItem extends Model
 {
     protected $fillable = [
         'payroll_id',
+        'employee_biometric_id',
         'employee_id',
         'payroll_employee_salary_id',
         'biometric_employee_id',
@@ -59,6 +60,35 @@ class PayrollItem extends Model
     ];
 
     protected $casts = [
+        'employee_biometric_id' => 'integer',
+        'employee_id' => 'integer',
+        'payroll_employee_salary_id' => 'integer',
+        'monthly_rate' => 'decimal:2',
+        'daily_rate' => 'decimal:2',
+        'hourly_rate' => 'decimal:4',
+        'minute_rate' => 'decimal:4',
+        'regular_pay' => 'decimal:2',
+        'gross_pay' => 'decimal:2',
+        'late_deduction' => 'decimal:2',
+        'undertime_deduction' => 'decimal:2',
+        'absence_deduction' => 'decimal:2',
+        'overtime_pay' => 'decimal:2',
+        'holiday_pay' => 'decimal:2',
+        'rest_day_pay' => 'decimal:2',
+        'leave_pay' => 'decimal:2',
+        'taxable_compensation' => 'decimal:2',
+        'sss_employee' => 'decimal:2',
+        'sss_employer' => 'decimal:2',
+        'philhealth_employee' => 'decimal:2',
+        'philhealth_employer' => 'decimal:2',
+        'pagibig_employee' => 'decimal:2',
+        'pagibig_employer' => 'decimal:2',
+        'withholding_tax' => 'decimal:2',
+        'total_employee_government_deductions' => 'decimal:2',
+        'total_employer_government_contributions' => 'decimal:2',
+        'other_additions' => 'decimal:2',
+        'other_deductions' => 'decimal:2',
+        'net_pay' => 'decimal:2',
         'meta' => 'array',
     ];
 
@@ -67,8 +97,18 @@ class PayrollItem extends Model
         return $this->belongsTo(Payroll::class);
     }
 
+    public function employeeBiometric(): BelongsTo
+    {
+        return $this->belongsTo(EmployeeBiometric::class, 'employee_biometric_id');
+    }
+
+    public function salaryProfile(): BelongsTo
+    {
+        return $this->belongsTo(PayrollEmployeeSalary::class, 'payroll_employee_salary_id');
+    }
+
     public function paymentLogs(): HasMany
     {
-        return $this->hasMany(PaymentLog::class);
+        return $this->hasMany(PaymentLog::class, 'payroll_item_id');
     }
 }

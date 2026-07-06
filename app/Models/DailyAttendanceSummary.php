@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class DailyAttendanceSummary extends Model
 {
     protected $fillable = [
+        'employee_biometric_id',
         'employee_id',
         'biometric_employee_id',
         'employee_no',
@@ -64,13 +67,20 @@ class DailyAttendanceSummary extends Model
 
         'remarks',
         'computed_at',
+        'meta',
     ];
 
     protected $casts = [
+        'employee_biometric_id' => 'integer',
+        'employee_id' => 'integer',
+        'plotting_schedule_id' => 'integer',
+        'attendance_adjustment_id' => 'integer',
+        'holiday_id' => 'integer',
         'work_date' => 'date',
         'actual_time_in' => 'datetime',
         'actual_time_out' => 'datetime',
 
+        'raw_log_count' => 'integer',
         'has_biometrics' => 'boolean',
         'is_rest_day' => 'boolean',
         'is_leave' => 'boolean',
@@ -82,11 +92,50 @@ class DailyAttendanceSummary extends Model
         'is_absent' => 'boolean',
         'is_incomplete_log' => 'boolean',
 
+        'grace_minutes' => 'integer',
+        'late_minutes' => 'integer',
+        'undertime_minutes' => 'integer',
+        'worked_minutes' => 'integer',
+        'overtime_minutes' => 'integer',
+
         'payable_days' => 'decimal:2',
         'payable_hours' => 'decimal:2',
         'holiday_worked_multiplier' => 'decimal:2',
         'holiday_not_worked_multiplier' => 'decimal:2',
 
         'computed_at' => 'datetime',
+        'meta' => 'array',
     ];
+
+    public function employeeBiometric(): BelongsTo
+    {
+        return $this->belongsTo(EmployeeBiometric::class, 'employee_biometric_id');
+    }
+
+    public function plottingSchedule(): BelongsTo
+    {
+        return $this->belongsTo(EmployeePlottingSchedule::class, 'plotting_schedule_id');
+    }
+
+    public function attendanceAdjustment(): BelongsTo
+    {
+        return $this->belongsTo(PayrollAttendanceAdjustment::class, 'attendance_adjustment_id');
+    }
+
+    public function holiday(): BelongsTo
+    {
+        return $this->belongsTo(Holiday::class, 'holiday_id');
+    }
+
+    public function scopeForEmployeeBiometric(Builder $query, int $employeeBiometricId): Builder
+    {
+        return $query->where('employee_biometric_id', $employeeBiometricId);
+    }
+
+    public function scopeForPayrollActiveEmployees(Builder $query): Builder
+    {
+        return $query->whereHas('employeeBiometric', function (Builder $query): void {
+            $query->payrollActive();
+        });
+    }
 }

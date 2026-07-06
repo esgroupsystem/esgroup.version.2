@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -39,9 +40,11 @@ class PayrollAttendanceAdjustment extends Model
     ];
 
     protected $fillable = [
+        'employee_biometric_id',
         'biometric_employee_id',
         'employee_no',
         'employee_name',
+        'crosschex_id',
         'work_date',
         'date_from',
         'date_to',
@@ -58,6 +61,7 @@ class PayrollAttendanceAdjustment extends Model
         'ignore_undertime',
         'reason',
         'remarks',
+        'status',
         'encoded_by',
         'encoded_at',
     ];
@@ -65,6 +69,7 @@ class PayrollAttendanceAdjustment extends Model
     protected function casts(): array
     {
         return [
+            'employee_biometric_id' => 'integer',
             'work_date' => 'date',
             'date_from' => 'date',
             'date_to' => 'date',
@@ -77,9 +82,32 @@ class PayrollAttendanceAdjustment extends Model
         ];
     }
 
+    public function employeeBiometric(): BelongsTo
+    {
+        return $this->belongsTo(EmployeeBiometric::class, 'employee_biometric_id');
+    }
+
     public function encoder(): BelongsTo
     {
         return $this->belongsTo(User::class, 'encoded_by');
+    }
+
+    public function scopeApproved(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query): void {
+            $query->whereNull('status')
+                ->orWhere('status', 'approved');
+        });
+    }
+
+    public function scopeForPayrollActiveEmployees(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query): void {
+            $query->where('adjustment_type', self::TYPE_TYPHOON_DISASTER)
+                ->orWhereHas('employeeBiometric', function (Builder $query): void {
+                    $query->payrollActive();
+                });
+        });
     }
 
     public function getTypeLabelAttribute(): string

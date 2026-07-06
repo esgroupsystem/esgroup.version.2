@@ -12,7 +12,7 @@
                             Add Employee Salary Profile
                         </h5>
                         <p class="mb-0 text-muted small">
-                            Setup salary rate, government deductions, allowances, loans, cash advance, and cutoff rules.
+                            Setup salary rate, government deductions, allowances, loans, cash advance, and cutoff rules using employee_biometric_id.
                         </p>
                     </div>
 

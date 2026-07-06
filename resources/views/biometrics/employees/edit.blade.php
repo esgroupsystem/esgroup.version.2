@@ -143,6 +143,32 @@
                                     </div>
 
                                     <div class="col-md-6">
+                                        <label class="form-label fw-semibold" for="group_name">
+                                            Group / Department
+                                        </label>
+
+                                        <input type="text" name="group_name" id="group_name"
+                                            value="{{ old('group_name', $employeeBiometric->group_name) }}"
+                                            class="form-control @error('group_name') is-invalid @enderror"
+                                            list="biometricGroupOptions"
+                                            placeholder="Example: Drivers, Admin, Warehouse">
+
+                                        <datalist id="biometricGroupOptions">
+                                            @foreach (($groups ?? []) as $group)
+                                                <option value="{{ $group }}">
+                                            @endforeach
+                                        </datalist>
+
+                                        @error('group_name')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @else
+                                            <div class="form-text">
+                                                Use this for easy filtering by department, team, branch, or payroll group.
+                                            </div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6">
                                         <label class="form-label fw-semibold" for="employment_status">
                                             Employment Status <span class="text-danger">*</span>
                                         </label>
@@ -162,6 +188,33 @@
                                         @else
                                             <div class="form-text">
                                                 Use inactive for resigned, archived, or hidden biometric records.
+                                            </div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold d-block">
+                                            Payroll Inclusion
+                                        </label>
+
+                                        <div class="form-check form-switch mt-2">
+                                            <input class="form-check-input @error('is_payroll_active') is-invalid @enderror"
+                                                type="checkbox"
+                                                name="is_payroll_active"
+                                                id="is_payroll_active"
+                                                value="1"
+                                                @checked(old('is_payroll_active', $employeeBiometric->is_payroll_active ?? true))>
+
+                                            <label class="form-check-label fw-semibold" for="is_payroll_active">
+                                                Include in payroll workflow
+                                            </label>
+                                        </div>
+
+                                        @error('is_payroll_active')
+                                            <div class="text-danger small mt-1">{{ $message }}</div>
+                                        @else
+                                            <div class="form-text">
+                                                Excluded employees will not appear in adjustment, summary rebuild, plotting, salary sync, or payroll.
                                             </div>
                                         @enderror
                                     </div>
@@ -255,6 +308,24 @@
 
                         <div class="card-body">
                             <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="source-info-box">
+                                        <div class="text-muted fs-10 mb-1">Canonical Bio ID</div>
+                                        <div class="fw-bold text-primary">#{{ $employeeBiometric->id }}</div>
+                                        <div class="text-muted fs-11">Saved as employee_biometric_id in payroll tables.</div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="source-info-box">
+                                        <div class="text-muted fs-10 mb-1">Legacy Biometric ID</div>
+                                        <div class="fw-semibold font-monospace">
+                                            {{ $employeeBiometric->legacy_biometric_employee_id ?? $employeeBiometric->source_employee_id ?? $employeeBiometric->source_crosschex_id ?? $employeeBiometric->source_employee_no ?? 'N/A' }}
+                                        </div>
+                                        <div class="text-muted fs-11">Kept as biometric_employee_id snapshot.</div>
+                                    </div>
+                                </div>
+
                                 <div class="col-md-6">
                                     <div class="source-info-box">
                                         <div class="text-muted fs-10 mb-1">Source Employee Name</div>
@@ -386,6 +457,25 @@
 
                                 <div class="border-top border-200 pt-3">
                                     <div class="summary-line">
+                                        <span class="text-muted">Canonical Bio ID</span>
+                                        <span class="fw-bold text-primary">#{{ $employeeBiometric->id }}</span>
+                                    </div>
+
+                                    <div class="summary-line">
+                                        <span class="text-muted">Legacy Bio ID</span>
+                                        <span class="fw-semibold font-monospace text-end">
+                                            {{ $employeeBiometric->legacy_biometric_employee_id ?? $employeeBiometric->source_employee_id ?? $employeeBiometric->source_crosschex_id ?? $employeeBiometric->source_employee_no ?? 'N/A' }}
+                                        </span>
+                                    </div>
+
+                                    <div class="summary-line">
+                                        <span class="text-muted">Group</span>
+                                        <span class="fw-semibold text-end">
+                                            {{ $employeeBiometric->group_name ?: 'Ungrouped' }}
+                                        </span>
+                                    </div>
+
+                                    <div class="summary-line">
                                         <span class="text-muted">Company</span>
                                         <span class="fw-semibold text-end">
                                             {{ $employeeBiometric->company?->name ?? 'Not Tagged' }}
@@ -444,7 +534,7 @@
                                     <div>
                                         <h6 class="mb-1">Active</h6>
                                         <p class="text-muted fs-10 mb-0">
-                                            Use for employees who should remain visible in active biometric records.
+                                            Use for employees who should be allowed in payroll workflow.
                                         </p>
                                     </div>
                                 </div>
@@ -456,7 +546,7 @@
                                     <div>
                                         <h6 class="mb-1">Inactive</h6>
                                         <p class="text-muted fs-10 mb-0">
-                                            Use for resigned or archived biometric records that must remain stored.
+                                            Use for resigned or archived records. They remain stored but excluded from new payroll processing.
                                         </p>
                                     </div>
                                 </div>

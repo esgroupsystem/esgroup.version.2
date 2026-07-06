@@ -35,7 +35,7 @@
                             </h5>
                             <p class="mb-0 text-muted small">
                                 Manage salary rates, automatic SSS / Pag-IBIG / PhilHealth deductions, allowances,
-                                loans, cash advances, and cutoff release rules.
+                                loans, cash advances, and cutoff release rules connected to employee_biometrics.id.
                             </p>
                         </div>
 
@@ -133,6 +133,11 @@
                                             </div>
                                             <div class="text-muted small">
                                                 Emp No: {{ $salary->employee_no ?: '—' }}
+                                            </div>
+                                            <div class="text-muted small">
+                                                Bio ID: {{ $salary->employee_biometric_id ?: '—' }}
+                                                |
+                                                Legacy: {{ $salary->biometric_employee_id ?: '—' }}
                                             </div>
                                         </td>
 
@@ -321,9 +326,15 @@
 
                                         <td>
                                             @if ($salary->is_active)
-                                                <span class="badge bg-success">Active</span>
+                                                <span class="badge bg-success">Salary Active</span>
                                             @else
-                                                <span class="badge bg-secondary">Inactive</span>
+                                                <span class="badge bg-secondary">Salary Inactive</span>
+                                            @endif
+
+                                            @if (($salary->employeeBiometric?->employment_status ?? 'active') === 'active' && ($salary->employeeBiometric?->is_payroll_active ?? true))
+                                                <span class="badge bg-primary mt-1">Bio Included</span>
+                                            @else
+                                                <span class="badge bg-danger mt-1">Bio Excluded</span>
                                             @endif
                                         </td>
 
