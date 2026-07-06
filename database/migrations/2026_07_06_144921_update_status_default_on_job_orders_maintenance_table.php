@@ -13,7 +13,7 @@ return new class extends Migration
 
         DB::statement("
             ALTER TABLE job_orders_maintenance
-            MODIFY status VARCHAR(255) NOT NULL DEFAULT 'standby'
+            MODIFY status VARCHAR(50) NOT NULL DEFAULT 'standby'
         ");
     }
 
@@ -21,7 +21,7 @@ return new class extends Migration
     {
         DB::statement("
             ALTER TABLE job_orders_maintenance
-            MODIFY status VARCHAR(255) NOT NULL DEFAULT 'open'
+            MODIFY status VARCHAR(50) NOT NULL DEFAULT 'open'
         ");
     }
 };
