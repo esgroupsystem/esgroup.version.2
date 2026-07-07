@@ -238,6 +238,99 @@
             background: #edf2f9;
         }
 
+        .fleet-folder-panel {
+            border: 1px solid #edf2f9;
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .fleet-folder-tabs {
+            gap: .35rem;
+            border-bottom: 1px solid #edf2f9;
+            background: #f9fafd;
+            padding: .75rem .75rem 0;
+        }
+
+        .fleet-folder-tabs .nav-link {
+            border: 1px solid #d8e2ef;
+            border-bottom: 0;
+            border-radius: .75rem .75rem 0 0;
+            background: #eef3f9;
+            color: #5e6e82;
+            font-weight: 700;
+            padding: .75rem 1.1rem;
+            min-width: 150px;
+            text-align: left;
+        }
+
+        .fleet-folder-tabs .nav-link.active {
+            background: #ffffff;
+            color: #2c7be5;
+            border-color: #edf2f9;
+            box-shadow: 0 -.15rem .5rem rgba(15, 34, 58, .05);
+        }
+
+        .fleet-folder-count {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            height: 22px;
+            padding: 0 .45rem;
+            border-radius: 999px;
+            background: #d8e2ef;
+            color: #344050;
+            font-size: .7rem;
+            margin-left: .4rem;
+        }
+
+        .fleet-folder-tabs .nav-link.active .fleet-folder-count {
+            background: #e7f0ff;
+            color: #2c7be5;
+        }
+
+        .fleet-folder-company-row td {
+            background: #f4f8fd;
+            color: #344050;
+            font-weight: 800;
+            border-top: 1px solid #edf2f9;
+            border-bottom: 1px solid #edf2f9;
+        }
+
+        .fleet-folder-company-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .75rem;
+        }
+
+        .fleet-folder-company-count {
+            border-radius: 999px;
+            background: #edf2f9;
+            color: #5e6e82;
+            padding: .25rem .6rem;
+            font-size: .7rem;
+            font-weight: 700;
+        }
+
+        .fleet-folder-empty {
+            padding: 4rem 1rem;
+            text-align: center;
+            color: #748194;
+        }
+
+        @media (max-width: 767.98px) {
+            .fleet-folder-tabs {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                padding-bottom: .25rem;
+            }
+
+            .fleet-folder-tabs .nav-link {
+                min-width: 135px;
+            }
+        }
+
         @media (max-width: 575.98px) {
             .fleet-action-card {
                 align-items: flex-start;
@@ -844,23 +937,37 @@
         </div>
 
         {{-- DETAILED MONITORING LIST --}}
-        <div class="card">
+        {{-- FOLDER BUS MONITORING LIST --}}
+        @php
+            $folderTabs = collect($folder_tabs ?? []);
+
+            $isFolderForSaleBus = function ($bus, array $tab): bool {
+                $forSaleBusIds = collect($tab['for_sale_bus_ids'] ?? []);
+                $forSaleBusNumbers = collect($tab['for_sale_bus_numbers'] ?? []);
+
+                return $forSaleBusIds->contains((int) $bus->id) ||
+                    $forSaleBusNumbers->contains(strtoupper(trim((string) $bus->bus_no)));
+            };
+        @endphp
+
+        <div class="card fleet-folder-panel">
             <div class="card-header bg-body-tertiary">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
-                        <h5 class="mb-0 fleet-section-title">Detailed Bus Monitoring List</h5>
+                        <h5 class="mb-0 fleet-section-title">Fleet Folder Monitoring List</h5>
                         <small class="fleet-muted">
-                            Grouped by garage and company. Records are paginated for faster loading.
+                            Click a garage folder to view its bus list. Click For Sale to view all for-sale records.
                         </small>
                     </div>
 
                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                        @if ($grouped_buses instanceof \Illuminate\Pagination\LengthAwarePaginator)
-                            <span class="badge badge-soft badge-subtle-secondary text-secondary">
-                                Page {{ number_format($grouped_buses->currentPage()) }}
-                                of {{ number_format($grouped_buses->lastPage()) }}
-                            </span>
-                        @endif
+                        <span class="badge badge-soft badge-subtle-secondary text-secondary">
+                            Bus Master: {{ number_format($folder_total_units ?? 0) }}
+                        </span>
+
+                        <span class="badge badge-soft badge-subtle-danger text-danger">
+                            For Sale: {{ number_format($folder_total_for_sale ?? 0) }}
+                        </span>
 
                         @can('fleet.manage.update')
                             <a href="{{ route('fleet.buses.create', request()->query()) }}"
@@ -873,73 +980,40 @@
                 </div>
             </div>
 
-            <div class="card-body">
-                @forelse ($grouped_buses as $garage => $companies)
-                    @php
-                        $garageBuses = $companies->flatten(1);
-                    @endphp
+            <div class="card-header p-0">
+                <ul class="nav nav-tabs fleet-folder-tabs" id="fleetFolderTabs" role="tablist">
+                    @forelse ($folderTabs as $index => $tab)
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {{ $index === 0 ? 'active' : '' }}"
+                                id="fleet-folder-tab-{{ $tab['key'] }}" data-bs-toggle="tab"
+                                data-bs-target="#fleet-folder-pane-{{ $tab['key'] }}" type="button" role="tab"
+                                aria-controls="fleet-folder-pane-{{ $tab['key'] }}"
+                                aria-selected="{{ $index === 0 ? 'true' : 'false' }}">
+                                <span class="fas {{ $tab['type'] === 'for_sale' ? 'fa-tags' : 'fa-folder' }} me-1"></span>
+                                {{ $tab['label'] }}
+                                <span class="fleet-folder-count">{{ number_format($tab['count']) }}</span>
+                            </button>
+                        </li>
+                    @empty
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" type="button">
+                                No Records
+                            </button>
+                        </li>
+                    @endforelse
+                </ul>
+            </div>
 
-                    <div class="fleet-garage-card mb-4">
-                        <div class="card-header bg-light">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                <div>
-                                    <h5 class="mb-0">{{ $garage }}</h5>
-                                    <small class="fleet-muted">
-                                        {{ number_format($garageBuses->count()) }} unit(s) on this page
-                                    </small>
-                                </div>
+            <div class="card-body p-0">
+                <div class="tab-content" id="fleetFolderTabsContent">
+                    @forelse ($folderTabs as $index => $tab)
+                        <div class="tab-pane fade {{ $index === 0 ? 'show active' : '' }}"
+                            id="fleet-folder-pane-{{ $tab['key'] }}" role="tabpanel"
+                            aria-labelledby="fleet-folder-tab-{{ $tab['key'] }}" tabindex="0">
 
-                                <div class="d-flex gap-2 flex-wrap">
-                                    <span class="badge badge-soft badge-subtle-success text-success">
-                                        Active:
-                                        {{ $netActiveCount($garageBuses) }}
-                                    </span>
-
-                                    <span class="badge badge-soft badge-subtle-warning text-warning">
-                                        Mechanical:
-                                        {{ $garageBuses->where('operational_status', \App\Models\Bus::STATUS_MECHANICAL_BREAKDOWN)->count() }}
-                                    </span>
-
-                                    <span class="badge badge-soft badge-subtle-danger text-danger">
-                                        Accident:
-                                        {{ $garageBuses->where('operational_status', \App\Models\Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN)->count() }}
-                                    </span>
-
-                                    <span class="badge badge-soft badge-subtle-info text-info">
-                                        On Hold:
-                                        {{ $garageBuses->where('operational_status', \App\Models\Bus::STATUS_ON_HOLD_PLATE_REGISTRATION)->count() }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card-body">
-                            @foreach ($companies as $company => $buses)
-                                <div class="fleet-company-header p-3 mb-2">
-                                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                                        <div>
-                                            <h6 class="mb-0">{{ $company }}</h6>
-                                            <small class="fleet-muted">
-                                                {{ number_format($buses->count()) }} unit(s) on this page
-                                            </small>
-                                        </div>
-
-                                        <div class="d-flex gap-2 flex-wrap">
-                                            <span class="badge badge-soft badge-subtle-success text-success">
-                                                Active
-                                                {{ $netActiveCount($buses) }}
-                                            </span>
-
-                                            <span class="badge badge-soft badge-subtle-danger text-danger">
-                                                For Sale
-                                                {{ $forSaleCount($buses) }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="table-responsive mb-4">
-                                    <table class="table table-sm table-hover align-middle mb-0 fleet-table">
+                            @if ($tab['type'] === 'garage')
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0 fleet-table">
                                         <thead>
                                             <tr>
                                                 <th>Bus No.</th>
@@ -960,77 +1034,215 @@
                                         </thead>
 
                                         <tbody>
-                                            @foreach ($buses as $bus)
-                                                <tr>
-                                                    <td class="fw-bold">{{ $bus->bus_no }}</td>
-                                                    <td>{{ $bus->plate_no ?? '—' }}</td>
-                                                    <td>{{ $bus->company ?? '—' }}</td>
-                                                    <td>{{ $bus->garage ?? '—' }}</td>
-                                                    <td>
-                                                        <span
-                                                            class="badge badge-soft {{ $bus->operational_status_badge_class }}">
-                                                            {{ $bus->operational_status_label }}
-                                                        </span>
-                                                    </td>
-                                                    <td>
-                                                        <span
-                                                            class="badge badge-soft {{ $bus->sale_status_badge_class }}">
-                                                            {{ $bus->sale_status_label }}
-                                                        </span>
-                                                    </td>
-                                                    <td>{{ $bus->chassis_number ?? '—' }}</td>
-                                                    <td>{{ $bus->engine_number ?? '—' }}</td>
-                                                    <td>{{ $bus->case_number ?? '—' }}</td>
-                                                    <td class="text-muted">
-                                                        {{ $bus->monitoring_remarks ?? '—' }}
-                                                    </td>
+                                            @forelse ($tab['companies'] as $company => $buses)
+                                                <tr class="fleet-folder-company-row">
+                                                    <td
+                                                        colspan="{{ auth()->user()?->can('fleet.manage.update') ? 11 : 10 }}">
+                                                        <div class="fleet-folder-company-label">
+                                                            <span>
+                                                                <span class="fas fa-building me-2 text-primary"></span>
+                                                                {{ $company }}
+                                                            </span>
 
-                                                    @can('fleet.manage.update')
-                                                        <td class="text-end">
-                                                            <a href="{{ route('fleet.buses.edit', array_merge(['bus' => $bus->id], request()->query())) }}"
-                                                                class="btn btn-falcon-primary btn-sm">
-                                                                <span class="fas fa-pen me-1"></span>
-                                                                Update
-                                                            </a>
-                                                        </td>
-                                                    @endcan
+                                                            <span class="fleet-folder-company-count">
+                                                                {{ number_format($buses->count()) }} unit(s)
+                                                            </span>
+                                                        </div>
+                                                    </td>
                                                 </tr>
-                                            @endforeach
+
+                                                @foreach ($buses as $bus)
+                                                    @php
+                                                        $busIsForSale = $isFolderForSaleBus($bus, $tab);
+                                                    @endphp
+
+                                                    <tr>
+                                                        <td class="fw-bold text-dark">
+                                                            {{ $bus->bus_no }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $bus->plate_no ?? '—' }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $bus->company ?? '—' }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $bus->garage ?? '—' }}
+                                                        </td>
+
+                                                        <td>
+                                                            <span
+                                                                class="badge badge-soft {{ $bus->operational_status_badge_class ?? 'badge-subtle-secondary text-secondary' }}">
+                                                                {{ $bus->operational_status_label ?? ($bus->operational_status ?? '—') }}
+                                                            </span>
+                                                        </td>
+
+                                                        <td>
+                                                            @if ($busIsForSale)
+                                                                <span
+                                                                    class="badge badge-soft badge-subtle-danger text-danger">
+                                                                    For Sale
+                                                                </span>
+                                                            @else
+                                                                <span
+                                                                    class="badge badge-soft {{ $bus->sale_status_badge_class ?? 'badge-subtle-secondary text-secondary' }}">
+                                                                    {{ $bus->sale_status_label ?? 'Not For Sale' }}
+                                                                </span>
+                                                            @endif
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $bus->chassis_number ?? '—' }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $bus->engine_number ?? '—' }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $bus->case_number ?? '—' }}
+                                                        </td>
+
+                                                        <td class="text-muted">
+                                                            {{ $bus->monitoring_remarks ?? '—' }}
+                                                        </td>
+
+                                                        @can('fleet.manage.update')
+                                                            <td class="text-end">
+                                                                <a href="{{ route('fleet.buses.edit', array_merge(['bus' => $bus->id], request()->query())) }}"
+                                                                    class="btn btn-falcon-primary btn-sm">
+                                                                    <span class="fas fa-pen me-1"></span>
+                                                                    Update
+                                                                </a>
+                                                            </td>
+                                                        @endcan
+                                                    </tr>
+                                                @endforeach
+                                            @empty
+                                                <tr>
+                                                    <td colspan="{{ auth()->user()?->can('fleet.manage.update') ? 11 : 10 }}"
+                                                        class="fleet-folder-empty">
+                                                        No bus records found for this folder.
+                                                    </td>
+                                                </tr>
+                                            @endforelse
                                         </tbody>
                                     </table>
                                 </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @empty
-                    <div class="text-center py-5">
-                        <div class="mb-3">
-                            <span class="fas fa-bus fs-1 text-muted"></span>
-                        </div>
-                        <h5>No buses found</h5>
-                        <p class="text-muted mb-0">
-                            Try clearing the filter or import your bus master list first.
-                        </p>
-                    </div>
-                @endforelse
+                            @endif
 
-                @if ($grouped_buses instanceof \Illuminate\Pagination\LengthAwarePaginator && $grouped_buses->hasPages())
-                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4">
-                        <small class="fleet-muted">
-                            Showing
-                            <strong>{{ $grouped_buses->firstItem() ?? 0 }}</strong>
-                            to
-                            <strong>{{ $grouped_buses->lastItem() ?? 0 }}</strong>
-                            of
-                            <strong>{{ number_format($grouped_buses->total()) }}</strong>
-                            unit(s)
-                        </small>
+                            @if ($tab['type'] === 'for_sale')
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0 fleet-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Bus No.</th>
+                                                <th>Plate No.</th>
+                                                <th>Company</th>
+                                                <th>Garage</th>
+                                                <th>Status</th>
+                                                <th>Storage Area</th>
+                                                <th>Breakdown Start</th>
+                                                <th>Breakdown End</th>
+                                                <th class="text-end">Days</th>
+                                                <th>Unit Location</th>
+                                                <th>Progress</th>
+                                                <th>Remarks</th>
+                                            </tr>
+                                        </thead>
 
-                        <div>
-                            {{ $grouped_buses->links('pagination.custom') }}
+                                        <tbody>
+                                            @forelse ($tab['records'] as $company => $records)
+                                                <tr class="fleet-folder-company-row">
+                                                    <td colspan="12">
+                                                        <div class="fleet-folder-company-label">
+                                                            <span>
+                                                                <span class="fas fa-building me-2 text-danger"></span>
+                                                                {{ $company }}
+                                                            </span>
+
+                                                            <span class="fleet-folder-company-count">
+                                                                {{ number_format($records->count()) }} unit(s)
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+
+                                                @foreach ($records as $record)
+                                                    <tr>
+                                                        <td class="fw-bold text-dark">
+                                                            {{ $record->bus_no ?? '—' }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $record->plate_no ?? '—' }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $record->company ?? '—' }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $record->garage ?? '—' }}
+                                                        </td>
+
+                                                        <td>
+                                                            <span
+                                                                class="badge badge-soft {{ $record->status_badge_class ?? 'badge-subtle-secondary text-secondary' }}">
+                                                                {{ $record->status_label ?? 'For Sale' }}
+                                                            </span>
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $record->storage_area ?? '—' }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $record->breakdown_start_date ? \Carbon\Carbon::parse($record->breakdown_start_date)->format('M d, Y') : '—' }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $record->breakdown_end_date ? \Carbon\Carbon::parse($record->breakdown_end_date)->format('M d, Y') : '—' }}
+                                                        </td>
+
+                                                        <td class="text-end fw-bold">
+                                                            {{ number_format($record->live_days_in_breakdown ?? 0) }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $record->unit_location ?? '—' }}
+                                                        </td>
+
+                                                        <td>
+                                                            {{ $record->progress ?? '—' }}
+                                                        </td>
+
+                                                        <td class="text-muted">
+                                                            {{ $record->remarks ?? '—' }}
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            @empty
+                                                <tr>
+                                                    <td colspan="12" class="fleet-folder-empty">
+                                                        No for-sale records found.
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
                         </div>
-                    </div>
-                @endif
+                    @empty
+                        <div class="fleet-folder-empty">
+                            No fleet records found.
+                        </div>
+                    @endforelse
+                </div>
             </div>
         </div>
     </div>
