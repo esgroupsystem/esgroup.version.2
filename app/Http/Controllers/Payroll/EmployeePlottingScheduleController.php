@@ -41,15 +41,43 @@ class EmployeePlottingScheduleController extends Controller
                         ->orWhere('source_employee_id', 'like', "%{$search}%")
                         ->orWhere('source_employee_name', 'like', "%{$search}%")
                         ->orWhere('source_crosschex_id', 'like', "%{$search}%")
+                        ->orWhere('source_crosschex_account_name', 'like', "%{$search}%")
+                        ->orWhere('source_crosschex_account', 'like', "%{$search}%")
                         ->orWhere('group_name', 'like', "%{$search}%");
                 });
             })
             ->orderBy('group_name')
-            ->orderByRaw("COALESCE(NULLIF(display_name, ''), NULLIF(source_employee_name, ''), NULLIF(source_crosschex_account_name, '')) ASC")
+            ->orderByRaw("
+            COALESCE(
+                NULLIF(display_name, ''),
+                NULLIF(source_employee_name, ''),
+                NULLIF(source_crosschex_account_name, ''),
+                NULLIF(source_crosschex_account, ''),
+                'Unknown Employee'
+            ) ASC
+        ")
             ->paginate(25)
             ->withQueryString();
 
-        $employeeIds = $employees->getCollection()->pluck('id')->values();
+        $employees->setCollection(
+            $employees->getCollection()
+                ->map(function (EmployeeBiometric $employee): EmployeeBiometric {
+                    $snapshot = $this->identityService->snapshot($employee);
+
+                    $employee->setAttribute('plotting_employee_biometric_id', $employee->id);
+                    $employee->setAttribute('plotting_employee_name', $snapshot['employee_name'] ?? 'Unknown Employee');
+                    $employee->setAttribute('plotting_employee_no', $snapshot['employee_no'] ?? null);
+                    $employee->setAttribute('plotting_biometric_employee_id', $snapshot['biometric_employee_id'] ?? null);
+                    $employee->setAttribute('plotting_crosschex_id', $snapshot['crosschex_id'] ?? null);
+
+                    return $employee;
+                })
+        );
+
+        $employeeIds = $employees->getCollection()
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values();
 
         $scheduleQuery = EmployeePlottingSchedule::query()
             ->whereIn('employee_biometric_id', $employeeIds);
@@ -66,7 +94,7 @@ class EmployeePlottingScheduleController extends Controller
             $employees->setCollection(
                 $employees->getCollection()
                     ->filter(function (EmployeeBiometric $employee) use ($schedules, $status): bool {
-                        $schedule = $schedules->get($employee->id);
+                        $schedule = $schedules->get((int) $employee->id);
 
                         return ($schedule?->status ?? 'scheduled') === $status;
                     })
@@ -78,7 +106,7 @@ class EmployeePlottingScheduleController extends Controller
             $employees->setCollection(
                 $employees->getCollection()
                     ->filter(function (EmployeeBiometric $employee) use ($schedules, $shift): bool {
-                        $schedule = $schedules->get($employee->id);
+                        $schedule = $schedules->get((int) $employee->id);
 
                         return ($schedule?->shift_name ?? 'Regular Shift') === $shift;
                     })

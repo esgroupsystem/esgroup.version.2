@@ -282,33 +282,44 @@
                                 <tbody>
                                     @forelse ($employees as $rowIndex => $employee)
                                         @php
-                                            $employeeNo = trim((string) $employee->employee_no);
-                                            $biometricEmployeeId = trim(
-                                                (string) ($employee->biometric_employee_id ?? ''),
+                                            $employeeBiometricId = (int) $employee->id;
+
+                                            $employeeName = trim((string) ($employee->plotting_employee_name ?? ''));
+                                            $employeeNo = trim((string) ($employee->plotting_employee_no ?? ''));
+                                            $legacyBiometricId = trim(
+                                                (string) ($employee->plotting_biometric_employee_id ?? ''),
                                             );
-                                            $schedule = $schedules->get($employeeNo);
+                                            $crosschexId = trim((string) ($employee->plotting_crosschex_id ?? ''));
+
+                                            $schedule = $schedules->get($employeeBiometricId);
 
                                             $rowStatus = old(
                                                 "schedule.$rowIndex.status",
                                                 $schedule->status ?? 'scheduled',
                                             );
+
                                             $rowShift = old(
                                                 "schedule.$rowIndex.shift_name",
                                                 $schedule->shift_name ?? 'Regular Shift',
                                             );
+
                                             $rowTimeIn = old(
                                                 "schedule.$rowIndex.time_in",
                                                 $schedule?->formatted_time_in ?? '08:00',
                                             );
+
                                             $rowTimeOut = old(
                                                 "schedule.$rowIndex.time_out",
                                                 $schedule?->formatted_time_out ?? '17:00',
                                             );
+
                                             $rowGrace = old(
                                                 "schedule.$rowIndex.grace_minutes",
                                                 $schedule->grace_minutes ?? 15,
                                             );
+
                                             $rowDayOff = old("schedule.$rowIndex.day_off", $schedule->day_off ?? '');
+
                                             $rowRemarks = old("schedule.$rowIndex.remarks", $schedule->remarks ?? '');
 
                                             $statusClass = match ($rowStatus) {
@@ -322,36 +333,49 @@
                                         <tr class="schedule-row">
                                             <td class="ps-3">
                                                 <div class="fw-semibold text-dark">
-                                                    {{ $employee->employee_name ?: 'No Name' }}</div>
+                                                    {{ $employeeName ?: 'Unknown Employee' }}
+                                                </div>
+
                                                 <div class="text-muted fs-11">
                                                     <strong>Emp No:</strong> {{ $employeeNo ?: '—' }}
                                                 </div>
-                                                <div class="text-muted fs-11">
-                                                    <strong>Biometric ID:</strong> {{ $biometricEmployeeId ?: '—' }}
-                                                </div>
+
+                                                <input type="hidden"
+                                                    name="schedule[{{ $rowIndex }}][employee_biometric_id]"
+                                                    value="{{ $employeeBiometricId }}">
 
                                                 <input type="hidden"
                                                     name="schedule[{{ $rowIndex }}][biometric_employee_id]"
-                                                    value="{{ $biometricEmployeeId }}">
+                                                    value="{{ $legacyBiometricId }}">
+
                                                 <input type="hidden" name="schedule[{{ $rowIndex }}][employee_no]"
                                                     value="{{ $employeeNo }}">
+
                                                 <input type="hidden" name="schedule[{{ $rowIndex }}][employee_name]"
-                                                    value="{{ $employee->employee_name }}">
+                                                    value="{{ $employeeName ?: 'Unknown Employee' }}">
+
+                                                <input type="hidden" name="schedule[{{ $rowIndex }}][crosschex_id]"
+                                                    value="{{ $crosschexId }}">
                                             </td>
 
                                             <td>
                                                 <select name="schedule[{{ $rowIndex }}][status]"
                                                     class="form-select form-select-sm plot-status">
                                                     <option value="scheduled"
-                                                        {{ $rowStatus === 'scheduled' ? 'selected' : '' }}>Scheduled
+                                                        {{ $rowStatus === 'scheduled' ? 'selected' : '' }}>
+                                                        Scheduled
                                                     </option>
                                                     <option value="rest_day"
-                                                        {{ $rowStatus === 'rest_day' ? 'selected' : '' }}>Fixed Rest Day
+                                                        {{ $rowStatus === 'rest_day' ? 'selected' : '' }}>
+                                                        Fixed Rest Day
                                                     </option>
                                                     <option value="inactive"
-                                                        {{ $rowStatus === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                                        {{ $rowStatus === 'inactive' ? 'selected' : '' }}>
+                                                        Inactive
+                                                    </option>
                                                 </select>
-                                                <div class="text-muted fs-11 mt-1 status-help">Normal working schedule
+                                                <div class="text-muted fs-11 mt-1 status-help">
+                                                    Normal working schedule
                                                 </div>
                                             </td>
 
@@ -359,13 +383,16 @@
                                                 <select name="schedule[{{ $rowIndex }}][shift_name]"
                                                     class="form-select form-select-sm plot-shift">
                                                     <option value="Regular Shift"
-                                                        {{ $rowShift === 'Regular Shift' ? 'selected' : '' }}>Regular Shift
+                                                        {{ $rowShift === 'Regular Shift' ? 'selected' : '' }}>
+                                                        Regular Shift
                                                     </option>
                                                     <option value="Flexible Shift"
-                                                        {{ $rowShift === 'Flexible Shift' ? 'selected' : '' }}>Flexible
-                                                        Shift</option>
+                                                        {{ $rowShift === 'Flexible Shift' ? 'selected' : '' }}>
+                                                        Flexible Shift
+                                                    </option>
                                                 </select>
-                                                <div class="text-muted fs-11 mt-1 shift-help">Regular uses fixed in/out
+                                                <div class="text-muted fs-11 mt-1 shift-help">
+                                                    Regular uses fixed in/out
                                                 </div>
                                             </td>
 
@@ -398,10 +425,13 @@
                                                     @foreach (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as $day)
                                                         <option value="{{ $day }}"
                                                             {{ $rowDayOff === $day ? 'selected' : '' }}>
-                                                            {{ $day }}</option>
+                                                            {{ $day }}
+                                                        </option>
                                                     @endforeach
                                                 </select>
-                                                <div class="text-muted fs-11 mt-1">This day is paid rest day.</div>
+                                                <div class="text-muted fs-11 mt-1">
+                                                    This day is paid rest day.
+                                                </div>
                                             </td>
 
                                             <td>
@@ -416,11 +446,14 @@
                                                     class="badge badge-phoenix badge-phoenix-{{ $statusClass }} px-3 py-2 setup-badge">
                                                     {{ strtoupper(str_replace('_', ' ', $rowStatus)) }}
                                                 </span>
+
                                                 <div class="text-muted fs-11 mt-2 setup-preview">
                                                     {{ $rowShift }}
+
                                                     @if ($rowShift === 'Regular Shift' && $rowStatus === 'scheduled')
                                                         <br>{{ $rowTimeIn ?: '—' }} to {{ $rowTimeOut ?: '—' }}
                                                     @endif
+
                                                     @if ($rowDayOff)
                                                         <br>Day off: {{ $rowDayOff }}
                                                     @endif
