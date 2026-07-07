@@ -89,7 +89,7 @@
     </div>
 </div>
 
-<div class="card mb-3">
+{{-- <div class="card mb-3">
     <div class="card-header bg-body-tertiary">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
@@ -182,4 +182,4 @@
             </div>
         </div>
     @endif
-</div>
+</div> --}}
