@@ -45,7 +45,7 @@ class FleetFolderDashboardService
 
         $tabs = $garageTabs->push([
             'type' => 'for_sale',
-            'key' => 'for-sale',
+            'key' => 'for-sale-records',
             'label' => 'For Sale',
             'count' => $forSaleRows->count(),
             'records' => $forSaleRows
@@ -86,7 +86,13 @@ class FleetFolderDashboardService
             ->when($filters['operational_status'] !== '', function (Builder $query) use ($filters): void {
                 $query->where('operational_status', $filters['operational_status']);
             })
-            ->orderByRaw("CASE WHEN UPPER(garage) = 'MIRASOL' THEN 0 WHEN UPPER(garage) = 'BALINTAWAK' THEN 1 ELSE 2 END")
+            ->orderByRaw("
+                CASE
+                    WHEN UPPER(garage) = 'MIRASOL' THEN 0
+                    WHEN UPPER(garage) = 'BALINTAWAK' THEN 1
+                    ELSE 2
+                END
+            ")
             ->orderBy('garage')
             ->orderBy('company')
             ->orderByRaw('CAST(bus_no AS UNSIGNED), bus_no')
@@ -161,10 +167,13 @@ class FleetFolderDashboardService
     ): Collection {
         return $buses
             ->groupBy(fn (Bus $bus): string => $bus->garage ?: 'Unassigned Garage')
+            ->reject(function (Collection $garageBuses, string $garage): bool {
+                return $this->isReservedForSaleGarage($garage);
+            })
             ->map(function (Collection $garageBuses, string $garage) use ($forSaleBusIds, $forSaleBusNumbers): array {
                 return [
                     'type' => 'garage',
-                    'key' => Str::slug($garage),
+                    'key' => 'garage-'.Str::slug($garage),
                     'label' => $garage,
                     'count' => $garageBuses->count(),
                     'companies' => $garageBuses
@@ -184,6 +193,19 @@ class FleetFolderDashboardService
                 };
             })
             ->values();
+    }
+
+    private function isReservedForSaleGarage(string $garage): bool
+    {
+        $normalizedGarage = Str::upper(trim($garage));
+
+        return in_array($normalizedGarage, [
+            'FOR SALE',
+            'FORSALE',
+            'FOR-SALE',
+            'FOR SALE UNITS',
+            'FOR SALE UNIT',
+        ], true);
     }
 
     private function statusLabel(?string $status): string
@@ -215,6 +237,7 @@ class FleetFolderDashboardService
         }
 
         $start = Carbon::parse($startDate)->startOfDay();
+
         $end = $endDate
             ? Carbon::parse($endDate)->startOfDay()
             : now()->startOfDay();
