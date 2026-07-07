@@ -7,6 +7,7 @@ use App\Models\Bus;
 use App\Models\BusForSaleRecord;
 use App\Models\JobOrderMaintenance;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -21,19 +22,19 @@ class BusService
     {
         $filters = $this->normalizeFilters($filters);
 
-        $filteredBuses = $this->filteredBusQuery($filters)
+        $paginatedBuses = $this->filteredBusQuery($filters)
+            ->with([
+                'currentForSaleRecord',
+            ])
             ->orderBy('garage')
             ->orderBy('company')
             ->orderBy('bus_no')
-            ->get();
+            ->paginate(10, ['*'], 'bus_page')
+            ->withQueryString();
 
-        $groupedBuses = $filteredBuses
-            ->groupBy(fn (Bus $bus): string => $this->displayGroup($bus->garage))
-            ->map(function (Collection $garageBuses): Collection {
-                return $garageBuses->groupBy(
-                    fn (Bus $bus): string => $this->displayGroup($bus->company)
-                );
-            });
+        $currentPageBuses = $paginatedBuses->getCollection();
+
+        $groupedBuses = $this->groupPaginatedBuses($paginatedBuses);
 
         return [
             'filters' => $filters,
@@ -45,10 +46,11 @@ class BusService
 
             'grouped_buses' => $groupedBuses,
 
-            'garage_summary_raw' => $filteredBuses->groupBy(
+            'garage_summary_raw' => $currentPageBuses->groupBy(
                 fn (Bus $bus): string => $this->displayGroup($bus->garage)
             ),
-            'company_summary_raw' => $filteredBuses->groupBy(
+
+            'company_summary_raw' => $currentPageBuses->groupBy(
                 fn (Bus $bus): string => $this->displayGroup($bus->company)
             ),
 
@@ -60,7 +62,7 @@ class BusService
             'for_sale_bus_numbers' => $this->forSaleBusNumbers(),
             'totals' => $this->overallTotals(),
 
-            'filtered_count' => $filteredBuses->count(),
+            'filtered_count' => $paginatedBuses->total(),
         ];
     }
 
@@ -130,7 +132,7 @@ class BusService
             });
     }
 
-    private function dashboardForSaleRecords(array $filters): Collection
+    private function dashboardForSaleRecords(array $filters): LengthAwarePaginator
     {
         return BusForSaleRecord::query()
             ->when($this->filled($filters, 'search'), function (Builder $query) use ($filters): void {
@@ -168,8 +170,8 @@ class BusService
             ->orderBy('company')
             ->orderBy('garage')
             ->orderBy('bus_no')
-            ->limit(50)
-            ->get();
+            ->paginate(15, ['*'], 'for_sale_page')
+            ->withQueryString();
     }
 
     private function summaryBy(string $column): Collection
@@ -839,5 +841,20 @@ class BusService
     private function quotedIdentifier(string $identifier): string
     {
         return '`'.str_replace('`', '``', $identifier).'`';
+    }
+
+    private function groupPaginatedBuses(LengthAwarePaginator $paginator): LengthAwarePaginator
+    {
+        $grouped = $paginator->getCollection()
+            ->groupBy(fn (Bus $bus): string => $this->displayGroup($bus->garage))
+            ->map(function (Collection $garageBuses): Collection {
+                return $garageBuses->groupBy(
+                    fn (Bus $bus): string => $this->displayGroup($bus->company)
+                );
+            });
+
+        $paginator->setCollection($grouped);
+
+        return $paginator;
     }
 }

@@ -25,16 +25,17 @@
                     <form action="{{ route('payroll-employee-salaries.store') }}" method="POST">
                         @csrf
 
-                        @include('payroll.employee_salaries._form')
+                        <div class="row g-3">
+                            @include('payroll.employee_salaries._identity_create', ['people' => $people])
+                            @include('payroll.employee_salaries._salary_fields')
+                        </div>
 
                         <div class="mt-4 d-flex flex-wrap gap-2">
                             <button class="btn btn-primary">
                                 <span class="fas fa-save me-1"></span>
                                 Save Salary Profile
                             </button>
-                            <a href="{{ route('payroll-employee-salaries.index') }}" class="btn btn-light">
-                                Cancel
-                            </a>
+                            <a href="{{ route('payroll-employee-salaries.index') }}" class="btn btn-light">Cancel</a>
                         </div>
                     </form>
                 </div>

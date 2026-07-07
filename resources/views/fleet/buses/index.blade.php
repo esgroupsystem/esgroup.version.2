@@ -413,7 +413,18 @@
 
                     <div class="mt-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <small class="fleet-muted">
-                            Showing <strong>{{ number_format($filtered_count) }}</strong> unit(s) based on current filter.
+                            @if ($grouped_buses instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                                Showing
+                                <strong>{{ $grouped_buses->firstItem() ?? 0 }}</strong>
+                                to
+                                <strong>{{ $grouped_buses->lastItem() ?? 0 }}</strong>
+                                of
+                                <strong>{{ number_format($grouped_buses->total()) }}</strong>
+                                unit(s) based on current filter.
+                            @else
+                                Showing <strong>{{ number_format($filtered_count) }}</strong> unit(s) based on current
+                                filter.
+                            @endif
                         </small>
 
                         <a href="{{ route('fleet.buses.index') }}" class="btn btn-sm btn-falcon-default">
@@ -839,17 +850,26 @@
                     <div>
                         <h5 class="mb-0 fleet-section-title">Detailed Bus Monitoring List</h5>
                         <small class="fleet-muted">
-                            Grouped by garage and company.
+                            Grouped by garage and company. Records are paginated for faster loading.
                         </small>
                     </div>
 
-                    @can('fleet.manage.update')
-                        <a href="{{ route('fleet.buses.create', request()->query()) }}"
-                            class="btn btn-falcon-primary btn-sm">
-                            <span class="fas fa-plus me-1"></span>
-                            Add Bus
-                        </a>
-                    @endcan
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        @if ($grouped_buses instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                            <span class="badge badge-soft badge-subtle-secondary text-secondary">
+                                Page {{ number_format($grouped_buses->currentPage()) }}
+                                of {{ number_format($grouped_buses->lastPage()) }}
+                            </span>
+                        @endif
+
+                        @can('fleet.manage.update')
+                            <a href="{{ route('fleet.buses.create', request()->query()) }}"
+                                class="btn btn-falcon-primary btn-sm">
+                                <span class="fas fa-plus me-1"></span>
+                                Add Bus
+                            </a>
+                        @endcan
+                    </div>
                 </div>
             </div>
 
@@ -865,7 +885,7 @@
                                 <div>
                                     <h5 class="mb-0">{{ $garage }}</h5>
                                     <small class="fleet-muted">
-                                        {{ number_format($garageBuses->count()) }} unit(s)
+                                        {{ number_format($garageBuses->count()) }} unit(s) on this page
                                     </small>
                                 </div>
 
@@ -874,14 +894,17 @@
                                         Active:
                                         {{ $netActiveCount($garageBuses) }}
                                     </span>
+
                                     <span class="badge badge-soft badge-subtle-warning text-warning">
                                         Mechanical:
                                         {{ $garageBuses->where('operational_status', \App\Models\Bus::STATUS_MECHANICAL_BREAKDOWN)->count() }}
                                     </span>
+
                                     <span class="badge badge-soft badge-subtle-danger text-danger">
                                         Accident:
                                         {{ $garageBuses->where('operational_status', \App\Models\Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN)->count() }}
                                     </span>
+
                                     <span class="badge badge-soft badge-subtle-info text-info">
                                         On Hold:
                                         {{ $garageBuses->where('operational_status', \App\Models\Bus::STATUS_ON_HOLD_PLATE_REGISTRATION)->count() }}
@@ -897,7 +920,7 @@
                                         <div>
                                             <h6 class="mb-0">{{ $company }}</h6>
                                             <small class="fleet-muted">
-                                                {{ number_format($buses->count()) }} unit(s)
+                                                {{ number_format($buses->count()) }} unit(s) on this page
                                             </small>
                                         </div>
 
@@ -906,6 +929,7 @@
                                                 Active
                                                 {{ $netActiveCount($buses) }}
                                             </span>
+
                                             <span class="badge badge-soft badge-subtle-danger text-danger">
                                                 For Sale
                                                 {{ $forSaleCount($buses) }}
@@ -928,11 +952,13 @@
                                                 <th>Engine Number</th>
                                                 <th>Case Number</th>
                                                 <th>Remarks</th>
+
                                                 @can('fleet.manage.update')
                                                     <th class="text-end">Action</th>
                                                 @endcan
                                             </tr>
                                         </thead>
+
                                         <tbody>
                                             @foreach ($buses as $bus)
                                                 <tr>
@@ -987,6 +1013,24 @@
                         </p>
                     </div>
                 @endforelse
+
+                @if ($grouped_buses instanceof \Illuminate\Pagination\LengthAwarePaginator && $grouped_buses->hasPages())
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-4">
+                        <small class="fleet-muted">
+                            Showing
+                            <strong>{{ $grouped_buses->firstItem() ?? 0 }}</strong>
+                            to
+                            <strong>{{ $grouped_buses->lastItem() ?? 0 }}</strong>
+                            of
+                            <strong>{{ number_format($grouped_buses->total()) }}</strong>
+                            unit(s)
+                        </small>
+
+                        <div>
+                            {{ $grouped_buses->links('pagination.custom') }}
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>

@@ -34,6 +34,7 @@
                         <th class="text-end">Total Units For Sale</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @forelse ($for_sale_summary['rows'] as $company => $data)
                         <tr>
@@ -59,16 +60,28 @@
                         </tr>
                     @endforelse
                 </tbody>
+
                 <tfoot>
                     <tr class="fleet-total-box">
                         <th>Total</th>
-                        <th class="text-end">{{ number_format($for_sale_summary['mechanical_breakdown_total']) }}</th>
-                        <th class="text-end">{{ number_format($for_sale_summary['accident_related_total']) }}</th>
-                        <th class="text-end">{{ number_format($for_sale_summary['on_hold_total']) }}</th>
-                        <th class="text-end text-danger">{{ number_format($for_sale_summary['breakdown_total']) }}</th>
+                        <th class="text-end">
+                            {{ number_format($for_sale_summary['mechanical_breakdown_total']) }}
+                        </th>
+                        <th class="text-end">
+                            {{ number_format($for_sale_summary['accident_related_total']) }}
+                        </th>
+                        <th class="text-end">
+                            {{ number_format($for_sale_summary['on_hold_total']) }}
+                        </th>
+                        <th class="text-end text-danger">
+                            {{ number_format($for_sale_summary['breakdown_total']) }}
+                        </th>
                         <th class="text-end text-success">
-                            {{ number_format($for_sale_summary['running_condition_total']) }}</th>
-                        <th class="text-end">{{ number_format($for_sale_summary['total_for_sale']) }}</th>
+                            {{ number_format($for_sale_summary['running_condition_total']) }}
+                        </th>
+                        <th class="text-end">
+                            {{ number_format($for_sale_summary['total_for_sale']) }}
+                        </th>
                     </tr>
                 </tfoot>
             </table>
@@ -82,9 +95,15 @@
             <div>
                 <h5 class="mb-0 fleet-section-title">Detailed For Sale Monitoring</h5>
                 <small class="fleet-muted">
-                    Latest 50 records from the For Sale database.
+                    Paginated records from the For Sale database.
                 </small>
             </div>
+
+            @if ($for_sale_records instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                <span class="badge badge-soft badge-subtle-secondary text-secondary">
+                    {{ number_format($for_sale_records->total()) }} record(s)
+                </span>
+            @endif
         </div>
     </div>
 
@@ -108,6 +127,7 @@
                         <th>Remarks</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @forelse ($for_sale_records as $record)
                         <tr>
@@ -142,4 +162,24 @@
             </table>
         </div>
     </div>
+
+    @if ($for_sale_records instanceof \Illuminate\Pagination\LengthAwarePaginator && $for_sale_records->hasPages())
+        <div class="card-footer bg-body-tertiary">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <small class="fleet-muted">
+                    Showing
+                    <strong>{{ $for_sale_records->firstItem() ?? 0 }}</strong>
+                    to
+                    <strong>{{ $for_sale_records->lastItem() ?? 0 }}</strong>
+                    of
+                    <strong>{{ number_format($for_sale_records->total()) }}</strong>
+                    for-sale record(s)
+                </small>
+
+                <div>
+                    {{ $for_sale_records->links('pagination.custom') }}
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

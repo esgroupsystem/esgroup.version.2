@@ -26,16 +26,17 @@
                         @csrf
                         @method('PUT')
 
-                        @include('payroll.employee_salaries._form', ['salary' => $salary])
+                        <div class="row g-3">
+                            @include('payroll.employee_salaries._identity_edit', ['salary' => $salary])
+                            @include('payroll.employee_salaries._salary_fields', ['salary' => $salary])
+                        </div>
 
                         <div class="mt-4 d-flex flex-wrap gap-2">
                             <button class="btn btn-primary">
                                 <span class="fas fa-save me-1"></span>
                                 Update Salary Profile
                             </button>
-                            <a href="{{ route('payroll-employee-salaries.index') }}" class="btn btn-light">
-                                Cancel
-                            </a>
+                            <a href="{{ route('payroll-employee-salaries.index') }}" class="btn btn-light">Cancel</a>
                         </div>
                     </form>
                 </div>
