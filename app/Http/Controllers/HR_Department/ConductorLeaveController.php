@@ -3,63 +3,422 @@
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
-use App\Mail\LeaveNoticeMail;
 use App\Models\ConductorLeave;
 use App\Models\Employee;
 use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class ConductorLeaveController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View
     {
         date_default_timezone_set('Asia/Manila');
 
         $today = Carbon::now('Asia/Manila')->startOfDay();
         $search = $request->get('search');
 
-        $baseQuery = ConductorLeave::with('employee');
-
-        if (!empty($search)) {
-            $baseQuery->where(function ($q) use ($search) {
-                $q->whereHas('employee', function ($qq) use ($search) {
-                    $qq->where('full_name', 'like', "%{$search}%");
-                })
-                ->orWhere('leave_type', 'like', "%{$search}%")
-                ->orWhere('status', 'like', "%{$search}%");
+        $baseQuery = ConductorLeave::query()
+            ->with(['employee.position'])
+            ->when(! empty($search), function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('employee', function ($employeeQuery) use ($search) {
+                        $employeeQuery
+                            ->where('full_name', 'like', "%{$search}%")
+                            ->orWhere('employee_id', 'like', "%{$search}%")
+                            ->orWhere('employee_id_permanent', 'like', "%{$search}%")
+                            ->orWhere('garage', 'like', "%{$search}%")
+                            ->orWhere('company', 'like', "%{$search}%");
+                    })
+                        ->orWhere('leave_type', 'like', "%{$search}%")
+                        ->orWhere('status', 'like', "%{$search}%")
+                        ->orWhere('reason', 'like', "%{$search}%");
+                });
             });
-        }
 
         $leaves = (clone $baseQuery)
             ->orderByRaw("
                 CASE
                     WHEN status IS NULL OR status = '' THEN 1
-                    WHEN status = 'active' THEN 1
-                    WHEN status = 'on_leave' THEN 1
-                    WHEN status = 'completed' THEN 2
-                    WHEN status = 'cancelled' THEN 3
-                    WHEN status = 'terminated' THEN 3
-                    ELSE 2
+                    WHEN LOWER(status) = 'active' THEN 1
+                    WHEN LOWER(status) = 'on_leave' THEN 1
+                    WHEN LOWER(status) = 'inactive' THEN 2
+                    WHEN LOWER(status) = 'completed' THEN 3
+                    WHEN LOWER(status) = 'cancelled' THEN 4
+                    WHEN LOWER(status) = 'terminated' THEN 5
+                    ELSE 3
                 END ASC
             ")
             ->orderByDesc('id')
             ->paginate(10)
             ->withQueryString();
 
+        $this->decorateLeaveRows($leaves, $today);
+
+        $allForCounts = (clone $baseQuery)->get();
+
+        $counts = [
+            'active' => 0,
+            'first' => 0,
+            'second' => 0,
+            'inactive' => 0,
+            'termination' => 0,
+            'completed' => 0,
+            'cancelled' => 0,
+            'total' => $allForCounts->count(),
+        ];
+
+        foreach ($allForCounts as $leave) {
+            $level = (int) ($leave->offense_level ?? 0);
+            $status = strtolower($leave->status ?? '');
+
+            if ($status === 'inactive') {
+                $counts['inactive']++;
+            }
+
+            if ($status === 'completed') {
+                $counts['completed']++;
+            }
+
+            if ($status === 'cancelled') {
+                $counts['cancelled']++;
+            }
+
+            if ($level === 1) {
+                $counts['first']++;
+            } elseif ($level === 2) {
+                $counts['second']++;
+            } elseif ($level >= 3 || $status === 'terminated') {
+                $counts['termination']++;
+            } elseif (! in_array($status, ['cancelled', 'terminated', 'completed', 'inactive'], true)) {
+                $counts['active']++;
+            }
+        }
+
+        $garageSummary = $allForCounts
+            ->groupBy(fn (ConductorLeave $leave) => $leave->employee?->garage ?: 'No Garage Assigned')
+            ->map(function ($items, $garage) {
+                return [
+                    'garage' => $garage,
+                    'total' => $items->count(),
+                    'active' => $items->filter(fn ($leave) => in_array(strtolower($leave->status ?? ''), ['', 'active', 'on_leave'], true))->count(),
+                    'first_notice' => $items->where('offense_level', 1)->count(),
+                    'second_notice' => $items->where('offense_level', 2)->count(),
+                    'inactive' => $items->filter(fn ($leave) => strtolower($leave->status ?? '') === 'inactive')->count(),
+                    'terminated' => $items->filter(fn ($leave) => strtolower($leave->status ?? '') === 'terminated')->count(),
+                ];
+            })
+            ->sortBy('garage')
+            ->values();
+
+        if ($request->ajax()) {
+            return view('hr_department.leaves.conductor.table', compact('leaves', 'today'));
+        }
+
+        return view('hr_department.leaves.conductor.index', compact(
+            'leaves',
+            'counts',
+            'today',
+            'garageSummary'
+        ));
+    }
+
+    public function create(): View
+    {
+        $conductors = Employee::query()
+            ->with('position')
+            ->whereHas('position', function ($query) {
+                $query->where('title', 'Conductor');
+            })
+            ->whereIn('status', ['Active', 'Active(Re-Entry)'])
+            ->orderBy('garage')
+            ->orderBy('full_name')
+            ->get();
+
+        return view('hr_department.leaves.conductor.create', compact('conductors'));
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'employee_id' => ['required', 'exists:employees,id'],
+            'leave_type' => ['required', 'string', 'max:100'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'reason' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $days = Carbon::parse($validated['start_date'])
+            ->diffInDays(Carbon::parse($validated['end_date'])) + 1;
+
+        DB::transaction(function () use ($validated, $days) {
+            ConductorLeave::create([
+                'employee_id' => $validated['employee_id'],
+                'leave_type' => $validated['leave_type'],
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
+                'days' => $days,
+                'reason' => $validated['reason'] ?? null,
+                'offense_level' => 0,
+                'status' => 'Active',
+            ]);
+
+            Employee::whereKey($validated['employee_id'])->update([
+                'status' => 'On Leave',
+            ]);
+        });
+
+        flash('Conductor leave created successfully.')->success();
+
+        return redirect()->route('conductor-leave.conductor.index');
+    }
+
+    public function edit(ConductorLeave $leave): View
+    {
+        $leave->load(['employee.position']);
+
+        $conductors = Employee::query()
+            ->with('position')
+            ->whereHas('position', function ($query) {
+                $query->where('title', 'Conductor');
+            })
+            ->orderBy('garage')
+            ->orderBy('full_name')
+            ->get();
+
+        return view('hr_department.leaves.conductor.edit', compact('leave', 'conductors'));
+    }
+
+    public function update(Request $request, ConductorLeave $leave): RedirectResponse
+    {
+        $validated = $request->validate([
+            'employee_id' => ['required', 'exists:employees,id'],
+            'leave_type' => ['required', 'string', 'max:100'],
+            'start_date' => ['required', 'date'],
+            'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+            'reason' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $oldEmployeeId = $leave->employee_id;
+
+        $days = Carbon::parse($validated['start_date'])
+            ->diffInDays(Carbon::parse($validated['end_date'])) + 1;
+
+        DB::transaction(function () use ($leave, $validated, $days, $oldEmployeeId) {
+            $leave->update([
+                'employee_id' => $validated['employee_id'],
+                'leave_type' => $validated['leave_type'],
+                'start_date' => $validated['start_date'],
+                'end_date' => $validated['end_date'],
+                'days' => $days,
+                'reason' => $validated['reason'] ?? null,
+            ]);
+
+            if ((int) $oldEmployeeId !== (int) $validated['employee_id']) {
+                Employee::whereKey($oldEmployeeId)->update([
+                    'status' => 'Active',
+                ]);
+
+                Employee::whereKey($validated['employee_id'])->update([
+                    'status' => $leave->status === 'Inactive' ? 'Inactive' : 'On Leave',
+                ]);
+            }
+        });
+
+        flash('Conductor leave updated successfully.')->success();
+
+        return redirect()->route('conductor-leave.conductor.index');
+    }
+
+    public function action(Request $request, ConductorLeave $leave): RedirectResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'action_type' => ['required', 'in:first,second,terminate,cancel,ready'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator);
+        }
+
+        $action = $request->input('action_type');
+        $note = $request->input('note');
+
+        $leave->load('employee');
+
+        if ($action === 'first') {
+            return $this->markFirstNotice($leave, $note);
+        }
+
+        if ($action === 'second') {
+            return $this->markSecondNoticeAndDeactivate($leave, $note);
+        }
+
+        if ($action === 'terminate') {
+            return $this->markFinalNoticeAndTerminate($leave, $note);
+        }
+
+        if ($action === 'cancel') {
+            return $this->cancelLeave($leave, $note);
+        }
+
+        if ($action === 'ready') {
+            return $this->markReadyForDuty($leave, $note);
+        }
+
+        return redirect()->route('conductor-leave.conductor.index');
+    }
+
+    private function markFirstNotice(ConductorLeave $leave, ?string $note): RedirectResponse
+    {
+        if ($leave->first_notice_sent_at) {
+            flash('1st Notice already sent.')->info();
+
+            return back();
+        }
+
+        DB::transaction(function () use ($leave, $note) {
+            $leave->update([
+                'first_notice_sent_at' => now('Asia/Manila'),
+                'offense_level' => 1,
+                'last_action_note' => $note,
+            ]);
+        });
+
+        flash('1st Notice marked as sent.')->success();
+
+        return redirect()->route('conductor-leave.conductor.index');
+    }
+
+    private function markSecondNoticeAndDeactivate(ConductorLeave $leave, ?string $note): RedirectResponse
+    {
+        if (! $leave->first_notice_sent_at) {
+            flash('Send 1st Notice first.')->warning();
+
+            return back();
+        }
+
+        if ($leave->second_notice_sent_at) {
+            flash('2nd Notice already sent.')->info();
+
+            return back();
+        }
+
+        DB::transaction(function () use ($leave, $note) {
+            $leave->update([
+                'second_notice_sent_at' => now('Asia/Manila'),
+                'offense_level' => 2,
+                'status' => 'Inactive',
+                'last_action_note' => $note,
+            ]);
+
+            if ($leave->employee) {
+                $leave->employee->update([
+                    'status' => 'Inactive',
+                ]);
+            }
+        });
+
+        flash('2nd Notice marked as sent. Conductor record is now automatically Inactive.')->success();
+
+        return redirect()->route('conductor-leave.conductor.index');
+    }
+
+    private function markFinalNoticeAndTerminate(ConductorLeave $leave, ?string $note): RedirectResponse
+    {
+        if (! $leave->second_notice_sent_at) {
+            flash('Send 2nd Notice first.')->warning();
+
+            return back();
+        }
+
+        if ($leave->final_notice_sent_at) {
+            flash('Final Notice already sent.')->info();
+
+            return back();
+        }
+
+        DB::transaction(function () use ($leave, $note) {
+            $leave->update([
+                'final_notice_sent_at' => now('Asia/Manila'),
+                'offense_level' => 3,
+                'status' => 'Terminated',
+                'last_action_note' => $note,
+            ]);
+
+            if ($leave->employee) {
+                $leave->employee->update([
+                    'status' => 'Terminated',
+                ]);
+            }
+        });
+
+        flash('Final Notice marked as sent. Conductor record is now Terminated.')->success();
+
+        return redirect()->route('conductor-leave.conductor.index');
+    }
+
+    private function cancelLeave(ConductorLeave $leave, ?string $note): RedirectResponse
+    {
+        DB::transaction(function () use ($leave, $note) {
+            $leave->update([
+                'status' => 'Cancelled',
+                'last_action_note' => $note,
+            ]);
+
+            if ($leave->employee) {
+                $leave->employee->update([
+                    'status' => 'Active',
+                ]);
+            }
+        });
+
+        flash('Leave cancelled. Employee returned to Active.')->success();
+
+        return redirect()->route('conductor-leave.conductor.index');
+    }
+
+    private function markReadyForDuty(ConductorLeave $leave, ?string $note): RedirectResponse
+    {
+        DB::transaction(function () use ($leave, $note) {
+            $leave->update([
+                'status' => 'Completed',
+                'offense_level' => 0,
+                'ready_for_duty_notified_at' => now('Asia/Manila'),
+                'last_action_note' => $note,
+            ]);
+
+            if ($leave->employee) {
+                $leave->employee->update([
+                    'status' => 'Active',
+                ]);
+            }
+        });
+
+        flash('Conductor marked as Ready for Duty.')->success();
+
+        return redirect()->route('conductor-leave.conductor.index');
+    }
+
+    private function decorateLeaveRows($leaves, Carbon $today): void
+    {
         foreach ($leaves as $leave) {
             $rawStatus = strtolower($leave->status ?? '');
 
             $statusLabel = $leave->status ? ucfirst($leave->status) : 'Active';
+
             $statusColor = match ($rawStatus) {
                 'completed' => 'success',
                 'cancelled' => 'secondary',
                 'terminated' => 'danger',
+                'inactive' => 'warning',
                 default => 'primary',
             };
 
-            $leave->record_status_badge = '<span class="badge bg-' . $statusColor . '">' . e($statusLabel) . '</span>';
+            $leave->record_status_badge = '<span class="badge rounded-pill badge-subtle-'.$statusColor.' text-'.$statusColor.'">'.e($statusLabel).'</span>';
 
             $start = $leave->start_date
                 ? Carbon::parse($leave->start_date, 'Asia/Manila')->startOfDay()
@@ -69,265 +428,48 @@ class ConductorLeaveController extends Controller
                 ? Carbon::parse($leave->end_date, 'Asia/Manila')->startOfDay()
                 : null;
 
-            if (in_array($rawStatus, ['cancelled', 'terminated', 'completed'], true)) {
+            if (in_array($rawStatus, ['cancelled', 'terminated', 'completed', 'inactive'], true)) {
                 $leave->remaining_status = match ($rawStatus) {
-                    'completed' => '<span class="badge bg-success">Completed</span>',
-                    'cancelled' => '<span class="badge bg-secondary">Cancelled</span>',
-                    'terminated' => '<span class="badge bg-danger">Terminated</span>',
-                    default => '<span class="badge bg-secondary">N/A</span>',
+                    'completed' => '<span class="badge rounded-pill badge-subtle-success text-success">Completed / Ready</span>',
+                    'cancelled' => '<span class="badge rounded-pill badge-subtle-secondary text-secondary">Cancelled</span>',
+                    'terminated' => '<span class="badge rounded-pill badge-subtle-danger text-danger">Terminated</span>',
+                    'inactive' => '<span class="badge rounded-pill badge-subtle-warning text-warning">Inactive after 2nd Notice</span>',
+                    default => '<span class="badge rounded-pill badge-subtle-secondary text-secondary">N/A</span>',
                 };
 
                 continue;
             }
 
-            if (!$start || !$end) {
-                $leave->remaining_status = '<span class="badge bg-secondary">No schedule</span>';
+            if (! $start || ! $end) {
+                $leave->remaining_status = '<span class="badge rounded-pill badge-subtle-secondary text-secondary">No schedule</span>';
+
                 continue;
             }
 
             if ($today->lt($start)) {
-                $leave->remaining_status = '<span class="badge bg-secondary">Not started</span>';
+                $leave->remaining_status = '<span class="badge rounded-pill badge-subtle-secondary text-secondary">Not started</span>';
+
                 continue;
             }
 
             if ($today->lte($end)) {
                 $remainingDays = $today->diffInDays($end) + 1;
-                $leave->remaining_status =
-                    '<span class="badge bg-success">On Leave (' . $remainingDays . ' day' . ($remainingDays > 1 ? 's' : '') . ' left)</span>';
+                $leave->remaining_status = '<span class="badge rounded-pill badge-subtle-success text-success">On Leave: '.$remainingDays.' day'.($remainingDays > 1 ? 's' : '').' left</span>';
+
                 continue;
             }
 
             $daysAfterEnd = $end->diffInDays($today);
 
-            if ($daysAfterEnd == 1) {
-                $leave->remaining_status = '<span class="badge bg-primary">Ready for Duty</span>';
+            if ($daysAfterEnd === 1) {
+                $leave->remaining_status = '<span class="badge rounded-pill badge-subtle-primary text-primary">Ready for Duty</span>';
             } elseif ($daysAfterEnd >= 2 && $daysAfterEnd <= 9) {
-                $leave->remaining_status = '<span class="badge bg-info">Warning for 1st Notice</span>';
+                $leave->remaining_status = '<span class="badge rounded-pill badge-subtle-info text-info">Warning for 1st Notice</span>';
             } elseif ($daysAfterEnd >= 10 && $daysAfterEnd <= 22) {
-                $leave->remaining_status = '<span class="badge bg-warning text-dark">Warning for 2nd Notice</span>';
+                $leave->remaining_status = '<span class="badge rounded-pill badge-subtle-warning text-warning">Warning for 2nd Notice</span>';
             } else {
-                $leave->remaining_status = '<span class="badge bg-danger">Subject for Termination</span>';
+                $leave->remaining_status = '<span class="badge rounded-pill badge-subtle-danger text-danger">Subject for Final Notice</span>';
             }
         }
-
-        $allForCounts = (clone $baseQuery)->get();
-
-        $counts = [
-            'active' => 0,
-            'first' => 0,
-            'second' => 0,
-            'termination' => 0,
-        ];
-
-        foreach ($allForCounts as $l) {
-            $level = (int) ($l->offense_level ?? 0);
-            $status = strtolower($l->status ?? '');
-
-            if ($level === 1) {
-                $counts['first']++;
-            } elseif ($level === 2) {
-                $counts['second']++;
-            } elseif ($level >= 3) {
-                $counts['termination']++;
-            } else {
-                if (!in_array($status, ['cancelled', 'terminated', 'completed'], true)) {
-                    $counts['active']++;
-                }
-            }
-        }
-
-        if ($request->ajax()) {
-            return view('hr_department.leaves.conductor.table', compact('leaves', 'today'));
-        }
-
-        return view('hr_department.leaves.conductor.index', compact('leaves', 'counts', 'today'));
-    }
-
-    public function action(Request $request, ConductorLeave $leave)
-    {
-        $validator = Validator::make($request->all(), [
-            'action_type' => 'required|in:first,second,terminate,cancel,ready',
-            'note' => 'nullable|string|max:1000',
-        ]);
-
-        if ($validator->fails()) {
-            return back()->withErrors($validator);
-        }
-
-        $action = $request->action_type;
-        $note = $request->note;
-        $employee = $leave->employee;
-
-        if ($action === 'first') {
-
-            if ($leave->first_notice_sent_at) {
-                flash('1st Notice already sent.')->info();
-                return back();
-            }
-
-            $leave->first_notice_sent_at = now('Asia/Manila');
-            $leave->offense_level = 1;
-            $leave->last_action_note = $note;
-            $leave->save();
-
-            flash('1st Notice marked as Sent.')->success();
-
-        } elseif ($action === 'second') {
-
-            if (!$leave->first_notice_sent_at) {
-                flash('Send 1st Notice first.')->warning();
-                return back();
-            }
-
-            if ($leave->second_notice_sent_at) {
-                flash('2nd Notice already sent.')->info();
-                return back();
-            }
-
-            $leave->second_notice_sent_at = now('Asia/Manila');
-            $leave->offense_level = 2;
-            $leave->last_action_note = $note;
-            $leave->save();
-
-            flash('2nd Notice marked as Sent.')->success();
-
-        } elseif ($action === 'terminate') {
-
-            if (!$leave->second_notice_sent_at) {
-                flash('Send 2nd Notice first.')->warning();
-                return back();
-            }
-
-            if ($leave->final_notice_sent_at) {
-                flash('Final Notice already sent.')->info();
-                return back();
-            }
-
-            $leave->final_notice_sent_at = now('Asia/Manila');
-            $leave->offense_level = 3;
-            $leave->status = 'terminated';
-            $leave->last_action_note = $note;
-            $leave->save();
-
-            if ($employee) {
-                $employee->update(['status' => 'Terminated']);
-            }
-
-            flash('Final Notice marked as Sent (Termination).')->success();
-
-        } elseif ($action === 'cancel') {
-
-            $leave->status = 'cancelled';
-            $leave->last_action_note = $note;
-            $leave->save();
-
-            if ($employee) {
-                $employee->status = 'Active';
-                $employee->save();
-            }
-
-            flash('Leave cancelled & employee returned to Active.')->success();
-
-        } elseif ($action === 'ready') {
-
-            if ($leave->ready_for_duty_notified_at) {
-                flash('Ready for Duty already notified.')->info();
-                return back();
-            }
-
-            $leave->status = 'completed';
-            $leave->last_action_note = $note;
-            $leave->ready_for_duty_notified_at = now('Asia/Manila');
-            $leave->save();
-
-            if ($employee) {
-                $employee->status = 'Active';
-                $employee->save();
-            }
-
-            flash('Employee marked as Ready for Duty.')->success();
-        }
-
-        return redirect()->route('conductor-leave.conductor.index');
-    }
-
-    public function create()
-    {
-        $conductors = Employee::whereHas('position', function ($q) {
-            $q->where('title', 'Conductor');
-        })
-        ->whereIn('status', ['Active', 'Active(Re-Entry)'])
-        ->get();
-
-        return view('hr_department.leaves.conductor.create', compact('conductors'));
-    }
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'employee_id' => 'required',
-            'leave_type' => 'required',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'reason' => 'nullable|string',
-        ]);
-
-        $days = Carbon::parse($request->start_date)->diffInDays(Carbon::parse($request->end_date)) + 1;
-
-        $leave = ConductorLeave::create([
-            'employee_id' => $request->employee_id,
-            'leave_type' => $request->leave_type,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'days' => $days,
-            'reason' => $request->reason,
-            'status' => 'Active',
-        ]);
-
-        $employee = Employee::find($request->employee_id);
-        if ($employee) {
-            $employee->status = 'On Leave';
-            $employee->save();
-        }
-
-        flash('Conductor Leave Created Successfully!')->success();
-
-        return redirect()->route('conductor-leave.conductor.index');
-    }
-
-    public function edit(ConductorLeave $leave)
-    {
-        $conductors = Employee::whereHas('position', function ($q) {
-            $q->where('title', 'Conductor');
-        })->get();
-
-        return view('hr_department.leaves.conductor.edit', compact('leave', 'conductors'));
-    }
-
-    public function update(Request $request, ConductorLeave $leave)
-    {
-        $request->validate([
-            'employee_id' => 'required',
-            'leave_type' => 'required',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'reason' => 'nullable|string',
-        ]);
-
-        $days = Carbon::parse($request->start_date)->diffInDays(Carbon::parse($request->end_date)) + 1;
-
-        $leave->update([
-            'employee_id' => $request->employee_id,
-            'leave_type' => $request->leave_type,
-            'start_date' => $request->start_date,
-            'end_date' => $request->end_date,
-            'days' => $days,
-            'reason' => $request->reason,
-        ]);
-
-
-        flash('Leave updated successfully')->success();
-
-        return redirect()->route('conductor-leave.conductor.index');
     }
 }

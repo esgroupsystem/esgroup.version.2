@@ -1,8 +1,41 @@
+{{-- resources/views/layouts/partials/sidebar.blade.php --}}
+
+@php
+    use Illuminate\Support\Facades\Route;
+
+    $safeRoute = static function (string $name): string {
+        return Route::has($name) ? route($name) : '#';
+    };
+
+    $isDashboardActive =
+        request()->routeIs([
+            'dashboard.*',
+            'dashboard',
+            'chairman.*',
+            'items.dashboard',
+            'odometer.*',
+            'fleet.buses.*',
+        ]) ||
+        request()->is(['dashboard*', 'chairman/hr-data*', 'maintenance/items/dashboard*', 'odometer*', 'fleet/buses*']);
+
+    $isEmployeesActive = request()->routeIs(['employees.*', 'violation.*']) || request()->is(['employees*']);
+
+    $isBenefitsActive = request()->routeIs('claims.*') || request()->is('claims*');
+
+    $isLeavesActive = request()->routeIs(['employee-leave.*', 'driver-leave.*', 'conductor-leave.*']);
+
+    $isPayrollProcessActive = request()->routeIs([
+        'payroll-attendance-adjustments.*',
+        'attendance-summary.*',
+        'payroll.*',
+    ]);
+@endphp
+
 <nav class="navbar navbar-light navbar-vertical navbar-expand-xl px-4 px-lg-1">
     <div class="d-flex align-items-center">
         <div class="toggle-icon-wrapper">
-            <button class="btn navbar-toggler-humburger-icon navbar-vertical-toggle" data-bs-toggle="tooltip"
-                data-bs-placement="left" title="Toggle Navigation">
+            <button class="btn navbar-toggler-humburger-icon navbar-vertical-toggle" type="button"
+                data-bs-toggle="tooltip" data-bs-placement="left" title="Toggle Navigation">
                 <span class="navbar-toggle-icon">
                     <span class="toggle-line"></span>
                 </span>
@@ -20,15 +53,14 @@
         <div class="navbar-vertical-content scrollbar">
             <ul class="navbar-nav flex-column mb-3" id="navbarVerticalNav">
 
+                {{-- =============================================== --}}
+                {{-- ================= DASHBOARD =================== --}}
+                {{-- =============================================== --}}
 
-                {{-- =============================================== --}}
-                {{-- ================= DASHBOARD ================= --}}
-                {{-- =============================================== --}}
                 <li class="nav-item">
-                    <a class="nav-link dropdown-indicator d-flex justify-content-between align-items-center"
-                        href="#dashboardMenu" data-bs-toggle="collapse"
-                        aria-expanded="{{ request()->is('dashboard*') ? 'true' : 'false' }}"
-                        aria-controls="dashboardMenu">
+                    <a class="nav-link dropdown-indicator {{ $isDashboardActive ? 'active' : '' }}"
+                        href="#dashboardMenu" role="button" data-bs-toggle="collapse"
+                        aria-expanded="{{ $isDashboardActive ? 'true' : 'false' }}" aria-controls="dashboardMenu">
 
                         <div class="d-flex align-items-center">
                             <span class="nav-link-icon">
@@ -38,13 +70,11 @@
                         </div>
                     </a>
 
-                    <ul class="nav collapse {{ request()->is('dashboard*') ? 'show' : '' }}" id="dashboardMenu">
-
-                        {{-- Default Dashboard --}}
+                    <ul class="nav collapse {{ $isDashboardActive ? 'show' : '' }}" id="dashboardMenu">
                         @can('dashboard.view')
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}"
-                                    href="{{ route('dashboard.index') }}">
+                                <a class="nav-link {{ request()->routeIs('dashboard.index') || request()->is('dashboard') ? 'active' : '' }}"
+                                    href="{{ $safeRoute('dashboard.index') }}">
                                     Default
                                 </a>
                             </li>
@@ -52,48 +82,44 @@
 
                         @can('chairman.view')
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('chairman/hr-data') ? 'active' : '' }}"
-                                    href="{{ route('chairman.hr-data.index') }}">
+                                <a class="nav-link {{ request()->routeIs('chairman.hr-data.index') || request()->is('chairman/hr-data*') ? 'active' : '' }}"
+                                    href="{{ $safeRoute('chairman.hr-data.index') }}">
                                     All Data
                                 </a>
                             </li>
                         @endcan
 
-                        {{-- HR Dashboard --}}
                         @can('hr-dashboard.view')
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('dashboard/hr') ? 'active' : '' }}"
-                                    href="{{ route('hr.dashboard') }}">
+                                <a class="nav-link {{ request()->routeIs('hr.dashboard') || request()->is('dashboard/hr') ? 'active' : '' }}"
+                                    href="{{ $safeRoute('hr.dashboard') }}">
                                     Employees
                                 </a>
                             </li>
                         @endcan
 
-                        {{-- IT Dashboard --}}
                         @can('dashboard.it')
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('dashboard/it-department') ? 'active' : '' }}"
-                                    href="{{ route('dashboard.itindex') }}">
+                                <a class="nav-link {{ request()->routeIs('dashboard.itindex') || request()->is('dashboard/it-department') ? 'active' : '' }}"
+                                    href="{{ $safeRoute('dashboard.itindex') }}">
                                     IT Department
                                 </a>
                             </li>
                         @endcan
 
-                        {{-- Maintenance Dashboard --}}
                         @can('items.view')
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('maintenance/items/dashboard') ? 'active' : '' }}"
-                                    href="{{ route('items.dashboard') }}">
+                                <a class="nav-link {{ request()->routeIs('items.dashboard') || request()->is('maintenance/items/dashboard') ? 'active' : '' }}"
+                                    href="{{ $safeRoute('items.dashboard') }}">
                                     Maintenance Stock
                                 </a>
                             </li>
                         @endcan
 
-                        {{-- Odometer --}}
                         @can('odometer.view')
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('odometer-index*') ? 'active' : '' }}"
-                                    href="{{ route('odometer.index') }}">
+                                <a class="nav-link {{ request()->routeIs('odometer.*') || request()->is('odometer*') ? 'active' : '' }}"
+                                    href="{{ $safeRoute('odometer.index') }}">
                                     Odometer Monitoring
                                 </a>
                             </li>
@@ -101,23 +127,20 @@
 
                         @can('fleet.view')
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('fleet/buses/analytics') ? 'active' : '' }}"
-                                    href="{{ route('fleet.buses.index') }}">
+                                <a class="nav-link {{ request()->routeIs('fleet.buses.*') || request()->is('fleet/buses*') ? 'active' : '' }}"
+                                    href="{{ $safeRoute('fleet.buses.index') }}">
                                     Bus Analytics
                                 </a>
                             </li>
                         @endcan
-
                     </ul>
                 </li>
 
-
-                {{-- ========================================================= --}}
-                {{-- ================= IT Department ================= --}}
-                {{-- ========================================================= --}}
+                {{-- =============================================== --}}
+                {{-- =============== IT DEPARTMENT ================= --}}
+                {{-- =============================================== --}}
 
                 @canany(['tickets.view', 'cctv.view', 'it-inventory.view'])
-
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -129,11 +152,10 @@
                         </div>
                     </li>
 
-                    {{-- Bus Dashboard --}}
                     @can('cctv.view')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('concern.bus-status') ? 'active' : '' }}"
-                                href="{{ route('concern.bus-status') }}">
+                                href="{{ $safeRoute('concern.bus-status') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-bus"></span>
@@ -146,8 +168,8 @@
 
                     @can('tickets.view')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->is('tickets/job-order') ? 'active' : '' }}"
-                                href="{{ route('tickets.joborder.index') }}">
+                            <a class="nav-link {{ request()->routeIs('tickets.joborder.*') || request()->is('tickets/job-order*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('tickets.joborder.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-ticket-alt"></span>
@@ -160,8 +182,8 @@
 
                     @can('cctv.view')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->is('tickets/cctv') ? 'active' : '' }}"
-                                href="{{ route('concern.cctv.index') }}">
+                            <a class="nav-link {{ request()->routeIs('concern.cctv.*') || request()->is('tickets/cctv*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('concern.cctv.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-video"></span>
@@ -175,7 +197,7 @@
                     @can('it-inventory.view')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('it-inventory.*') ? 'active' : '' }}"
-                                href="{{ route('it-inventory.index') }}">
+                                href="{{ $safeRoute('it-inventory.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <i class="fas fa-laptop-house"></i>
@@ -185,16 +207,13 @@
                             </a>
                         </li>
                     @endcan
-
                 @endcanany
 
-
                 {{-- =============================================== --}}
-                {{-- ================= EMPLOYEES ================= --}}
+                {{-- ================= HR DEPARTMENT =============== --}}
                 {{-- =============================================== --}}
 
                 @canany(['employees.view', 'departments.view', 'violations.view'])
-
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -207,9 +226,9 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link dropdown-indicator {{ request()->is('employees*') ? 'active' : '' }}"
+                        <a class="nav-link dropdown-indicator {{ $isEmployeesActive ? 'active' : '' }}"
                             href="#employeesMenu" role="button" data-bs-toggle="collapse"
-                            aria-expanded="{{ request()->is('employees*') ? 'true' : 'false' }}">
+                            aria-expanded="{{ $isEmployeesActive ? 'true' : 'false' }}" aria-controls="employeesMenu">
 
                             <div class="d-flex align-items-center">
                                 <span class="nav-link-icon">
@@ -219,54 +238,46 @@
                             </div>
                         </a>
 
-                        <ul class="nav collapse {{ request()->is('employees*') ? 'show' : '' }}" id="employeesMenu">
-
+                        <ul class="nav collapse {{ $isEmployeesActive ? 'show' : '' }}" id="employeesMenu">
                             @can('employees.view')
                                 <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('employees') ? 'active' : '' }}"
-                                        href="{{ route('employees.staff.index') }}">
-                                        <span class="nav-link-text">
-                                            Employee List
-                                        </span>
+                                    <a class="nav-link {{ request()->routeIs('employees.staff.*') || request()->is('employees') ? 'active' : '' }}"
+                                        href="{{ $safeRoute('employees.staff.index') }}">
+                                        <span class="nav-link-text">Employee List</span>
                                     </a>
                                 </li>
                             @endcan
 
                             @can('departments.view')
                                 <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('employees/departments*') || request()->is('employees/positions*') ? 'active' : '' }}"
-                                        href="{{ route('employees.departments.index') }}">
-                                        <span class="nav-link-text">
-                                            Department & Position
-                                        </span>
+                                    <a class="nav-link {{ request()->routeIs('employees.departments.*') || request()->is('employees/departments*', 'employees/positions*') ? 'active' : '' }}"
+                                        href="{{ $safeRoute('employees.departments.index') }}">
+                                        <span class="nav-link-text">Department & Position</span>
                                     </a>
                                 </li>
                             @endcan
 
                             @can('violations.view')
                                 <li class="nav-item">
-                                    <a class="nav-link {{ request()->is('employees/offenses*') ? 'active' : '' }}"
-                                        href="{{ route('violation.offenses.index') }}">
-                                        <span class="nav-link-text">
-                                            HR Offenses
-                                        </span>
+                                    <a class="nav-link {{ request()->routeIs('violation.offenses.*') || request()->is('employees/offenses*') ? 'active' : '' }}"
+                                        href="{{ $safeRoute('violation.offenses.index') }}">
+                                        <span class="nav-link-text">HR Offenses</span>
                                     </a>
                                 </li>
                             @endcan
-
                         </ul>
                     </li>
-
                 @endcanany
-                {{-- ============================================== --}}
-                {{-- ================= BENEFITS ================= --}}
-                {{-- ============================================== --}}
+
+                {{-- =============================================== --}}
+                {{-- ================= BENEFITS ==================== --}}
+                {{-- =============================================== --}}
 
                 @can('claims.view')
                     <li class="nav-item">
-                        <a class="nav-link dropdown-indicator {{ request()->is('claims*') ? 'active' : '' }}"
+                        <a class="nav-link dropdown-indicator {{ $isBenefitsActive ? 'active' : '' }}"
                             href="#benefitsMenu" role="button" data-bs-toggle="collapse"
-                            aria-expanded="{{ request()->is('claims*') ? 'true' : 'false' }}">
+                            aria-expanded="{{ $isBenefitsActive ? 'true' : 'false' }}" aria-controls="benefitsMenu">
 
                             <div class="d-flex align-items-center">
                                 <span class="nav-link-icon">
@@ -276,100 +287,78 @@
                             </div>
                         </a>
 
-                        <ul class="nav collapse {{ request()->is('claims*') ? 'show' : '' }}" id="benefitsMenu">
-
+                        <ul class="nav collapse {{ $isBenefitsActive ? 'show' : '' }}" id="benefitsMenu">
                             <li class="nav-item">
-                                <a class="nav-link {{ request()->is('claims*') ? 'active' : '' }}"
-                                    href="{{ route('claims.index') }}">
-                                    <span class="nav-link-text">
-                                        SSS / Maternity / Paternity
-                                    </span>
+                                <a class="nav-link {{ request()->routeIs('claims.*') || request()->is('claims*') ? 'active' : '' }}"
+                                    href="{{ $safeRoute('claims.index') }}">
+                                    <span class="nav-link-text">SSS / Maternity / Paternity</span>
                                 </a>
                             </li>
 
                             <li class="nav-item">
-                                <a class="nav-link disabled text-muted" href="#">
-                                    <span class="nav-link-text">
-                                        Cash Advance (Coming Soon)
-                                    </span>
+                                <a class="nav-link disabled text-muted" href="#" tabindex="-1"
+                                    aria-disabled="true">
+                                    <span class="nav-link-text">Cash Advance (Coming Soon)</span>
                                 </a>
                             </li>
-
                         </ul>
                     </li>
                 @endcan
 
-
-                {{-- ======================================================= --}}
-                {{-- ================= Attendance Parent ================= --}}
-                {{-- ======================================================= --}}
+                {{-- =============================================== --}}
+                {{-- ================= LEAVES ====================== --}}
+                {{-- =============================================== --}}
 
                 @canany(['employee-leave.view', 'driver-leave.view', 'conductor-leave.view'])
-
                     <li class="nav-item">
-                        <a class="nav-link dropdown-indicator {{ request()->is('attendance*') || request()->is('leave*') ? 'active' : '' }}"
-                            href="#attendanceMenu" role="button" data-bs-toggle="collapse"
-                            aria-expanded="{{ request()->is('attendance*') || request()->is('leave*') ? 'true' : 'false' }}">
+                        <a class="nav-link dropdown-indicator {{ $isLeavesActive ? 'active' : '' }}" href="#leavesMenu"
+                            role="button" data-bs-toggle="collapse"
+                            aria-expanded="{{ $isLeavesActive ? 'true' : 'false' }}" aria-controls="leavesMenu">
 
                             <div class="d-flex align-items-center">
                                 <span class="nav-link-icon">
-                                    <span class="fas fa-calendar-check"></span>
+                                    <span class="fas fa-calendar-alt"></span>
                                 </span>
-                                <span class="nav-link-text ps-1">Attendance</span>
+                                <span class="nav-link-text ps-1">Leaves</span>
                             </div>
                         </a>
 
-                        <ul class="nav collapse {{ request()->is('attendance*') || request()->is('leave*') ? 'show' : '' }}"
-                            id="attendanceMenu">
+                        <ul class="nav collapse {{ $isLeavesActive ? 'show' : '' }}" id="leavesMenu">
+                            @can('employee-leave.view')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->routeIs('employee-leave.*') ? 'active' : '' }}"
+                                        href="{{ $safeRoute('employee-leave.employee.index') }}">
+                                        <span class="nav-link-text ps-1">Admin</span>
+                                    </a>
+                                </li>
+                            @endcan
 
-                            <li class="nav-item">
+                            @can('driver-leave.view')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->routeIs('driver-leave.*') ? 'active' : '' }}"
+                                        href="{{ $safeRoute('driver-leave.driver.index') }}">
+                                        <span class="nav-link-text ps-1">Driver</span>
+                                    </a>
+                                </li>
+                            @endcan
 
-                                <a class="nav-link dropdown-indicator {{ request()->is('leave*') ? 'active' : '' }}"
-                                    href="#leaveMenu" role="button" data-bs-toggle="collapse">
-
-                                    <span class="nav-link-text">
-                                        Leaves
-                                    </span>
-                                </a>
-
-                                <ul class="nav collapse {{ request()->is('leave*') ? 'show' : '' }}" id="leaveMenu">
-
-                                    @can('employee-leave.view')
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="{{ route('employee-leave.employee.index') }}">
-                                                <span class="nav-link-text">Employee</span>
-                                            </a>
-                                        </li>
-                                    @endcan
-
-                                    @can('driver-leave.view')
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="{{ route('driver-leave.driver.index') }}">
-                                                <span class="nav-link-text">Driver</span>
-                                            </a>
-                                        </li>
-                                    @endcan
-
-                                    @can('conductor-leave.view')
-                                        <li class="nav-item">
-                                            <a class="nav-link" href="{{ route('conductor-leave.conductor.index') }}">
-                                                <span class="nav-link-text">Conductor</span>
-                                            </a>
-                                        </li>
-                                    @endcan
-
-                                </ul>
-                            </li>
-
+                            @can('conductor-leave.view')
+                                <li class="nav-item">
+                                    <a class="nav-link {{ request()->routeIs('conductor-leave.*') ? 'active' : '' }}"
+                                        href="{{ $safeRoute('conductor-leave.conductor.index') }}">
+                                        <span class="nav-link-text ps-1">Conductor</span>
+                                    </a>
+                                </li>
+                            @endcan
                         </ul>
                     </li>
-
                 @endcanany
 
+                {{-- =============================================== --}}
+                {{-- ============ BIOMETRIC MANAGEMENT ============= --}}
+                {{-- =============================================== --}}
 
-                {{-- ================= BIOMETRIC ================= --}}
-
-                @can('mirasol-logs.view')
+                @canany(['mirasol-logs.view', 'manual-biometrics.view'])
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -381,44 +370,40 @@
                         </div>
                     </li>
 
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('mirasol-logs.*') ? 'active' : '' }}"
-                            href="{{ route('mirasol-logs.index') }}">
+                    @can('mirasol-logs.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('mirasol-logs.*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('mirasol-logs.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-fingerprint"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">Mirasol Biometrics</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
 
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-fingerprint"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">
-                                    Mirasol Biometrics
-                                </span>
-                            </div>
-                        </a>
-                    </li>
-                @endcan
+                    @can('manual-biometrics.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('manual-biometrics.*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('manual-biometrics.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-keyboard"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">Manual Biometrics</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
+                @endcanany
 
+                {{-- =============================================== --}}
+                {{-- ========== EMPLOYEE SCHEDULE / RATES ========== --}}
+                {{-- =============================================== --}}
 
-                @can('manual-biometrics.view')
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('manual-biometrics.*') ? 'active' : '' }}"
-                            href="{{ route('manual-biometrics.index') }}">
-
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-keyboard"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">
-                                    Manual Biometrics
-                                </span>
-                            </div>
-                        </a>
-                    </li>
-                @endcan
-
-
-                {{-- Employee Schedule / Rates --}}
-
-                @canany(['payroll-plotting.view', 'employee-salaries.view'])
+                @canany(['biometrics.view', 'payroll-plotting.view', 'employee-salaries.view'])
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -433,31 +418,26 @@
                     @can('biometrics.view')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('biometrics.employees.*') ? 'active' : '' }}"
-                                href="{{ route('biometrics.employees.index') }}">
+                                href="{{ $safeRoute('biometrics.employees.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-fingerprint"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">
-                                        Employees
-                                    </span>
+                                    <span class="nav-link-text ps-1">Employees</span>
                                 </div>
                             </a>
                         </li>
                     @endcan
 
-
                     @can('payroll-plotting.view')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->is('payroll-plotting*') ? 'active' : '' }}"
-                                href="{{ route('payroll-plotting.index') }}">
+                            <a class="nav-link {{ request()->routeIs('payroll-plotting.*') || request()->is('payroll-plotting*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('payroll-plotting.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-calendar-alt"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">
-                                        Work Schedule
-                                    </span>
+                                    <span class="nav-link-text ps-1">Work Schedule</span>
                                 </div>
                             </a>
                         </li>
@@ -466,39 +446,35 @@
                     @can('employee-salaries.view')
                         <li class="nav-item">
                             <a class="nav-link {{ request()->routeIs('payroll-employee-salaries.*') ? 'active' : '' }}"
-                                href="{{ route('payroll-employee-salaries.index') }}">
+                                href="{{ $safeRoute('payroll-employee-salaries.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-money-bill-wave"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">
-                                        Employee Rates
+                                    <span class="nav-link-text ps-1">Employee Rates</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
+
+                    @can('holidays.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('holidays.*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('holidays.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <i class="fas fa-calendar-alt"></i>
                                     </span>
+                                    <span class="nav-link-text ps-1">Holiday Calendar</span>
                                 </div>
                             </a>
                         </li>
                     @endcan
                 @endcanany
 
-
-                @can('holidays.view')
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('holidays.*') ? 'active' : '' }}"
-                            href="{{ route('holidays.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <i class="fas fa-calendar-alt"></i>
-                                </span>
-                                <span class="nav-link-text ms-2">
-                                    Holiday Calendar
-                                </span>
-                            </div>
-                        </a>
-                    </li>
-                @endcan
-
-
-                {{-- Payroll Process --}}
+                {{-- =============================================== --}}
+                {{-- =============== PAYROLL PROCESS =============== --}}
+                {{-- =============================================== --}}
 
                 @canany(['payroll-attendance-adjustments.view', 'attendance-summary.view', 'payroll.view'])
                     <li class="nav-item">
@@ -514,14 +490,13 @@
 
                     @can('payroll-attendance-adjustments.view')
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('payroll-attendance-adjustments.index') }}">
+                            <a class="nav-link {{ request()->routeIs('payroll-attendance-adjustments.*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('payroll-attendance-adjustments.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-edit"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">
-                                        Adjustment
-                                    </span>
+                                    <span class="nav-link-text ps-1">Adjustment</span>
                                 </div>
                             </a>
                         </li>
@@ -529,14 +504,13 @@
 
                     @can('attendance-summary.view')
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('attendance-summary.index') }}">
+                            <a class="nav-link {{ request()->routeIs('attendance-summary.*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('attendance-summary.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-clipboard-list"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">
-                                        Summary
-                                    </span>
+                                    <span class="nav-link-text ps-1">Summary</span>
                                 </div>
                             </a>
                         </li>
@@ -544,24 +518,22 @@
 
                     @can('payroll.view')
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('payroll.index') }}">
+                            <a class="nav-link {{ request()->routeIs('payroll.*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('payroll.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-money-check-alt"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">
-                                        Payroll
-                                    </span>
+                                    <span class="nav-link-text ps-1">Payroll</span>
                                 </div>
                             </a>
                         </li>
                     @endcan
                 @endcanany
 
-
-                {{-- ======================================================= --}}
-                {{-- ================= MAINTENANCE ================= --}}
-                {{-- ======================================================= --}}
+                {{-- =============================================== --}}
+                {{-- ================ STOCK MOVEMENTS ============== --}}
+                {{-- =============================================== --}}
 
                 @can('parts-out.view')
                     <li class="nav-item">
@@ -576,69 +548,69 @@
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->is('parts-out*') ? 'active' : '' }}"
-                            href="{{ route('parts-out.index') }}">
+                        <a class="nav-link {{ request()->routeIs('parts-out.*') || request()->is('parts-out*') ? 'active' : '' }}"
+                            href="{{ $safeRoute('parts-out.index') }}">
                             <div class="d-flex align-items-center">
                                 <span class="nav-link-icon">
                                     <span class="fas fa-tools"></span>
                                 </span>
-                                <span class="nav-link-text ps-1">
-                                    Parts Issuance
-                                </span>
+                                <span class="nav-link-text ps-1">Parts Issuance</span>
                             </div>
                         </a>
                     </li>
                 @endcan
 
-                @can('buses.view')
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('maintenance.job-orders.*') ? 'active' : '' }}"
-                            href="{{ route('maintenance.job-orders.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-clipboard-list"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">Maintenance Job Orders</span>
-                            </div>
-                        </a>
-                    </li>
-                @endcan
+                {{-- =============================================== --}}
+                {{-- ================ MAINTENANCE ================== --}}
+                {{-- =============================================== --}}
 
+                @canany(['buses.view', 'allbus.view'])
+                    @can('buses.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('maintenance.job-orders.*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('maintenance.job-orders.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-clipboard-list"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">Maintenance Job Orders</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
 
-                @can('buses.view')
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('buses*') ? 'active' : '' }}"
-                            href="{{ route('buses.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-bus"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">
-                                    Vehicle History
-                                </span>
-                            </div>
-                        </a>
-                    </li>
-                @endcan
+                    @can('buses.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('buses.*') || request()->is('buses*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('buses.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-bus"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">Vehicle History</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
 
+                    @can('allbus.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('allbus.*') || request()->is('allbus*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('allbus.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-bus"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">Bus List</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
+                @endcanany
 
-                @can('allbus.view')
-                    <li class="nav-item">
-                        <a class="nav-link {{ request()->is('allbus*') ? 'active' : '' }}"
-                            href="{{ route('allbus.index') }}">
-                            <div class="d-flex align-items-center">
-                                <span class="nav-link-icon">
-                                    <span class="fas fa-bus"></span>
-                                </span>
-                                <span class="nav-link-text ps-1">
-                                    Bus List
-                                </span>
-                            </div>
-                        </a>
-                    </li>
-                @endcan
-
-
+                {{-- =============================================== --}}
+                {{-- ============= INVENTORY MANAGEMENT ============ --}}
+                {{-- =============================================== --}}
 
                 @canany(['receivings.view', 'stock-transfers.view'])
                     <li class="nav-item">
@@ -654,43 +626,36 @@
 
                     @can('receivings.view')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->is('receivings*') ? 'active' : '' }}"
-                                href="{{ route('receivings.index') }}">
+                            <a class="nav-link {{ request()->routeIs('receivings.*') || request()->is('receivings*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('receivings.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-truck-loading"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">
-                                        Receiving Area
-                                    </span>
+                                    <span class="nav-link-text ps-1">Receiving Area</span>
                                 </div>
                             </a>
                         </li>
                     @endcan
 
-
                     @can('stock-transfers.view')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->is('stock-transfers*') ? 'active' : '' }}"
-                                href="{{ route('stock-transfers.index') }}">
+                            <a class="nav-link {{ request()->routeIs('stock-transfers.*') || request()->is('stock-transfers*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('stock-transfers.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-exchange-alt"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">
-                                        Stock Transfer
-                                    </span>
+                                    <span class="nav-link-text ps-1">Stock Transfer</span>
                                 </div>
                             </a>
                         </li>
                     @endcan
                 @endcanany
 
-
-
-                {{-- ===================================================== --}}
-                {{-- ================= Products ================= --}}
-                {{-- ===================================================== --}}
+                {{-- =============================================== --}}
+                {{-- ============= PRODUCTS MANAGEMENT ============= --}}
+                {{-- =============================================== --}}
 
                 @canany(['category.view', 'items.view'])
                     <li class="nav-item">
@@ -704,48 +669,38 @@
                         </div>
                     </li>
 
-
                     @can('category.view')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->is('category*') ? 'active' : '' }}"
-                                href="{{ route('category.index') }}">
-
+                            <a class="nav-link {{ request()->routeIs('category.*') || request()->is('category*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('category.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="far fa-list-alt"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">
-                                        Categories
-                                    </span>
+                                    <span class="nav-link-text ps-1">Categories</span>
                                 </div>
                             </a>
                         </li>
                     @endcan
 
-
                     @can('items.view')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->is('items*') ? 'active' : '' }}"
-                                href="{{ route('items.index') }}">
-
+                            <a class="nav-link {{ request()->routeIs('items.*') || request()->is('items*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('items.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-toolbox"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">
-                                        Products
-                                    </span>
+                                    <span class="nav-link-text ps-1">Products</span>
                                 </div>
                             </a>
                         </li>
                     @endcan
                 @endcanany
 
-
-
-                {{-- ========================================================== --}}
-                {{-- ================= Authentication ================= --}}
-                {{-- ========================================================== --}}
+                {{-- =============================================== --}}
+                {{-- ================ AUTHENTICATION =============== --}}
+                {{-- =============================================== --}}
 
                 @canany(['users.view', 'roles.view'])
                     <li class="nav-item">
@@ -759,44 +714,36 @@
                         </div>
                     </li>
 
-
                     @can('users.view')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->is('authentication/users*') ? 'active' : '' }}"
-                                href="{{ route('authentication.users.index') }}">
-
+                            <a class="nav-link {{ request()->routeIs('authentication.users.*') || request()->is('authentication/users*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('authentication.users.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-user-shield"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">
-                                        Users
-                                    </span>
+                                    <span class="nav-link-text ps-1">Users</span>
                                 </div>
                             </a>
                         </li>
                     @endcan
 
-
                     @can('roles.view')
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->is('authentication/roles*') ? 'active' : '' }}"
-                                href="{{ route('roles.index') }}">
-
+                            <a class="nav-link {{ request()->routeIs('roles.*') || request()->is('authentication/roles*') ? 'active' : '' }}"
+                                href="{{ $safeRoute('roles.index') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="nav-link-icon">
                                         <span class="fas fa-user-secret"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">
-                                        Roles
-                                    </span>
+                                    <span class="nav-link-text ps-1">Roles</span>
                                 </div>
                             </a>
                         </li>
                     @endcan
                 @endcanany
+
             </ul>
         </div>
     </div>
-
 </nav>

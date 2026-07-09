@@ -3,82 +3,357 @@
 
 @section('content')
     <div class="container" data-layout="container">
-        <div class="content">
+        <div class="content employee-leave-form-page">
 
-            {{-- HEADER CARD --}}
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h4>Edit Employee Leave</h4>
-                    <p class="text-muted">Modify the leave details below.</p>
+            <div class="card mb-4 overflow-hidden">
+                <div class="bg-holder d-none d-lg-block bg-card"
+                    style="background-image:url(/assets/img/icons/spot-illustrations/corner-4.png);">
+                </div>
+
+                <div class="card-body position-relative">
+                    <div class="row align-items-center g-3">
+                        <div class="col-lg-8">
+                            <h3 class="mb-1">Edit Employee Leave</h3>
+                            <p class="text-700 mb-0">
+                                Update employee leave details, garage assignment visibility, and HR notes.
+                            </p>
+                        </div>
+
+                        <div class="col-lg-4 text-lg-end">
+                            <a href="{{ route('employee-leave.employee.index') }}" class="btn btn-falcon-default">
+                                <span class="fas fa-arrow-left me-1"></span>
+                                Back to Records
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {{-- FORM CARD --}}
-            <div class="card p-4">
+            @if ($errors->any())
+                <div class="alert alert-danger border-0 shadow-sm">
+                    <h6 class="alert-heading">Please fix the following:</h6>
+                    <ul class="mb-0">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
-                <form action="{{ route('employee-leave.employee.update', $leave) }}" method="POST">
-                    @csrf
-                    @method('PUT')
+            @php
+                $status = strtolower($leave->status ?? 'active');
+                $statusColor = match ($status) {
+                    'completed' => 'success',
+                    'cancelled' => 'secondary',
+                    'terminated' => 'danger',
+                    'inactive' => 'warning',
+                    default => 'primary',
+                };
+            @endphp
 
-                    <div class="row g-3">
+            <form action="{{ route('employee-leave.employee.update', $leave) }}" method="POST">
+                @csrf
+                @method('PUT')
 
-                        {{-- Employee --}}
-                        <div class="col-md-6">
-                            <label class="form-label">Employee</label>
-                            <select name="employee_id" class="form-select" required>
-                                @foreach ($employees as $emp)
-                                    <option value="{{ $emp->id }}" {{ $emp->id == $leave->employee_id ? 'selected' : '' }}>
-                                        {{ $emp->full_name }} ({{ $emp->position?->title ?? '-' }})
-                                    </option>
-                                @endforeach
-                            </select>
+                <div class="row g-4">
+                    <div class="col-xl-8">
+                        <div class="card">
+                            <div class="card-header bg-body-tertiary">
+                                <div class="d-flex justify-content-between align-items-start gap-3">
+                                    <div>
+                                        <h5 class="mb-0">Leave Information</h5>
+                                        <p class="mb-0 text-600 small">
+                                            Review and update the selected leave record.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <span
+                                            class="badge rounded-pill badge-subtle-{{ $statusColor }} text-{{ $statusColor }}">
+                                            {{ ucfirst($leave->status ?? 'Active') }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-12">
+                                        <label for="employee_id" class="form-label fw-semi-bold">
+                                            Employee <span class="text-danger">*</span>
+                                        </label>
+
+                                        <select name="employee_id" id="employee_id"
+                                            class="form-select @error('employee_id') is-invalid @enderror" required>
+                                            <option value="">Select Employee</option>
+
+                                            @foreach ($employees as $employee)
+                                                <option value="{{ $employee->id }}" data-name="{{ $employee->full_name }}"
+                                                    data-position="{{ $employee->position?->title ?? 'No position' }}"
+                                                    data-garage="{{ $employee->garage ?? 'No Garage Assigned' }}"
+                                                    data-company="{{ $employee->company ?? 'No Company' }}"
+                                                    data-status="{{ $employee->status ?? 'No Status' }}"
+                                                    data-employee-no="{{ $employee->employee_id_permanent ?? $employee->employee_id }}"
+                                                    {{ old('employee_id', $leave->employee_id) == $employee->id ? 'selected' : '' }}>
+                                                    {{ $employee->full_name }}
+                                                    | {{ $employee->garage ?? 'No Garage' }}
+                                                    | {{ $employee->position?->title ?? 'Employee' }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+
+                                        @error('employee_id')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semi-bold">
+                                            Leave Type <span class="text-danger">*</span>
+                                        </label>
+
+                                        <select name="leave_type"
+                                            class="form-select @error('leave_type') is-invalid @enderror" required>
+                                            @foreach (['Medical Leave', 'Emergency Leave', 'Vacation Leave', 'Others'] as $type)
+                                                <option value="{{ $type }}"
+                                                    {{ old('leave_type', $leave->leave_type) === $type ? 'selected' : '' }}>
+                                                    {{ $type }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+
+                                        @error('leave_type')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semi-bold">
+                                            Start Date <span class="text-danger">*</span>
+                                        </label>
+
+                                        <input type="date" name="start_date"
+                                            class="form-control @error('start_date') is-invalid @enderror"
+                                            value="{{ old('start_date', optional($leave->start_date)->format('Y-m-d')) }}"
+                                            required>
+
+                                        @error('start_date')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semi-bold">
+                                            End Date <span class="text-danger">*</span>
+                                        </label>
+
+                                        <input type="date" name="end_date"
+                                            class="form-control @error('end_date') is-invalid @enderror"
+                                            value="{{ old('end_date', optional($leave->end_date)->format('Y-m-d')) }}"
+                                            required>
+
+                                        @error('end_date')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <label class="form-label fw-semi-bold">Reason / Remarks</label>
+
+                                        <textarea name="reason" class="form-control @error('reason') is-invalid @enderror" rows="4"
+                                            placeholder="Enter leave reason, supporting details, or HR note.">{{ old('reason', $leave->reason) }}</textarea>
+
+                                        @error('reason')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-footer bg-body-tertiary text-end">
+                                <a href="{{ route('employee-leave.employee.index') }}" class="btn btn-falcon-default me-2">
+                                    Cancel
+                                </a>
+
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="fas fa-save me-1"></span>
+                                    Save Changes
+                                </button>
+                            </div>
                         </div>
-
-                        {{-- Leave Type --}}
-                        <div class="col-md-6">
-                            <label class="form-label">Leave Type</label>
-                            <select name="leave_type" class="form-select" required>
-                                <option value="Medical Leave" {{ $leave->leave_type == 'Medical Leave' ? 'selected' : '' }}>
-                                    Medical Leave</option>
-                                <option value="Emergency Leave"
-                                    {{ $leave->leave_type == 'Emergency Leave' ? 'selected' : '' }}>Emergency Leave</option>
-                                <option value="Vacation Leave"
-                                    {{ $leave->leave_type == 'Vacation Leave' ? 'selected' : '' }}>Vacation Leave</option>
-                                <option value="Others" {{ $leave->leave_type == 'Others' ? 'selected' : '' }}>Others
-                                </option>
-                            </select>
-                        </div>
-
-                        {{-- Start Date --}}
-                        <div class="col-md-6">
-                            <label class="form-label">Start Date</label>
-                            <input type="date" name="start_date" class="form-control" value="{{ $leave->start_date }}"
-                                required>
-                        </div>
-
-                        {{-- End Date --}}
-                        <div class="col-md-6">
-                            <label class="form-label">End Date</label>
-                            <input type="date" name="end_date" class="form-control" value="{{ $leave->end_date }}"
-                                required>
-                        </div>
-
-                        {{-- Reason --}}
-                        <div class="col-12">
-                            <label class="form-label">Reason</label>
-                            <textarea name="reason" class="form-control" rows="3">{{ $leave->reason }}</textarea>
-                        </div>
-
                     </div>
 
-                    <div class="mt-4 text-end">
-                        <a href="{{ route('employee-leave.employee.index') }}" class="btn btn-secondary me-2">Cancel</a>
-                        <button class="btn btn-primary">Save Changes</button>
+                    <div class="col-xl-4">
+                        <div class="card mb-3">
+                            <div class="card-header bg-body-tertiary">
+                                <h5 class="mb-0">Selected Employee Details</h5>
+                            </div>
+
+                            <div class="card-body">
+                                <div id="employeePreview">
+                                    <h5 id="previewName" class="mb-1">-</h5>
+                                    <div class="text-600 small mb-3" id="previewEmployeeNo">-</div>
+
+                                    <div class="detail-row">
+                                        <span>Position</span>
+                                        <strong id="previewPosition">-</strong>
+                                    </div>
+
+                                    <div class="detail-row">
+                                        <span>Garage</span>
+                                        <strong id="previewGarage">-</strong>
+                                    </div>
+
+                                    <div class="detail-row">
+                                        <span>Company</span>
+                                        <strong id="previewCompany">-</strong>
+                                    </div>
+
+                                    <div class="detail-row">
+                                        <span>Status</span>
+                                        <strong id="previewStatus">-</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-header bg-body-tertiary">
+                                <h5 class="mb-0">Current Notice Status</h5>
+                            </div>
+
+                            <div class="card-body">
+                                <div class="notice-list">
+                                    <div class="notice-line">
+                                        <span class="fas fa-paper-plane text-info me-2"></span>
+                                        <div>
+                                            <strong>1st Notice</strong>
+                                            <div class="small text-600">
+                                                {{ $leave->first_notice_sent_at ? $leave->first_notice_sent_at->format('M d, Y h:i A') : 'Pending' }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="notice-line">
+                                        <span class="fas fa-user-slash text-warning me-2"></span>
+                                        <div>
+                                            <strong>2nd Notice</strong>
+                                            <div class="small text-600">
+                                                {{ $leave->second_notice_sent_at ? $leave->second_notice_sent_at->format('M d, Y h:i A') : 'Pending' }}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="notice-line">
+                                        <span class="fas fa-file-signature text-danger me-2"></span>
+                                        <div>
+                                            <strong>Final Notice</strong>
+                                            <div class="small text-600">
+                                                {{ $leave->final_notice_sent_at ? $leave->final_notice_sent_at->format('M d, Y h:i A') : 'Pending' }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <hr>
+
+                                <div class="small text-700">
+                                    2nd Notice automatically makes the employee <strong>Inactive</strong>.
+                                </div>
+                            </div>
+                        </div>
+
+                        @if ($leave->last_action_note)
+                            <div class="card">
+                                <div class="card-header bg-body-tertiary">
+                                    <h5 class="mb-0">Last Action Note</h5>
+                                </div>
+
+                                <div class="card-body">
+                                    <p class="mb-0 text-700">{{ $leave->last_action_note }}</p>
+                                </div>
+                            </div>
+                        @endif
                     </div>
+                </div>
+            </form>
 
-                </form>
-
-            </div>
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        window.addEventListener('load', function() {
+            const employeeSelect = document.getElementById('employee_id');
+
+            function updateEmployeePreview() {
+                const selected = employeeSelect.options[employeeSelect.selectedIndex];
+
+                if (!selected || !selected.value) {
+                    return;
+                }
+
+                document.getElementById('previewName').innerText = selected.dataset.name || '-';
+                document.getElementById('previewEmployeeNo').innerText = selected.dataset.employeeNo ||
+                    'No Employee ID';
+                document.getElementById('previewPosition').innerText = selected.dataset.position || '-';
+                document.getElementById('previewGarage').innerText = selected.dataset.garage || '-';
+                document.getElementById('previewCompany').innerText = selected.dataset.company || '-';
+                document.getElementById('previewStatus').innerText = selected.dataset.status || '-';
+            }
+
+            if (typeof jQuery !== 'undefined' && typeof jQuery.fn.select2 !== 'undefined') {
+                const select = $('#employee_id');
+
+                if (select.hasClass('select2-hidden-accessible')) {
+                    select.select2('destroy');
+                }
+
+                select.select2({
+                    width: '100%',
+                    placeholder: 'Search employee by name, garage, or position...',
+                    allowClear: true
+                });
+
+                select.on('change', updateEmployeePreview);
+            } else {
+                employeeSelect.addEventListener('change', updateEmployeePreview);
+            }
+
+            updateEmployeePreview();
+        });
+    </script>
+@endpush
+
+@push('styles')
+    <style>
+        .employee-leave-form-page .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px solid var(--falcon-gray-200, #edf2f9);
+            padding: .75rem 0;
+        }
+
+        .employee-leave-form-page .detail-row:last-child {
+            border-bottom: 0;
+        }
+
+        .employee-leave-form-page .detail-row span {
+            color: var(--falcon-gray-600, #748194);
+        }
+
+        .employee-leave-form-page .notice-list {
+            display: flex;
+            flex-direction: column;
+            gap: .85rem;
+        }
+
+        .employee-leave-form-page .notice-line {
+            display: flex;
+            align-items: flex-start;
+        }
+    </style>
+@endpush
