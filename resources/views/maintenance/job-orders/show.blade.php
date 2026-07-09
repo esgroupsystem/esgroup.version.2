@@ -151,6 +151,14 @@
                                     Back
                                 </a>
 
+                                @can('job-orders.update-number')
+                                    <a href="{{ route('maintenance.job-orders.edit-number', $jobOrder) }}"
+                                        class="btn btn-falcon-primary">
+                                        <span class="fas fa-hashtag me-1"></span>
+                                        Edit JO-NO
+                                    </a>
+                                @endcan
+
                                 @can('job-orders.update-status')
                                     <a href="{{ route('maintenance.job-orders.edit-status', $jobOrder) }}"
                                         class="btn btn-warning">

@@ -1376,6 +1376,14 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::patch('/{jobOrderMaintenance}/status', 'updateStatus')
                 ->middleware('permission:job-orders.update-status')
                 ->name('update-status');
+
+            Route::get('/{jobOrderMaintenance}/edit-number', 'editNumber')
+                ->middleware('permission:job-orders.update-number')
+                ->name('edit-number');
+
+            Route::patch('/{jobOrderMaintenance}/number', 'updateNumber')
+                ->middleware('permission:job-orders.update-number')
+                ->name('update-number');
         });
 
 });

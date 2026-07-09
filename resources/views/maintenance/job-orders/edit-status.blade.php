@@ -204,6 +204,32 @@
                             </div>
                         </div>
 
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-header bg-white border-bottom">
+                                <h5 class="mb-0">
+                                    <span class="fas fa-comment-alt me-2 text-primary"></span>
+                                    Status Remarks
+                                </h5>
+                            </div>
+
+                            <div class="card-body">
+                                <label for="remarks" class="form-label fw-semibold">
+                                    Remarks
+                                </label>
+
+                                <textarea name="remarks" id="remarks" rows="4" class="form-control @error('remarks') is-invalid @enderror"
+                                    maxlength="1000" placeholder="Example: Unit is waiting for brake lining parts from supplier.">{{ old('remarks') }}</textarea>
+
+                                @error('remarks')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+
+                                <div class="form-text">
+                                    Optional. This note will appear in the job order update history.
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="card border-0 shadow-sm">
                             <div class="card-body d-flex justify-content-end gap-2">
                                 <a href="{{ route('maintenance.job-orders.show', $jobOrder) }}"

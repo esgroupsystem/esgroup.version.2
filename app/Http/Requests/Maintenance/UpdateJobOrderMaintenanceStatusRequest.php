@@ -18,8 +18,13 @@ class UpdateJobOrderMaintenanceStatusRequest extends FormRequest
         return [
             'status' => [
                 'required',
+                Rule::enum(JobOrderStatus::class),
+            ],
+
+            'remarks' => [
+                'nullable',
                 'string',
-                Rule::in(JobOrderStatus::values()),
+                'max:1000',
             ],
         ];
     }
@@ -27,8 +32,9 @@ class UpdateJobOrderMaintenanceStatusRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'status.required' => 'Please select a maintenance status.',
-            'status.in' => 'The selected maintenance status is invalid.',
+            'status.required' => 'Maintenance status is required.',
+            'status.enum' => 'Selected maintenance status is invalid.',
+            'remarks.max' => 'Remarks must not exceed 1000 characters.',
         ];
     }
 }

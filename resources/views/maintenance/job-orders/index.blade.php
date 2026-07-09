@@ -142,6 +142,10 @@
                                     'status' => $statusCard['value'],
                                     'search' => request('search'),
                                     'bus_id' => request('bus_id'),
+                                    'date_filter' => request('date_filter'),
+                                    'filter_date' => request('filter_date'),
+                                    'filter_month' => request('filter_month'),
+                                    'filter_year' => request('filter_year'),
                                 ],
                                 fn($value) => filled($value),
                             ),
@@ -185,22 +189,23 @@
                 <div class="card-body">
                     <form method="GET" action="{{ route('maintenance.job-orders.index') }}">
                         <div class="row g-3 align-items-end">
-                            <div class="col-xl-4 col-lg-5">
+                            <div class="col-xl-3 col-lg-6">
                                 <label class="form-label fw-semibold">Search Job Order</label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-white">
                                         <span class="fas fa-search text-600"></span>
                                     </span>
+
                                     <input type="text" name="search" value="{{ request('search') }}"
-                                        class="form-control"
-                                        placeholder="JO no., bus no., plate no., requester, work description">
+                                        class="form-control" placeholder="JO no., bus no., plate no., requester, work">
                                 </div>
                             </div>
 
-                            <div class="col-xl-3 col-lg-3">
+                            <div class="col-xl-2 col-lg-6">
                                 <label class="form-label fw-semibold">Bus</label>
                                 <select name="bus_id" class="form-select">
                                     <option value="">All buses</option>
+
                                     @foreach ($buses as $bus)
                                         <option value="{{ $bus->id }}" @selected((string) request('bus_id') === (string) $bus->id)>
                                             {{ $bus->bus_no }} — {{ $bus->plate_no ?? 'No Plate' }}
@@ -209,10 +214,11 @@
                                 </select>
                             </div>
 
-                            <div class="col-xl-3 col-lg-3">
+                            <div class="col-xl-2 col-lg-6">
                                 <label class="form-label fw-semibold">Maintenance Status</label>
                                 <select name="status" class="form-select">
                                     <option value="">All statuses</option>
+
                                     @foreach ($statuses as $value => $label)
                                         <option value="{{ $value }}" @selected(request('status') === $value)>
                                             {{ $label }}
@@ -221,11 +227,38 @@
                                 </select>
                             </div>
 
-                            <div class="col-xl-2 col-lg-1">
+                            <div class="col-xl-2 col-lg-6">
+                                <label class="form-label fw-semibold">Date Filter</label>
+                                <select name="date_filter" id="date_filter" class="form-select">
+                                    <option value="">All dates</option>
+                                    <option value="day" @selected(request('date_filter') === 'day')>By Day</option>
+                                    <option value="month" @selected(request('date_filter') === 'month')>By Month</option>
+                                    <option value="year" @selected(request('date_filter') === 'year')>By Year</option>
+                                </select>
+                            </div>
+
+                            <div class="col-xl-2 col-lg-6 date-filter-input" id="filter_day_wrapper">
+                                <label class="form-label fw-semibold">Day</label>
+                                <input type="date" name="filter_date" value="{{ request('filter_date') }}"
+                                    class="form-control">
+                            </div>
+
+                            <div class="col-xl-2 col-lg-6 date-filter-input d-none" id="filter_month_wrapper">
+                                <label class="form-label fw-semibold">Month</label>
+                                <input type="month" name="filter_month" value="{{ request('filter_month') }}"
+                                    class="form-control">
+                            </div>
+
+                            <div class="col-xl-2 col-lg-6 date-filter-input d-none" id="filter_year_wrapper">
+                                <label class="form-label fw-semibold">Year</label>
+                                <input type="number" name="filter_year" value="{{ request('filter_year') }}"
+                                    class="form-control" min="2000" max="2100" placeholder="2026">
+                            </div>
+
+                            <div class="col-xl-1 col-lg-6">
                                 <div class="d-flex gap-2">
                                     <button type="submit" class="btn btn-primary flex-fill">
-                                        <span class="fas fa-filter me-1"></span>
-                                        Filter
+                                        <span class="fas fa-filter"></span>
                                     </button>
 
                                     <a href="{{ route('maintenance.job-orders.index') }}" class="btn btn-falcon-default">
@@ -289,12 +322,17 @@
                                         <td>
                                             <div class="fw-semibold">
                                                 <span class="fas fa-bus text-primary me-1"></span>
-                                                {{ $jobOrder->bus?->bus_no ?? $jobOrder->bus_no_snapshot }}
+                                                {{ $jobOrder->bus?->bus_no ?? ($jobOrder->bus_no_snapshot ?? 'N/A') }}
                                             </div>
 
                                             <div class="fs-11 jo-muted">
                                                 Plate:
                                                 {{ $jobOrder->bus?->plate_no ?? ($jobOrder->plate_no_snapshot ?? 'N/A') }}
+                                            </div>
+
+                                            <div class="fs-11 jo-muted">
+                                                Company:
+                                                {{ $jobOrder->bus?->company ?? ($jobOrder->company_snapshot ?? 'N/A') }}
                                             </div>
 
                                             <div class="fs-11 jo-muted">
@@ -400,3 +438,41 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateFilter = document.getElementById('date_filter');
+
+            const dayWrapper = document.getElementById('filter_day_wrapper');
+            const monthWrapper = document.getElementById('filter_month_wrapper');
+            const yearWrapper = document.getElementById('filter_year_wrapper');
+
+            function toggleDateInputs() {
+                const selectedFilter = dateFilter.value;
+
+                dayWrapper.classList.add('d-none');
+                monthWrapper.classList.add('d-none');
+                yearWrapper.classList.add('d-none');
+
+                if (selectedFilter === 'day') {
+                    dayWrapper.classList.remove('d-none');
+                    return;
+                }
+
+                if (selectedFilter === 'month') {
+                    monthWrapper.classList.remove('d-none');
+                    return;
+                }
+
+                if (selectedFilter === 'year') {
+                    yearWrapper.classList.remove('d-none');
+                }
+            }
+
+            dateFilter.addEventListener('change', toggleDateInputs);
+
+            toggleDateInputs();
+        });
+    </script>
+@endpush

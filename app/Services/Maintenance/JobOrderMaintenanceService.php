@@ -5,6 +5,7 @@ namespace App\Services\Maintenance;
 use App\Enums\JobOrderStatus;
 use App\Models\Bus;
 use App\Models\JobOrderMaintenance;
+use App\Models\JobOrderMaintenanceHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -35,8 +36,10 @@ class JobOrderMaintenanceService
                 $isLowerThanLast = $currentOdometer < $lastOdometer;
             }
 
+            $jobOrderNo = $this->resolveJobOrderNumber($data['job_order_no'] ?? null);
+
             $jobOrderMaintenance = JobOrderMaintenance::query()->create([
-                'job_order_no' => $this->generateJobOrderNumber(),
+                'job_order_no' => $jobOrderNo,
 
                 'bus_id' => $bus->id,
                 'bus_no_snapshot' => $bus->bus_no,
@@ -54,6 +57,15 @@ class JobOrderMaintenanceService
 
                 'status' => JobOrderStatus::Standby,
                 'created_by' => $userId,
+            ]);
+
+            JobOrderMaintenanceHistory::query()->create([
+                'job_order_maintenance_id' => $jobOrderMaintenance->id,
+                'user_id' => $userId,
+                'action' => 'Created',
+                'remarks' => 'Maintenance job order created.',
+                'old_value' => null,
+                'new_value' => $jobOrderMaintenance->job_order_no,
             ]);
 
             Log::info('Maintenance job order created', [
@@ -74,25 +86,84 @@ class JobOrderMaintenanceService
     public function updateStatus(
         JobOrderMaintenance $jobOrderMaintenance,
         JobOrderStatus $status,
-        ?int $userId
+        ?int $userId,
+        ?string $remarks = null
     ): JobOrderMaintenance {
-        return DB::transaction(function () use ($jobOrderMaintenance, $status, $userId) {
+        return DB::transaction(function () use ($jobOrderMaintenance, $status, $userId, $remarks) {
             $oldStatus = $jobOrderMaintenance->status?->value;
+            $newStatus = $status->value;
 
             $jobOrderMaintenance->update([
                 'status' => $status,
+            ]);
+
+            JobOrderMaintenanceHistory::query()->create([
+                'job_order_maintenance_id' => $jobOrderMaintenance->id,
+                'user_id' => $userId,
+                'action' => 'Status Updated',
+                'remarks' => $this->cleanRemarks($remarks),
+                'old_value' => $oldStatus,
+                'new_value' => $newStatus,
             ]);
 
             Log::info('Maintenance job order status updated', [
                 'job_order_maintenance_id' => $jobOrderMaintenance->id,
                 'job_order_no' => $jobOrderMaintenance->job_order_no,
                 'old_status' => $oldStatus,
-                'new_status' => $status->value,
+                'new_status' => $newStatus,
                 'updated_by' => $userId,
             ]);
 
             return $jobOrderMaintenance->refresh();
         });
+    }
+
+    /**
+     * @throws Throwable
+     */
+    public function updateJobOrderNumber(
+        JobOrderMaintenance $jobOrderMaintenance,
+        string $jobOrderNo,
+        ?int $userId,
+        ?string $remarks = null
+    ): JobOrderMaintenance {
+        return DB::transaction(function () use ($jobOrderMaintenance, $jobOrderNo, $userId, $remarks) {
+            $oldJobOrderNo = $jobOrderMaintenance->job_order_no;
+            $newJobOrderNo = strtoupper(trim($jobOrderNo));
+
+            $jobOrderMaintenance->update([
+                'job_order_no' => $newJobOrderNo,
+            ]);
+
+            JobOrderMaintenanceHistory::query()->create([
+                'job_order_maintenance_id' => $jobOrderMaintenance->id,
+                'user_id' => $userId,
+                'action' => 'JO-NO Updated',
+                'remarks' => $this->cleanRemarks($remarks),
+                'old_value' => $oldJobOrderNo,
+                'new_value' => $newJobOrderNo,
+            ]);
+
+            Log::info('Maintenance job order number updated', [
+                'job_order_maintenance_id' => $jobOrderMaintenance->id,
+                'old_job_order_no' => $oldJobOrderNo,
+                'new_job_order_no' => $newJobOrderNo,
+                'updated_by' => $userId,
+            ]);
+
+            return $jobOrderMaintenance->refresh();
+        });
+    }
+
+    private function resolveJobOrderNumber(?string $customJobOrderNo): string
+    {
+        $customJobOrderNo = strtoupper(trim((string) $customJobOrderNo));
+
+        if ($customJobOrderNo !== '') {
+            return $customJobOrderNo;
+        }
+
+        return $this->generateJobOrderNumber();
     }
 
     private function getLastOdometerReading(int $busId): ?int
@@ -124,5 +195,12 @@ class JobOrderMaintenanceService
         );
 
         return $jobOrderNo;
+    }
+
+    private function cleanRemarks(?string $remarks): ?string
+    {
+        $remarks = trim((string) $remarks);
+
+        return $remarks !== '' ? $remarks : null;
     }
 }

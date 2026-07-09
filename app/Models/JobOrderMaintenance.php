@@ -6,6 +6,7 @@ use App\Enums\JobOrderStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class JobOrderMaintenance extends Model
@@ -101,5 +102,38 @@ class JobOrderMaintenance extends Model
         }
 
         return number_format($this->odometer_difference).' km difference from last reading';
+    }
+
+    public function histories(): HasMany
+    {
+        return $this->hasMany(JobOrderMaintenanceHistory::class);
+    }
+
+    public function scopeFilterCreatedPeriod(
+        Builder $query,
+        ?string $dateFilter,
+        ?string $filterDate,
+        ?string $filterMonth,
+        ?string $filterYear
+    ): Builder {
+        return $query
+            ->when($dateFilter === 'day' && filled($filterDate), function (Builder $query) use ($filterDate) {
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $filterDate)) {
+                    $query->whereDate('created_at', $filterDate);
+                }
+            })
+            ->when($dateFilter === 'month' && filled($filterMonth), function (Builder $query) use ($filterMonth) {
+                if (preg_match('/^\d{4}-\d{2}$/', $filterMonth)) {
+                    [$year, $month] = explode('-', $filterMonth);
+
+                    $query->whereYear('created_at', $year)
+                        ->whereMonth('created_at', $month);
+                }
+            })
+            ->when($dateFilter === 'year' && filled($filterYear), function (Builder $query) use ($filterYear) {
+                if (preg_match('/^\d{4}$/', $filterYear)) {
+                    $query->whereYear('created_at', $filterYear);
+                }
+            });
     }
 }

@@ -135,6 +135,37 @@
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="jo-section-number bg-primary-subtle text-primary">1</span>
                                     <div>
+                                        <h5 class="mb-0">Job Order Number</h5>
+                                        <div class="fs-11 text-600">
+                                            Leave blank to auto-generate, or encode your own JO-NO.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                <label for="job_order_no" class="form-label fw-semibold">JO-NO</label>
+
+                                <input type="text" name="job_order_no" id="job_order_no"
+                                    value="{{ old('job_order_no') }}"
+                                    class="form-control @error('job_order_no') is-invalid @enderror" maxlength="50"
+                                    placeholder="Example: JO-2026-0001">
+
+                                @error('job_order_no')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+
+                                <div class="form-text">
+                                    Allowed: letters, numbers, dash, and slash only. If blank, the system will
+                                    generate the JO-NO.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-header bg-white border-bottom">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="jo-section-number bg-primary-subtle text-primary">2</span>
+                                    <div>
                                         <h5 class="mb-0">Bus Assignment</h5>
                                         <div class="fs-11 text-600">Required vehicle connection for maintenance analytics.
                                         </div>
@@ -148,8 +179,10 @@
                                 </label>
 
                                 <select name="bus_id" id="bus_id"
-                                    class="form-select @error('bus_id') is-invalid @enderror" required>
-                                    <option value="">Choose bus record</option>
+                                    class="form-select js-choice @error('bus_id') is-invalid @enderror"
+                                    data-options='{"searchEnabled":true,"shouldSort":false,"placeholder":true,"placeholderValue":"Search bus no., plate no., company, or garage"}'
+                                    required>
+                                    <option value="">Search and choose bus record</option>
 
                                     @foreach ($buses as $bus)
                                         <option value="{{ $bus->id }}" data-bus-no="{{ $bus->bus_no }}"
@@ -160,7 +193,7 @@
                                             data-last-odometer="{{ $bus->latestJobOrderMaintenanceWithOdometer?->odometer_reading }}"
                                             @selected((string) old('bus_id') === (string) $bus->id)>
                                             {{ $bus->bus_no }} — {{ $bus->plate_no ?? 'No Plate' }} —
-                                            {{ $bus->garage ?? 'No Garage' }}
+                                            {{ $bus->company ?? 'No Company' }} — {{ $bus->garage ?? 'No Garage' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -198,7 +231,7 @@
                         <div class="card border-0 shadow-sm mb-3">
                             <div class="card-header bg-white border-bottom">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="jo-section-number bg-primary-subtle text-primary">2</span>
+                                    <span class="jo-section-number bg-primary-subtle text-primary">3</span>
                                     <div>
                                         <h5 class="mb-0">Work Request</h5>
                                         <div class="fs-11 text-600">Requester is optional. Work description is required.
@@ -244,7 +277,7 @@
                         <div class="card border-0 shadow-sm mb-3">
                             <div class="card-header bg-white border-bottom">
                                 <div class="d-flex align-items-center gap-2">
-                                    <span class="jo-section-number bg-primary-subtle text-primary">3</span>
+                                    <span class="jo-section-number bg-primary-subtle text-primary">4</span>
                                     <div>
                                         <h5 class="mb-0">Odometer Reading</h5>
                                         <div class="fs-11 text-600">Optional, but useful for maintenance interval tracking.
@@ -310,7 +343,9 @@
 
                                     <div class="text-end">
                                         <div class="fs-11 text-600">Job Order No.</div>
-                                        <div class="fw-semibold">Auto-generated</div>
+                                        <div class="fw-semibold" id="preview-job-order-no">
+                                            {{ old('job_order_no') ?: 'Auto-generated' }}
+                                        </div>
                                     </div>
                                 </div>
 
@@ -370,6 +405,7 @@
             const odometerInput = document.getElementById('odometer_reading');
             const fullNameInput = document.getElementById('full_name');
             const descriptionInput = document.getElementById('description_of_work');
+            const jobOrderNoInput = document.getElementById('job_order_no');
 
             const selectedBusCard = document.getElementById('selected-bus-card');
             const selectedBusNo = document.getElementById('selected-bus-no');
@@ -384,6 +420,22 @@
             const previewFullName = document.getElementById('preview-full-name');
             const previewOdometer = document.getElementById('preview-odometer');
             const previewDescription = document.getElementById('preview-description');
+            const previewJobOrderNo = document.getElementById('preview-job-order-no');
+
+            if (window.Choices && busSelect && !busSelect.classList.contains('choices__input')) {
+                new Choices(busSelect, {
+                    searchEnabled: true,
+                    shouldSort: false,
+                    itemSelectText: '',
+                    placeholder: true,
+                    placeholderValue: 'Search bus no., plate no., company, or garage',
+                    searchPlaceholderValue: 'Type bus no., plate no., company, or garage'
+                });
+            }
+
+            function updateJobOrderNoPreview() {
+                previewJobOrderNo.textContent = jobOrderNoInput.value.trim() || 'Auto-generated';
+            }
 
             function numberFormat(value) {
                 return Number(value).toLocaleString();
@@ -406,6 +458,7 @@
 
                 const busNo = selected.dataset.busNo || '—';
                 const plateNo = selected.dataset.plateNo || 'No Plate';
+                const company = selected.dataset.company || 'No Company';
                 const garage = selected.dataset.garage || 'No Garage';
                 const operationalStatus = selected.dataset.operationalStatus || 'Unknown';
                 const operationalBadge = selected.dataset.operationalBadge ||
@@ -419,7 +472,7 @@
 
                 selectedBusCard.classList.remove('d-none');
 
-                previewBusNo.textContent = busNo;
+                previewBusNo.textContent = `${busNo} — ${company}`;
                 previewPlateNo.textContent = plateNo;
 
                 updateOdometerComparison();
@@ -485,11 +538,13 @@
                     `Current reading is ${numberFormat(difference)} km higher than the last maintenance reading.`;
             }
 
+            jobOrderNoInput.addEventListener('input', updateJobOrderNoPreview);
             busSelect.addEventListener('change', updateBusSection);
             odometerInput.addEventListener('input', updateOdometerComparison);
             fullNameInput.addEventListener('input', updateRequesterPreview);
             descriptionInput.addEventListener('input', updateDescriptionPreview);
 
+            updateJobOrderNoPreview();
             updateBusSection();
             updateRequesterPreview();
             updateDescriptionPreview();
