@@ -90,20 +90,30 @@
                         </div>
                     </div>
 
-                    <div class="col-lg-4">
-                        <div class="d-flex justify-content-lg-end gap-2 flex-wrap">
-                            <button type="button" class="btn btn-success" data-bs-toggle="modal"
-                                data-bs-target="#addManualOdometerModal">
-                                <span class="fas fa-tachometer-alt me-1"></span>
-                                Add Odometer
-                            </button>
+                    <div class="d-flex justify-content-lg-end gap-2 flex-wrap">
+                        <a href="{{ route('odometer.export', array_merge(request()->query(), ['export_type' => 'csv'])) }}"
+                            class="btn btn-falcon-success">
+                            <span class="fas fa-file-csv me-1"></span>
+                            CSV
+                        </a>
 
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal"
-                                data-bs-target="#addDieselStockModal">
-                                <span class="fas fa-plus me-1"></span>
-                                Add Diesel Stock
-                            </button>
-                        </div>
+                        <a href="{{ route('odometer.export', array_merge(request()->query(), ['export_type' => 'xls'])) }}"
+                            class="btn btn-falcon-primary">
+                            <span class="fas fa-file-excel me-1"></span>
+                            Excel
+                        </a>
+
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal"
+                            data-bs-target="#addManualOdometerModal">
+                            <span class="fas fa-tachometer-alt me-1"></span>
+                            Add Odometer
+                        </button>
+
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#addDieselStockModal">
+                            <span class="fas fa-plus me-1"></span>
+                            Add Diesel Stock
+                        </button>
                     </div>
                 </div>
             </div>

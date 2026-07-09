@@ -1220,10 +1220,13 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         ->name('odometer.')
         ->controller(OdometerReportController::class)
         ->group(function () {
-
             Route::get('/index', 'index')
                 ->middleware('permission:odometer.view')
                 ->name('index');
+
+            Route::get('/export', 'export')
+                ->middleware('permission:odometer.view')
+                ->name('export');
 
             Route::post('/maintenance/diesel-stock', 'storeDieselStock')
                 ->middleware('permission:odometer.update')
@@ -1357,6 +1360,10 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->middleware('permission:job-orders.view')
                 ->name('index');
 
+            Route::get('/export', 'export')
+                ->middleware('permission:job-orders.view')
+                ->name('export');
+
             Route::get('/create', 'create')
                 ->middleware('permission:job-orders.create')
                 ->name('create');
@@ -1384,6 +1391,10 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::patch('/{jobOrderMaintenance}/number', 'updateNumber')
                 ->middleware('permission:job-orders.update-number')
                 ->name('update-number');
+
+            Route::get('/{jobOrderMaintenance}/export', 'exportSingle')
+                ->middleware('permission:job-orders.view')
+                ->name('export-single');
         });
 
 });

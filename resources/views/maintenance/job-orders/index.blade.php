@@ -282,9 +282,25 @@
                         </div>
 
                         <div class="col-auto">
-                            <span class="badge badge-subtle-secondary">
-                                {{ number_format($jobOrders->total()) }} records
-                            </span>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="badge badge-subtle-secondary">
+                                    {{ number_format($jobOrders->total()) }} records
+                                </span>
+
+                                <div class="btn-group">
+                                    <a href="{{ route('maintenance.job-orders.export', array_merge(request()->query(), ['export_type' => 'csv'])) }}"
+                                        class="btn btn-falcon-success btn-sm">
+                                        <span class="fas fa-file-csv me-1"></span>
+                                        CSV
+                                    </a>
+
+                                    <a href="{{ route('maintenance.job-orders.export', array_merge(request()->query(), ['export_type' => 'xls'])) }}"
+                                        class="btn btn-falcon-primary btn-sm">
+                                        <span class="fas fa-file-excel me-1"></span>
+                                        Excel
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
