@@ -1151,13 +1151,18 @@
                                                 <th>Unit Location</th>
                                                 <th>Progress</th>
                                                 <th>Remarks</th>
+
+                                                @can('fleet.manage.update')
+                                                    <th class="text-end">Action</th>
+                                                @endcan
                                             </tr>
                                         </thead>
 
                                         <tbody>
                                             @forelse ($tab['records'] as $company => $records)
                                                 <tr class="fleet-folder-company-row">
-                                                    <td colspan="12">
+                                                    <td
+                                                        colspan="{{ auth()->user()?->can('fleet.manage.update') ? 13 : 12 }}">
                                                         <div class="fleet-folder-company-label">
                                                             <span>
                                                                 <span class="fas fa-building me-2 text-danger"></span>
@@ -1223,11 +1228,22 @@
                                                         <td class="text-muted">
                                                             {{ $record->remarks ?? '—' }}
                                                         </td>
+
+                                                        @can('fleet.manage.update')
+                                                            <td class="text-end">
+                                                                <a href="{{ route('fleet.for-sale-units.edit', $record->id) }}"
+                                                                    class="btn btn-falcon-primary btn-sm">
+                                                                    <span class="fas fa-pen me-1"></span>
+                                                                    Update
+                                                                </a>
+                                                            </td>
+                                                        @endcan
                                                     </tr>
                                                 @endforeach
                                             @empty
                                                 <tr>
-                                                    <td colspan="12" class="fleet-folder-empty">
+                                                    <td colspan="{{ auth()->user()?->can('fleet.manage.update') ? 13 : 12 }}"
+                                                        class="fleet-folder-empty">
                                                         No for-sale records found.
                                                     </td>
                                                 </tr>
