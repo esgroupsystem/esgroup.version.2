@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Maintenance;
 
+use App\Enums\JobOrderRepairType;
 use App\Enums\JobOrderStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Maintenance\StoreJobOrderMaintenanceRequest;
@@ -26,7 +27,7 @@ class JobOrderMaintenanceController extends Controller
         $filters = $this->resolveFilters($request);
 
         $jobOrders = $this->applyIndexFilters(
-            query: JobOrderMaintenance::query()->with(['bus', 'creator']),
+            query: JobOrderMaintenance::query()->with(['bus', 'creator', 'statusPeriods']),
             filters: $filters,
             includeStatus: true
         )
@@ -80,7 +81,7 @@ class JobOrderMaintenanceController extends Controller
         }
 
         $query = $this->applyIndexFilters(
-            query: JobOrderMaintenance::query()->with(['bus', 'creator']),
+            query: JobOrderMaintenance::query()->with(['bus', 'creator', 'statusPeriods']),
             filters: $filters,
             includeStatus: true
         )
@@ -112,6 +113,7 @@ class JobOrderMaintenanceController extends Controller
 
         return view('maintenance.job-orders.create', [
             'buses' => $buses,
+            'repairTypes' => JobOrderRepairType::cases(),
         ]);
     }
 
@@ -149,6 +151,7 @@ class JobOrderMaintenanceController extends Controller
             'bus',
             'creator',
             'histories.user',
+            'statusPeriods.changedBy',
         ]);
 
         return view('maintenance.job-orders.show', [
@@ -158,11 +161,16 @@ class JobOrderMaintenanceController extends Controller
 
     public function editStatus(JobOrderMaintenance $jobOrderMaintenance): View
     {
-        $jobOrderMaintenance->load(['bus', 'creator']);
+        $jobOrderMaintenance->load([
+            'bus',
+            'creator',
+            'statusPeriods',
+        ]);
 
         return view('maintenance.job-orders.edit-status', [
             'jobOrder' => $jobOrderMaintenance,
             'statuses' => JobOrderStatus::cases(),
+            'repairTypes' => JobOrderRepairType::cases(),
         ]);
     }
 
@@ -178,7 +186,9 @@ class JobOrderMaintenanceController extends Controller
                 jobOrderMaintenance: $jobOrderMaintenance,
                 status: JobOrderStatus::from($validated['status']),
                 userId: $request->user()?->id,
-                remarks: $validated['remarks'] ?? null
+                remarks: $validated['remarks'] ?? null,
+                mechanicNames: $validated['mechanic_names'] ?? [],
+                repairTypes: $validated['repair_types'] ?? []
             );
 
             return redirect()
@@ -353,11 +363,18 @@ class JobOrderMaintenanceController extends Controller
             'Company',
             'Garage',
             'Requester',
+            'Mechanic(s)',
+            'Repair Type(s)',
             'Description of Work',
             'Odometer Reading',
             'Last Odometer Reading',
             'Odometer Difference',
             'Odometer Warning',
+            'Standby Downtime',
+            'Waiting Parts Downtime',
+            'On Going Repair Downtime',
+            'Total Downtime',
+            'Downtime Counter',
             'Status',
             'Created By',
             'Created Date',
@@ -374,11 +391,18 @@ class JobOrderMaintenanceController extends Controller
             $jobOrder->bus?->company ?? $jobOrder->company_snapshot ?? 'N/A',
             $jobOrder->bus?->garage ?? $jobOrder->garage_snapshot ?? 'N/A',
             $jobOrder->full_name ?: 'Not specified',
+            $jobOrder->mechanic_names_label,
+            $jobOrder->repair_types_label,
             $jobOrder->description_of_work,
             $jobOrder->odometer_reading !== null ? $jobOrder->odometer_reading : '',
             $jobOrder->last_odometer_reading !== null ? $jobOrder->last_odometer_reading : '',
             $jobOrder->odometer_difference !== null ? $jobOrder->odometer_difference : '',
             $jobOrder->is_odometer_lower_than_last ? 'Current reading is lower than last reading' : '',
+            $jobOrder->downtime_breakdown[JobOrderStatus::Standby->value]['label'],
+            $jobOrder->downtime_breakdown[JobOrderStatus::WaitingParts->value]['label'],
+            $jobOrder->downtime_breakdown[JobOrderStatus::OnGoingRepair->value]['label'],
+            $jobOrder->total_downtime_label,
+            $jobOrder->is_downtime_running ? 'Running' : 'Stopped',
             $jobOrder->status_label,
             $jobOrder->creator?->name ?? 'System',
             $jobOrder->created_at?->format('Y-m-d'),
@@ -423,6 +447,7 @@ class JobOrderMaintenanceController extends Controller
             'bus',
             'creator',
             'histories.user',
+            'statusPeriods.changedBy',
         ]);
 
         $fileName = 'maintenance-job-order-'.$jobOrderMaintenance->job_order_no.'-'.now()->format('Ymd-His').'.'.$exportType;
@@ -515,4 +540,32 @@ class JobOrderMaintenanceController extends Controller
             'Cache-Control' => 'max-age=0',
         ]);
     }
+
+    private function singleExportDetails(JobOrderMaintenance $jobOrder): array
+    {
+        return [
+            ['Job Order No.', $jobOrder->job_order_no],
+            ['Bus No.', $jobOrder->bus?->bus_no ?? $jobOrder->bus_no_snapshot ?? 'N/A'],
+            ['Plate No.', $jobOrder->bus?->plate_no ?? $jobOrder->plate_no_snapshot ?? 'N/A'],
+            ['Company', $jobOrder->bus?->company ?? $jobOrder->company_snapshot ?? 'N/A'],
+            ['Garage', $jobOrder->bus?->garage ?? $jobOrder->garage_snapshot ?? 'N/A'],
+            ['Requester', $jobOrder->full_name ?: 'Not specified'],
+            ['Mechanic(s)', $jobOrder->mechanic_names_label],
+            ['Repair Type(s)', $jobOrder->repair_types_label],
+            ['Description of Work', $jobOrder->description_of_work],
+            ['Current Odometer', $jobOrder->odometer_reading !== null ? $jobOrder->odometer_reading.' km' : 'Not encoded'],
+            ['Previous Odometer', $jobOrder->last_odometer_reading !== null ? $jobOrder->last_odometer_reading.' km' : 'No previous record'],
+            ['Odometer Difference', $jobOrder->odometer_difference !== null ? $jobOrder->odometer_difference.' km' : 'N/A'],
+            ['Standby Downtime', $jobOrder->downtime_breakdown[JobOrderStatus::Standby->value]['label']],
+            ['Waiting Parts Downtime', $jobOrder->downtime_breakdown[JobOrderStatus::WaitingParts->value]['label']],
+            ['On Going Repair Downtime', $jobOrder->downtime_breakdown[JobOrderStatus::OnGoingRepair->value]['label']],
+            ['Total Downtime', $jobOrder->total_downtime_label],
+            ['Downtime Counter', $jobOrder->is_downtime_running ? 'Running' : 'Stopped'],
+            ['Status', $jobOrder->status_label],
+            ['Created By', $jobOrder->creator?->name ?? 'System'],
+            ['Created At', $jobOrder->created_at?->format('Y-m-d h:i A')],
+            ['Last Updated', $jobOrder->updated_at?->format('Y-m-d h:i A')],
+        ];
+    }
+
 }

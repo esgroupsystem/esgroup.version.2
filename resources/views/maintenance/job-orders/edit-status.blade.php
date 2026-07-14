@@ -207,6 +207,28 @@
                         <div class="card border-0 shadow-sm mb-3">
                             <div class="card-header bg-white border-bottom">
                                 <h5 class="mb-0">
+                                    <span class="fas fa-user-gear me-2 text-primary"></span>
+                                    Repair Completion Details
+                                </h5>
+                            </div>
+
+                            <div class="card-body">
+                                <div id="operational-requirement-alert" class="alert alert-subtle-warning mb-3 d-none">
+                                    <span class="fas fa-triangle-exclamation me-1"></span>
+                                    Mechanic name and at least one repair type are required when setting the status to
+                                    <strong>Operational</strong>.
+                                </div>
+
+                                @include('maintenance.job-orders._repair-details-fields', [
+                                    'jobOrder' => $jobOrder,
+                                    'repairTypes' => $repairTypes,
+                                ])
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-header bg-white border-bottom">
+                                <h5 class="mb-0">
                                     <span class="fas fa-comment-alt me-2 text-primary"></span>
                                     Status Remarks
                                 </h5>
@@ -296,6 +318,12 @@
                                     </div>
                                 </div>
 
+                                <div class="mt-3">
+                                    @include('maintenance.job-orders._downtime-summary', [
+                                        'jobOrder' => $jobOrder,
+                                    ])
+                                </div>
+
                                 <div class="alert alert-subtle-info mb-0 mt-3">
                                     <div class="fw-semibold mb-1">
                                         <span class="fas fa-circle-info me-1"></span>
@@ -317,3 +345,37 @@
         </div>
     </div>
 @endsection
+
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const operationalValue = @json(\App\Enums\JobOrderStatus::Operational->value);
+            const statusInputs = document.querySelectorAll('input[name="status"]');
+            const alertBox = document.getElementById('operational-requirement-alert');
+
+            function updateOperationalRequirements() {
+                const selectedStatus = document.querySelector('input[name="status"]:checked')?.value;
+                const isOperational = selectedStatus === operationalValue;
+
+                alertBox?.classList.toggle('d-none', !isOperational);
+
+                document.querySelectorAll('input[name="mechanic_names[]"]').forEach(function(input) {
+                    input.required = isOperational;
+                });
+            }
+
+            statusInputs.forEach(function(input) {
+                input.addEventListener('change', updateOperationalRequirements);
+            });
+
+            document.addEventListener('click', function(event) {
+                if (event.target.closest('#add-mechanic-row') || event.target.closest('.remove-mechanic-row')) {
+                    window.setTimeout(updateOperationalRequirements, 0);
+                }
+            });
+
+            updateOperationalRequirements();
+        });
+    </script>
+@endpush

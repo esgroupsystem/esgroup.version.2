@@ -49,17 +49,31 @@ enum JobOrderStatus: string
         };
     }
 
+    public function countsAsDowntime(): bool
+    {
+        return $this !== self::Operational;
+    }
+
+    public static function downtimeStatuses(): array
+    {
+        return [
+            self::Standby,
+            self::WaitingParts,
+            self::OnGoingRepair,
+        ];
+    }
+
     public static function options(): array
     {
         return collect(self::cases())
-            ->mapWithKeys(fn (self $status) => [$status->value => $status->label()])
-            ->toArray();
+            ->mapWithKeys(fn (self $status): array => [$status->value => $status->label()])
+            ->all();
     }
 
     public static function values(): array
     {
         return collect(self::cases())
-            ->map(fn (self $status) => $status->value)
-            ->toArray();
+            ->map(fn (self $status): string => $status->value)
+            ->all();
     }
 }

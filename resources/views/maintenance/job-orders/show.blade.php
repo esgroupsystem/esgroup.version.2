@@ -307,6 +307,11 @@
                                             <span class="fas fa-calendar-day text-primary"></span>
                                             {{ $jobOrder->created_at->format('M d, Y h:i A') }}
                                         </span>
+
+                                        <span class="jo-pill">
+                                            <span class="fas fa-stopwatch text-primary"></span>
+                                            Downtime: {{ $jobOrder->total_downtime_label }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -427,6 +432,116 @@
                                         </h5>
                                         <div class="fs-11 text-600">
                                             {{ $jobOrder->created_at->format('h:i A') }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="jo-card mb-3">
+                        <div class="jo-card-header">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="jo-section-icon">
+                                    <span class="fas fa-stopwatch"></span>
+                                </span>
+                                <h5 class="jo-card-title">Downtime Analysis</h5>
+                            </div>
+
+                            <span class="badge rounded-pill {{ $jobOrder->is_downtime_running ? 'badge-subtle-warning text-warning' : 'badge-subtle-success text-success' }}">
+                                {{ $jobOrder->is_downtime_running ? 'Counter Running' : 'Counter Stopped' }}
+                            </span>
+                        </div>
+
+                        <div class="card-body p-3">
+                            @include('maintenance.job-orders._downtime-summary', [
+                                'jobOrder' => $jobOrder,
+                            ])
+
+                            <div class="table-responsive scrollbar mt-3">
+                                <table class="table table-sm table-bordered align-middle mb-0">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>Status Period</th>
+                                            <th>Started</th>
+                                            <th>Ended</th>
+                                            <th>Duration</th>
+                                            <th>Changed By</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse ($jobOrder->statusPeriods as $period)
+                                            <tr>
+                                                <td>
+                                                    <span class="badge rounded-pill {{ $period->status->badgeClass() }}">
+                                                        <span class="{{ $period->status->icon() }} me-1"></span>
+                                                        {{ $period->status->label() }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ $period->started_at?->format('M d, Y h:i A') ?? 'N/A' }}</td>
+                                                <td>
+                                                    @if ($period->ended_at)
+                                                        {{ $period->ended_at->format('M d, Y h:i A') }}
+                                                    @else
+                                                        <span class="badge badge-subtle-warning text-warning">Still counting</span>
+                                                    @endif
+                                                </td>
+                                                <td class="fw-semibold">{{ $period->duration_label }}</td>
+                                                <td>{{ $period->changedBy?->name ?? 'System' }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="5" class="text-center text-600 py-3">
+                                                    No downtime periods are available for this legacy record.
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="jo-card mb-3">
+                        <div class="jo-card-header">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="jo-section-icon">
+                                    <span class="fas fa-user-gear"></span>
+                                </span>
+                                <h5 class="jo-card-title">Repair Completion Details</h5>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-3">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="jo-stat h-100">
+                                        <div class="jo-label">Mechanic(s) Who Fixed the Unit</div>
+
+                                        @forelse ($jobOrder->mechanic_names_list as $mechanicName)
+                                            <div class="d-flex align-items-center gap-2 mb-2">
+                                                <span class="fas fa-user-check text-success"></span>
+                                                <span class="jo-value">{{ $mechanicName }}</span>
+                                            </div>
+                                        @empty
+                                            <div class="text-600">Not assigned</div>
+                                        @endforelse
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="jo-stat h-100">
+                                        <div class="jo-label">Type of Repair Done</div>
+
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @forelse ($jobOrder->repair_type_enums as $repairType)
+                                                <span class="badge rounded-pill {{ $repairType->badgeClass() }}">
+                                                    <span class="{{ $repairType->icon() }} me-1"></span>
+                                                    {{ $repairType->label() }}
+                                                </span>
+                                            @empty
+                                                <span class="text-600">Not encoded</span>
+                                            @endforelse
                                         </div>
                                     </div>
                                 </div>
@@ -672,6 +787,16 @@
                                     <span class="{{ $jobOrder->status_icon }} me-1"></span>
                                     {{ $jobOrder->status_label }}
                                 </span>
+                            </div>
+
+                            <div class="jo-side-row">
+                                <div class="jo-label">Mechanic(s)</div>
+                                <div class="jo-value">{{ $jobOrder->mechanic_names_label }}</div>
+                            </div>
+
+                            <div class="jo-side-row">
+                                <div class="jo-label">Repair Type(s)</div>
+                                <div class="jo-value">{{ $jobOrder->repair_types_label }}</div>
                             </div>
 
                             <div class="jo-side-row">

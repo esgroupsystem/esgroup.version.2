@@ -315,6 +315,7 @@
                                     <th>Requester</th>
                                     <th>Work Required</th>
                                     <th>Odometer</th>
+                                    <th>Downtime</th>
                                     <th>Status</th>
                                     <th>Created</th>
                                     <th class="text-end pe-3">Action</th>
@@ -367,6 +368,23 @@
                                             <div class="jo-work-preview" title="{{ $jobOrder->description_of_work }}">
                                                 {{ $jobOrder->description_of_work }}
                                             </div>
+
+                                            @if ($jobOrder->repair_type_enums->isNotEmpty())
+                                                <div class="d-flex flex-wrap gap-1 mt-2">
+                                                    @foreach ($jobOrder->repair_type_enums as $repairType)
+                                                        <span class="badge rounded-pill {{ $repairType->badgeClass() }}">
+                                                            {{ $repairType->label() }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+
+                                            @if ($jobOrder->mechanic_names_list !== [])
+                                                <div class="fs-11 jo-muted mt-2">
+                                                    <span class="fas fa-user-gear me-1"></span>
+                                                    {{ $jobOrder->mechanic_names_label }}
+                                                </div>
+                                            @endif
                                         </td>
 
                                         <td>
@@ -384,6 +402,17 @@
                                                     No reading
                                                 </span>
                                             @endif
+                                        </td>
+
+                                        <td style="min-width: 170px;">
+                                            <div class="fw-bold text-800">
+                                                {{ $jobOrder->total_downtime_label }}
+                                            </div>
+
+                                            <div class="fs-11 {{ $jobOrder->is_downtime_running ? 'text-warning' : 'text-success' }} mt-1">
+                                                <span class="fas {{ $jobOrder->is_downtime_running ? 'fa-stopwatch' : 'fa-circle-check' }} me-1"></span>
+                                                {{ $jobOrder->is_downtime_running ? 'Counting' : 'Stopped' }}
+                                            </div>
                                         </td>
 
                                         <td style="min-width: 190px;">
@@ -420,7 +449,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="8" class="text-center py-5">
+                                        <td colspan="9" class="text-center py-5">
                                             <div class="mb-3">
                                                 <span class="fas fa-clipboard-list fa-3x text-300"></span>
                                             </div>

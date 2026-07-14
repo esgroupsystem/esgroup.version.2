@@ -279,6 +279,26 @@
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="jo-section-number bg-primary-subtle text-primary">4</span>
                                     <div>
+                                        <h5 class="mb-0">Repair Assignment</h5>
+                                        <div class="fs-11 text-600">
+                                            Optional during creation. Required before the unit can be marked Operational.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="card-body">
+                                @include('maintenance.job-orders._repair-details-fields', [
+                                    'repairTypes' => $repairTypes,
+                                ])
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-header bg-white border-bottom">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="jo-section-number bg-primary-subtle text-primary">5</span>
+                                    <div>
                                         <h5 class="mb-0">Odometer Reading</h5>
                                         <div class="fs-11 text-600">Optional, but useful for maintenance interval tracking.
                                         </div>
@@ -372,6 +392,20 @@
 
                                 <div class="jo-data-row">
                                     <div>
+                                        <div class="jo-data-label">Mechanic(s)</div>
+                                    </div>
+                                    <div class="jo-data-value" id="preview-mechanics">Not assigned</div>
+                                </div>
+
+                                <div class="jo-data-row">
+                                    <div>
+                                        <div class="jo-data-label">Repair Type(s)</div>
+                                    </div>
+                                    <div class="jo-data-value" id="preview-repair-types">Not selected</div>
+                                </div>
+
+                                <div class="jo-data-row">
+                                    <div>
                                         <div class="jo-data-label">Odometer</div>
                                     </div>
                                     <div class="jo-data-value" id="preview-odometer">Not encoded</div>
@@ -421,6 +455,8 @@
             const previewOdometer = document.getElementById('preview-odometer');
             const previewDescription = document.getElementById('preview-description');
             const previewJobOrderNo = document.getElementById('preview-job-order-no');
+            const previewMechanics = document.getElementById('preview-mechanics');
+            const previewRepairTypes = document.getElementById('preview-repair-types');
 
             if (window.Choices && busSelect && !busSelect.classList.contains('choices__input')) {
                 new Choices(busSelect, {
@@ -538,6 +574,31 @@
                     `Current reading is ${numberFormat(difference)} km higher than the last maintenance reading.`;
             }
 
+            function updateRepairDetailsPreview() {
+                const mechanicNames = Array.from(document.querySelectorAll('input[name="mechanic_names[]"]'))
+                    .map(input => input.value.trim())
+                    .filter(Boolean);
+
+                const repairTypes = Array.from(document.querySelectorAll('input[name="repair_types[]"]:checked'))
+                    .map(input => input.closest('label')?.innerText.trim())
+                    .filter(Boolean);
+
+                previewMechanics.textContent = mechanicNames.length ? mechanicNames.join(', ') : 'Not assigned';
+                previewRepairTypes.textContent = repairTypes.length ? repairTypes.join(', ') : 'Not selected';
+            }
+
+            document.addEventListener('input', function(event) {
+                if (event.target.matches('input[name="mechanic_names[]"]')) {
+                    updateRepairDetailsPreview();
+                }
+            });
+
+            document.addEventListener('change', function(event) {
+                if (event.target.matches('input[name="repair_types[]"]')) {
+                    updateRepairDetailsPreview();
+                }
+            });
+
             jobOrderNoInput.addEventListener('input', updateJobOrderNoPreview);
             busSelect.addEventListener('change', updateBusSection);
             odometerInput.addEventListener('input', updateOdometerComparison);
@@ -549,6 +610,7 @@
             updateRequesterPreview();
             updateDescriptionPreview();
             updateOdometerComparison();
+            updateRepairDetailsPreview();
         });
     </script>
 @endpush
