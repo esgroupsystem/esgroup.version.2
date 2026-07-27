@@ -249,10 +249,10 @@ class PayrollComputationService
                 ?? config('payroll.government_deduction_schedule.sss', 'first_cutoff'),
 
             'philhealth' => $this->profileSchedule($rates['salary_model'], 'philhealth')
-                ?? config('payroll.government_deduction_schedule.philhealth', 'second_cutoff'),
+                ?? config('payroll.government_deduction_schedule.philhealth', 'first_cutoff'),
 
             'pagibig' => $this->profileSchedule($rates['salary_model'], 'pagibig')
-                ?? config('payroll.government_deduction_schedule.pagibig', 'second_cutoff'),
+                ?? config('payroll.government_deduction_schedule.pagibig', 'first_cutoff'),
         ];
 
         $government = $this->governmentDeductionService->applyDeductionSchedule(
@@ -310,6 +310,7 @@ class PayrollComputationService
             'taxable_compensation' => $taxableCompensation,
             'sss_employee' => $government['sss_employee'],
             'sss_employer' => $government['sss_employer'],
+            'sss_ec' => $government['sss_ec'],
             'philhealth_employee' => $government['philhealth_employee'],
             'philhealth_employer' => $government['philhealth_employer'],
             'pagibig_employee' => $government['pagibig_employee'],
@@ -781,6 +782,10 @@ class PayrollComputationService
             if ($schedule !== null && ! $matchesCutoff) {
                 $government[$employeeField] = 0.00;
                 $government[$employerField] = 0.00;
+
+                if ($key === 'sss') {
+                    $government['sss_ec'] = 0.00;
+                }
             }
 
             $scheduleMeta[$key] = [
@@ -789,10 +794,16 @@ class PayrollComputationService
                 'basis' => round((float) ($governmentRaw[$key.'_basis'] ?? $governmentRaw['monthly_basic'] ?? 0), 2),
                 'raw_employee_before_profile' => $governmentRaw[$employeeField] ?? null,
                 'raw_employer_before_profile' => $governmentRaw[$employerField] ?? null,
+                'raw_sss_ec_before_profile' => $key === 'sss'
+                    ? round((float) ($governmentRaw['sss_ec'] ?? 0), 2)
+                    : null,
                 'profile_amount_override' => false,
-                'profile_amount_override_note' => 'Fixed government contribution amounts from salary profile are ignored so absences can reduce the contribution basis.',
+                'profile_amount_override_note' => 'Fixed government contribution amounts from salary profile are ignored. Only the configured deduction schedule is applied.',
                 'final_employee_share' => round((float) ($government[$employeeField] ?? 0), 2),
                 'final_employer_share' => round((float) ($government[$employerField] ?? 0), 2),
+                'final_sss_ec' => $key === 'sss'
+                    ? round((float) ($government['sss_ec'] ?? 0), 2)
+                    : null,
             ];
         }
 
@@ -920,6 +931,7 @@ class PayrollComputationService
         foreach ([
             'sss_employee',
             'sss_employer',
+            'sss_ec',
             'philhealth_employee',
             'philhealth_employer',
             'pagibig_employee',
@@ -939,6 +951,7 @@ class PayrollComputationService
 
         $government['total_employer_government_contributions'] = round(
             $government['sss_employer']
+            + $government['sss_ec']
             + $government['philhealth_employer']
             + $government['pagibig_employer'],
             2

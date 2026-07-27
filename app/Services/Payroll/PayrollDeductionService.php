@@ -15,35 +15,33 @@ class PayrollDeductionService
 
     public const SCHEDULE_EVERY = 'every_cutoff';
 
-    private const WORKING_DAYS_PER_MONTH = 22;
-
-    private const PAID_HOURS_PER_DAY = 8;
-
-    private const MINUTES_PER_HOUR = 60;
+    public function __construct(
+        private readonly GovernmentDeductionService $governmentDeductionService
+    ) {}
 
     public function computeRates(float $basicSalary, string $rateType): array
     {
         if ($basicSalary <= 0) {
             return [
-                'daily_rate' => 0,
-                'hourly_rate' => 0,
-                'per_minute_rate' => 0,
+                'daily_rate' => 0.00,
+                'hourly_rate' => 0.00,
+                'per_minute_rate' => 0.00,
             ];
         }
 
         $rateType = strtolower(trim($rateType));
 
         $dailyRate = $rateType === 'monthly'
-            ? $basicSalary / self::WORKING_DAYS_PER_MONTH
+            ? ($basicSalary * $this->annualMonths()) / $this->annualDays()
             : $basicSalary;
 
-        $hourlyRate = $dailyRate / self::PAID_HOURS_PER_DAY;
-        $perMinuteRate = $hourlyRate / self::MINUTES_PER_HOUR;
+        $hourlyRate = $dailyRate / $this->paidHoursPerDay();
+        $perMinuteRate = $hourlyRate / $this->minutesPerHour();
 
         return [
-            'daily_rate' => round($dailyRate, 2),
-            'hourly_rate' => round($hourlyRate, 2),
-            'per_minute_rate' => round($perMinuteRate, 4),
+            'daily_rate' => round($dailyRate, 6),
+            'hourly_rate' => round($hourlyRate, 6),
+            'per_minute_rate' => round($perMinuteRate, 6),
         ];
     }
 
@@ -52,22 +50,29 @@ class PayrollDeductionService
         $basicSalary = (float) $salary->basic_salary;
 
         if ($basicSalary <= 0) {
-            return 0;
+            return 0.00;
         }
 
-        return $salary->rate_type === 'monthly'
+        return strtolower((string) $salary->rate_type) === 'monthly'
             ? round($basicSalary, 2)
-            : round($basicSalary * self::WORKING_DAYS_PER_MONTH, 2);
+            : round(($basicSalary * $this->annualDays()) / $this->annualMonths(), 2);
     }
 
     public function salaryPreview(PayrollEmployeeSalary $salary): array
     {
         $monthlyBasic = $this->monthlyBasicSalary($salary);
 
+        $government = $this->governmentDeductionService->compute([
+            'monthly_basic' => $monthlyBasic,
+            'sss_monthly_basic' => $monthlyBasic,
+            'philhealth_monthly_basic' => $monthlyBasic,
+            'pagibig_monthly_basic' => $monthlyBasic,
+        ]);
+
         $monthlyGovernment = [
-            'sss' => $this->computeSssEmployeeShare($monthlyBasic),
-            'pagibig' => $this->computePagibigEmployeeShare($monthlyBasic),
-            'philhealth' => $this->computePhilhealthEmployeeShare($monthlyBasic),
+            'sss' => round((float) $government['sss_employee'], 2),
+            'pagibig' => round((float) $government['pagibig_employee'], 2),
+            'philhealth' => round((float) $government['philhealth_employee'], 2),
         ];
 
         $firstGovernment = [
@@ -118,6 +123,12 @@ class PayrollDeductionService
         return [
             'monthly_basic' => round($monthlyBasic, 2),
             'monthly_government' => $monthlyGovernment,
+            'monthly_employer_government' => [
+                'sss' => round((float) $government['sss_employer'], 2),
+                'sss_ec' => round((float) $government['sss_ec'], 2),
+                'pagibig' => round((float) $government['pagibig_employer'], 2),
+                'philhealth' => round((float) $government['philhealth_employer'], 2),
+            ],
 
             'first' => [
                 'gross_preview' => $firstGrossPreview,
@@ -177,37 +188,26 @@ class PayrollDeductionService
 
     public function computeSssEmployeeShare(float $monthlySalary): float
     {
-        if ($monthlySalary <= 0) {
-            return 0;
-        }
-
-        $msc = $this->sssMonthlySalaryCredit($monthlySalary);
-
-        return round($msc * 0.05, 2);
+        return round((float) $this->governmentDeductionService->compute([
+            'monthly_basic' => $monthlySalary,
+            'sss_monthly_basic' => $monthlySalary,
+        ])['sss_employee'], 2);
     }
 
     public function computePagibigEmployeeShare(float $monthlySalary): float
     {
-        if ($monthlySalary <= 0) {
-            return 0;
-        }
-
-        $baseSalary = min($monthlySalary, 10000);
-        $rate = $baseSalary <= 1500 ? 0.01 : 0.02;
-
-        return round($baseSalary * $rate, 2);
+        return round((float) $this->governmentDeductionService->compute([
+            'monthly_basic' => $monthlySalary,
+            'pagibig_monthly_basic' => $monthlySalary,
+        ])['pagibig_employee'], 2);
     }
 
     public function computePhilhealthEmployeeShare(float $monthlySalary): float
     {
-        if ($monthlySalary <= 0) {
-            return 0;
-        }
-
-        $baseSalary = min(max($monthlySalary, 10000), 100000);
-        $totalMonthlyPremium = $baseSalary * 0.05;
-
-        return round($totalMonthlyPremium / 2, 2);
+        return round((float) $this->governmentDeductionService->compute([
+            'monthly_basic' => $monthlySalary,
+            'philhealth_monthly_basic' => $monthlySalary,
+        ])['philhealth_employee'], 2);
     }
 
     public function monthlyToCutoffAmount(float $monthlyAmount, string $schedule, string $cutoff): float
@@ -273,19 +273,6 @@ class PayrollDeductionService
         }
 
         return $cursor->format('M d, Y');
-    }
-
-    private function sssMonthlySalaryCredit(float $monthlySalary): float
-    {
-        if ($monthlySalary < 5250) {
-            return 5000;
-        }
-
-        if ($monthlySalary >= 34750) {
-            return 35000;
-        }
-
-        return round($monthlySalary / 500) * 500;
     }
 
     private function loanCutoffAmounts(PayrollEmployeeSalary $salary, string $cutoff): array
@@ -396,5 +383,25 @@ class PayrollDeductionService
         usort($candidates, fn (Carbon $a, Carbon $b): int => $a->timestamp <=> $b->timestamp);
 
         return $candidates[0];
+    }
+
+    private function annualMonths(): float
+    {
+        return max(1, (float) config('payroll.salary_rate.annual_months', 12));
+    }
+
+    private function annualDays(): float
+    {
+        return max(1, (float) config('payroll.salary_rate.annual_days', 365));
+    }
+
+    private function paidHoursPerDay(): float
+    {
+        return max(1, (float) config('payroll.salary_rate.paid_hours_per_day', 8));
+    }
+
+    private function minutesPerHour(): float
+    {
+        return max(1, (float) config('payroll.salary_rate.minutes_per_hour', 60));
     }
 }

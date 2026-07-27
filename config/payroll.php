@@ -114,14 +114,25 @@ return [
     |--------------------------------------------------------------------------
     | Government Contribution Basis
     |--------------------------------------------------------------------------
+    |
+    | SSS uses the actual contribution-cycle compensation and the official MSC
+    | bracket. PhilHealth uses fixed monthly basic salary and must not be reduced
+    | by absence, tardiness, undertime, or leave-without-pay deductions.
+    | Pag-IBIG uses fixed monthly basic salary with a P10,000 maximum fund salary.
+    |
     */
 
     'government_basis' => [
         'sss' => 'actual_cycle_basic',
-        'philhealth' => 'actual_cycle_basic',
-        'pagibig' => 'actual_cycle_basic',
+        'philhealth' => 'fixed_monthly_basic',
+        'pagibig' => 'fixed_monthly_basic',
     ],
 
+    /*
+    | Deduct the complete monthly statutory contribution on the first cutoff.
+    | This is the cutoff where the system already has both halves of the monthly
+    | contribution cycle: previous second cutoff + current first cutoff.
+    */
     'government_deduction_schedule' => [
         'sss' => 'first_cutoff',
         'philhealth' => 'first_cutoff',

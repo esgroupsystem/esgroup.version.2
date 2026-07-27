@@ -4,26 +4,75 @@ namespace App\Services\Payroll;
 
 class GovernmentDeductionService
 {
+    private const SSS_EMPLOYEE_RATE = 0.05;
+
+    private const SSS_EMPLOYER_RATE = 0.10;
+
+    private const SSS_MINIMUM_MSC = 5000.00;
+
+    private const SSS_MAXIMUM_MSC = 35000.00;
+
+    private const SSS_MSC_INCREMENT = 500.00;
+
+    private const SSS_FIRST_MIDDLE_RANGE = 5250.00;
+
+    private const SSS_MAXIMUM_RANGE_START = 34750.00;
+
+    private const SSS_EC_LOW_AMOUNT = 10.00;
+
+    private const SSS_EC_HIGH_AMOUNT = 30.00;
+
+    private const SSS_EC_LOW_MSC_MAXIMUM = 14500.00;
+
+    private const PHILHEALTH_PREMIUM_RATE = 0.05;
+
+    private const PHILHEALTH_EMPLOYEE_SHARE = 0.50;
+
+    private const PHILHEALTH_EMPLOYER_SHARE = 0.50;
+
+    private const PHILHEALTH_INCOME_FLOOR = 10000.00;
+
+    private const PHILHEALTH_INCOME_CEILING = 100000.00;
+
+    private const PAGIBIG_LOW_EMPLOYEE_RATE = 0.01;
+
+    private const PAGIBIG_REGULAR_EMPLOYEE_RATE = 0.02;
+
+    private const PAGIBIG_EMPLOYER_RATE = 0.02;
+
+    private const PAGIBIG_LOW_SALARY_THRESHOLD = 1500.00;
+
+    private const PAGIBIG_MAXIMUM_FUND_SALARY = 10000.00;
+
     public function compute(array $data): array
     {
-        $monthlyBasic = round((float) ($data['monthly_basic'] ?? 0), 2);
-        $sssMonthlyBasic = round((float) ($data['sss_monthly_basic'] ?? $monthlyBasic), 2);
-        $philHealthMonthlyBasic = round((float) ($data['philhealth_monthly_basic'] ?? $monthlyBasic), 2);
-        $pagibigMonthlyBasic = round((float) ($data['pagibig_monthly_basic'] ?? $monthlyBasic), 2);
+        $monthlyBasic = $this->money($data['monthly_basic'] ?? 0);
+        $sssMonthlyBasic = $this->money($data['sss_monthly_basic'] ?? $monthlyBasic);
+        $philHealthMonthlyBasic = $this->money($data['philhealth_monthly_basic'] ?? $monthlyBasic);
+        $pagibigMonthlyBasic = $this->money($data['pagibig_monthly_basic'] ?? $monthlyBasic);
 
         $sss = $this->computeSss($sssMonthlyBasic);
-        $philhealth = $this->computePhilHealth($philHealthMonthlyBasic);
+        $philHealth = $this->computePhilHealth($philHealthMonthlyBasic);
         $pagibig = $this->computePagIbig($pagibigMonthlyBasic);
 
         return $this->total([
             'sss_employee' => $sss['employee'],
             'sss_employer' => $sss['employer'],
-            'philhealth_employee' => $philhealth['employee'],
-            'philhealth_employer' => $philhealth['employer'],
+            'sss_ec' => $sss['ec'],
+            'philhealth_employee' => $philHealth['employee'],
+            'philhealth_employer' => $philHealth['employer'],
             'pagibig_employee' => $pagibig['employee'],
             'pagibig_employer' => $pagibig['employer'],
             'withholding_tax' => 0.00,
-            'taxable_cutoff_compensation' => round((float) ($data['taxable_cutoff_compensation'] ?? 0), 2),
+            'taxable_cutoff_compensation' => $this->money(
+                $data['taxable_cutoff_compensation'] ?? 0
+            ),
+            'sss_basis' => $sssMonthlyBasic,
+            'sss_msc' => $sss['msc'],
+            'philhealth_basis' => $philHealthMonthlyBasic,
+            'philhealth_salary_base' => $philHealth['salary_base'],
+            'pagibig_basis' => $pagibigMonthlyBasic,
+            'pagibig_fund_salary' => $pagibig['fund_salary'],
         ]);
     }
 
@@ -42,11 +91,11 @@ class GovernmentDeductionService
 
             'philhealth' => $profileSchedules['philhealth']
                 ?? $scheduleConfig['philhealth']
-                ?? 'second_cutoff',
+                ?? 'first_cutoff',
 
             'pagibig' => $profileSchedules['pagibig']
                 ?? $scheduleConfig['pagibig']
-                ?? 'second_cutoff',
+                ?? 'first_cutoff',
         ];
 
         $government = [
@@ -57,6 +106,11 @@ class GovernmentDeductionService
             ),
             'sss_employer' => $this->scheduledMonthlyContribution(
                 (float) ($monthlyGovernment['sss_employer'] ?? 0),
+                $schedules['sss'],
+                $cutoffType
+            ),
+            'sss_ec' => $this->scheduledMonthlyContribution(
+                (float) ($monthlyGovernment['sss_ec'] ?? 0),
                 $schedules['sss'],
                 $cutoffType
             ),
@@ -86,25 +140,40 @@ class GovernmentDeductionService
             'withholding_tax' => 0.00,
         ];
 
-        $taxableCompensation = round(
-            (float) ($taxableCutoffCompensation ?? $monthlyGovernment['taxable_cutoff_compensation'] ?? 0),
-            2
+        $taxableCompensation = $this->money(
+            $taxableCutoffCompensation
+                ?? $monthlyGovernment['taxable_cutoff_compensation']
+                ?? 0
         );
 
         $government['schedule_meta'] = [
             'sss' => [
                 'schedule' => $this->normalizeSchedule($schedules['sss']),
-                'monthly_employee_share' => round((float) ($monthlyGovernment['sss_employee'] ?? 0), 2),
+                'monthly_employee_share' => $this->money(
+                    $monthlyGovernment['sss_employee'] ?? 0
+                ),
+                'monthly_employer_share' => $this->money(
+                    $monthlyGovernment['sss_employer'] ?? 0
+                ),
+                'monthly_ec_share' => $this->money(
+                    $monthlyGovernment['sss_ec'] ?? 0
+                ),
                 'deducted_employee_share' => $government['sss_employee'],
+                'scheduled_employer_share' => $government['sss_employer'],
+                'scheduled_ec_share' => $government['sss_ec'],
             ],
             'philhealth' => [
                 'schedule' => $this->normalizeSchedule($schedules['philhealth']),
-                'monthly_employee_share' => round((float) ($monthlyGovernment['philhealth_employee'] ?? 0), 2),
+                'monthly_employee_share' => $this->money(
+                    $monthlyGovernment['philhealth_employee'] ?? 0
+                ),
                 'deducted_employee_share' => $government['philhealth_employee'],
             ],
             'pagibig' => [
                 'schedule' => $this->normalizeSchedule($schedules['pagibig']),
-                'monthly_employee_share' => round((float) ($monthlyGovernment['pagibig_employee'] ?? 0), 2),
+                'monthly_employee_share' => $this->money(
+                    $monthlyGovernment['pagibig_employee'] ?? 0
+                ),
                 'deducted_employee_share' => $government['pagibig_employee'],
             ],
             'withholding_tax' => [
@@ -115,7 +184,14 @@ class GovernmentDeductionService
             ],
         ];
 
-        foreach (['sss_basis', 'philhealth_basis', 'pagibig_basis'] as $key) {
+        foreach ([
+            'sss_basis',
+            'sss_msc',
+            'philhealth_basis',
+            'philhealth_salary_base',
+            'pagibig_basis',
+            'pagibig_fund_salary',
+        ] as $key) {
             if (array_key_exists($key, $monthlyGovernment)) {
                 $government[$key] = $monthlyGovernment[$key];
             }
@@ -124,16 +200,19 @@ class GovernmentDeductionService
         return $this->total($government);
     }
 
-    protected function scheduledMonthlyContribution(float $monthlyAmount, ?string $schedule, string $cutoffType): float
-    {
+    protected function scheduledMonthlyContribution(
+        float $monthlyAmount,
+        ?string $schedule,
+        string $cutoffType
+    ): float {
         $schedule = $this->normalizeSchedule($schedule);
 
         return match ($schedule) {
             'none' => 0.00,
-            'first' => $cutoffType === 'first' ? round($monthlyAmount, 2) : 0.00,
-            'second' => $cutoffType === 'second' ? round($monthlyAmount, 2) : 0.00,
-            'every' => round($monthlyAmount / 2, 2),
-            default => round($monthlyAmount, 2),
+            'first' => $cutoffType === 'first' ? $this->money($monthlyAmount) : 0.00,
+            'second' => $cutoffType === 'second' ? $this->money($monthlyAmount) : 0.00,
+            'every' => $this->money($monthlyAmount / 2),
+            default => 0.00,
         };
     }
 
@@ -182,28 +261,28 @@ class GovernmentDeductionService
         foreach ([
             'sss_employee',
             'sss_employer',
+            'sss_ec',
             'philhealth_employee',
             'philhealth_employer',
             'pagibig_employee',
             'pagibig_employer',
         ] as $key) {
-            $government[$key] = round((float) ($government[$key] ?? 0), 2);
+            $government[$key] = $this->money($government[$key] ?? 0);
         }
 
         $government['withholding_tax'] = 0.00;
 
-        $government['total_employee_government_deductions'] = round(
+        $government['total_employee_government_deductions'] = $this->money(
             $government['sss_employee']
             + $government['philhealth_employee']
-            + $government['pagibig_employee'],
-            2
+            + $government['pagibig_employee']
         );
 
-        $government['total_employer_government_contributions'] = round(
+        $government['total_employer_government_contributions'] = $this->money(
             $government['sss_employer']
+            + $government['sss_ec']
             + $government['philhealth_employer']
-            + $government['pagibig_employer'],
-            2
+            + $government['pagibig_employer']
         );
 
         return $government;
@@ -211,59 +290,106 @@ class GovernmentDeductionService
 
     protected function computeSss(float $monthlyBasic): array
     {
-        $compensation = round($monthlyBasic, 2);
+        $compensation = $this->money($monthlyBasic);
 
         if ($compensation <= 0) {
-            return ['employee' => 0.00, 'employer' => 0.00];
+            return [
+                'employee' => 0.00,
+                'employer' => 0.00,
+                'ec' => 0.00,
+                'msc' => 0.00,
+            ];
         }
 
-        if ($compensation <= 5249.99) {
-            $totalMsc = 5000;
-        } elseif ($compensation >= 34750) {
-            $totalMsc = 35000;
-        } else {
-            $step = (int) floor(($compensation - 5250) / 500) + 1;
-            $totalMsc = 5000 + ($step * 500);
-        }
-
-        $employee = $totalMsc * 0.05;
-        $employer = $totalMsc * 0.10;
-        $ec = $totalMsc <= 14500 ? 10 : 30;
+        $msc = $this->sssMonthlySalaryCredit($compensation);
 
         return [
-            'employee' => round($employee, 2),
-            'employer' => round($employer + $ec, 2),
+            'employee' => $this->money($msc * self::SSS_EMPLOYEE_RATE),
+            'employer' => $this->money($msc * self::SSS_EMPLOYER_RATE),
+            'ec' => $msc <= self::SSS_EC_LOW_MSC_MAXIMUM
+                ? self::SSS_EC_LOW_AMOUNT
+                : self::SSS_EC_HIGH_AMOUNT,
+            'msc' => $msc,
         ];
     }
 
     protected function computePhilHealth(float $monthlyBasic): array
     {
+        $monthlyBasic = $this->money($monthlyBasic);
+
         if ($monthlyBasic <= 0) {
-            return ['employee' => 0.00, 'employer' => 0.00];
+            return [
+                'employee' => 0.00,
+                'employer' => 0.00,
+                'salary_base' => 0.00,
+            ];
         }
 
-        $salaryBase = min(max($monthlyBasic, 10000), 100000);
-        $monthlyPremium = $salaryBase * 0.05;
+        $salaryBase = min(
+            max($monthlyBasic, self::PHILHEALTH_INCOME_FLOOR),
+            self::PHILHEALTH_INCOME_CEILING
+        );
+
+        $monthlyPremium = $salaryBase * self::PHILHEALTH_PREMIUM_RATE;
 
         return [
-            'employee' => round($monthlyPremium / 2, 2),
-            'employer' => round($monthlyPremium / 2, 2),
+            'employee' => $this->money(
+                $monthlyPremium * self::PHILHEALTH_EMPLOYEE_SHARE
+            ),
+            'employer' => $this->money(
+                $monthlyPremium * self::PHILHEALTH_EMPLOYER_SHARE
+            ),
+            'salary_base' => $this->money($salaryBase),
         ];
     }
 
     protected function computePagIbig(float $monthlyBasic): array
     {
+        $monthlyBasic = $this->money($monthlyBasic);
+
         if ($monthlyBasic <= 0) {
-            return ['employee' => 0.00, 'employer' => 0.00];
+            return [
+                'employee' => 0.00,
+                'employer' => 0.00,
+                'fund_salary' => 0.00,
+            ];
         }
 
-        $fundSalary = min($monthlyBasic, 10000);
-        $employeeRate = $monthlyBasic <= 1500 ? 0.01 : 0.02;
-        $employerRate = 0.02;
+        $fundSalary = min($monthlyBasic, self::PAGIBIG_MAXIMUM_FUND_SALARY);
+        $employeeRate = $monthlyBasic <= self::PAGIBIG_LOW_SALARY_THRESHOLD
+            ? self::PAGIBIG_LOW_EMPLOYEE_RATE
+            : self::PAGIBIG_REGULAR_EMPLOYEE_RATE;
 
         return [
-            'employee' => round($fundSalary * $employeeRate, 2),
-            'employer' => round($fundSalary * $employerRate, 2),
+            'employee' => $this->money($fundSalary * $employeeRate),
+            'employer' => $this->money($fundSalary * self::PAGIBIG_EMPLOYER_RATE),
+            'fund_salary' => $this->money($fundSalary),
         ];
+    }
+
+    private function sssMonthlySalaryCredit(float $compensation): float
+    {
+        if ($compensation < self::SSS_FIRST_MIDDLE_RANGE) {
+            return self::SSS_MINIMUM_MSC;
+        }
+
+        if ($compensation >= self::SSS_MAXIMUM_RANGE_START) {
+            return self::SSS_MAXIMUM_MSC;
+        }
+
+        $step = (int) floor(
+            ($compensation - self::SSS_FIRST_MIDDLE_RANGE)
+            / self::SSS_MSC_INCREMENT
+        ) + 1;
+
+        return min(
+            self::SSS_MAXIMUM_MSC,
+            self::SSS_MINIMUM_MSC + ($step * self::SSS_MSC_INCREMENT)
+        );
+    }
+
+    private function money(mixed $value): float
+    {
+        return round(max(0, (float) $value), 2);
     }
 }
