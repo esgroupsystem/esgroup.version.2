@@ -224,6 +224,13 @@ class CrossChexSyncLogsJob implements ShouldQueue
                     continue;
                 }
 
+                $employeeId = data_get($record, 'employee.uuid')
+                    ?? data_get($record, 'employee.id')
+                    ?? data_get($record, 'employee.employee_id')
+                    ?? data_get($record, 'employee_id')
+                    ?? data_get($record, 'person.uuid')
+                    ?? data_get($record, 'person.id');
+
                 $employeeNo = data_get($record, 'employee.workno')
                     ?? data_get($record, 'employee.employee_no')
                     ?? data_get($record, 'workno')
@@ -258,21 +265,37 @@ class CrossChexSyncLogsJob implements ShouldQueue
                     continue;
                 }
 
-                $crossId = (string) $crossId;
+                $crossId = trim((string) $crossId);
                 $crossIds[] = $crossId;
 
                 $rows[] = [
                     'crosschex_account' => $api->account(),
                     'crosschex_account_name' => $api->accountName(),
                     'crosschex_id' => $crossId,
-                    'employee_id' => null,
-                    'employee_no' => (string) $employeeNo,
-                    'employee_name' => $employeeName ?: null,
+
+                    'employee_id' => filled($employeeId)
+                        ? trim((string) $employeeId)
+                        : null,
+
+                    'employee_no' => trim((string) $employeeNo),
+                    'employee_name' => filled($employeeName)
+                        ? trim((string) $employeeName)
+                        : null,
+
                     'check_time' => $checkTime,
-                    'device_sn' => $deviceSn ? (string) $deviceSn : null,
-                    'device_name' => $deviceName,
-                    'state' => $state,
-                    'raw' => json_encode($record, JSON_UNESCAPED_UNICODE),
+                    'device_sn' => filled($deviceSn)
+                        ? trim((string) $deviceSn)
+                        : null,
+                    'device_name' => filled($deviceName)
+                        ? trim((string) $deviceName)
+                        : null,
+                    'state' => filled($state)
+                        ? trim((string) $state)
+                        : null,
+                    'raw' => json_encode(
+                        $record,
+                        JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                    ),
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];

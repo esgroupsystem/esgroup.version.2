@@ -50,6 +50,13 @@ return [
                 'key' => env('CROSSCHEX_SECOND_KEY'),
                 'secret' => env('CROSSCHEX_SECOND_SECRET'),
             ],
+
+            'gonzales' => [
+                'name' => env('CROSSCHEX_GONZALES_NAME', 'Gonzales Biometric'),
+                'url' => env('CROSSCHEX_GONZALES_URL'),
+                'key' => env('CROSSCHEX_GONZALES_KEY'),
+                'secret' => env('CROSSCHEX_GONZALES_SECRET'),
+            ],
         ],
     ],
 

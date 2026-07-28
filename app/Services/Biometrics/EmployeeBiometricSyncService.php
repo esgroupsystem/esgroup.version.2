@@ -128,61 +128,112 @@ class EmployeeBiometricSyncService
             ->values();
     }
 
-    private function payloadFromLog(MirasolBiometricsLog $log, string $timeColumn): array
-    {
-        $employeeId = $this->identityService->clean($log->employee_id ?? null);
-        $employeeNo = $this->identityService->clean($log->employee_no ?? null);
-        $employeeName = $this->identityService->clean($log->employee_name ?? null);
-        $crosschexId = $this->identityService->clean($log->crosschex_id ?? null);
-        $account = $this->identityService->clean($log->crosschex_account ?? null);
-        $accountName = $this->identityService->clean($log->crosschex_account_name ?? null);
-        $sourceKey = $employeeId ?: $crosschexId ?: $employeeNo ?: $employeeName ?: $accountName;
+    private function payloadFromLog(
+        MirasolBiometricsLog $log,
+        string $timeColumn
+    ): array {
+        $account = $this->identityService->clean(
+            $log->crosschex_account ?? null
+        );
+
+        $accountName = $this->identityService->clean(
+            $log->crosschex_account_name ?? null
+        );
+
+        $employeeId = $this->identityService->clean(
+            $log->employee_id ?? null
+        );
+
+        $employeeNo = $this->identityService->clean(
+            $log->employee_no ?? null
+        );
+
+        $employeeName = $this->identityService->clean(
+            $log->employee_name ?? null
+        );
+
+        /*
+         * crosschex_id on the log is the attendance record UUID.
+         * The employee UUID extracted by the sync job is stored in employee_id.
+         */
+        $sourceEmployeeIdentifier = $employeeId;
+
+        $sourceKey = $employeeId
+            ?: $employeeNo
+            ?: $employeeName
+            ?: $accountName;
 
         return [
             'source_key' => $sourceKey,
             'biometric_company_id' => null,
-            'display_employee_no' => $employeeNo ?: $employeeId ?: $crosschexId,
-            'display_name' => $employeeName ?: $accountName ?: $account,
+
+            'display_employee_no' => $employeeNo
+                ?: $employeeId,
+
+            'display_name' => $employeeName
+                ?: $accountName
+                ?: $account,
+
             'employment_status' => 'active',
             'group_name' => null,
             'is_payroll_active' => true,
+
             'source_crosschex_account' => $account,
             'source_crosschex_account_name' => $accountName,
-            'source_crosschex_id' => $crosschexId,
+
+            /*
+             * Store the employee UUID, not the attendance record UUID.
+             */
+            'source_crosschex_id' => $sourceEmployeeIdentifier,
+
             'source_employee_id' => $employeeId,
             'source_employee_no' => $employeeNo,
             'source_employee_name' => $employeeName,
-            'device_sn' => $this->identityService->clean($log->device_sn ?? null),
-            'device_name' => $this->identityService->clean($log->device_name ?? null),
+
+            'device_sn' => $this->identityService->clean(
+                $log->device_sn ?? null
+            ),
+
+            'device_name' => $this->identityService->clean(
+                $log->device_name ?? null
+            ),
+
             'last_check_time' => ! empty($log->{$timeColumn})
-                ? Carbon::parse($log->{$timeColumn}, 'Asia/Manila')
+                ? Carbon::parse(
+                    $log->{$timeColumn},
+                    config('app.timezone', 'Asia/Manila')
+                )
                 : null,
+
             'total_logs' => 1,
             'remarks' => null,
         ];
     }
 
-    private function findExistingBiometric(array $person): ?EmployeeBiometric
-    {
-        $existing = null;
-
+    private function findExistingBiometric(
+        array $person
+    ): ?EmployeeBiometric {
         $hash = $this->identityService->identityHash($person);
 
         if ($hash !== null) {
             $existing = EmployeeBiometric::query()
                 ->where('employee_identity_hash', $hash)
                 ->first();
-        }
 
-        if ($existing) {
-            return $existing;
+            if ($existing) {
+                return $existing;
+            }
         }
 
         return $this->identityService->resolve(
             biometricEmployeeId: $person['source_employee_id'] ?? null,
             employeeNo: $person['source_employee_no'] ?? null,
-            employeeName: $person['source_employee_name'] ?? $person['display_name'] ?? null,
-            crosschexId: $person['source_crosschex_id'] ?? null
+            employeeName: $person['source_employee_name']
+                ?? $person['display_name']
+                ?? null,
+            crosschexId: $person['source_crosschex_id'] ?? null,
+            onlyPayrollActive: false,
+            crosschexAccount: $person['source_crosschex_account'] ?? null
         );
     }
 
@@ -237,13 +288,50 @@ class EmployeeBiometricSyncService
 
     private function identityKeys(array $payload): array
     {
-        return collect([
-            $payload['source_employee_id'] ? 'employee_id:'.mb_strtolower($payload['source_employee_id']) : null,
-            $payload['source_employee_no'] ? 'employee_no:'.mb_strtolower($payload['source_employee_no']) : null,
-            $payload['source_crosschex_id'] ? 'crosschex_id:'.mb_strtolower($payload['source_crosschex_id']) : null,
-            $payload['source_employee_name'] ? 'employee_name:'.mb_strtolower($payload['source_employee_name']) : null,
-            $payload['display_name'] ? 'display_name:'.mb_strtolower($payload['display_name']) : null,
-        ])->filter()->values()->all();
+        $account = $this->identityService->clean(
+            $payload['source_crosschex_account'] ?? null
+        ) ?: 'legacy';
+
+        $scope = 'account:'.mb_strtolower($account);
+
+        $employeeId = $this->identityService->clean(
+            $payload['source_employee_id'] ?? null
+        );
+
+        $employeeNo = $this->identityService->clean(
+            $payload['source_employee_no'] ?? null
+        );
+
+        $keys = collect([
+            $employeeId !== null
+                ? $scope.'|employee_id:'.mb_strtolower($employeeId)
+                : null,
+
+            $employeeNo !== null
+                ? $scope.'|employee_no:'.mb_strtolower($employeeNo)
+                : null,
+        ])
+            ->filter()
+            ->values();
+
+        /*
+         * Use names only as a fallback when no stable identifier exists.
+         */
+        if ($keys->isEmpty()) {
+            $employeeName = $this->identityService->clean(
+                $payload['source_employee_name']
+                    ?? $payload['display_name']
+                    ?? null
+            );
+
+            if ($employeeName !== null) {
+                $keys->push(
+                    $scope.'|employee_name:'.mb_strtolower($employeeName)
+                );
+            }
+        }
+
+        return $keys->unique()->values()->all();
     }
 
     private function latestDate(mixed $current, mixed $incoming): mixed

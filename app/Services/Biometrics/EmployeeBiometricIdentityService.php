@@ -41,9 +41,14 @@ class EmployeeBiometricIdentityService
         ];
     }
 
-    public function resolveFromModel(object $model, bool $onlyPayrollActive = false): ?EmployeeBiometric
-    {
-        if (! empty($model->employeeBiometric) && $model->employeeBiometric instanceof EmployeeBiometric) {
+    public function resolveFromModel(
+        object $model,
+        bool $onlyPayrollActive = false
+    ): ?EmployeeBiometric {
+        if (
+            ! empty($model->employeeBiometric)
+            && $model->employeeBiometric instanceof EmployeeBiometric
+        ) {
             return $model->employeeBiometric;
         }
 
@@ -63,11 +68,18 @@ class EmployeeBiometricIdentityService
         }
 
         return $this->resolve(
-            biometricEmployeeId: $this->clean($model->biometric_employee_id ?? null),
+            biometricEmployeeId: $this->clean(
+                $model->biometric_employee_id ?? null
+            ),
             employeeNo: $this->clean($model->employee_no ?? null),
             employeeName: $this->clean($model->employee_name ?? null),
             crosschexId: $this->clean($model->crosschex_id ?? null),
-            onlyPayrollActive: $onlyPayrollActive
+            onlyPayrollActive: $onlyPayrollActive,
+            crosschexAccount: $this->clean(
+                $model->source_crosschex_account
+                    ?? $model->crosschex_account
+                    ?? null
+            )
         );
     }
 
@@ -76,7 +88,8 @@ class EmployeeBiometricIdentityService
         ?string $employeeNo = null,
         ?string $employeeName = null,
         ?string $crosschexId = null,
-        bool $onlyPayrollActive = false
+        bool $onlyPayrollActive = false,
+        ?string $crosschexAccount = null
     ): ?EmployeeBiometric {
         $identifierValues = collect([
             $biometricEmployeeId,
@@ -88,47 +101,71 @@ class EmployeeBiometricIdentityService
             ->unique()
             ->values();
 
+        $employeeName = $this->clean($employeeName);
+        $crosschexAccount = $this->clean($crosschexAccount);
+
+        if ($identifierValues->isEmpty() && $employeeName === null) {
+            return null;
+        }
+
         $query = EmployeeBiometric::query();
 
         if ($onlyPayrollActive) {
             $query->payrollActive();
         }
 
-        $hasConstraint = false;
+        if ($crosschexAccount !== null) {
+            $query->where(
+                'source_crosschex_account',
+                $crosschexAccount
+            );
+        }
 
-        $query->where(function (Builder $query) use ($identifierValues, $employeeName, &$hasConstraint): void {
-            foreach ($identifierValues as $value) {
-                $hasConstraint = true;
+        /*
+         * Strong identifiers take priority. Do not include the employee name
+         * when an ID or employee number is available because two employees may
+         * have identical names.
+         */
+        if ($identifierValues->isNotEmpty()) {
+            $query->where(function (Builder $query) use (
+                $identifierValues
+            ): void {
+                foreach ($identifierValues as $value) {
+                    $query
+                        ->orWhere('source_key', $value)
+                        ->orWhere('source_employee_id', $value)
+                        ->orWhere('source_employee_no', $value)
+                        ->orWhere('display_employee_no', $value)
+                        ->orWhere('source_crosschex_id', $value);
+                }
+            });
+        } else {
+            $normalizedName = mb_strtolower($employeeName);
 
+            $query->where(function (Builder $query) use (
+                $normalizedName
+            ): void {
                 $query
-                    ->orWhere('source_key', $value)
-                    ->orWhere('source_employee_id', $value)
-                    ->orWhere('source_employee_no', $value)
-                    ->orWhere('display_employee_no', $value)
-                    ->orWhere('source_crosschex_id', $value)
-                    ->orWhere('source_crosschex_account', $value);
-            }
-
-            $employeeName = $this->clean($employeeName);
-
-            if ($employeeName !== null) {
-                $hasConstraint = true;
-
-                $query
-                    ->orWhereRaw('LOWER(TRIM(display_name)) = ?', [mb_strtolower($employeeName)])
-                    ->orWhereRaw('LOWER(TRIM(source_employee_name)) = ?', [mb_strtolower($employeeName)])
-                    ->orWhereRaw('LOWER(TRIM(source_crosschex_account_name)) = ?', [mb_strtolower($employeeName)])
-                    ->orWhereRaw('LOWER(TRIM(source_crosschex_account)) = ?', [mb_strtolower($employeeName)]);
-            }
-        });
-
-        if (! $hasConstraint) {
-            return null;
+                    ->whereRaw(
+                        'LOWER(TRIM(display_name)) = ?',
+                        [$normalizedName]
+                    )
+                    ->orWhereRaw(
+                        'LOWER(TRIM(source_employee_name)) = ?',
+                        [$normalizedName]
+                    )
+                    ->orWhereRaw(
+                        'LOWER(TRIM(source_crosschex_account_name)) = ?',
+                        [$normalizedName]
+                    );
+            });
         }
 
         return $query
             ->orderByDesc('is_payroll_active')
-            ->orderByRaw("CASE WHEN employment_status = 'active' THEN 1 ELSE 0 END DESC")
+            ->orderByRaw(
+                "CASE WHEN employment_status = 'active' THEN 1 ELSE 0 END DESC"
+            )
             ->orderByDesc('last_check_time')
             ->orderBy('id')
             ->first();
@@ -163,21 +200,40 @@ class EmployeeBiometricIdentityService
 
     public function identityHash(array $data): ?string
     {
-        $companyId = $this->clean($data['biometric_company_id'] ?? null) ?: 'global';
+        $account = $this->clean(
+            $data['source_crosschex_account'] ?? null
+        );
+
+        $companyId = $this->clean(
+            $data['biometric_company_id'] ?? null
+        );
+
+        /*
+         * The CrossChex account is the primary identity boundary.
+         * Manually changing the biometric company must not change the employee's
+         * source identity hash.
+         */
+        $scope = match (true) {
+            $account !== null => 'crosschex:'.mb_strtolower($account),
+            $companyId !== null => 'company:'.$companyId,
+            default => 'global',
+        };
 
         foreach ([
             'source_employee_id',
             'source_employee_no',
             'display_employee_no',
             'source_crosschex_id',
-            'source_crosschex_account',
             'source_employee_name',
             'display_name',
         ] as $field) {
             $value = $this->clean($data[$field] ?? null);
 
             if ($value !== null) {
-                return hash('sha256', $companyId.'|'.$field.'|'.mb_strtolower($value));
+                return hash(
+                    'sha256',
+                    $scope.'|'.$field.'|'.mb_strtolower($value)
+                );
             }
         }
 
