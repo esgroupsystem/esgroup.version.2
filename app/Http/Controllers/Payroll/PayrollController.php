@@ -64,12 +64,32 @@ class PayrollController extends Controller
 
     public function create()
     {
-        [$defaultCutoffMonth, $defaultCutoffYear, $defaultCutoffType] = $this->periodService->getDefaultCutoff();
+        [
+            $defaultCutoffMonth,
+            $defaultCutoffYear,
+            $defaultCutoffType
+        ] = $this->periodService->getDefaultCutoff();
+
+        $allowedGroups = session('payroll_allowed_groups');
+
+        $payrollGroups = collect([
+            1 => 'Mirasol / Balintawak Payroll',
+            2 => 'Gonzales Payroll',
+        ]);
+
+        if ($allowedGroups !== 'all') {
+
+            $payrollGroups = $payrollGroups->only(
+                $allowedGroups ?? []
+            );
+
+        }
 
         return view('payroll.payrolls.create', compact(
             'defaultCutoffMonth',
             'defaultCutoffYear',
-            'defaultCutoffType'
+            'defaultCutoffType',
+            'payrollGroups'
         ));
     }
 

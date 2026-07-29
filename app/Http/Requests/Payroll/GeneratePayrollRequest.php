@@ -19,6 +19,11 @@ class GeneratePayrollRequest extends FormRequest
             'cutoff_type' => ['required', 'string', 'in:first,second'],
             'remarks' => ['nullable', 'string', 'max:5000'],
             'rebuild_summary' => ['nullable', 'boolean'],
+            'garage_group' => [
+                'required',
+                'integer',
+                'in:1,2',
+            ],
         ];
     }
 }

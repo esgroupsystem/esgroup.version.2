@@ -21,7 +21,8 @@
                                 Payroll Batches
                             </h4>
                             <p class="mb-0 text-muted small">
-                                Overall payroll computation: attendance hours, holidays, absences, adjustments, government deductions, and loan logs.
+                                Overall payroll computation: attendance hours, holidays, absences, adjustments, government
+                                deductions, and loan logs.
                             </p>
                         </div>
                         <a href="{{ route('payroll.create') }}" class="btn btn-primary">
@@ -34,7 +35,8 @@
                     <form method="GET" action="{{ route('payroll.index') }}" class="row g-2 align-items-end mb-3">
                         <div class="col-lg-4">
                             <label class="form-label small text-muted">Search</label>
-                            <input type="text" name="search" class="form-control" placeholder="Payroll no., status, remarks" value="{{ request('search') }}">
+                            <input type="text" name="search" class="form-control"
+                                placeholder="Payroll no., status, remarks" value="{{ request('search') }}">
                         </div>
                         <div class="col-md-3 col-lg-2">
                             <label class="form-label small text-muted">Cutoff</label>
@@ -67,6 +69,7 @@
                                     <th>Coverage</th>
                                     <th>Contribution Month</th>
                                     <th class="text-center">Employees</th>
+                                    <th>Group</th>
                                     <th>Status</th>
                                     <th>Generated</th>
                                     <th class="text-end" width="190">Action</th>
@@ -76,7 +79,8 @@
                                 @forelse ($payrolls as $payroll)
                                     <tr>
                                         <td>
-                                            <a href="{{ route('payroll.show', $payroll) }}" class="fw-bold text-decoration-none">
+                                            <a href="{{ route('payroll.show', $payroll) }}"
+                                                class="fw-bold text-decoration-none">
                                                 {{ $payroll->payroll_number }}
                                             </a>
                                             <div class="small text-muted">{{ $payroll->cutoff_label }}</div>
@@ -92,22 +96,32 @@
                                         </td>
                                         <td class="text-center fw-semibold">{{ $payroll->items_count }}</td>
                                         <td>
-                                            <span class="badge {{ $payroll->status === 'finalized' ? 'bg-success' : 'bg-warning text-dark' }}">
+                                            <span class="badge bg-primary">
+                                                {{ $payroll->garage_group_label }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span
+                                                class="badge {{ $payroll->status === 'finalized' ? 'bg-success' : 'bg-warning text-dark' }}">
                                                 {{ ucfirst($payroll->status) }}
                                             </span>
                                         </td>
                                         <td>
                                             <div>{{ $payroll->generator->name ?? 'N/A' }}</div>
-                                            <small class="text-muted">{{ optional($payroll->generated_at)->format('M d, Y h:i A') }}</small>
+                                            <small
+                                                class="text-muted">{{ optional($payroll->generated_at)->format('M d, Y h:i A') }}</small>
                                         </td>
                                         <td class="text-end">
                                             <div class="btn-group btn-group-sm">
-                                                <a href="{{ route('payroll.show', $payroll) }}" class="btn btn-falcon-primary">View</a>
+                                                <a href="{{ route('payroll.show', $payroll) }}"
+                                                    class="btn btn-falcon-primary">View</a>
                                                 @if ($payroll->status !== 'finalized')
-                                                    <form method="POST" action="{{ route('payroll.destroy', $payroll) }}" onsubmit="return confirm('Delete this draft payroll?')">
+                                                    <form method="POST" action="{{ route('payroll.destroy', $payroll) }}"
+                                                        onsubmit="return confirm('Delete this draft payroll?')">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button class="btn btn-falcon-danger rounded-start-0">Delete</button>
+                                                        <button
+                                                            class="btn btn-falcon-danger rounded-start-0">Delete</button>
                                                     </form>
                                                 @endif
                                             </div>

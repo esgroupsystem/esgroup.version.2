@@ -781,7 +781,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     */
 
     Route::prefix('payroll')
-        ->middleware(['auth'])
+        ->middleware([ 'auth', 'payroll.group',])
         ->name('payroll.')
         ->controller(PayrollController::class)
         ->group(function () {
@@ -839,11 +839,10 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         });
 
     /*
-    /*
-|--------------------------------------------------------------------------
-| Claims Management
-|--------------------------------------------------------------------------
-*/
+    |--------------------------------------------------------------------------
+    | Claims Management
+    |--------------------------------------------------------------------------
+    */
 
     Route::middleware(['auth'])
         ->prefix('claims')

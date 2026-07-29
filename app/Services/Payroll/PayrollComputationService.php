@@ -52,10 +52,39 @@ class PayrollComputationService
 
         $summaries = DailyAttendanceSummary::query()
             ->with('employeeBiometric')
-            ->whereBetween('work_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->whereBetween(
+                'work_date',
+                [
+                    $startDate->toDateString(),
+                    $endDate->toDateString(),
+                ]
+            )
+->when(
+    ! empty($data['garage_group']),
+    function ($query) use ($data) {
+
+        $query->whereHas(
+            'employeeBiometric',
+            function ($employeeQuery) use ($data) {
+
+                $employeeQuery->where(
+                    'group_name',
+                    $data['garage_group']
+                );
+
+            }
+        );
+
+    }
+)
             ->where(function ($query): void {
-                $query->whereHas('employeeBiometric', fn ($employeeQuery) => $employeeQuery->payrollActive())
+
+                $query->whereHas(
+                    'employeeBiometric',
+                    fn ($employeeQuery) => $employeeQuery->payrollActive()
+                )
                     ->orWhereNull('employee_biometric_id');
+
             })
             ->orderBy('employee_name')
             ->orderBy('work_date')
@@ -78,6 +107,7 @@ class PayrollComputationService
                 'cutoff_month' => (int) $data['cutoff_month'],
                 'cutoff_year' => (int) $data['cutoff_year'],
                 'cutoff_type' => (string) $data['cutoff_type'],
+                'garage_group' => $data['garage_group'],
                 'contribution_month' => $contribution['month'],
                 'contribution_year' => $contribution['year'],
                 'period_start' => $startDate->toDateString(),

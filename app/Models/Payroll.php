@@ -14,6 +14,7 @@ class Payroll extends Model
         'cutoff_month',
         'cutoff_year',
         'cutoff_type',
+        'garage_group',
         'contribution_month',
         'contribution_year',
         'period_start',
@@ -79,5 +80,14 @@ class Payroll extends Model
 
             return now()->setDate((int) $this->contribution_year, (int) $this->contribution_month, 1)->format('F Y');
         });
+    }
+
+    public function getGarageGroupLabelAttribute(): string
+    {
+        return match ((int) $this->garage_group) {
+            1 => 'Mirasol / Balintawak Payroll',
+            2 => 'Gonzales Payroll',
+            default => 'Unknown Group',
+        };
     }
 }

@@ -15,7 +15,8 @@
                         Generate Payroll
                     </h4>
                     <p class="mb-0 text-muted small">
-                        Uses 9 hours = 1 day, holiday before/after rule, monthly-cycle government deductions, and payment logs.
+                        Uses 9 hours = 1 day, holiday before/after rule, monthly-cycle government deductions, and payment
+                        logs.
                     </p>
                 </div>
 
@@ -23,6 +24,26 @@
                     <form method="POST" action="{{ route('payroll.store') }}">
                         @csrf
 
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                Payroll Group
+                            </label>
+                            <select name="garage_group" class="form-select" required>
+                                <option value="">
+                                    Select Payroll Group
+                                </option>
+                                @foreach ($payrollGroups as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('garage_group') == $value)>
+                                        {{ $label }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('garage_group')
+                                <div class="invalid-feedback d-block">
+                                    {{ $message }}
+                                </div>
+                            @enderror
+                        </div>
                         <div class="row g-3">
                             <div class="col-md-4">
                                 <label class="form-label">Cutoff Month</label>
@@ -37,7 +58,8 @@
 
                             <div class="col-md-4">
                                 <label class="form-label">Cutoff Year</label>
-                                <input type="number" name="cutoff_year" class="form-control" value="{{ old('cutoff_year', $defaultCutoffYear) }}" required>
+                                <input type="number" name="cutoff_year" class="form-control"
+                                    value="{{ old('cutoff_year', $defaultCutoffYear) }}" required>
                             </div>
 
                             <div class="col-md-4">
@@ -55,14 +77,16 @@
                             <div class="col-12">
                                 <div class="alert alert-info border-0 mb-0">
                                     <strong>Payroll basis:</strong>
-                                    A 2nd cutoff ending on Feb 10 plus 1st cutoff Feb 11–25 belongs to the February contribution month.
+                                    A 2nd cutoff ending on Feb 10 plus 1st cutoff Feb 11–25 belongs to the February
+                                    contribution month.
                                     Government contribution schedules are configurable in <code>config/payroll.php</code>.
                                 </div>
                             </div>
 
                             <div class="col-12">
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" name="rebuild_summary" value="1" id="rebuild_summary" @checked(old('rebuild_summary', '1'))>
+                                    <input class="form-check-input" type="checkbox" name="rebuild_summary" value="1"
+                                        id="rebuild_summary" @checked(old('rebuild_summary', '1'))>
                                     <label class="form-check-label" for="rebuild_summary">
                                         Rebuild daily attendance summary before generating payroll
                                     </label>

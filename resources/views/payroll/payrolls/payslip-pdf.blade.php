@@ -95,8 +95,9 @@
         .employee-card {
             position: relative;
             border: 1px dashed #333;
-            min-height: 128mm;
-            padding: 4px;
+            min-height: 0;
+            height: auto;
+            padding: 4px 4px 3px;
             page-break-inside: avoid;
             overflow: hidden;
         }
@@ -282,25 +283,52 @@
         .signature-table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
             margin-top: 4px;
         }
 
         .signature-table td {
             border: 0;
-            padding: 2px;
+            padding: 1px 0;
             font-size: 7px;
+            vertical-align: bottom;
+        }
+
+        .signature-label {
+            width: 12%;
+            white-space: nowrap;
+            padding-right: 2px !important;
+        }
+
+        .received-signature-line {
+            width: 50%;
+        }
+
+        .signature-spacer {
+            width: 7%;
+        }
+
+        .date-label {
+            width: 8%;
+            white-space: nowrap;
+            padding-right: 2px !important;
+        }
+
+        .date-signature-line {
+            width: 23%;
         }
 
         .signature-line {
             border-bottom: 1px solid #111 !important;
-            height: 12px;
+            height: 10px;
         }
 
         .cut-note {
             text-align: right;
             font-size: 6px;
             color: #555;
-            margin-top: 2px;
+            margin: 1px 0 0;
+            line-height: 1;
             letter-spacing: .3px;
         }
 
@@ -314,7 +342,13 @@
 
 <body>
     @php
+        /*
+         * Use PHP instead of the peso glyph because some PDF fonts/renderers
+         * do not contain the ₱ character and display it as a question mark.
+         */
+        $currency = 'PHP';
         $money = fn($value) => number_format((float) $value, 2);
+        $moneyWithCurrency = fn($value) => $currency . ' ' . $money($value);
 
         $backgroundPath = public_path('images/payroll/jell-payslip-bg.jpg');
 
@@ -345,33 +379,34 @@
 
                     <td>
                         <strong>Gross Pay</strong>
-                        ₱ {{ $money($payroll->items->sum('gross_pay')) }}
+                        {{ $moneyWithCurrency($payroll->items->sum('gross_pay')) }}
                     </td>
 
                     <td>
                         <strong>Net Pay</strong>
-                        ₱ {{ $money($payroll->items->sum('net_pay')) }}
+                        {{ $moneyWithCurrency($payroll->items->sum('net_pay')) }}
                     </td>
 
                     <td>
                         <strong>Deductions</strong>
-                        ₱
-                        {{ $money($payroll->items->sum('total_employee_government_deductions') + $payroll->items->sum('other_deductions')) }}
+                        {{ $moneyWithCurrency(
+                            $payroll->items->sum('total_employee_government_deductions') + $payroll->items->sum('other_deductions'),
+                        ) }}
                     </td>
 
                     <td>
                         <strong>SSS</strong>
-                        ₱ {{ $money($payroll->items->sum('sss_employee')) }}
+                        {{ $moneyWithCurrency($payroll->items->sum('sss_employee')) }}
                     </td>
 
                     <td>
                         <strong>PhilHealth</strong>
-                        ₱ {{ $money($payroll->items->sum('philhealth_employee')) }}
+                        {{ $moneyWithCurrency($payroll->items->sum('philhealth_employee')) }}
                     </td>
 
                     <td>
                         <strong>Pag-Ibig</strong>
-                        ₱ {{ $money($payroll->items->sum('pagibig_employee')) }}
+                        {{ $moneyWithCurrency($payroll->items->sum('pagibig_employee')) }}
                     </td>
 
                     <td>
@@ -414,20 +449,12 @@
                                                     <strong>Emp No:</strong>
                                                     {{ $slip['employee_no'] ?: '—' }}
                                                 </td>
-                                                <td>
-                                                    <strong>Bio ID:</strong>
-                                                    {{ $slip['biometric_employee_id'] ?: '—' }}
-                                                </td>
                                             </tr>
 
                                             <tr>
                                                 <td>
                                                     <strong>Period Ending:</strong>
                                                     {{ $slip['period_ending'] }}
-                                                </td>
-                                                <td>
-                                                    <strong>Rate:</strong>
-                                                    {{ strtoupper((string) ($item->rate_type ?? '—')) }}
                                                 </td>
                                             </tr>
                                         </table>
@@ -447,14 +474,16 @@
                                                                 <tr>
                                                                     <td class="label">{{ $earning['label'] }}</td>
                                                                     <td class="unit">{{ $earning['unit'] }}</td>
-                                                                    <td class="amount">{{ $money($earning['amount']) }}
+                                                                    <td class="amount">
+                                                                        {{ $money($earning['amount']) }}
                                                                     </td>
                                                                 </tr>
                                                             @endforeach
 
                                                             <tr class="total-row">
                                                                 <td colspan="2" class="text-end">Gross Pay</td>
-                                                                <td class="amount">{{ $money($slip['gross_pay']) }}
+                                                                <td class="amount">
+                                                                    {{ $money($slip['gross_pay']) }}
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -474,19 +503,22 @@
                                                                 <tr>
                                                                     <td class="label">{{ $deduction['label'] }}</td>
                                                                     <td class="amount">
-                                                                        {{ $money($deduction['amount']) }}</td>
+                                                                        {{ $money($deduction['amount']) }}
+                                                                    </td>
                                                                 </tr>
                                                             @endforeach
 
                                                             <tr class="total-row">
                                                                 <td>Total Deductions</td>
                                                                 <td class="amount">
-                                                                    {{ $money($slip['total_deductions']) }}</td>
+                                                                    {{ $money($slip['total_deductions']) }}
+                                                                </td>
                                                             </tr>
 
                                                             <tr class="net-row">
                                                                 <td>Net Pay</td>
-                                                                <td class="amount">₱ {{ $money($slip['net_pay']) }}
+                                                                <td class="amount">
+                                                                    {{ $moneyWithCurrency($slip['net_pay']) }}
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -503,101 +535,29 @@
                                                 </td>
 
                                                 <td>
-                                                    <strong>Review:</strong>
-                                                    {{ $slip['summary']['review'] }}
-                                                </td>
-
-                                                <td>
-                                                    <strong>Hol Paid:</strong>
-                                                    {{ $slip['summary']['holiday_paid'] }}
-                                                </td>
-                                            </tr>
-
-                                            <tr>
-                                                <td>
-                                                    <strong>Hol Unpaid:</strong>
-                                                    {{ $slip['summary']['holiday_unpaid'] }}
-                                                </td>
-
-                                                <td>
                                                     <strong>Late/UT:</strong>
                                                     {{ $slip['summary']['late_minutes'] }}/{{ $slip['summary']['undertime_minutes'] }}
                                                     min
                                                 </td>
 
                                                 <td>
-                                                    <strong>Pay Units:</strong>
-                                                    {{ $slip['summary']['pay_units'] }}
+                                                    <strong>Holiday Paid:</strong>
+                                                    {{ $slip['summary']['holiday_paid'] }}
                                                 </td>
                                             </tr>
                                         </table>
 
-                                        <div class="daily-title">Daily Attendance Status</div>
-
-                                        <table class="inner-table">
-                                            <thead>
-                                                <tr>
-                                                    <th style="width: 13%;">Day</th>
-                                                    <th style="width: 13%;">Date</th>
-                                                    <th style="width: 14%;">Pay</th>
-                                                    <th>Status</th>
-                                                </tr>
-                                            </thead>
-
-                                            <tbody>
-                                                @foreach ($attendanceRows as $row)
-                                                    @php
-                                                        $status = strtoupper((string) $row['status']);
-
-                                                        $statusClass = match (true) {
-                                                            str_contains($status, 'ABSENT'),
-                                                            str_contains($status, 'UNPAID'),
-                                                            str_contains($status, 'REVIEW')
-                                                                => 'status-danger',
-
-                                                            str_contains($status, 'LATE'),
-                                                            str_contains($status, 'UT'),
-                                                            str_contains($status, 'ADJ'),
-                                                            str_contains($status, 'OB'),
-                                                            str_contains($status, 'OFFSET')
-                                                                => 'status-warning',
-
-                                                            default => (float) $row['pay_units'] > 0
-                                                                ? 'status-paid'
-                                                                : '',
-                                                        };
-                                                    @endphp
-
-                                                    <tr class="{{ $statusClass }}">
-                                                        <td>{{ $row['day'] }}</td>
-                                                        <td>{{ $row['date'] }}</td>
-                                                        <td>{{ $row['pay_units'] }}</td>
-                                                        <td>{{ $status }}</td>
-                                                    </tr>
-                                                @endforeach
-
-                                                @for ($i = $attendanceRows->count(); $i < 15; $i++)
-                                                    <tr>
-                                                        <td>&nbsp;</td>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                    </tr>
-                                                @endfor
-                                            </tbody>
-                                        </table>
-
                                         <table class="signature-table">
                                             <tr>
-                                                <td style="width: 16%;">
+                                                <td class="signature-label">
                                                     <strong>RECEIVED:</strong>
                                                 </td>
-                                                <td class="signature-line" style="width: 48%;"></td>
-                                                <td style="width: 10%;"></td>
-                                                <td style="width: 8%;">
+                                                <td class="signature-line received-signature-line"></td>
+                                                <td class="signature-spacer"></td>
+                                                <td class="date-label">
                                                     <strong>DATE:</strong>
                                                 </td>
-                                                <td class="signature-line" style="width: 18%;"></td>
+                                                <td class="signature-line date-signature-line"></td>
                                             </tr>
                                         </table>
 

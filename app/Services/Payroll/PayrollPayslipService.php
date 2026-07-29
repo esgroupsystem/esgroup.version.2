@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\Schema;
 
 class PayrollPayslipService
 {
+    private const DEFAULT_BASE_DAYS_PER_CUTOFF = 15.00;
+
+    private const DEFAULT_PAID_HOURS_PER_DAY = 8.00;
+
     public function build(Payroll $payroll): array
     {
         $payroll->load([
@@ -79,35 +83,68 @@ class PayrollPayslipService
             'employee_no' => $item->employee_no ?: '—',
             'biometric_employee_id' => $item->biometric_employee_id ?: '—',
             'period_ending' => Carbon::parse($payroll->period_end)->format('F d, Y'),
-            'earnings' => $this->earnings($item),
+            'earnings' => $this->earnings($item, $rows, $adjustmentGroups),
             'deductions' => $this->deductions($item),
             'summary' => $this->summary($item, $rows),
             'attendanceRows' => $attendanceRows,
             'gross_pay' => round((float) $item->gross_pay, 2),
             'net_pay' => round((float) $item->net_pay, 2),
-            'total_deductions' => round(max(0, (float) $item->gross_pay - (float) $item->net_pay), 2),
+            'total_deductions' => round(
+                max(0, (float) $item->gross_pay - (float) $item->net_pay),
+                2
+            ),
         ];
     }
 
-    protected function earnings(PayrollItem $item): array
-    {
-        $allowance = round((float) data_get($item->meta, 'allowance.allowance_per_cutoff', 0), 2);
-        $adjustment = round((float) data_get($item->meta, 'manual_adjustments.additions', 0), 2);
+    protected function earnings(
+        PayrollItem $item,
+        Collection $rows,
+        Collection $adjustmentGroups
+    ): array {
+        $allowance = round(
+            (float) data_get($item->meta, 'allowance.allowance_per_cutoff', 0),
+            2
+        );
+
+        $adjustment = round(
+            (float) data_get($item->meta, 'manual_adjustments.additions', 0),
+            2
+        );
 
         if ($allowance <= 0 && $adjustment <= 0 && (float) $item->other_additions > 0) {
             $allowance = round((float) $item->other_additions, 2);
         }
 
+        $regularDaysWorked = $this->regularDaysWorked(
+            $item,
+            $rows,
+            $adjustmentGroups
+        );
+
+        $overtimePay = round((float) $item->overtime_pay, 2);
+        $restDayPay = round((float) $item->rest_day_pay, 2);
+        $holidayPay = round((float) $item->holiday_pay, 2);
+
+        $regularPayAmount = $this->regularPayAmount(
+            $item,
+            $regularDaysWorked,
+            $allowance,
+            $adjustment,
+            $overtimePay,
+            $restDayPay,
+            $holidayPay
+        );
+
         return [
             [
                 'label' => 'Regular Days Worked',
-                'unit' => number_format((float) $item->total_scheduled_days, 2),
-                'amount' => round((float) $item->regular_pay, 2),
+                'unit' => number_format($regularDaysWorked, 2),
+                'amount' => $regularPayAmount,
             ],
             [
                 'label' => 'Overtime (Reg.)',
                 'unit' => number_format(((float) $item->total_overtime_minutes) / 60, 2),
-                'amount' => round((float) $item->overtime_pay, 2),
+                'amount' => $overtimePay,
             ],
             [
                 'label' => 'Overtime (RD. or Sp. Day)',
@@ -132,12 +169,12 @@ class PayrollPayslipService
             [
                 'label' => 'Restday/Special Holiday',
                 'unit' => number_format((float) $item->total_rest_day_worked, 2),
-                'amount' => round((float) $item->rest_day_pay, 2),
+                'amount' => $restDayPay,
             ],
             [
                 'label' => 'Holidays Worked',
                 'unit' => number_format((float) $item->total_holiday_worked, 2),
-                'amount' => round((float) $item->holiday_pay, 2),
+                'amount' => $holidayPay,
             ],
             [
                 'label' => 'COLA',
@@ -155,6 +192,172 @@ class PayrollPayslipService
                 'amount' => $adjustment,
             ],
         ];
+    }
+
+    /**
+     * Return the actual regular-pay amount represented by the computed
+     * Regular Days Worked value.
+     *
+     * The payroll item's gross pay is the source of truth because it already
+     * contains the approved absence, late, undertime, and payroll adjustments.
+     * Subtracting the other earning lines makes the payslip detail reconcile
+     * exactly with the displayed Gross Pay.
+     */
+    protected function regularPayAmount(
+        PayrollItem $item,
+        float $regularDaysWorked,
+        float $allowance,
+        float $adjustment,
+        float $overtimePay,
+        float $restDayPay,
+        float $holidayPay
+    ): float {
+        $grossPay = round(max(0, (float) $item->gross_pay), 2);
+
+        $otherEarnings = round(
+            max(0, $allowance)
+            + max(0, $adjustment)
+            + max(0, $overtimePay)
+            + max(0, $restDayPay)
+            + max(0, $holidayPay),
+            2
+        );
+
+        if ($grossPay > 0) {
+            return round(max(0, $grossPay - $otherEarnings), 2);
+        }
+
+        $dailyRate = max(0, (float) $item->daily_rate);
+
+        if ($dailyRate <= 0 && (float) $item->regular_pay > 0) {
+            $dailyRate = (float) $item->regular_pay / $this->baseDaysPerCutoff();
+        }
+
+        return round(max(0, $regularDaysWorked * $dailyRate), 2);
+    }
+
+    protected function regularDaysWorked(
+        PayrollItem $item,
+        Collection $rows,
+        Collection $adjustmentGroups
+    ): float {
+        $baseDays = $this->baseDaysPerCutoff();
+        $paidMinutesPerDay = $this->paidMinutesPerDay();
+
+        if ($rows->isEmpty()) {
+            $absentDays = max(0, (float) $item->total_absent_days);
+            $lateMinutes = max(0, (int) $item->total_late_minutes);
+            $undertimeMinutes = max(0, (int) $item->total_undertime_minutes);
+
+            $minuteDeductionDays = ($lateMinutes + $undertimeMinutes) / $paidMinutesPerDay;
+
+            return round(
+                max(0, min($baseDays, $baseDays - $absentDays - $minuteDeductionDays)),
+                2
+            );
+        }
+
+        $deductionDays = $rows->sum(function ($row) use (
+            $adjustmentGroups,
+            $paidMinutesPerDay
+        ): float {
+            $adjustments = $adjustmentGroups->get(
+                $this->employeeDateKey($row),
+                collect()
+            );
+
+            if ($this->hasPaidAttendanceAdjustment($adjustments)) {
+                return 0.00;
+            }
+
+            if ($this->isRestDayRow($row)) {
+                return 0.00;
+            }
+
+            if ($this->isHolidayRow($row)) {
+                return $this->hasWorkRecord($row) || $this->payUnits($row) > 0
+                    ? 0.00
+                    : 1.00;
+            }
+
+            if ($this->isAbsent($row)) {
+                return 1.00;
+            }
+
+            $lateMinutes = max(0, (int) ($row->late_minutes ?? 0));
+            $undertimeMinutes = max(0, (int) ($row->undertime_minutes ?? 0));
+            $minuteDeductionDays = ($lateMinutes + $undertimeMinutes) / $paidMinutesPerDay;
+
+            $partialDayDeduction = $this->partialDayDeduction($row);
+
+            // Use the larger deduction because payable_days may already contain
+            // the same late or undertime deduction. This prevents double deduction.
+            return max($minuteDeductionDays, $partialDayDeduction);
+        });
+
+        return round(
+            max(0, min($baseDays, $baseDays - $deductionDays)),
+            2
+        );
+    }
+
+    protected function partialDayDeduction(object $row): float
+    {
+        $status = $this->normalizedStatus($row);
+        $payUnits = $this->payUnits($row);
+
+        if ($status === 'half_day') {
+            if ($payUnits > 0 && $payUnits < 1) {
+                return round(1 - $payUnits, 4);
+            }
+
+            return 0.50;
+        }
+
+        if ($payUnits > 0 && $payUnits < 1) {
+            return round(1 - $payUnits, 4);
+        }
+
+        return 0.00;
+    }
+
+    protected function hasPaidAttendanceAdjustment(Collection $adjustments): bool
+    {
+        $label = $this->adjustmentLabel($adjustments);
+
+        return in_array($label, [
+            'OB',
+            'OFFSET',
+            'ADJ',
+            'ADJ+',
+        ], true);
+    }
+
+    protected function baseDaysPerCutoff(): float
+    {
+        return self::DEFAULT_BASE_DAYS_PER_CUTOFF;
+    }
+
+    protected function paidMinutesPerDay(): float
+    {
+        $configuredMinutes = (float) config(
+            'payroll.attendance.paid_minutes_per_day',
+            0
+        );
+
+        if ($configuredMinutes > 0) {
+            return $configuredMinutes;
+        }
+
+        $paidHoursPerDay = max(
+            0.01,
+            (float) config(
+                'payroll.attendance.paid_hours_per_day',
+                self::DEFAULT_PAID_HOURS_PER_DAY
+            )
+        );
+
+        return $paidHoursPerDay * 60;
     }
 
     protected function deductions(PayrollItem $item): array
@@ -206,7 +409,11 @@ class PayrollPayslipService
             ],
         ];
 
-        $totalDeductions = round(max(0, (float) $item->gross_pay - (float) $item->net_pay), 2);
+        $totalDeductions = round(
+            max(0, (float) $item->gross_pay - (float) $item->net_pay),
+            2
+        );
+
         $shownDeductions = round(collect($lines)->sum('amount'), 2);
         $otherDeductions = round(max(0, $totalDeductions - $shownDeductions), 2);
 
@@ -237,13 +444,30 @@ class PayrollPayslipService
         $holidayRows = $rows->filter(fn ($row): bool => $this->isHolidayRow($row));
 
         return [
-            'absent' => number_format($rows->filter(fn ($row): bool => $this->isAbsent($row))->count()),
-            'review' => number_format($rows->filter(fn ($row): bool => $this->needsReview($row))->count()),
-            'holiday_paid' => number_format($holidayRows->filter(fn ($row): bool => $this->payUnits($row) > 0)->count()),
-            'holiday_unpaid' => number_format($holidayRows->filter(fn ($row): bool => $this->payUnits($row) <= 0)->count()),
-            'late_minutes' => number_format((float) $rows->sum(fn ($row): int => (int) ($row->late_minutes ?? 0)), 0),
-            'undertime_minutes' => number_format((float) $rows->sum(fn ($row): int => (int) ($row->undertime_minutes ?? 0)), 0),
-            'pay_units' => number_format((float) $rows->sum(fn ($row): float => $this->payUnits($row)), 2),
+            'absent' => number_format(
+                $rows->filter(fn ($row): bool => $this->isAbsent($row))->count()
+            ),
+            'review' => number_format(
+                $rows->filter(fn ($row): bool => $this->needsReview($row))->count()
+            ),
+            'holiday_paid' => number_format(
+                $holidayRows->filter(fn ($row): bool => $this->payUnits($row) > 0)->count()
+            ),
+            'holiday_unpaid' => number_format(
+                $holidayRows->filter(fn ($row): bool => $this->payUnits($row) <= 0)->count()
+            ),
+            'late_minutes' => number_format(
+                (float) $rows->sum(fn ($row): int => (int) ($row->late_minutes ?? 0)),
+                0
+            ),
+            'undertime_minutes' => number_format(
+                (float) $rows->sum(fn ($row): int => (int) ($row->undertime_minutes ?? 0)),
+                0
+            ),
+            'pay_units' => number_format(
+                (float) $rows->sum(fn ($row): float => $this->payUnits($row)),
+                2
+            ),
         ];
     }
 
@@ -257,7 +481,13 @@ class PayrollPayslipService
         return [
             'date' => $date->format('m/d'),
             'day' => $date->format('D'),
-            'status' => $this->shortStatus($row, $adjustments, $payUnits, $lateMinutes, $undertimeMinutes),
+            'status' => $this->shortStatus(
+                $row,
+                $adjustments,
+                $payUnits,
+                $lateMinutes,
+                $undertimeMinutes
+            ),
             'pay_units' => number_format($payUnits, 2),
         ];
     }
@@ -363,20 +593,23 @@ class PayrollPayslipService
 
     protected function sumDeductions(Collection $deductions, array $needles): float
     {
-        return round((float) $deductions
-            ->filter(function ($deduction) use ($needles): bool {
-                $sourceType = strtolower((string) data_get($deduction, 'source_type', ''));
-                $name = strtolower((string) data_get($deduction, 'name', ''));
+        return round(
+            (float) $deductions
+                ->filter(function ($deduction) use ($needles): bool {
+                    $sourceType = strtolower((string) data_get($deduction, 'source_type', ''));
+                    $name = strtolower((string) data_get($deduction, 'name', ''));
 
-                foreach ($needles as $needle) {
-                    if (str_contains($sourceType, $needle) || str_contains($name, $needle)) {
-                        return true;
+                    foreach ($needles as $needle) {
+                        if (str_contains($sourceType, $needle) || str_contains($name, $needle)) {
+                            return true;
+                        }
                     }
-                }
 
-                return false;
-            })
-            ->sum(fn ($deduction): float => (float) data_get($deduction, 'amount', 0)), 2);
+                    return false;
+                })
+                ->sum(fn ($deduction): float => (float) data_get($deduction, 'amount', 0)),
+            2
+        );
     }
 
     protected function adjustmentGroups(Carbon $startDate, Carbon $endDate): Collection
@@ -434,11 +667,18 @@ class PayrollPayslipService
     protected function payUnits(object $row): float
     {
         if (isset($row->payable_days)) {
-            return round(max(0, (float) $row->payable_days), 2);
+            return round(max(0, (float) $row->payable_days), 4);
         }
 
         if (isset($row->payable_hours)) {
-            return round(max(0, (float) $row->payable_hours) / (float) config('payroll.attendance.paid_hours_per_day', 8), 2);
+            return round(
+                max(0, (float) $row->payable_hours)
+                    / max(0.01, (float) config(
+                        'payroll.attendance.paid_hours_per_day',
+                        self::DEFAULT_PAID_HOURS_PER_DAY
+                    )),
+                4
+            );
         }
 
         return 0.00;
