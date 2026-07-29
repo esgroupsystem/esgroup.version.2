@@ -675,33 +675,19 @@
                                     <tr class="{{ $rowClass }}">
                                         <td>
                                             <div class="payroll-employee-name">
-                                                <div class="name">
-                                                    {{ $item->employee_name }}
-                                                </div>
+                                                <span class="name">
+                                                    {{ $item->employee_name ?: 'Unknown Employee' }}
+                                                </span>
 
-                                                <div class="meta">
-                                                    {{ $item->employee_no ?: 'No Employee No' }}
-
-                                                    @if ($item->biometric_employee_id)
-                                                        <span class="mx-1">|</span>
-                                                        Bio: {{ $item->biometric_employee_id }}
-                                                    @endif
-                                                </div>
-
-                                                @if (!empty($item->rate_type))
-                                                    <div class="meta">
-                                                        Rate: {{ str_replace('_', ' ', ucfirst($item->rate_type)) }}
-                                                    </div>
-                                                @endif
+                                                <span class="meta">
+                                                    — {{ $item->employee_no ?: 'No Employee No' }}
+                                                </span>
                                             </div>
                                         </td>
 
                                         <td class="text-end">
                                             <span class="payroll-amount">
                                                 {{ $num($itemPayableDays, 2) }} day
-                                            </span>
-                                            <span class="payroll-sub">
-                                                {{ $num($itemPayableHours, 2) }} hr
                                             </span>
                                         </td>
 
@@ -715,25 +701,11 @@
                                             <span class="payroll-amount text-info">
                                                 {{ $money($itemAdditions) }}
                                             </span>
-                                            <span class="payroll-sub">
-                                                H {{ $num($itemHolidayPay, 2) }}
-                                                /
-                                                R {{ $num($itemRestDayPay, 2) }}
-                                                /
-                                                OT {{ $num($itemOvertimePay, 2) }}
-                                            </span>
                                         </td>
 
                                         <td class="text-end">
                                             <span class="payroll-amount text-danger">
                                                 {{ $money($itemGovernment) }}
-                                            </span>
-                                            <span class="payroll-sub">
-                                                SSS {{ $num($item->sss_employee ?? 0, 2) }}
-                                                /
-                                                PH {{ $num($item->philhealth_employee ?? 0, 2) }}
-                                                /
-                                                PI {{ $num($item->pagibig_employee ?? 0, 2) }}
                                             </span>
                                         </td>
 
@@ -753,12 +725,6 @@
                                             <span class="payroll-amount text-success">
                                                 {{ $money($itemNetPay) }}
                                             </span>
-
-                                            @if ($itemGrossPay > 0)
-                                                <span class="payroll-sub">
-                                                    {{ $num(($itemNetPay / $itemGrossPay) * 100, 1) }}% of gross
-                                                </span>
-                                            @endif
                                         </td>
 
                                         <td class="text-end">
@@ -798,9 +764,6 @@
 
                                         <td class="text-end">
                                             {{ $num($totalPayableDays, 2) }} day
-                                            <span class="payroll-sub">
-                                                {{ $num($totalPayableHours, 2) }} hr
-                                            </span>
                                         </td>
 
                                         <td class="text-end">

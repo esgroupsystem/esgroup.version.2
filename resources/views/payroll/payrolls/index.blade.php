@@ -107,7 +107,7 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <div>{{ $payroll->generator->name ?? 'N/A' }}</div>
+                                            <div>{{ $payroll->generator->full_name ?? 'N/A' }}</div>
                                             <small
                                                 class="text-muted">{{ optional($payroll->generated_at)->format('M d, Y h:i A') }}</small>
                                         </td>
