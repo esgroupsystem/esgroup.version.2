@@ -313,102 +313,148 @@
                 </div>
 
                 <div class="card-body">
-                    <form method="GET" action="{{ route('biometrics.employees.index') }}">
-                        <div class="row g-3 align-items-end">
-                            <div class="col-xl-3 col-lg-5">
-                                <label class="form-label fw-semibold" for="search">Search Employee</label>
+                    <form method="GET" action="{{ route('biometrics.employees.index') }}" class="bio-filter-form">
 
-                                <div class="input-group">
-                                    <span class="input-group-text bg-white">
-                                        <span class="fas fa-search text-muted"></span>
-                                    </span>
+                        <div class="row g-3">
+                            {{-- Search Employee --}}
+                            <div class="col-xl-4 col-lg-6">
+                                <div class="bio-filter-field">
+                                    <label class="form-label fw-semibold bio-filter-label" for="search">
+                                        Search Employee
+                                    </label>
 
-                                    <input type="text" name="search" id="search"
-                                        value="{{ $filters['search'] ?? '' }}" class="form-control"
-                                        placeholder="Name, employee no, CrossChex ID">
+                                    <div class="input-group bio-filter-control">
+                                        <span class="input-group-text bg-white">
+                                            <span class="fas fa-search text-muted"></span>
+                                        </span>
+
+                                        <input type="text" name="search" id="search"
+                                            value="{{ $filters['search'] ?? '' }}" class="form-control"
+                                            placeholder="Name, employee no, CrossChex ID">
+                                    </div>
+
+                                    <div class="form-text bio-filter-help">
+                                        Searches display name, source name, employee number, and CrossChex ID.
+                                    </div>
                                 </div>
-
-                                <div class="form-text">
-                                    Searches display name, source name, employee no, and CrossChex ID.
-                                </div>
                             </div>
 
-                            <div class="col-xl-2 col-lg-3">
-                                <label class="form-label fw-semibold" for="employment_status">Status</label>
+                            {{-- Status --}}
+                            <div class="col-xl-2 col-lg-3 col-md-6">
+                                <div class="bio-filter-field">
+                                    <label class="form-label fw-semibold bio-filter-label" for="employment_status">
+                                        Status
+                                    </label>
 
-                                <select name="employment_status" id="employment_status" class="form-select">
-                                    <option value="">All Status</option>
-                                    <option value="active" @selected(($filters['employment_status'] ?? '') === 'active')>
-                                        Active
-                                    </option>
-                                    <option value="inactive" @selected(($filters['employment_status'] ?? '') === 'inactive')>
-                                        Inactive
-                                    </option>
-                                </select>
+                                    <select name="employment_status" id="employment_status"
+                                        class="form-select bio-filter-control">
 
-                                <div class="form-text">Active or inactive records.</div>
-                            </div>
+                                        <option value="">All Status</option>
 
-                            <div class="col-xl-2 col-lg-3">
-                                <label class="form-label fw-semibold" for="payroll_active">Payroll</label>
-
-                                <select name="payroll_active" id="payroll_active" class="form-select">
-                                    <option value="">All</option>
-                                    <option value="1" @selected((string) ($filters['payroll_active'] ?? '') === '1')>
-                                        Included
-                                    </option>
-                                    <option value="0" @selected((string) ($filters['payroll_active'] ?? '') === '0')>
-                                        Excluded
-                                    </option>
-                                </select>
-
-                                <div class="form-text">Included or excluded from payroll workflow.</div>
-                            </div>
-
-                            <div class="col-xl-2 col-lg-3">
-                                <label class="form-label fw-semibold" for="group_name">Group</label>
-
-                                <select name="group_name" id="group_name" class="form-select">
-                                    <option value="">All Groups</option>
-
-                                    @foreach (($groups ?? []) as $group)
-                                        <option value="{{ $group }}" @selected(($filters['group_name'] ?? '') === $group)>
-                                            {{ $group }}
+                                        <option value="active" @selected(($filters['employment_status'] ?? '') === 'active')>
+                                            Active
                                         </option>
-                                    @endforeach
-                                </select>
 
-                                <div class="form-text">Filter by company group or department.</div>
-                            </div>
-
-                            <div class="col-xl-2 col-lg-4">
-                                <label class="form-label fw-semibold" for="biometric_company_id">Company</label>
-
-                                <select name="biometric_company_id" id="biometric_company_id" class="form-select">
-                                    <option value="">All Companies</option>
-
-                                    @foreach ($companies as $company)
-                                        <option value="{{ $company->id }}" @selected((string) ($filters['biometric_company_id'] ?? '') === (string) $company->id)>
-                                            {{ $company->name }}
+                                        <option value="inactive" @selected(($filters['employment_status'] ?? '') === 'inactive')>
+                                            Inactive
                                         </option>
-                                    @endforeach
-                                </select>
+                                    </select>
 
-                                <div class="form-text">Filter by company tag.</div>
-                            </div>
-
-                            <div class="col-xl-2">
-                                <div class="d-grid d-sm-flex gap-2 justify-content-xl-end">
-                                    <a href="{{ route('biometrics.employees.index') }}" class="btn btn-falcon-default">
-                                        Cancel
-                                    </a>
-
-                                    <button type="submit" class="btn btn-primary">
-                                        <span class="fas fa-search me-1"></span>
-                                        Apply
-                                    </button>
+                                    <div class="form-text bio-filter-help">
+                                        Active or inactive records.
+                                    </div>
                                 </div>
                             </div>
+
+                            {{-- Payroll --}}
+                            <div class="col-xl-2 col-lg-3 col-md-6">
+                                <div class="bio-filter-field">
+                                    <label class="form-label fw-semibold bio-filter-label" for="payroll_active">
+                                        Payroll
+                                    </label>
+
+                                    <select name="payroll_active" id="payroll_active"
+                                        class="form-select bio-filter-control">
+
+                                        <option value="">All</option>
+
+                                        <option value="1" @selected((string) ($filters['payroll_active'] ?? '') === '1')>
+                                            Included
+                                        </option>
+
+                                        <option value="0" @selected((string) ($filters['payroll_active'] ?? '') === '0')>
+                                            Excluded
+                                        </option>
+                                    </select>
+
+                                    <div class="form-text bio-filter-help">
+                                        Included or excluded from payroll.
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Group --}}
+                            <div class="col-xl-2 col-lg-3 col-md-6">
+                                <div class="bio-filter-field">
+                                    <label class="form-label fw-semibold bio-filter-label" for="group_name">
+                                        Group
+                                    </label>
+
+                                    <select name="group_name" id="group_name" class="form-select bio-filter-control">
+
+                                        <option value="">All Groups</option>
+
+                                        @foreach ($groups ?? [] as $group)
+                                            <option value="{{ $group }}" @selected(($filters['group_name'] ?? '') === $group)>
+                                                {{ $group }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+
+                                    <div class="form-text bio-filter-help">
+                                        Filter by group or department.
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Company --}}
+                            <div class="col-xl-2 col-lg-3 col-md-6">
+                                <div class="bio-filter-field">
+                                    <label class="form-label fw-semibold bio-filter-label" for="biometric_company_id">
+                                        Company
+                                    </label>
+
+                                    <select name="biometric_company_id" id="biometric_company_id"
+                                        class="form-select bio-filter-control">
+
+                                        <option value="">All Companies</option>
+
+                                        @foreach ($companies as $company)
+                                            <option value="{{ $company->id }}" @selected((string) ($filters['biometric_company_id'] ?? '') === (string) $company->id)>
+                                                {{ $company->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+
+                                    <div class="form-text bio-filter-help">
+                                        Filter by company tag.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Actions --}}
+                        <div class="bio-filter-actions">
+                            <a href="{{ route('biometrics.employees.index') }}" class="btn btn-falcon-default">
+
+                                <span class="fas fa-times me-1"></span>
+                                Cancel
+                            </a>
+
+                            <button type="submit" class="btn btn-primary">
+                                <span class="fas fa-search me-1"></span>
+                                Apply Filters
+                            </button>
                         </div>
                     </form>
 
@@ -504,7 +550,7 @@
                 </div>
 
                 <div class="card-body p-0">
-                    <div class="table-responsive scrollbar bio-table-wrapper">
+                    <div class="table-responsive bio-table-wrapper">
                         <table class="table table-hover align-middle mb-0 bio-table">
                             <thead>
                                 <tr>
@@ -525,9 +571,14 @@
                                 @forelse ($employeeBiometrics as $employeeBiometric)
                                     @php
                                         $isActive = $employeeBiometric->employment_status === 'active';
-                                        $isPayrollIncluded = $isActive && (bool) ($employeeBiometric->is_payroll_active ?? true);
+                                        $isPayrollIncluded =
+                                            $isActive && (bool) ($employeeBiometric->is_payroll_active ?? true);
                                         $canonicalBioId = $employeeBiometric->id;
-                                        $legacyBioId = $employeeBiometric->legacy_biometric_employee_id ?? $employeeBiometric->source_employee_id ?? $employeeBiometric->source_crosschex_id ?? $employeeBiometric->source_employee_no ?? null;
+                                        $legacyBioId =
+                                            $employeeBiometric->legacy_biometric_employee_id ??
+                                            ($employeeBiometric->source_employee_id ??
+                                                ($employeeBiometric->source_crosschex_id ??
+                                                    ($employeeBiometric->source_employee_no ?? null)));
                                         $groupName = $employeeBiometric->group_name ?? null;
 
                                         $statusClass = $isActive ? 'success' : 'secondary';
@@ -574,15 +625,10 @@
                                                             Source: {{ $sourceNo }}
                                                         </span>
 
-                                                        <span class="bio-meta-pill">
+                                                        {{-- <span class="bio-meta-pill">
                                                             <span class="fas fa-key"></span>
                                                             Bio ID: {{ $canonicalBioId }}
-                                                        </span>
-
-                                                        <span class="bio-meta-pill">
-                                                            <span class="fas fa-archive"></span>
-                                                            Legacy: {{ $legacyBioId ?: 'N/A' }}
-                                                        </span>
+                                                        </span> --}}
                                                     </div>
                                                 </div>
                                             </div>
@@ -590,11 +636,13 @@
 
                                         <td>
                                             @if ($groupName)
-                                                <span class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
+                                                <span
+                                                    class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
                                                     {{ $groupName }}
                                                 </span>
                                             @else
-                                                <span class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-2">
+                                                <span
+                                                    class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-2">
                                                     Ungrouped
                                                 </span>
                                             @endif
@@ -649,12 +697,6 @@
                                                 <div class="bio-source-line">
                                                     <span>Name</span>
                                                     <strong>{{ $sourceName }}</strong>
-                                                </div>
-
-                                                <div class="bio-source-line">
-                                                    <span>CrossChex</span>
-                                                    <strong
-                                                        class="font-monospace text-break">{{ $sourceCrosschexId }}</strong>
                                                 </div>
 
                                                 <div class="bio-source-line">
@@ -827,4 +869,4 @@
                 });
             });
         </script>
-@endpush
+    @endpush
