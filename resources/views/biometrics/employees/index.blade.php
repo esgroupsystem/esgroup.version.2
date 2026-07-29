@@ -559,7 +559,6 @@
                                     <th class="text-nowrap">Company</th>
                                     <th class="text-nowrap">Status</th>
                                     <th class="text-center text-nowrap">Payroll</th>
-                                    <th class="bio-source-col">Source Biometrics</th>
                                     <th class="bio-device-col">Device</th>
                                     <th class="text-nowrap">Last Check</th>
                                     <th class="text-center text-nowrap">Logs</th>
@@ -624,25 +623,36 @@
                                                             <span class="fas fa-fingerprint"></span>
                                                             Source: {{ $sourceNo }}
                                                         </span>
-
-                                                        {{-- <span class="bio-meta-pill">
-                                                            <span class="fas fa-key"></span>
-                                                            Bio ID: {{ $canonicalBioId }}
-                                                        </span> --}}
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
 
                                         <td>
-                                            @if ($groupName)
+                                            @php
+                                                $payrollGroupLabel = match ((int) $groupName) {
+                                                    1 => 'Mirasol / Balintawak Payroll',
+                                                    2 => 'Gonzales Payroll',
+                                                    default => null,
+                                                };
+
+                                                $payrollGroupIcon = match ((int) $groupName) {
+                                                    1 => 'fa-building',
+                                                    2 => 'fa-city',
+                                                    default => 'fa-question-circle',
+                                                };
+                                            @endphp
+
+                                            @if ($payrollGroupLabel)
                                                 <span
                                                     class="badge rounded-pill bg-primary-subtle text-primary border border-primary-subtle px-3 py-2">
-                                                    {{ $groupName }}
+                                                    <span class="fas {{ $payrollGroupIcon }} me-1"></span>
+                                                    {{ $payrollGroupLabel }}
                                                 </span>
                                             @else
                                                 <span
                                                     class="badge rounded-pill bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-2">
+                                                    <span class="fas fa-layer-group me-1"></span>
                                                     Ungrouped
                                                 </span>
                                             @endif
@@ -690,20 +700,6 @@
                                                     Excluded
                                                 </span>
                                             @endif
-                                        </td>
-
-                                        <td class="bio-source-col">
-                                            <div class="bio-source-card">
-                                                <div class="bio-source-line">
-                                                    <span>Name</span>
-                                                    <strong>{{ $sourceName }}</strong>
-                                                </div>
-
-                                                <div class="bio-source-line">
-                                                    <span>Employee ID</span>
-                                                    <strong>{{ $sourceEmployeeId }}</strong>
-                                                </div>
-                                            </div>
                                         </td>
 
                                         <td class="bio-device-col">

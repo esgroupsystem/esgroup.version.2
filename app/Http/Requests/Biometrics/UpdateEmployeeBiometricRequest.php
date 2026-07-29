@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Biometrics;
 
+use App\Models\EmployeeBiometric;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -21,7 +22,7 @@ class UpdateEmployeeBiometricRequest extends FormRequest
             'is_payroll_active' => $status === 'active' && $this->boolean('is_payroll_active'),
             'display_employee_no' => trim((string) $this->input('display_employee_no')),
             'display_name' => trim((string) $this->input('display_name')),
-            'group_name' => trim((string) $this->input('group_name')),
+            'group_name' => (int) $this->input('group_name'),
         ]);
     }
 
@@ -32,7 +33,13 @@ class UpdateEmployeeBiometricRequest extends FormRequest
             'display_employee_no' => ['nullable', 'string', 'max:100'],
             'display_name' => ['nullable', 'string', 'max:255'],
             'employment_status' => ['required', Rule::in(['active', 'inactive'])],
-            'group_name' => ['nullable', 'string', 'max:255'],
+            'group_name' => [
+                'required',
+                Rule::in([
+                    EmployeeBiometric::PAYROLL_GROUP_MIRASOL,
+                    EmployeeBiometric::PAYROLL_GROUP_GONZALES,
+                ]),
+            ],
             'is_payroll_active' => ['nullable', 'boolean'],
             'remarks' => ['nullable', 'string', 'max:5000'],
         ];

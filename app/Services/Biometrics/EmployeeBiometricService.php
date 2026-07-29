@@ -124,7 +124,7 @@ class EmployeeBiometricService
             'display_employee_no' => $this->identityService->clean($data['display_employee_no'] ?? null),
             'display_name' => $this->identityService->clean($data['display_name'] ?? null),
             'employment_status' => $status,
-            'group_name' => $this->identityService->clean($data['group_name'] ?? null),
+            'group_name' => (int) ($data['group_name'] ?? 0),
             'is_payroll_active' => $isPayrollActive,
             'inactive_at' => $isPayrollActive ? null : ($employeeBiometric->inactive_at ?? now('Asia/Manila')),
             'remarks' => $this->identityService->clean($data['remarks'] ?? null),

@@ -13,6 +13,10 @@ class EmployeeBiometric extends Model
 
     public const STATUS_INACTIVE = 'inactive';
 
+    public const PAYROLL_GROUP_MIRASOL = 1;
+
+    public const PAYROLL_GROUP_GONZALES = 2;
+
     protected $fillable = [
         'source_key',
         'employee_identity_hash',
@@ -38,6 +42,7 @@ class EmployeeBiometric extends Model
 
     protected $casts = [
         'biometric_company_id' => 'integer',
+        'group_name' => 'integer',
         'is_payroll_active' => 'boolean',
         'inactive_at' => 'datetime',
         'last_check_time' => 'datetime',
@@ -173,5 +178,14 @@ class EmployeeBiometric extends Model
         }
 
         return null;
+    }
+
+    public function getPayrollGroupLabelAttribute(): string
+    {
+        return match ($this->group_name) {
+            self::PAYROLL_GROUP_MIRASOL => 'Mirasol / Balintawak Payroll',
+            self::PAYROLL_GROUP_GONZALES => 'Gonzales Payroll',
+            default => 'No Payroll Group',
+        };
     }
 }

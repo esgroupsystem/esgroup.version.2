@@ -491,4 +491,556 @@
             border-right: 0;
         }
     }
+
+    .employee-biometric-edit-page {
+        --eb-primary: var(--falcon-primary, #2c7be5);
+        --eb-primary-rgb: 44, 123, 229;
+        --eb-info: #27bcfd;
+        --eb-success: #00a86b;
+        --eb-warning: #f6c343;
+        --eb-danger: #e63757;
+        --eb-secondary: #748194;
+        --eb-heading: var(--falcon-headings-color, #344050);
+        --eb-body: var(--falcon-body-color, #5e6e82);
+        --eb-muted: var(--falcon-gray-600, #748194);
+        --eb-border: var(--falcon-border-color, #d8e2ef);
+        --eb-soft-bg: var(--falcon-gray-100, #f9fafd);
+        --eb-card-bg: var(--falcon-card-bg, #fff);
+    }
+
+    .employee-biometric-edit-page,
+    .employee-biometric-edit-page * {
+        box-sizing: border-box;
+    }
+
+    .employee-biometric-edit-page .min-w-0 {
+        min-width: 0;
+    }
+
+    .employee-biometric-edit-page .page-header-card,
+    .employee-biometric-edit-page .app-card {
+        border: 1px solid var(--eb-border);
+        border-radius: .75rem;
+        background: var(--eb-card-bg);
+        box-shadow: 0 .25rem .75rem rgba(18, 38, 63, .06);
+        overflow: hidden;
+    }
+
+    .employee-biometric-edit-page .page-header-card {
+        border-top: 3px solid var(--eb-primary);
+    }
+
+    .employee-biometric-edit-page .breadcrumb-sm {
+        font-size: .8125rem;
+    }
+
+    .employee-biometric-edit-page .breadcrumb-sm a {
+        text-decoration: none;
+    }
+
+    .employee-biometric-edit-page .page-title-icon,
+    .employee-biometric-edit-page .section-icon,
+    .employee-biometric-edit-page .source-data-icon,
+    .employee-biometric-edit-page .guide-icon,
+    .employee-biometric-edit-page .field-icon,
+    .employee-biometric-edit-page .protected-notice-icon,
+    .employee-biometric-edit-page .app-alert-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+        line-height: 1;
+    }
+
+    .employee-biometric-edit-page .page-title-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: .75rem;
+        background: rgba(var(--eb-primary-rgb), .12);
+        color: var(--eb-primary);
+        font-size: 1.25rem;
+        box-shadow: inset 0 0 0 1px rgba(var(--eb-primary-rgb), .08);
+    }
+
+    .employee-biometric-edit-page .page-title {
+        color: var(--eb-heading);
+        font-size: clamp(1.25rem, 2vw, 1.55rem);
+        font-weight: 700;
+        line-height: 1.25;
+    }
+
+    .employee-biometric-edit-page .page-subtitle {
+        color: var(--eb-muted);
+        font-size: .875rem;
+        line-height: 1.5;
+    }
+
+    .employee-biometric-edit-page .app-card-header {
+        padding: 1rem 1.25rem;
+        border-bottom: 1px solid var(--eb-border);
+        background: var(--eb-soft-bg);
+    }
+
+    .employee-biometric-edit-page .app-card-footer {
+        padding: 1rem 1.25rem;
+        border-top: 1px solid var(--eb-border);
+        background: var(--eb-soft-bg);
+    }
+
+    .employee-biometric-edit-page .section-icon {
+        width: 2.35rem;
+        height: 2.35rem;
+        border-radius: .65rem;
+        font-size: .95rem;
+    }
+
+    .employee-biometric-edit-page .section-icon-primary {
+        color: var(--eb-primary);
+        background: rgba(var(--eb-primary-rgb), .12);
+    }
+
+    .employee-biometric-edit-page .section-icon-info {
+        color: #0787b5;
+        background: rgba(39, 188, 253, .14);
+    }
+
+    .employee-biometric-edit-page .section-icon-warning {
+        color: #b7791f;
+        background: rgba(246, 195, 67, .2);
+    }
+
+    .employee-biometric-edit-page .section-title {
+        color: var(--eb-heading);
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.35;
+    }
+
+    .employee-biometric-edit-page .section-description {
+        color: var(--eb-muted);
+        font-size: .8rem;
+        line-height: 1.45;
+    }
+
+    .employee-biometric-edit-page .status-pill,
+    .employee-biometric-edit-page .protected-pill,
+    .employee-biometric-edit-page .mini-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: .4rem;
+        border-radius: 999px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .employee-biometric-edit-page .status-pill {
+        min-height: 1.8rem;
+        padding: .35rem .7rem;
+        border: 1px solid transparent;
+        font-size: .75rem;
+    }
+
+    .employee-biometric-edit-page .status-pill-success {
+        color: #08734c;
+        background: #e7f8f0;
+        border-color: #b9ead4;
+    }
+
+    .employee-biometric-edit-page .status-pill-secondary {
+        color: #596579;
+        background: #eef1f5;
+        border-color: #d9e0e8;
+    }
+
+    .employee-biometric-edit-page .protected-pill {
+        padding: .4rem .7rem;
+        color: #596579;
+        background: #fff;
+        border: 1px solid var(--eb-border);
+        font-size: .75rem;
+    }
+
+    .employee-biometric-edit-page .form-label {
+        margin-bottom: .45rem;
+        color: var(--eb-heading);
+        font-size: .8125rem;
+        font-weight: 700;
+    }
+
+    .employee-biometric-edit-page .form-control,
+    .employee-biometric-edit-page .form-select,
+    .employee-biometric-edit-page .input-group-text {
+        min-height: 2.55rem;
+        border-color: var(--eb-border);
+        font-size: .875rem;
+    }
+
+    .employee-biometric-edit-page textarea.form-control {
+        min-height: 6.5rem;
+        resize: vertical;
+    }
+
+    .employee-biometric-edit-page .form-control:focus,
+    .employee-biometric-edit-page .form-select:focus,
+    .employee-biometric-edit-page .form-check-input:focus {
+        border-color: rgba(var(--eb-primary-rgb), .6);
+        box-shadow: 0 0 0 .2rem rgba(var(--eb-primary-rgb), .12);
+    }
+
+    .employee-biometric-edit-page .input-group-text {
+        min-width: 2.7rem;
+        justify-content: center;
+        color: var(--eb-primary);
+        background: rgba(var(--eb-primary-rgb), .06);
+    }
+
+    .employee-biometric-edit-page .app-input-group .form-control.is-invalid {
+        z-index: 3;
+    }
+
+    .employee-biometric-edit-page .form-text {
+        margin-top: .4rem;
+        color: var(--eb-muted);
+        font-size: .72rem;
+        line-height: 1.45;
+    }
+
+    .employee-biometric-edit-page .payroll-switch-panel {
+        min-height: 4.65rem;
+        padding: .75rem;
+        border: 1px solid var(--eb-border);
+        border-radius: .6rem;
+        background: var(--eb-soft-bg);
+    }
+
+    .employee-biometric-edit-page .field-icon {
+        width: 2.2rem;
+        height: 2.2rem;
+        border-radius: .6rem;
+        font-size: .9rem;
+    }
+
+    .employee-biometric-edit-page .field-icon-success {
+        color: #08734c;
+        background: #e7f8f0;
+    }
+
+    .employee-biometric-edit-page .form-check-input {
+        width: 2.55rem;
+        height: 1.35rem;
+        margin-top: 0;
+        cursor: pointer;
+    }
+
+    .employee-biometric-edit-page .source-data-item {
+        display: flex;
+        align-items: flex-start;
+        gap: .8rem;
+        min-height: 7rem;
+        height: 100%;
+        padding: .9rem;
+        border: 1px solid var(--eb-border);
+        border-radius: .65rem;
+        background: var(--eb-card-bg);
+        transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+
+    .employee-biometric-edit-page .source-data-item:hover {
+        border-color: rgba(var(--eb-primary-rgb), .35);
+        box-shadow: 0 .25rem .75rem rgba(18, 38, 63, .06);
+        transform: translateY(-1px);
+    }
+
+    .employee-biometric-edit-page .source-data-icon {
+        width: 2.15rem;
+        height: 2.15rem;
+        border-radius: .6rem;
+        font-size: .85rem;
+    }
+
+    .employee-biometric-edit-page .source-data-icon-primary {
+        color: var(--eb-primary);
+        background: rgba(var(--eb-primary-rgb), .11);
+    }
+
+    .employee-biometric-edit-page .source-data-icon-info {
+        color: #0787b5;
+        background: rgba(39, 188, 253, .14);
+    }
+
+    .employee-biometric-edit-page .source-data-icon-success {
+        color: #08734c;
+        background: #e7f8f0;
+    }
+
+    .employee-biometric-edit-page .source-data-icon-warning {
+        color: #9b6a17;
+        background: rgba(246, 195, 67, .2);
+    }
+
+    .employee-biometric-edit-page .source-data-icon-secondary {
+        color: #596579;
+        background: #eef1f5;
+    }
+
+    .employee-biometric-edit-page .source-data-label {
+        margin-bottom: .3rem;
+        color: var(--eb-muted);
+        font-size: .7rem;
+        font-weight: 700;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    .employee-biometric-edit-page .source-data-value {
+        color: var(--eb-heading);
+        font-size: .875rem;
+        font-weight: 700;
+        line-height: 1.45;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .employee-biometric-edit-page .source-data-value-mono,
+    .employee-biometric-edit-page .summary-value-mono {
+        font-family: var(--falcon-font-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace);
+        font-size: .73rem;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .employee-biometric-edit-page .source-data-note {
+        margin-top: .25rem;
+        color: var(--eb-muted);
+        font-size: .7rem;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .employee-biometric-edit-page .protected-notice {
+        display: flex;
+        align-items: flex-start;
+        gap: .8rem;
+        padding: .9rem 1rem;
+        border: 1px solid #bde8f8;
+        border-radius: .65rem;
+        color: #12627d;
+        background: #effaff;
+    }
+
+    .employee-biometric-edit-page .protected-notice-icon {
+        width: 2.15rem;
+        height: 2.15rem;
+        border-radius: .6rem;
+        color: #087fa8;
+        background: #d7f3fd;
+    }
+
+    .employee-biometric-edit-page .protected-notice h6 {
+        color: #12627d;
+        font-size: .85rem;
+    }
+
+    .employee-biometric-edit-page .protected-notice p {
+        font-size: .75rem;
+        line-height: 1.5;
+    }
+
+    .employee-biometric-edit-page .employee-summary-head {
+        padding: 1.4rem 1.25rem 1.25rem;
+        text-align: center;
+        border-bottom: 1px solid var(--eb-border);
+        background: linear-gradient(180deg, rgba(var(--eb-primary-rgb), .06), rgba(var(--eb-primary-rgb), 0));
+    }
+
+    .employee-biometric-edit-page .employee-avatar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 4.25rem;
+        height: 4.25rem;
+        margin-bottom: .85rem;
+        border: .3rem solid #fff;
+        border-radius: 50%;
+        color: var(--eb-primary);
+        background: rgba(var(--eb-primary-rgb), .14);
+        box-shadow: 0 .35rem .9rem rgba(18, 38, 63, .12);
+        font-size: 1.45rem;
+    }
+
+    .employee-biometric-edit-page .employee-summary-name {
+        margin-bottom: .25rem;
+        color: var(--eb-heading);
+        font-size: 1rem;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    .employee-biometric-edit-page .employee-summary-number {
+        margin-bottom: .75rem;
+        color: var(--eb-muted);
+        font-size: .8rem;
+        overflow-wrap: anywhere;
+    }
+
+    .employee-biometric-edit-page .summary-list {
+        padding: .35rem 1.25rem .65rem;
+    }
+
+    .employee-biometric-edit-page .summary-row {
+        display: grid;
+        grid-template-columns: minmax(7.5rem, .9fr) minmax(0, 1.1fr);
+        gap: .8rem;
+        align-items: start;
+        padding: .72rem 0;
+        border-bottom: 1px dashed var(--eb-border);
+    }
+
+    .employee-biometric-edit-page .summary-row:last-child {
+        border-bottom: 0;
+    }
+
+    .employee-biometric-edit-page .summary-label {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        color: var(--eb-muted);
+        font-size: .75rem;
+        line-height: 1.4;
+    }
+
+    .employee-biometric-edit-page .summary-label>span {
+        width: .9rem;
+        color: var(--eb-primary);
+        text-align: center;
+    }
+
+    .employee-biometric-edit-page .summary-value {
+        min-width: 0;
+        color: var(--eb-heading);
+        font-size: .75rem;
+        font-weight: 700;
+        line-height: 1.45;
+        text-align: right;
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    .employee-biometric-edit-page .mini-status {
+        padding: .25rem .55rem;
+        font-size: .68rem;
+    }
+
+    .employee-biometric-edit-page .mini-status-success {
+        color: #08734c;
+        background: #e7f8f0;
+    }
+
+    .employee-biometric-edit-page .mini-status-secondary {
+        color: #596579;
+        background: #eef1f5;
+    }
+
+    .employee-biometric-edit-page .guide-item {
+        display: flex;
+        align-items: flex-start;
+        gap: .75rem;
+        padding: .75rem;
+        margin-bottom: .65rem;
+        border: 1px solid transparent;
+        border-radius: .6rem;
+        background: var(--eb-soft-bg);
+    }
+
+    .employee-biometric-edit-page .guide-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: .55rem;
+        font-size: .8rem;
+    }
+
+    .employee-biometric-edit-page .guide-icon-info {
+        color: #087fa8;
+        background: #d7f3fd;
+    }
+
+    .employee-biometric-edit-page .guide-icon-success {
+        color: #08734c;
+        background: #e7f8f0;
+    }
+
+    .employee-biometric-edit-page .guide-icon-secondary {
+        color: #596579;
+        background: #e8edf3;
+    }
+
+    .employee-biometric-edit-page .guide-item h6 {
+        color: var(--eb-heading);
+        font-size: .8rem;
+        font-weight: 700;
+    }
+
+    .employee-biometric-edit-page .guide-item p {
+        color: var(--eb-muted);
+        font-size: .72rem;
+        line-height: 1.5;
+    }
+
+    .employee-biometric-edit-page .app-alert {
+        display: flex;
+        align-items: flex-start;
+        gap: .85rem;
+        padding: 1rem;
+        border-radius: .7rem;
+        box-shadow: 0 .25rem .75rem rgba(18, 38, 63, .05);
+    }
+
+    .employee-biometric-edit-page .app-alert-danger {
+        color: #842239;
+        border: 1px solid #f1b9c5;
+        background: #fff1f4;
+    }
+
+    .employee-biometric-edit-page .app-alert-icon {
+        width: 2.2rem;
+        height: 2.2rem;
+        border-radius: .6rem;
+        color: var(--eb-danger);
+        background: #ffdce4;
+    }
+
+    .employee-biometric-edit-page .edit-summary-sticky {
+        position: sticky;
+        top: 1rem;
+    }
+
+    @media (max-width: 1199.98px) {
+        .employee-biometric-edit-page .edit-summary-sticky {
+            position: static;
+        }
+    }
+
+    @media (max-width: 575.98px) {
+        .employee-biometric-edit-page .page-title-icon {
+            width: 2.7rem;
+            height: 2.7rem;
+            border-radius: .65rem;
+        }
+
+        .employee-biometric-edit-page .summary-row {
+            grid-template-columns: 1fr;
+            gap: .25rem;
+        }
+
+        .employee-biometric-edit-page .summary-value {
+            padding-left: 1.4rem;
+            text-align: left;
+        }
+
+        .employee-biometric-edit-page .source-data-item {
+            min-height: auto;
+        }
+    }
 </style>
