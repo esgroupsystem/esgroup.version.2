@@ -5,9 +5,12 @@ namespace App\Services\Biometrics;
 use App\Models\EmployeeBiometric;
 use App\Models\MirasolBiometricsLog;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 class EmployeeBiometricSyncService
 {
@@ -17,7 +20,10 @@ class EmployeeBiometricSyncService
         private readonly EmployeeBiometricIdentityService $identityService
     ) {}
 
-    public function syncFromMirasol(): array
+    /**
+     * Synchronize every CrossChex account stored in the biometric logs table.
+     */
+    public function syncAllAccounts(): array
     {
         $created = 0;
         $updated = 0;
@@ -26,44 +32,115 @@ class EmployeeBiometricSyncService
 
         $people = $this->collectCanonicalPeople();
 
-        DB::transaction(function () use ($people, &$created, &$updated, &$skipped, &$merged): void {
+        DB::transaction(function () use (
+            $people,
+            &$created,
+            &$updated,
+            &$skipped,
+            &$merged
+        ): void {
             foreach ($people as $person) {
-                $employeeName = $this->identityService->clean($person['source_employee_name'] ?? null)
-                    ?? $this->identityService->clean($person['source_crosschex_account_name'] ?? null);
+                $mergedCount = max(
+                    1,
+                    (int) ($person['merged_count'] ?? 1)
+                );
 
-                if ($employeeName === null && empty($person['source_employee_id']) && empty($person['source_employee_no'])) {
+                unset(
+                    $person['merged_count'],
+                    $person['_identity_keys']
+                );
+
+                $employeeName = $this->identityService->clean(
+                    $person['source_employee_name'] ?? null
+                ) ?? $this->identityService->clean(
+                    $person['source_crosschex_account_name'] ?? null
+                );
+
+                $employeeId = $this->identityService->clean(
+                    $person['source_employee_id'] ?? null
+                );
+
+                $employeeNo = $this->identityService->clean(
+                    $person['source_employee_no'] ?? null
+                );
+
+                if (
+                    $employeeName === null
+                    && $employeeId === null
+                    && $employeeNo === null
+                ) {
                     $skipped++;
 
                     continue;
                 }
 
+                $person['employment_status'] = $person['employment_status']
+                    ?? EmployeeBiometric::STATUS_ACTIVE;
+
+                $person['is_payroll_active'] = $person['is_payroll_active']
+                    ?? true;
+
+                $person['group_name'] = $person['group_name']
+                    ?? $this->defaultGroupName(
+                        $person['source_crosschex_account'] ?? null
+                    );
+
+                $person['employee_identity_hash'] =
+                    $this->identityService->identityHash($person);
+
                 $existing = $this->findExistingBiometric($person);
 
-                $person['employee_identity_hash'] = $this->identityService->identityHash($person);
-                $person['employment_status'] = $person['employment_status'] ?? 'active';
-                $person['is_payroll_active'] = $person['is_payroll_active'] ?? true;
+                if ($existing !== null) {
+                    $existing->update(
+                        $this->mergePayload($existing, $person)
+                    );
 
-                if ($existing) {
-                    $existing->update($this->mergePayload($existing, $person));
                     $updated++;
-
-                    if (($person['merged_count'] ?? 1) > 1) {
-                        $merged += ((int) $person['merged_count']) - 1;
-                    }
+                    $merged += $mergedCount - 1;
 
                     continue;
                 }
 
-                EmployeeBiometric::create($person);
-                $created++;
+                try {
+                    EmployeeBiometric::query()->create($person);
 
-                if (($person['merged_count'] ?? 1) > 1) {
-                    $merged += ((int) $person['merged_count']) - 1;
+                    $created++;
+                    $merged += $mergedCount - 1;
+                } catch (UniqueConstraintViolationException $exception) {
+                    /*
+                     * Handles two sync requests executing at the same time.
+                     * Re-query the newly created record and update it instead.
+                     */
+                    $existing = $this->findExistingBySource($person);
+
+                    if ($existing === null) {
+                        throw $exception;
+                    }
+
+                    $existing->update(
+                        $this->mergePayload($existing, $person)
+                    );
+
+                    $updated++;
+                    $merged += $mergedCount - 1;
                 }
             }
-        });
+        }, 3);
 
-        return compact('created', 'updated', 'skipped', 'merged');
+        return compact(
+            'created',
+            'updated',
+            'skipped',
+            'merged'
+        );
+    }
+
+    /**
+     * Backward-compatible method for existing controller calls.
+     */
+    public function syncFromMirasol(): array
+    {
+        return $this->syncAllAccounts();
     }
 
     private function collectCanonicalPeople(): Collection
@@ -72,51 +149,82 @@ class EmployeeBiometricSyncService
         $table = (new MirasolBiometricsLog)->getTable();
 
         $logs = MirasolBiometricsLog::query()
-            ->select($this->existingColumns($table, [
-                'id',
-                'employee_id',
-                'employee_no',
-                'employee_name',
-                'crosschex_id',
-                'crosschex_account',
-                'crosschex_account_name',
-                'device_sn',
-                'device_name',
-                $timeColumn,
-            ]))
+            ->select(
+                $this->existingColumns($table, [
+                    'id',
+                    'employee_id',
+                    'employee_no',
+                    'employee_name',
+                    'crosschex_id',
+                    'crosschex_account',
+                    'crosschex_account_name',
+                    'device_sn',
+                    'device_name',
+                    $timeColumn,
+                ])
+            )
             ->orderByDesc($timeColumn)
-            ->get();
+            ->orderByDesc('id')
+            ->cursor();
 
         $people = collect();
+        $identityIndex = [];
 
         foreach ($logs as $log) {
-            $payload = $this->payloadFromLog($log, $timeColumn);
+            $payload = $this->payloadFromLog(
+                $log,
+                $timeColumn
+            );
+
             $identityKeys = $this->identityKeys($payload);
 
-            if (empty($identityKeys)) {
+            if ($identityKeys === []) {
                 continue;
             }
 
-            $existingKey = null;
+            $canonicalKey = null;
 
-            foreach ($people as $key => $person) {
-                if (array_intersect($identityKeys, $person['_identity_keys'])) {
-                    $existingKey = $key;
+            foreach ($identityKeys as $identityKey) {
+                if (isset($identityIndex[$identityKey])) {
+                    $canonicalKey = $identityIndex[$identityKey];
+
                     break;
                 }
             }
 
-            if ($existingKey === null) {
+            if ($canonicalKey === null) {
+                $canonicalKey = $identityKeys[0];
+
                 $payload['_identity_keys'] = $identityKeys;
                 $payload['merged_count'] = 1;
-                $people->put($identityKeys[0], $payload);
+
+                $people->put($canonicalKey, $payload);
+
+                foreach ($identityKeys as $identityKey) {
+                    $identityIndex[$identityKey] = $canonicalKey;
+                }
 
                 continue;
             }
 
-            $existing = $people->get($existingKey);
+            $existing = $people->get($canonicalKey);
 
-            $people->put($existingKey, $this->mergeArrayPayload($existing, $payload));
+            if (! is_array($existing)) {
+                continue;
+            }
+
+            $mergedPayload = $this->mergeArrayPayload(
+                $existing,
+                $payload
+            );
+
+            $people->put($canonicalKey, $mergedPayload);
+
+            foreach (
+                $mergedPayload['_identity_keys'] ?? [] as $identityKey
+            ) {
+                $identityIndex[$identityKey] = $canonicalKey;
+            }
         }
 
         return $people
@@ -153,18 +261,25 @@ class EmployeeBiometricSyncService
         );
 
         /*
-         * crosschex_id on the log is the attendance record UUID.
-         * The employee UUID extracted by the sync job is stored in employee_id.
+         * crosschex_id from the logs is the attendance transaction UUID.
+         * The employee UUID retrieved by the API is stored in employee_id.
          */
         $sourceEmployeeIdentifier = $employeeId;
 
-        $sourceKey = $employeeId
-            ?: $employeeNo
-            ?: $employeeName
-            ?: $accountName;
-
         return [
-            'source_key' => $sourceKey,
+            /*
+             * The source key includes the identifier type.
+             *
+             * employee_id:1 and employee_no:1 must not be treated as the
+             * same source identity inside one CrossChex account.
+             */
+            'source_key' => $this->buildSourceKey(
+                employeeId: $employeeId,
+                employeeNo: $employeeNo,
+                employeeName: $employeeName,
+                accountName: $accountName
+            ),
+
             'biometric_company_id' => null,
 
             'display_employee_no' => $employeeNo
@@ -174,8 +289,10 @@ class EmployeeBiometricSyncService
                 ?: $accountName
                 ?: $account,
 
-            'employment_status' => 'active',
-            'group_name' => null,
+            'employment_status' => EmployeeBiometric::STATUS_ACTIVE,
+
+            'group_name' => $this->defaultGroupName($account),
+
             'is_payroll_active' => true,
 
             'source_crosschex_account' => $account,
@@ -198,34 +315,87 @@ class EmployeeBiometricSyncService
                 $log->device_name ?? null
             ),
 
-            'last_check_time' => ! empty($log->{$timeColumn})
-                ? Carbon::parse(
-                    $log->{$timeColumn},
-                    config('app.timezone', 'Asia/Manila')
-                )
-                : null,
+            'last_check_time' => $this->parseLogTime(
+                $log->{$timeColumn} ?? null
+            ),
 
             'total_logs' => 1,
             'remarks' => null,
         ];
     }
 
+    private function buildSourceKey(
+        ?string $employeeId,
+        ?string $employeeNo,
+        ?string $employeeName,
+        ?string $accountName
+    ): ?string {
+        $identifiers = [
+            'employee_id' => $employeeId,
+            'employee_no' => $employeeNo,
+            'employee_name' => $employeeName,
+            'account_name' => $accountName,
+        ];
+
+        foreach ($identifiers as $type => $value) {
+            $value = $this->identityService->clean($value);
+
+            if ($value === null) {
+                continue;
+            }
+
+            /*
+             * Fixed-length hashed value prevents oversized database indexes
+             * while retaining the identifier type.
+             */
+            return $type.':'.hash(
+                'sha256',
+                mb_strtolower($value)
+            );
+        }
+
+        return null;
+    }
+
     private function findExistingBiometric(
         array $person
     ): ?EmployeeBiometric {
+        /*
+         * First priority: exact account and source-key combination.
+         */
+        $existing = $this->findExistingBySource($person);
+
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        /*
+         * Second priority: account-scoped identity hash.
+         */
         $hash = $this->identityService->identityHash($person);
 
         if ($hash !== null) {
-            $existing = EmployeeBiometric::query()
-                ->where('employee_identity_hash', $hash)
+            $query = EmployeeBiometric::query()
+                ->where('employee_identity_hash', $hash);
+
+            $this->applyAccountScope(
+                $query,
+                $person['source_crosschex_account'] ?? null
+            );
+
+            $existing = $query
+                ->lockForUpdate()
                 ->first();
 
-            if ($existing) {
+            if ($existing !== null) {
                 return $existing;
             }
         }
 
-        return $this->identityService->resolve(
+        /*
+         * Third priority: account-scoped source identifiers.
+         */
+        $resolved = $this->identityService->resolve(
             biometricEmployeeId: $person['source_employee_id'] ?? null,
             employeeNo: $person['source_employee_no'] ?? null,
             employeeName: $person['source_employee_name']
@@ -233,32 +403,132 @@ class EmployeeBiometricSyncService
                 ?? null,
             crosschexId: $person['source_crosschex_id'] ?? null,
             onlyPayrollActive: false,
-            crosschexAccount: $person['source_crosschex_account'] ?? null
+            crosschexAccount: $person['source_crosschex_account']
+                ?? null
+        );
+
+        if ($resolved === null) {
+            return null;
+        }
+
+        return EmployeeBiometric::query()
+            ->lockForUpdate()
+            ->find($resolved->id);
+    }
+
+    private function findExistingBySource(
+        array $person
+    ): ?EmployeeBiometric {
+        $sourceKey = $this->identityService->clean(
+            $person['source_key'] ?? null
+        );
+
+        if ($sourceKey === null) {
+            return null;
+        }
+
+        $query = EmployeeBiometric::query()
+            ->where('source_key', $sourceKey);
+
+        $this->applyAccountScope(
+            $query,
+            $person['source_crosschex_account'] ?? null
+        );
+
+        return $query
+            ->lockForUpdate()
+            ->first();
+    }
+
+    private function applyAccountScope(
+        Builder $query,
+        mixed $account
+    ): void {
+        $account = $this->identityService->clean($account);
+
+        if ($account === null) {
+            $query->whereNull('source_crosschex_account');
+
+            return;
+        }
+
+        $query->where(
+            'source_crosschex_account',
+            $account
         );
     }
 
-    private function mergePayload(EmployeeBiometric $existing, array $incoming): array
-    {
+    private function mergePayload(
+        EmployeeBiometric $existing,
+        array $incoming
+    ): array {
         return [
-            'employee_identity_hash' => $incoming['employee_identity_hash'] ?: $existing->employee_identity_hash,
-            'source_key' => $existing->source_key ?: $incoming['source_key'],
-            'display_employee_no' => $existing->display_employee_no ?: $incoming['display_employee_no'],
-            'display_name' => $existing->display_name ?: $incoming['display_name'],
-            'source_crosschex_account' => $existing->source_crosschex_account ?: $incoming['source_crosschex_account'],
-            'source_crosschex_account_name' => $existing->source_crosschex_account_name ?: $incoming['source_crosschex_account_name'],
-            'source_crosschex_id' => $existing->source_crosschex_id ?: $incoming['source_crosschex_id'],
-            'source_employee_id' => $existing->source_employee_id ?: $incoming['source_employee_id'],
-            'source_employee_no' => $existing->source_employee_no ?: $incoming['source_employee_no'],
-            'source_employee_name' => $existing->source_employee_name ?: $incoming['source_employee_name'],
-            'device_sn' => $incoming['device_sn'] ?: $existing->device_sn,
-            'device_name' => $incoming['device_name'] ?: $existing->device_name,
-            'last_check_time' => $this->latestDate($existing->last_check_time, $incoming['last_check_time'] ?? null),
-            'total_logs' => max(0, (int) $existing->total_logs) + max(1, (int) ($incoming['total_logs'] ?? 1)),
+            /*
+             * Source-controlled fields are refreshed.
+             */
+            'employee_identity_hash' => $incoming['employee_identity_hash']
+                ?: $existing->employee_identity_hash,
+
+            'source_key' => $incoming['source_key']
+                ?: $existing->source_key,
+
+            'source_crosschex_account' => $incoming['source_crosschex_account']
+                ?: $existing->source_crosschex_account,
+
+            'source_crosschex_account_name' => $incoming['source_crosschex_account_name']
+                ?: $existing->source_crosschex_account_name,
+
+            'source_crosschex_id' => $incoming['source_crosschex_id']
+                ?: $existing->source_crosschex_id,
+
+            'source_employee_id' => $incoming['source_employee_id']
+                ?: $existing->source_employee_id,
+
+            'source_employee_no' => $incoming['source_employee_no']
+                ?: $existing->source_employee_no,
+
+            'source_employee_name' => $incoming['source_employee_name']
+                ?: $existing->source_employee_name,
+
+            'device_sn' => $incoming['device_sn']
+                ?: $existing->device_sn,
+
+            'device_name' => $incoming['device_name']
+                ?: $existing->device_name,
+
+            /*
+             * Manual display fields are preserved.
+             */
+            'display_employee_no' => $existing->display_employee_no
+                ?: $incoming['display_employee_no'],
+
+            'display_name' => $existing->display_name
+                ?: $incoming['display_name'],
+
+            'last_check_time' => $this->latestDate(
+                $existing->last_check_time,
+                $incoming['last_check_time'] ?? null
+            ),
+
+            /*
+             * The logs table is read as a complete source. Do not add the
+             * previous count during every sync or total_logs will inflate.
+             */
+            'total_logs' => max(
+                1,
+                (int) ($incoming['total_logs'] ?? 1)
+            ),
         ];
     }
 
-    private function mergeArrayPayload(array $existing, array $incoming): array
-    {
+    private function mergeArrayPayload(
+        array $existing,
+        array $incoming
+    ): array {
+        /*
+         * Logs are ordered newest first. Preserve the first non-empty source
+         * values while accumulating the total number of logs.
+         */
         foreach ([
             'source_key',
             'display_employee_no',
@@ -271,17 +541,33 @@ class EmployeeBiometricSyncService
             'source_employee_name',
             'device_sn',
             'device_name',
+            'group_name',
         ] as $field) {
-            $existing[$field] = $existing[$field] ?: ($incoming[$field] ?? null);
+            $existing[$field] = $existing[$field]
+                ?: ($incoming[$field] ?? null);
         }
 
-        $existing['last_check_time'] = $this->latestDate($existing['last_check_time'] ?? null, $incoming['last_check_time'] ?? null);
-        $existing['total_logs'] = (int) ($existing['total_logs'] ?? 0) + (int) ($incoming['total_logs'] ?? 1);
-        $existing['merged_count'] = (int) ($existing['merged_count'] ?? 1) + 1;
-        $existing['_identity_keys'] = collect(array_merge(
-            $existing['_identity_keys'] ?? [],
-            $this->identityKeys($incoming)
-        ))->unique()->values()->all();
+        $existing['last_check_time'] = $this->latestDate(
+            $existing['last_check_time'] ?? null,
+            $incoming['last_check_time'] ?? null
+        );
+
+        $existing['total_logs'] =
+            (int) ($existing['total_logs'] ?? 0)
+            + (int) ($incoming['total_logs'] ?? 1);
+
+        $existing['merged_count'] =
+            (int) ($existing['merged_count'] ?? 1) + 1;
+
+        $existing['_identity_keys'] = collect(
+            array_merge(
+                $existing['_identity_keys'] ?? [],
+                $this->identityKeys($incoming)
+            )
+        )
+            ->unique()
+            ->values()
+            ->all();
 
         return $existing;
     }
@@ -315,7 +601,7 @@ class EmployeeBiometricSyncService
             ->values();
 
         /*
-         * Use names only as a fallback when no stable identifier exists.
+         * Names are used only when no stable ID or employee number exists.
          */
         if ($keys->isEmpty()) {
             $employeeName = $this->identityService->clean(
@@ -326,16 +612,54 @@ class EmployeeBiometricSyncService
 
             if ($employeeName !== null) {
                 $keys->push(
-                    $scope.'|employee_name:'.mb_strtolower($employeeName)
+                    $scope
+                    .'|employee_name:'
+                    .mb_strtolower($employeeName)
                 );
             }
         }
 
-        return $keys->unique()->values()->all();
+        return $keys
+            ->unique()
+            ->values()
+            ->all();
     }
 
-    private function latestDate(mixed $current, mixed $incoming): mixed
-    {
+    private function defaultGroupName(
+        mixed $account
+    ): string|int|null {
+        $account = mb_strtolower(
+            $this->identityService->clean($account) ?? ''
+        );
+
+        return match ($account) {
+            'mirasol' => EmployeeBiometric::PAYROLL_GROUP_MIRASOL,
+            'gonzales' => EmployeeBiometric::PAYROLL_GROUP_GONZALES,
+            default => null,
+        };
+    }
+
+    private function parseLogTime(
+        mixed $value
+    ): ?Carbon {
+        if (empty($value)) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse(
+                $value,
+                config('app.timezone', 'Asia/Manila')
+            );
+        } catch (Throwable) {
+            return null;
+        }
+    }
+
+    private function latestDate(
+        mixed $current,
+        mixed $incoming
+    ): mixed {
         if ($current === null) {
             return $incoming;
         }
@@ -344,7 +668,10 @@ class EmployeeBiometricSyncService
             return $current;
         }
 
-        return Carbon::parse($incoming)->gt(Carbon::parse($current)) ? $incoming : $current;
+        return Carbon::parse($incoming)
+            ->gt(Carbon::parse($current))
+                ? $incoming
+                : $current;
     }
 
     private function biometricDateTimeColumn(): string
@@ -370,17 +697,23 @@ class EmployeeBiometricSyncService
         return 'created_at';
     }
 
-    private function existingColumns(string $table, array $columns): array
-    {
+    private function existingColumns(
+        string $table,
+        array $columns
+    ): array {
         return collect($columns)
-            ->filter(fn (string $column) => $this->columnExists($table, $column))
+            ->filter(
+                fn (string $column): bool => $this->columnExists($table, $column)
+            )
             ->unique()
             ->values()
-            ->toArray();
+            ->all();
     }
 
-    private function columnExists(string $table, string $column): bool
-    {
+    private function columnExists(
+        string $table,
+        string $column
+    ): bool {
         $key = $table.'.'.$column;
 
         if (array_key_exists($key, $this->columnCache)) {
@@ -388,8 +721,9 @@ class EmployeeBiometricSyncService
         }
 
         try {
-            $this->columnCache[$key] = Schema::hasColumn($table, $column);
-        } catch (\Throwable) {
+            $this->columnCache[$key] =
+                Schema::hasColumn($table, $column);
+        } catch (Throwable) {
             $this->columnCache[$key] = false;
         }
 

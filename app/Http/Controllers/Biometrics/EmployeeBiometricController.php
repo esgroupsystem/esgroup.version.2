@@ -11,6 +11,7 @@ use App\Services\Biometrics\EmployeeBiometricSyncService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Throwable;
 
 class EmployeeBiometricController extends Controller
 {
@@ -22,27 +23,39 @@ class EmployeeBiometricController extends Controller
     public function index(Request $request): View
     {
         $filters = [
-            'search' => trim((string) $request->query('search')),
-            'employment_status' => trim((string) $request->query('employment_status')),
-            'biometric_company_id' => trim((string) $request->query('biometric_company_id')),
-            'group_name' => trim((string) $request->query('group_name')),
-            'payroll_active' => trim((string) $request->query('payroll_active')),
+            'search' => trim(
+                (string) $request->query('search')
+            ),
+
+            'employment_status' => trim(
+                (string) $request->query('employment_status')
+            ),
+
+            'biometric_company_id' => trim(
+                (string) $request->query('biometric_company_id')
+            ),
+
+            'group_name' => trim(
+                (string) $request->query('group_name')
+            ),
+
+            'payroll_active' => trim(
+                (string) $request->query('payroll_active')
+            ),
         ];
 
-        $employeeBiometrics = $this->employeeBiometricService->paginate($filters);
+        $employeeBiometrics =
+            $this->employeeBiometricService->paginate($filters);
 
         $companies = BiometricCompany::query()
             ->orderBy('name')
             ->get();
 
-        $counts = $this->employeeBiometricService->counts();
-        $groups = $this->employeeBiometricService->groups();
-
         return view('biometrics.employees.index', [
             'employeeBiometrics' => $employeeBiometrics,
             'companies' => $companies,
-            'counts' => $counts,
-            'groups' => $groups,
+            'counts' => $this->employeeBiometricService->counts(),
+            'groups' => $this->employeeBiometricService->groups(),
             'filters' => $filters,
         ]);
     }
@@ -50,32 +63,43 @@ class EmployeeBiometricController extends Controller
     public function sync(): RedirectResponse
     {
         try {
-            $result = $this->employeeBiometricSyncService->syncFromMirasol();
+            $result =
+                $this->employeeBiometricSyncService
+                    ->syncAllAccounts();
 
             return to_route('biometrics.employees.index')
                 ->with(
                     'success',
-                    "Biometrics synced successfully. Created: {$result['created']}, Updated: {$result['updated']}, Skipped: {$result['skipped']}, Merged duplicates: {$result['merged']}."
+                    sprintf(
+                        'CrossChex accounts synchronized successfully. Created: %d, Updated: %d, Skipped: %d, Merged log duplicates: %d.',
+                        $result['created'],
+                        $result['updated'],
+                        $result['skipped'],
+                        $result['merged']
+                    )
                 );
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             report($exception);
 
             return to_route('biometrics.employees.index')
                 ->withErrors([
-                    'sync' => 'Biometric sync failed. Please check the Mirasol biometric logs table and Laravel log file.',
+                    'sync' => 'CrossChex synchronization failed. Check storage/logs/laravel.log for the exact production error.',
                 ]);
         }
     }
 
-    public function edit(EmployeeBiometric $employeeBiometric): View
-    {
+    public function edit(
+        EmployeeBiometric $employeeBiometric
+    ): View {
         $companies = BiometricCompany::query()
             ->orderBy('name')
             ->get();
 
         return view('biometrics.employees.edit', [
             'employeeBiometric' => $employeeBiometric->load('company'),
+
             'companies' => $companies,
+
             'groups' => $this->employeeBiometricService->groups(),
         ]);
     }
@@ -90,6 +114,9 @@ class EmployeeBiometricController extends Controller
         );
 
         return to_route('biometrics.employees.index')
-            ->with('success', 'Biometric employee record updated successfully.');
+            ->with(
+                'success',
+                'Biometric employee record updated successfully.'
+            );
     }
 }
