@@ -9,9 +9,12 @@ use App\Services\Biometrics\EmployeeBiometricIdentityService;
 use App\Services\Payroll\PayrollDeductionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Throwable;
 
 class PayrollEmployeeSalaryController extends Controller
 {
@@ -171,53 +174,123 @@ class PayrollEmployeeSalaryController extends Controller
 
     public function syncFromBiometrics(): RedirectResponse
     {
-        $people = EmployeeBiometric::query()
-            ->payrollActive()
-            ->orderByRaw("COALESCE(NULLIF(display_name, ''), NULLIF(source_employee_name, ''), NULLIF(source_crosschex_account_name, '')) ASC")
-            ->get();
+        $lock = Cache::lock(
+            'payroll:employee-salaries:sync-from-biometrics',
+            300
+        );
+
+        if (! $lock->get()) {
+            return redirect()
+                ->route('payroll-employee-salaries.index')
+                ->with('warning', 'A biometric salary sync is already running.');
+        }
 
         $inserted = 0;
         $updated = 0;
         $skipped = 0;
 
-        foreach ($people as $employee) {
-            $snapshot = $this->identityService->snapshot($employee);
+        try {
+            EmployeeBiometric::query()
+                ->payrollActive()
+                ->orderBy('id')
+                ->chunkById(200, function ($people) use (
+                    &$inserted,
+                    &$updated,
+                    &$skipped
+                ): void {
+                    [$chunkInserted, $chunkUpdated, $chunkSkipped] = DB::transaction(
+                        function () use ($people): array {
+                            $localInserted = 0;
+                            $localUpdated = 0;
+                            $localSkipped = 0;
 
-            if (empty($snapshot['employee_name'])) {
-                $skipped++;
+                            foreach ($people as $employee) {
+                                $snapshot = $this->identityService->snapshot($employee);
+                                $employeeName = $this->cleanText(
+                                    $snapshot['employee_name'] ?? null
+                                );
 
-                continue;
-            }
+                                if (
+                                    $employeeName === null
+                                    || strcasecmp($employeeName, 'Unknown Employee') === 0
+                                ) {
+                                    $localSkipped++;
 
-            $existingSalary = PayrollEmployeeSalary::query()
-                ->where('employee_biometric_id', $employee->id)
-                ->latest('id')
-                ->first();
+                                    continue;
+                                }
 
-            if ($existingSalary) {
-                $existingSalary->update([
-                    'biometric_employee_id' => $existingSalary->biometric_employee_id ?: $snapshot['biometric_employee_id'],
-                    'employee_no' => $snapshot['employee_no'],
-                    'employee_name' => $snapshot['employee_name'],
-                    'crosschex_id' => $existingSalary->crosschex_id ?: $snapshot['crosschex_id'],
-                    'is_active' => $employee->is_payroll_active,
-                ]);
+                                /*
+                                 * employee_biometric_id is the canonical local identity.
+                                 * biometric_employee_id is only a legacy/source value and
+                                 * may repeat across different CrossChex accounts.
+                                 */
+                                $salary = PayrollEmployeeSalary::query()
+                                    ->where('employee_biometric_id', $employee->id)
+                                    ->lockForUpdate()
+                                    ->latest('id')
+                                    ->first();
 
-                $updated++;
+                                if (! $salary) {
+                                    PayrollEmployeeSalary::create(
+                                        $this->defaultSalaryPayload($employee, $snapshot)
+                                    );
 
-                continue;
-            }
+                                    $localInserted++;
 
-            PayrollEmployeeSalary::create($this->defaultSalaryPayload($employee, $snapshot));
+                                    continue;
+                                }
 
-            $inserted++;
+                                $salary->update([
+                                    'biometric_employee_id' => $this->cleanText(
+                                        $snapshot['biometric_employee_id'] ?? null
+                                    ) ?: $salary->biometric_employee_id,
+                                    'employee_no' => $this->cleanText(
+                                        $snapshot['employee_no'] ?? null
+                                    ) ?: $salary->employee_no,
+                                    'employee_name' => $employeeName,
+                                    'crosschex_id' => $this->cleanText(
+                                        $snapshot['crosschex_id'] ?? null
+                                    ) ?: $salary->crosschex_id,
+                                    'is_active' => (bool) $employee->is_payroll_active,
+                                ]);
+
+                                $localUpdated++;
+                            }
+
+                            return [
+                                $localInserted,
+                                $localUpdated,
+                                $localSkipped,
+                            ];
+                        },
+                        3
+                    );
+
+                    $inserted += $chunkInserted;
+                    $updated += $chunkUpdated;
+                    $skipped += $chunkSkipped;
+                });
+        } catch (Throwable $exception) {
+            Log::error('Payroll biometric salary sync failed.', [
+                'user_id' => auth()->id(),
+                'exception' => $exception,
+            ]);
+
+            return redirect()
+                ->route('payroll-employee-salaries.index')
+                ->with(
+                    'error',
+                    'Biometrics sync failed. Check the application log for details.'
+                );
+        } finally {
+            $lock->release();
         }
 
         return redirect()
             ->route('payroll-employee-salaries.index')
             ->with(
                 'success',
-                "Biometrics sync completed. {$inserted} added, {$updated} updated, {$skipped} skipped. Only payroll-active biometric employees are included."
+                "Biometrics sync completed. {$inserted} added, {$updated} updated, {$skipped} skipped."
             );
     }
 

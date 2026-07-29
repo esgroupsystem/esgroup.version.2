@@ -171,31 +171,63 @@ class EmployeeBiometricIdentityService
             ->first();
     }
 
-    public function applyReferenceMatch(Builder $query, object $reference, string $tableName): void
-    {
-        $query->where(function (Builder $query) use ($reference, $tableName): void {
-            if (! empty($reference->employee_biometric_id)) {
-                $query->orWhere($tableName.'.employee_biometric_id', (int) $reference->employee_biometric_id);
-            }
+    public function applyReferenceMatch(
+        Builder $query,
+        object $reference,
+        string $tableName
+    ): void {
+        /*
+         * The canonical local foreign key is authoritative. Do not OR it with
+         * legacy/source identifiers because values such as employee ID "1"
+         * may exist in more than one CrossChex account.
+         */
+        if (! empty($reference->employee_biometric_id)) {
+            $query->where(
+                $tableName.'.employee_biometric_id',
+                (int) $reference->employee_biometric_id
+            );
 
-            if (! empty($reference->biometric_employee_id)) {
-                $query->orWhere($tableName.'.biometric_employee_id', trim((string) $reference->biometric_employee_id));
-            }
+            return;
+        }
 
-            if (! empty($reference->employee_no)) {
-                $query->orWhere($tableName.'.employee_no', trim((string) $reference->employee_no));
-            }
+        $crosschexId = $this->clean($reference->crosschex_id ?? null);
+        $employeeNo = $this->clean($reference->employee_no ?? null);
+        $biometricEmployeeId = $this->clean(
+            $reference->biometric_employee_id ?? null
+        );
+        $employeeName = $this->clean($reference->employee_name ?? null);
 
-            if (! empty($reference->crosschex_id)) {
-                $query->orWhere($tableName.'.crosschex_id', trim((string) $reference->crosschex_id));
-            }
+        if ($crosschexId !== null) {
+            $query->where($tableName.'.crosschex_id', $crosschexId);
 
-            if (! empty($reference->employee_name)) {
-                $query->orWhereRaw("LOWER(TRIM({$tableName}.employee_name)) = ?", [
-                    mb_strtolower(trim((string) $reference->employee_name)),
-                ]);
-            }
-        });
+            return;
+        }
+
+        if ($employeeNo !== null) {
+            $query->where($tableName.'.employee_no', $employeeNo);
+
+            return;
+        }
+
+        if ($biometricEmployeeId !== null) {
+            $query->where(
+                $tableName.'.biometric_employee_id',
+                $biometricEmployeeId
+            );
+
+            return;
+        }
+
+        if ($employeeName !== null) {
+            $query->whereRaw(
+                "LOWER(TRIM({$tableName}.employee_name)) = ?",
+                [mb_strtolower($employeeName)]
+            );
+
+            return;
+        }
+
+        $query->whereRaw('1 = 0');
     }
 
     public function identityHash(array $data): ?string
