@@ -24,9 +24,35 @@ class PayrollEmployeeSalaryController extends Controller
     {
         $search = trim((string) $request->search);
         $groupName = trim((string) $request->group_name);
+        $allowedGroups = session('payroll_allowed_groups');
 
         $salaries = PayrollEmployeeSalary::query()
             ->with(['otherDeductions', 'employeeBiometric'])
+            ->when(
+                $allowedGroups !== 'all',
+                function ($query) use ($allowedGroups) {
+
+                    if (empty($allowedGroups)) {
+
+                        $query->whereRaw('1 = 0');
+
+                        return;
+                    }
+
+                    $query->whereHas(
+                        'employeeBiometric',
+                        function ($employeeQuery) use ($allowedGroups) {
+
+                            $employeeQuery->whereIn(
+                                'group_name',
+                                $allowedGroups
+                            );
+
+                        }
+                    );
+
+                }
+            )
             ->whereIn('id', function ($query): void {
                 $query->selectRaw('COALESCE(MAX(CASE WHEN basic_salary > 0 THEN id END), MIN(id))')
                     ->from('payroll_employee_salaries')
@@ -197,8 +223,24 @@ class PayrollEmployeeSalaryController extends Controller
 
     private function biometricPeople()
     {
+        $allowedGroups = session('payroll_allowed_groups');
+
         return EmployeeBiometric::query()
             ->payrollActive()
+            ->when(
+                $allowedGroups !== 'all',
+                function ($query) use ($allowedGroups) {
+                    if (empty($allowedGroups)) {
+                        $query->whereRaw('1 = 0');
+
+                        return;
+                    }
+                    $query->whereIn(
+                        'group_name',
+                        $allowedGroups
+                    );
+                }
+            )
             ->orderBy('group_name')
             ->orderByRaw("COALESCE(NULLIF(display_name, ''), NULLIF(source_employee_name, ''), NULLIF(source_crosschex_account_name, '')) ASC")
             ->get()

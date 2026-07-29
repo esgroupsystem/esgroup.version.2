@@ -91,12 +91,10 @@
                         <table class="table table-sm table-hover align-middle mb-0 salary-master-table">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-3" style="min-width: 100px;">Employee</th>
+                                    <th class="ps-3" style="min-width: 120px;">Employee</th>
                                     <th style="min-width: 170px;">Salary Rate</th>
-                                    <th style="min-width: 260px;">Gov. Deduction / Month</th>
+                                    <th style="min-width: 200px;">Gov. Deduction / Month</th>
                                     <th style="min-width: 230px;">Allowance</th>
-                                    <th style="min-width: 390px;">Loans / CA</th>
-                                    <th style="min-width: 230px;">Preview Take Home</th>
                                     <th style="min-width: 100px;">Status</th>
                                     <th class="text-end pe-3" style="min-width: 110px;">Action</th>
                                 </tr>
@@ -134,11 +132,11 @@
                                             <div class="text-muted small">
                                                 Emp No: {{ $salary->employee_no ?: '—' }}
                                             </div>
-                                            <div class="text-muted small">
+                                            {{-- <div class="text-muted small">
                                                 Bio ID: {{ $salary->employee_biometric_id ?: '—' }}
                                                 |
                                                 Legacy: {{ $salary->biometric_employee_id ?: '—' }}
-                                            </div>
+                                            </div> --}}
                                         </td>
 
                                         <td>
@@ -217,109 +215,6 @@
                                                     <strong class="salary-value">
                                                         {{ $money($salary->sim_load_allowance) }}
                                                     </strong>
-                                                </div>
-                                            </div>
-                                        </td>
-
-                                        <td>
-                                            <div class="salary-info-list loans">
-                                                <div class="salary-loan-row">
-                                                    <span class="salary-label">SSS Loan</span>
-                                                    <strong class="salary-value">
-                                                        {{ $money($salary->sss_loan_payment_amount) }}
-                                                    </strong>
-                                                    <span>{!! $scheduleBadge($salary->sss_loan_deduction_schedule) !!}</span>
-                                                    <span class="salary-last-payment">
-                                                        Last: {{ $preview['last_payment']['sss_loan'] ?: '—' }}
-                                                    </span>
-                                                </div>
-
-                                                <div class="salary-loan-row">
-                                                    <span class="salary-label">Pag-IBIG Loan</span>
-                                                    <strong class="salary-value">
-                                                        {{ $money($salary->pagibig_loan_payment_amount) }}
-                                                    </strong>
-                                                    <span>{!! $scheduleBadge($salary->pagibig_loan_deduction_schedule) !!}</span>
-                                                    <span class="salary-last-payment">
-                                                        Last: {{ $preview['last_payment']['pagibig_loan'] ?: '—' }}
-                                                    </span>
-                                                </div>
-
-                                                <div class="salary-loan-row">
-                                                    <span class="salary-label">PhilHealth Loan</span>
-                                                    <strong class="salary-value">
-                                                        {{ $money($salary->philhealth_loan_payment_amount) }}
-                                                    </strong>
-                                                    <span>{!! $scheduleBadge($salary->philhealth_loan_deduction_schedule) !!}</span>
-                                                    <span class="salary-last-payment">
-                                                        Last: {{ $preview['last_payment']['philhealth_loan'] ?: '—' }}
-                                                    </span>
-                                                </div>
-
-                                                <div class="salary-loan-row">
-                                                    <span class="salary-label">CA / Vale</span>
-                                                    <strong class="salary-value">
-                                                        {{ $money($salary->cash_advance_payment_amount) }}
-                                                    </strong>
-                                                    <span>{!! $scheduleBadge($salary->cash_advance_deduction_schedule) !!}</span>
-                                                    <span class="salary-last-payment">
-                                                        Last: {{ $preview['last_payment']['cash_advance'] ?: '—' }}
-                                                    </span>
-                                                </div>
-
-                                                <div class="salary-loan-row">
-                                                    <span class="salary-label">Other Loan</span>
-                                                    <strong class="salary-value">
-                                                        {{ $money($salary->other_loan_payment_amount) }}
-                                                    </strong>
-                                                    <span>{!! $scheduleBadge($salary->other_loan_deduction_schedule) !!}</span>
-                                                    <span class="salary-last-payment">
-                                                        Last: {{ $preview['last_payment']['other_loan'] ?: '—' }}
-                                                    </span>
-                                                </div>
-
-                                                @if ($salary->otherDeductions->isNotEmpty())
-                                                    <div class="border-top pt-1 mt-1">
-                                                        @foreach ($salary->otherDeductions as $deduction)
-                                                            <div class="salary-loan-row">
-                                                                <span class="salary-label">
-                                                                    {{ $deduction->name }}
-                                                                </span>
-                                                                <strong class="salary-value">
-                                                                    {{ $money($deduction->payment_amount) }}
-                                                                </strong>
-                                                                <span>
-                                                                    {!! $scheduleBadge($deduction->deduction_schedule) !!}
-                                                                </span>
-                                                                <span class="salary-last-payment">
-                                                                    Last:
-                                                                    {{ $preview['last_payment']['other_deductions'][$deduction->id] ?? '—' }}
-                                                                </span>
-                                                            </div>
-                                                        @endforeach
-                                                    </div>
-                                                @endif
-                                            </div>
-                                        </td>
-
-                                        <td>
-                                            <div class="salary-info-list">
-                                                <div class="salary-info-row two-col">
-                                                    <span class="salary-label">1st Net</span>
-                                                    <strong class="salary-value">
-                                                        {{ $money($first['net_preview']) }}
-                                                    </strong>
-                                                </div>
-
-                                                <div class="salary-info-row two-col">
-                                                    <span class="salary-label">2nd Net</span>
-                                                    <strong class="salary-value">
-                                                        {{ $money($second['net_preview']) }}
-                                                    </strong>
-                                                </div>
-
-                                                <div class="salary-note mt-2">
-                                                    Attendance, late, undertime, OT, and absence can still adjust final pay.
                                                 </div>
                                             </div>
                                         </td>

@@ -729,13 +729,19 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     | Employee Salaries
     |--------------------------------------------------------------------------
     */
-
     Route::prefix('payroll')
-        ->middleware(['auth'])
+        ->middleware([
+            'auth',
+            'payroll.group',
+        ])
         ->group(function () {
+
             Route::get(
                 'employee-salaries/sync',
-                [PayrollEmployeeSalaryController::class, 'syncFromBiometrics']
+                [
+                    PayrollEmployeeSalaryController::class,
+                    'syncFromBiometrics',
+                ]
             )
                 ->middleware('permission:employee-salaries.update')
                 ->name('payroll-employee-salaries.sync');
@@ -749,10 +755,23 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     'employee-salaries' => 'payrollEmployeeSalary',
                 ])
                 ->names('payroll-employee-salaries')
-                ->middlewareFor(['index'], 'permission:employee-salaries.view')
-                ->middlewareFor(['create', 'store'], 'permission:employee-salaries.create')
-                ->middlewareFor(['edit', 'update'], 'permission:employee-salaries.update')
-                ->middlewareFor(['destroy'], 'permission:employee-salaries.delete');
+                ->middlewareFor(
+                    ['index'],
+                    'permission:employee-salaries.view'
+                )
+                ->middlewareFor(
+                    ['create', 'store'],
+                    'permission:employee-salaries.create'
+                )
+                ->middlewareFor(
+                    ['edit', 'update'],
+                    'permission:employee-salaries.update'
+                )
+                ->middlewareFor(
+                    ['destroy'],
+                    'permission:employee-salaries.delete'
+                );
+
         });
 
     /*

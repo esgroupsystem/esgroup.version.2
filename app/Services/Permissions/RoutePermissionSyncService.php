@@ -9,15 +9,49 @@ use Spatie\Permission\PermissionRegistrar;
 
 class RoutePermissionSyncService
 {
+    /**
+     * System permissions not directly attached to routes.
+     *
+     * These are used for data-level security.
+     */
+    private array $systemPermissions = [
+
+        /*
+        |--------------------------------------------------------------------------
+        | Payroll Salary Security
+        |--------------------------------------------------------------------------
+        */
+
+        'payroll.all-access',
+
+        'payroll.mirasol',
+
+        'payroll.gonzales',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Add other non-route permissions here
+        |--------------------------------------------------------------------------
+        */
+
+    ];
+
     public function scan(): Collection
     {
         return collect(Route::getRoutes())
             ->flatMap(function ($route) {
+
                 return collect($route->gatherMiddleware())
                     ->filter(fn ($middleware) => is_string($middleware))
-                    ->filter(fn ($middleware) => str_starts_with($middleware, 'permission:'))
-                    ->flatMap(fn ($middleware) => $this->extractPermissions($middleware));
+                    ->filter(
+                        fn ($middleware) => str_starts_with($middleware, 'permission:')
+                    )
+                    ->flatMap(
+                        fn ($middleware) => $this->extractPermissions($middleware)
+                    );
+
             })
+            ->merge($this->systemPermissions)
             ->unique()
             ->sort()
             ->values();
@@ -25,64 +59,112 @@ class RoutePermissionSyncService
 
     public function sync(string $guardName = 'web'): array
     {
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)
+            ->forgetCachedPermissions();
 
-        $routePermissions = $this->scan();
+        $permissions = $this->scan();
 
         $existingPermissions = Permission::query()
             ->where('guard_name', $guardName)
             ->pluck('name');
 
-        // CREATE: missing in DB but exists in routes
-        $toCreate = $routePermissions->diff($existingPermissions)->values();
+        /*
+        |--------------------------------------------------------------------------
+        | CREATE missing permissions
+        |--------------------------------------------------------------------------
+        */
+
+        $toCreate = $permissions
+            ->diff($existingPermissions)
+            ->values();
 
         foreach ($toCreate as $permissionName) {
+
             Permission::firstOrCreate([
                 'name' => $permissionName,
                 'guard_name' => $guardName,
             ]);
+
         }
 
-        // DELETE: exists in DB but NOT in routes (stale permissions)
-        $toDelete = $existingPermissions->diff($routePermissions)->values();
+        /*
+        |--------------------------------------------------------------------------
+        | DELETE stale permissions
+        |--------------------------------------------------------------------------
+        |
+        | Do not delete system permissions.
+        |
+        */
+
+        $protectedPermissions = collect(
+            $this->systemPermissions
+        );
+
+        $toDelete = $existingPermissions
+            ->diff($permissions)
+            ->diff($protectedPermissions)
+            ->values();
 
         if ($toDelete->isNotEmpty()) {
-            $permissions = Permission::query()
+
+            $permissionsToDelete = Permission::query()
                 ->where('guard_name', $guardName)
                 ->whereIn('name', $toDelete)
                 ->get();
 
-            foreach ($permissions as $permission) {
-                // detach from all roles first
+            foreach ($permissionsToDelete as $permission) {
+
                 foreach ($permission->roles as $role) {
+
                     $role->revokePermissionTo($permission);
+
                 }
 
                 $permission->delete();
+
             }
+
         }
 
-        app(PermissionRegistrar::class)->forgetCachedPermissions();
+        app(PermissionRegistrar::class)
+            ->forgetCachedPermissions();
 
         return [
-            'route_permissions' => $routePermissions,
+
+            'route_permissions' => $permissions,
+
             'created_permissions' => $toCreate,
+
             'deleted_permissions' => $toDelete,
+
             'created_count' => $toCreate->count(),
+
             'deleted_count' => $toDelete->count(),
+
         ];
     }
 
-    private function extractPermissions(string $middleware): array
-    {
-        $value = str_replace('permission:', '', $middleware);
+    private function extractPermissions(
+        string $middleware
+    ): array {
+
+        $value = str_replace(
+            'permission:',
+            '',
+            $middleware
+        );
 
         $permissionPart = explode(',', $value)[0];
 
-        return collect(explode('|', $permissionPart))
-            ->map(fn ($permission) => trim($permission))
+        return collect(
+            explode('|', $permissionPart)
+        )
+            ->map(
+                fn ($permission) => trim($permission)
+            )
             ->filter()
             ->values()
             ->all();
+
     }
 }
