@@ -7,8 +7,8 @@
                 <th style="min-width: 170px;">Leave Details</th>
                 <th style="min-width: 190px;">Leave Period</th>
                 <th class="text-center">Days</th>
-                <th style="min-width: 230px;">Notice Tracker</th>
-                <th style="min-width: 180px;">Record Status</th>
+                <th style="min-width: 290px;">Notice Tracker</th>
+                <th style="min-width: 190px;">Record Status</th>
                 <th class="text-center" style="min-width: 110px;">Action</th>
             </tr>
         </thead>
@@ -16,19 +16,12 @@
         <tbody>
             @forelse ($leaves as $leave)
                 @php
-                    $status = strtolower($leave->status ?? '');
+                    $status = strtolower((string) ($leave->status ?? ''));
                     $isLocked = in_array($status, ['cancelled', 'terminated', 'completed'], true);
 
-                    $start = $leave->start_date
-                        ? \Carbon\Carbon::parse($leave->start_date, 'Asia/Manila')->startOfDay()
-                        : null;
-
-                    $end = $leave->end_date
-                        ? \Carbon\Carbon::parse($leave->end_date, 'Asia/Manila')->startOfDay()
-                        : null;
-
+                    $end = $leave->end_date?->copy()->startOfDay();
                     $afterLeave = $end && $today->gt($end);
-                    $canShowReady = true;
+                    $canShowReady = !$isLocked;
                     $canShowNotices = $afterLeave && !$isLocked;
 
                     $employee = $leave->employee;
@@ -42,7 +35,9 @@
                         <div class="d-flex align-items-center">
                             <div class="avatar avatar-xl me-2">
                                 <div class="avatar-name rounded-circle bg-primary-subtle text-primary">
-                                    <span>{{ strtoupper(substr($employee?->full_name ?? 'D', 0, 1)) }}</span>
+                                    <span>
+                                        {{ strtoupper(substr($employee?->full_name ?? 'D', 0, 1)) }}
+                                    </span>
                                 </div>
                             </div>
 
@@ -50,9 +45,7 @@
                                 <div class="fw-semi-bold text-900">
                                     {{ $employee?->full_name ?? 'No employee record' }}
                                 </div>
-                                <div class="text-600 small">
-                                    {{ $employeeNo }}
-                                </div>
+                                <div class="text-600 small">{{ $employeeNo }}</div>
                                 <div class="text-600 small">
                                     {{ $employee?->position?->title ?? 'No position' }}
                                 </div>
@@ -65,9 +58,7 @@
                             <span class="fas fa-warehouse text-primary me-1"></span>
                             {{ $garage }}
                         </div>
-                        <div class="text-600 small">
-                            {{ $company }}
-                        </div>
+                        <div class="text-600 small">{{ $company }}</div>
                     </td>
 
                     <td>
@@ -76,7 +67,7 @@
                         </div>
 
                         <div class="small text-600 text-truncate" style="max-width: 230px;" data-bs-toggle="tooltip"
-                            title="{{ e($leave->reason ?? 'No reason provided') }}">
+                            title="{{ $leave->reason ?? 'No reason provided' }}">
                             <span class="fas fa-comment-dots me-1"></span>
                             {{ $leave->reason ?: 'No reason provided' }}
                         </div>
@@ -85,20 +76,16 @@
                     <td>
                         <div class="d-flex flex-column gap-1">
                             <div>
-                                <span class="badge badge-subtle-primary text-primary">
-                                    From
-                                </span>
+                                <span class="badge badge-subtle-primary text-primary">From</span>
                                 <span class="ms-1">
-                                    {{ $leave->start_date ? \Carbon\Carbon::parse($leave->start_date)->format('M d, Y') : '-' }}
+                                    {{ $leave->start_date?->format('M d, Y') ?? '-' }}
                                 </span>
                             </div>
 
                             <div>
-                                <span class="badge badge-subtle-info text-info">
-                                    To
-                                </span>
+                                <span class="badge badge-subtle-info text-info">To</span>
                                 <span class="ms-1">
-                                    {{ $leave->end_date ? \Carbon\Carbon::parse($leave->end_date)->format('M d, Y') : '-' }}
+                                    {{ $leave->end_date?->format('M d, Y') ?? '-' }}
                                 </span>
                             </div>
                         </div>
@@ -114,31 +101,82 @@
                         <div class="notice-tracker">
                             <div class="notice-step {{ $leave->first_notice_sent_at ? 'done' : '' }}">
                                 <span class="notice-dot"></span>
-                                <div>
+
+                                <div class="flex-grow-1">
                                     <div class="fw-semi-bold">1st Notice</div>
                                     <div class="small text-600">
-                                        {{ $leave->first_notice_sent_at ? $leave->first_notice_sent_at->format('M d, Y h:i A') : 'Pending' }}
+                                        {{ $leave->first_notice_sent_at
+                                            ? $leave->first_notice_sent_at->timezone('Asia/Manila')->format('M d, Y h:i A')
+                                            : 'Pending' }}
                                     </div>
+
+                                    @if ($leave->first_notice_proof)
+                                        <a href="{{ asset('storage/' . ltrim($leave->first_notice_proof, '/')) }}"
+                                            target="_blank" rel="noopener" class="notice-proof-link mt-1">
+                                            <img src="{{ asset('storage/' . ltrim($leave->first_notice_proof, '/')) }}"
+                                                alt="1st Notice proof" class="notice-proof-thumb">
+                                            <span>View proof</span>
+                                        </a>
+                                    @elseif ($leave->first_notice_sent_at)
+                                        <div class="small text-danger mt-1">
+                                            <span class="fas fa-triangle-exclamation me-1"></span>
+                                            No proof uploaded
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
                             <div class="notice-step {{ $leave->second_notice_sent_at ? 'done inactive-step' : '' }}">
                                 <span class="notice-dot"></span>
-                                <div>
+
+                                <div class="flex-grow-1">
                                     <div class="fw-semi-bold">2nd Notice</div>
                                     <div class="small text-600">
-                                        {{ $leave->second_notice_sent_at ? $leave->second_notice_sent_at->format('M d, Y h:i A') : 'Pending' }}
+                                        {{ $leave->second_notice_sent_at
+                                            ? $leave->second_notice_sent_at->timezone('Asia/Manila')->format('M d, Y h:i A')
+                                            : 'Pending' }}
                                     </div>
+
+                                    @if ($leave->second_notice_proof)
+                                        <a href="{{ asset('storage/' . ltrim($leave->second_notice_proof, '/')) }}"
+                                            target="_blank" rel="noopener" class="notice-proof-link mt-1">
+                                            <img src="{{ asset('storage/' . ltrim($leave->second_notice_proof, '/')) }}"
+                                                alt="2nd Notice proof" class="notice-proof-thumb">
+                                            <span>View proof</span>
+                                        </a>
+                                    @elseif ($leave->second_notice_sent_at)
+                                        <div class="small text-danger mt-1">
+                                            <span class="fas fa-triangle-exclamation me-1"></span>
+                                            No proof uploaded
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
                             <div class="notice-step {{ $leave->final_notice_sent_at ? 'done final-step' : '' }}">
                                 <span class="notice-dot"></span>
-                                <div>
+
+                                <div class="flex-grow-1">
                                     <div class="fw-semi-bold">Final Notice</div>
                                     <div class="small text-600">
-                                        {{ $leave->final_notice_sent_at ? $leave->final_notice_sent_at->format('M d, Y h:i A') : 'Pending' }}
+                                        {{ $leave->final_notice_sent_at
+                                            ? $leave->final_notice_sent_at->timezone('Asia/Manila')->format('M d, Y h:i A')
+                                            : 'Pending' }}
                                     </div>
+
+                                    @if ($leave->final_notice_proof)
+                                        <a href="{{ asset('storage/' . ltrim($leave->final_notice_proof, '/')) }}"
+                                            target="_blank" rel="noopener" class="notice-proof-link mt-1">
+                                            <img src="{{ asset('storage/' . ltrim($leave->final_notice_proof, '/')) }}"
+                                                alt="Final Notice proof" class="notice-proof-thumb">
+                                            <span>View proof</span>
+                                        </a>
+                                    @elseif ($leave->final_notice_sent_at)
+                                        <div class="small text-danger mt-1">
+                                            <span class="fas fa-triangle-exclamation me-1"></span>
+                                            No proof uploaded
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -154,9 +192,17 @@
                             {!! $leave->remaining_status !!}
                         </div>
 
+                        @if ($leave->ready_for_duty_notified_at)
+                            <div class="small text-success mb-1">
+                                <span class="fas fa-user-check me-1"></span>
+                                Ready:
+                                {{ $leave->ready_for_duty_notified_at->timezone('Asia/Manila')->format('M d, Y h:i A') }}
+                            </div>
+                        @endif
+
                         @if ($leave->last_action_note)
                             <div class="small text-600 text-truncate" style="max-width: 220px;" data-bs-toggle="tooltip"
-                                title="{{ e($leave->last_action_note) }}">
+                                title="{{ $leave->last_action_note }}">
                                 <span class="fas fa-sticky-note me-1"></span>
                                 {{ $leave->last_action_note }}
                             </div>
@@ -172,19 +218,26 @@
 
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li>
-                                    <a class="dropdown-item {{ $isLocked ? 'disabled' : '' }}"
-                                        href="{{ $isLocked ? '#' : route('driver-leave.driver.edit', $leave) }}">
-                                        <span class="fas fa-edit me-2 text-primary"></span>
-                                        Edit Leave
-                                    </a>
+                                    @if ($isLocked)
+                                        <span class="dropdown-item disabled" aria-disabled="true">
+                                            <span class="fas fa-edit me-2 text-500"></span>
+                                            Edit Leave
+                                        </span>
+                                    @else
+                                        <a class="dropdown-item"
+                                            href="{{ route('driver-leave.driver.edit', $leave) }}">
+                                            <span class="fas fa-edit me-2 text-primary"></span>
+                                            Edit Leave
+                                        </a>
+                                    @endif
                                 </li>
 
                                 @if ($canShowReady)
                                     <li>
-                                        <a class="dropdown-item action-open-modal" href="#"
-                                            data-id="{{ $leave->id }}" data-action="ready"
-                                            data-employee="{{ e($employee?->full_name ?? '') }}"
-                                            data-type="{{ e($leave->leave_type) }}" data-garage="{{ e($garage) }}">
+                                        <a class="dropdown-item driver-action-open-modal" href="#"
+                                            data-url="{{ route('driver-leave.driver.action', $leave) }}"
+                                            data-action="ready" data-employee="{{ $employee?->full_name ?? '' }}"
+                                            data-type="{{ $leave->leave_type }}" data-garage="{{ $garage }}">
                                             <span class="fas fa-user-check me-2 text-success"></span>
                                             Ready for Duty
                                         </a>
@@ -198,16 +251,16 @@
                                 @if ($canShowNotices)
                                     <li>
                                         @if ($leave->first_notice_sent_at)
-                                            <span class="dropdown-item disabled">
+                                            <span class="dropdown-item disabled" aria-disabled="true">
                                                 <span class="fas fa-check-circle text-info me-2"></span>
                                                 1st Notice Sent
                                             </span>
                                         @else
-                                            <a class="dropdown-item action-open-modal" href="#"
-                                                data-action="first" data-id="{{ $leave->id }}"
-                                                data-employee="{{ e($employee?->full_name ?? '') }}"
-                                                data-type="{{ e($leave->leave_type) }}"
-                                                data-garage="{{ e($garage) }}">
+                                            <a class="dropdown-item driver-action-open-modal" href="#"
+                                                data-url="{{ route('driver-leave.driver.action', $leave) }}"
+                                                data-action="first" data-employee="{{ $employee?->full_name ?? '' }}"
+                                                data-type="{{ $leave->leave_type }}"
+                                                data-garage="{{ $garage }}">
                                                 <span class="fas fa-paper-plane text-info me-2"></span>
                                                 Mark 1st Notice Sent
                                             </a>
@@ -216,16 +269,22 @@
 
                                     <li>
                                         @if ($leave->second_notice_sent_at)
-                                            <span class="dropdown-item disabled">
+                                            <span class="dropdown-item disabled" aria-disabled="true">
                                                 <span class="fas fa-check-circle text-warning me-2"></span>
                                                 2nd Notice Sent / Inactive
                                             </span>
+                                        @elseif (!$leave->first_notice_sent_at)
+                                            <span class="dropdown-item disabled" aria-disabled="true">
+                                                <span class="fas fa-lock text-500 me-2"></span>
+                                                Send 1st Notice First
+                                            </span>
                                         @else
-                                            <a class="dropdown-item action-open-modal {{ !$leave->first_notice_sent_at ? 'disabled' : '' }}"
-                                                href="#" data-action="second" data-id="{{ $leave->id }}"
-                                                data-employee="{{ e($employee?->full_name ?? '') }}"
-                                                data-type="{{ e($leave->leave_type) }}"
-                                                data-garage="{{ e($garage) }}">
+                                            <a class="dropdown-item driver-action-open-modal" href="#"
+                                                data-url="{{ route('driver-leave.driver.action', $leave) }}"
+                                                data-action="second"
+                                                data-employee="{{ $employee?->full_name ?? '' }}"
+                                                data-type="{{ $leave->leave_type }}"
+                                                data-garage="{{ $garage }}">
                                                 <span class="fas fa-user-slash text-warning me-2"></span>
                                                 Mark 2nd Notice + Inactive
                                             </a>
@@ -234,16 +293,22 @@
 
                                     <li>
                                         @if ($leave->final_notice_sent_at)
-                                            <span class="dropdown-item disabled">
+                                            <span class="dropdown-item disabled" aria-disabled="true">
                                                 <span class="fas fa-check-circle text-danger me-2"></span>
                                                 Final Notice Sent
                                             </span>
+                                        @elseif (!$leave->second_notice_sent_at)
+                                            <span class="dropdown-item disabled" aria-disabled="true">
+                                                <span class="fas fa-lock text-500 me-2"></span>
+                                                Send 2nd Notice First
+                                            </span>
                                         @else
-                                            <a class="dropdown-item action-open-modal {{ !$leave->second_notice_sent_at ? 'disabled' : '' }}"
-                                                href="#" data-action="terminate" data-id="{{ $leave->id }}"
-                                                data-employee="{{ e($employee?->full_name ?? '') }}"
-                                                data-type="{{ e($leave->leave_type) }}"
-                                                data-garage="{{ e($garage) }}">
+                                            <a class="dropdown-item driver-action-open-modal" href="#"
+                                                data-url="{{ route('driver-leave.driver.action', $leave) }}"
+                                                data-action="terminate"
+                                                data-employee="{{ $employee?->full_name ?? '' }}"
+                                                data-type="{{ $leave->leave_type }}"
+                                                data-garage="{{ $garage }}">
                                                 <span class="fas fa-file-signature text-danger me-2"></span>
                                                 Mark Final Notice
                                             </a>
@@ -253,16 +318,34 @@
                                     <li>
                                         <hr class="dropdown-divider">
                                     </li>
+                                @elseif (!$isLocked)
+                                    <li>
+                                        <span class="dropdown-item disabled" aria-disabled="true">
+                                            <span class="fas fa-clock text-500 me-2"></span>
+                                            Notices available after leave
+                                        </span>
+                                    </li>
+
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
                                 @endif
 
                                 <li>
-                                    <a class="dropdown-item action-open-modal {{ $isLocked ? 'disabled' : '' }}"
-                                        href="#" data-id="{{ $leave->id }}" data-action="cancel"
-                                        data-employee="{{ e($employee?->full_name ?? '') }}"
-                                        data-type="{{ e($leave->leave_type) }}" data-garage="{{ e($garage) }}">
-                                        <span class="fas fa-ban me-2 text-secondary"></span>
-                                        Cancel Leave
-                                    </a>
+                                    @if ($isLocked)
+                                        <span class="dropdown-item disabled" aria-disabled="true">
+                                            <span class="fas fa-ban me-2 text-500"></span>
+                                            Cancel Leave
+                                        </span>
+                                    @else
+                                        <a class="dropdown-item driver-action-open-modal" href="#"
+                                            data-url="{{ route('driver-leave.driver.action', $leave) }}"
+                                            data-action="cancel" data-employee="{{ $employee?->full_name ?? '' }}"
+                                            data-type="{{ $leave->leave_type }}" data-garage="{{ $garage }}">
+                                            <span class="fas fa-ban me-2 text-secondary"></span>
+                                            Cancel Leave
+                                        </a>
+                                    @endif
                                 </li>
                             </ul>
                         </div>
@@ -276,7 +359,9 @@
                                 <span class="fas fa-folder-open"></span>
                             </div>
                             <h6 class="mb-1">No driver leave records found</h6>
-                            <p class="text-600 mb-0">Create a new driver leave record or adjust your search.</p>
+                            <p class="text-600 mb-0">
+                                Create a new driver leave record or adjust your search.
+                            </p>
                         </div>
                     </td>
                 </tr>
@@ -293,23 +378,23 @@
     .driver-leave-table .notice-tracker {
         display: flex;
         flex-direction: column;
-        gap: .45rem;
+        gap: .75rem;
     }
 
     .driver-leave-table .notice-step {
         display: flex;
         align-items: flex-start;
-        gap: .5rem;
+        gap: .55rem;
         color: var(--falcon-gray-600, #748194);
     }
 
     .driver-leave-table .notice-dot {
         width: .65rem;
         height: .65rem;
-        border-radius: 50%;
         margin-top: .25rem;
-        background: var(--falcon-gray-300, #d8e2ef);
         flex-shrink: 0;
+        background: var(--falcon-gray-300, #d8e2ef);
+        border-radius: 50%;
     }
 
     .driver-leave-table .notice-step.done {
@@ -336,14 +421,38 @@
         background: var(--falcon-danger, #e63757);
     }
 
+    .driver-leave-table .notice-proof-link {
+        display: inline-flex;
+        align-items: center;
+        gap: .45rem;
+        margin-top: .25rem;
+        font-size: .75rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .driver-leave-table .notice-proof-thumb {
+        width: 42px;
+        height: 42px;
+        object-fit: cover;
+        background: var(--falcon-gray-100, #f9fafd);
+        border: 1px solid var(--falcon-gray-300, #d8e2ef);
+        border-radius: .5rem;
+    }
+
+    .driver-leave-table .dropdown-item.disabled {
+        pointer-events: none;
+        opacity: .55;
+    }
+
     .empty-state-icon {
+        display: inline-grid;
         width: 3rem;
         height: 3rem;
-        border-radius: 50%;
-        display: inline-grid;
         place-items: center;
-        background: var(--falcon-gray-100, #f9fafd);
         color: var(--falcon-gray-500, #9da9bb);
         font-size: 1.35rem;
+        background: var(--falcon-gray-100, #f9fafd);
+        border-radius: 50%;
     }
 </style>

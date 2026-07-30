@@ -4,16 +4,31 @@
 @section('content')
     <div class="container" data-layout="container">
         <script>
-            var isFluid = JSON.parse(localStorage.getItem('isFluid'));
+            const isFluid = JSON.parse(localStorage.getItem('isFluid'));
 
             if (isFluid) {
-                var container = document.querySelector('[data-layout]');
+                const container = document.querySelector('[data-layout]');
                 container.classList.remove('container');
                 container.classList.add('container-fluid');
             }
         </script>
 
         <div class="content employee-leave-page">
+            @if ($errors->any())
+                <div class="alert alert-danger border-0 shadow-sm mb-4">
+                    <div class="d-flex align-items-start">
+                        <span class="fas fa-circle-exclamation fs-4 me-3 mt-1"></span>
+                        <div>
+                            <h6 class="alert-heading mb-1">Action could not be completed</h6>
+                            <ul class="mb-0 ps-3">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             <div class="card mb-4 overflow-hidden">
                 <div class="bg-holder d-none d-lg-block bg-card"
@@ -31,8 +46,8 @@
                                 <div>
                                     <h3 class="mb-1">Admin Employee Leave Monitoring</h3>
                                     <p class="text-700 mb-0">
-                                        Track leave schedules, garage assignment, notices, duty status, and automatic
-                                        inactive records.
+                                        Track leave schedules, garage assignment, notices, duty status, proof images,
+                                        and employee status changes.
                                     </p>
                                 </div>
                             </div>
@@ -56,9 +71,10 @@
                     <div>
                         <h6 class="alert-heading mb-1">Process Rule</h6>
                         <p class="mb-0">
-                            This module is for admin/regular employees excluding Driver and Conductor positions.
-                            Once the employee reaches the 2nd Notice, the leave record status and employee status are
-                            automatically set to <strong>Inactive</strong>.
+                            Picture proof is required when marking the 1st, 2nd, or Final Notice as sent.
+                            Ready for Duty and Cancel Leave do not require a picture. Once the employee reaches the
+                            2nd Notice, the leave record and employee status are automatically set to
+                            <strong>Inactive</strong>.
                         </p>
                     </div>
                 </div>
@@ -199,7 +215,7 @@
                                         <div class="badge rounded-pill badge-subtle-info text-info mb-2">Step 1</div>
                                         <h6 class="mb-1">1st Notice</h6>
                                         <p class="text-700 small mb-0">
-                                            Used when employee is past leave period and needs first warning.
+                                            Record the first warning and upload picture proof that it was sent.
                                         </p>
                                     </div>
                                 </div>
@@ -209,7 +225,7 @@
                                         <div class="badge rounded-pill badge-subtle-warning text-warning mb-2">Step 2</div>
                                         <h6 class="mb-1">2nd Notice</h6>
                                         <p class="text-700 small mb-0">
-                                            Automatically changes leave and employee status to Inactive.
+                                            Upload proof and automatically change the employee status to Inactive.
                                         </p>
                                     </div>
                                 </div>
@@ -219,7 +235,7 @@
                                         <div class="badge rounded-pill badge-subtle-danger text-danger mb-2">Step 3</div>
                                         <h6 class="mb-1">Final Notice</h6>
                                         <p class="text-700 small mb-0">
-                                            Used for final notice and termination processing.
+                                            Upload final proof and move the employee record to Terminated.
                                         </p>
                                     </div>
                                 </div>
@@ -228,7 +244,7 @@
                             <hr>
 
                             <div class="small text-700">
-                                <strong>Note:</strong> Use “Ready for Duty” only when the employee has returned and is
+                                <strong>Note:</strong> Use Ready for Duty only when the employee has returned and is
                                 cleared to work.
                             </div>
                         </div>
@@ -242,7 +258,7 @@
                         <div class="col-md-7">
                             <h5 class="mb-0">Employee Leave Records</h5>
                             <p class="mb-0 text-600 small">
-                                Complete list with garage, leave period, status, notice stage, and actions.
+                                Complete list with garage, leave period, status, notice proof, and actions.
                             </p>
                         </div>
 
@@ -253,7 +269,7 @@
                                 </span>
                                 <input id="liveSearch" class="form-control"
                                     placeholder="Search employee, garage, company, status, leave type..."
-                                    value="{{ request('search') }}">
+                                    value="{{ request('search') }}" autocomplete="off">
                             </div>
                         </div>
                     </div>
@@ -268,45 +284,69 @@
         </div>
     </div>
 
-    <div class="modal fade" id="leaveActionModal" tabindex="-1" aria-labelledby="leaveActionModalLabel"
+    <div class="modal fade" id="employeeLeaveActionModal" tabindex="-1" aria-labelledby="employeeLeaveActionModalLabel"
         aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form id="leaveActionForm" method="POST" action="">
+            <form id="employeeLeaveActionForm" method="POST" action="" enctype="multipart/form-data">
                 @csrf
 
                 <div class="modal-content border-0 shadow">
                     <div class="modal-header bg-body-tertiary">
                         <div>
-                            <h5 class="modal-title" id="leaveActionModalLabel">Confirm Action</h5>
-                            <p class="mb-0 small text-600" id="modal_subtitle">Review the selected action before saving.
+                            <h5 class="modal-title" id="employeeLeaveActionModalLabel">Confirm Action</h5>
+                            <p class="mb-0 small text-600" id="employeeActionSubtitle">
+                                Review the selected action before saving.
                             </p>
                         </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
 
                     <div class="modal-body">
-                        <input type="hidden" name="action_type" id="modal_action_type" value="">
+                        <input type="hidden" name="action_type" id="employeeActionType" value="">
 
                         <div class="employee-modal-box mb-3">
-                            <div class="fw-bold text-900" id="modal_employee_name"></div>
-                            <div class="small text-600" id="modal_leave_type"></div>
-                            <div class="small text-600" id="modal_garage"></div>
+                            <div class="fw-bold text-900" id="employeeActionEmployee"></div>
+                            <div class="small text-600" id="employeeActionLeaveType"></div>
+                            <div class="small text-600" id="employeeActionGarage"></div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semi-bold">Action Note</label>
-                            <textarea name="note" id="modal_note" class="form-control" rows="4"
+                            <label for="employeeActionNote" class="form-label fw-semi-bold">Action Note</label>
+                            <textarea name="note" id="employeeActionNote" class="form-control" rows="4"
                                 placeholder="Enter notice reference, HR note, or reason."></textarea>
                         </div>
 
-                        <div class="alert alert-warning small mb-0" id="modal_warning">
+                        <div class="mb-3 d-none" id="employeeProofContainer">
+                            <label for="employeeProofImage" class="form-label fw-semi-bold">
+                                Picture Proof
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <input type="file" name="proof_image" id="employeeProofImage" class="form-control"
+                                accept="image/jpeg,image/png,image/webp" disabled>
+
+                            <div class="form-text">
+                                Required for 1st, 2nd, and Final Notice. Maximum file size: 4 MB.
+                            </div>
+
+                            <div class="proof-preview-wrapper d-none mt-3" id="employeeProofPreviewWrapper">
+                                <img src="" alt="Selected proof preview" id="employeeProofPreview"
+                                    class="proof-preview-image">
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning small mb-0" id="employeeActionWarning">
                             This will update the selected leave record.
                         </div>
                     </div>
 
                     <div class="modal-footer bg-body-tertiary">
-                        <button type="button" class="btn btn-falcon-default" data-bs-dismiss="modal">Close</button>
-                        <button type="submit" class="btn btn-primary" id="modal_submit_btn">Confirm</button>
+                        <button type="button" class="btn btn-falcon-default" data-bs-dismiss="modal">
+                            Close
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="employeeActionSubmit">
+                            Confirm
+                        </button>
                     </div>
                 </div>
             </form>
@@ -316,164 +356,364 @@
 
 @push('scripts')
     <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            function initTooltips() {
-                document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
-                    const instance = bootstrap.Tooltip.getInstance(el);
-
-                    if (instance) {
-                        instance.dispose();
-                    }
-
-                    bootstrap.Tooltip.getOrCreateInstance(el, {
-                        container: 'body',
-                        trigger: 'hover'
-                    });
-                });
-            }
-
-            function bindActionModal() {
-                const modalElement = document.getElementById('leaveActionModal');
-                const modal = new bootstrap.Modal(modalElement);
-                const modalForm = document.getElementById('leaveActionForm');
-
-                document.querySelectorAll('.action-open-modal').forEach(button => {
-                    button.addEventListener('click', function(event) {
-                        event.preventDefault();
-
-                        if (this.classList.contains('disabled')) {
-                            return;
-                        }
-
-                        const id = this.dataset.id;
-                        const action = this.dataset.action;
-                        const employee = this.dataset.employee || '';
-                        const type = this.dataset.type || '';
-                        const garage = this.dataset.garage || 'No garage assigned';
-
-                        modalForm.action = "{{ route('employee-leave.employee.action', ':id') }}"
-                            .replace(':id', id);
-
-                        document.getElementById('modal_action_type').value = action;
-                        document.getElementById('modal_employee_name').innerText = employee;
-                        document.getElementById('modal_leave_type').innerText = type;
-                        document.getElementById('modal_garage').innerText = `Garage: ${garage}`;
-                        document.getElementById('modal_note').value = '';
-
-                        const title = document.getElementById('leaveActionModalLabel');
-                        const subtitle = document.getElementById('modal_subtitle');
-                        const submit = document.getElementById('modal_submit_btn');
-                        const warning = document.getElementById('modal_warning');
-
-                        submit.className = 'btn btn-primary';
-
-                        if (action === 'first') {
-                            title.innerText = 'Mark 1st Notice Sent';
-                            subtitle.innerText = 'This records the first warning notice.';
-                            submit.innerText = 'Mark 1st Notice';
-                            warning.className = 'alert alert-info small mb-0';
-                            warning.innerText =
-                                'This will update the notice tracker only. Employee status will not be set to Inactive yet.';
-                        }
-
-                        if (action === 'second') {
-                            title.innerText = 'Mark 2nd Notice Sent';
-                            subtitle.innerText =
-                                'This will automatically deactivate the employee record.';
-                            submit.innerText = 'Mark 2nd Notice + Set Inactive';
-                            submit.className = 'btn btn-warning';
-                            warning.className = 'alert alert-warning small mb-0';
-                            warning.innerText =
-                                'Important: after confirming, the leave record status and employee status will automatically become Inactive.';
-                        }
-
-                        if (action === 'terminate') {
-                            title.innerText = 'Mark Final Notice Sent';
-                            subtitle.innerText = 'This will move the record to termination status.';
-                            submit.innerText = 'Mark Final Notice';
-                            submit.className = 'btn btn-danger';
-                            warning.className = 'alert alert-danger small mb-0';
-                            warning.innerText =
-                                'This will mark the leave record and employee record as Terminated.';
-                        }
-
-                        if (action === 'cancel') {
-                            title.innerText = 'Cancel Leave';
-                            subtitle.innerText =
-                                'This will cancel the leave and return the employee to Active.';
-                            submit.innerText = 'Cancel Leave';
-                            submit.className = 'btn btn-secondary';
-                            warning.className = 'alert alert-secondary small mb-0';
-                            warning.innerText =
-                                'This will cancel the leave record and set the employee back to Active.';
-                        }
-
-                        if (action === 'ready') {
-                            title.innerText = 'Mark Ready for Duty';
-                            subtitle.innerText = 'This will complete the leave record.';
-                            submit.innerText = 'Set Ready for Duty';
-                            submit.className = 'btn btn-success';
-                            warning.className = 'alert alert-success small mb-0';
-                            warning.innerText =
-                                'This will mark the leave as Completed and set the employee back to Active.';
-                        }
-
-                        modal.show();
-                    });
-                });
-            }
-
-            function refreshBindings() {
-                initTooltips();
-                bindActionModal();
-            }
-
-            refreshBindings();
-
-            let timer = null;
-            const input = document.getElementById("liveSearch");
-
-            if (input) {
-                input.addEventListener("keyup", function() {
-                    const search = this.value;
-                    clearTimeout(timer);
-
-                    timer = setTimeout(() => {
-                        fetch(`?search=${encodeURIComponent(search)}`, {
-                                headers: {
-                                    "X-Requested-With": "XMLHttpRequest"
-                                }
-                            })
-                            .then(response => response.text())
-                            .then(html => {
-                                document.getElementById("employeeLeaveTable").innerHTML = html;
-                                refreshBindings();
-                            });
-                    }, 300);
-                });
-            }
-
-            document.addEventListener('click', function(event) {
-                const link = event.target.closest('#employeeLeaveTable .pagination a');
-
-                if (!link) {
+        (() => {
+            const bootEmployeeLeavePage = () => {
+                if (window.__employeeLeavePageBooted) {
                     return;
                 }
 
-                event.preventDefault();
+                const modalElement = document.getElementById('employeeLeaveActionModal');
+                const form = document.getElementById('employeeLeaveActionForm');
+                const tableContainer = document.getElementById('employeeLeaveTable');
 
-                fetch(link.href, {
+                if (!modalElement || !form || !tableContainer) {
+                    console.error(
+                        'Employee leave page is missing the modal, form, or table container.'
+                    );
+
+                    return;
+                }
+
+                if (typeof bootstrap === 'undefined' || !bootstrap.Modal) {
+                    window.setTimeout(bootEmployeeLeavePage, 150);
+
+                    return;
+                }
+
+                window.__employeeLeavePageBooted = true;
+
+                const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+                const byId = (id) => document.getElementById(id);
+
+                const fields = {
+                    actionType: byId('employeeActionType'),
+                    title: byId('employeeLeaveActionModalLabel'),
+                    subtitle: byId('employeeActionSubtitle'),
+                    employee: byId('employeeActionEmployee'),
+                    leaveType: byId('employeeActionLeaveType'),
+                    garage: byId('employeeActionGarage'),
+                    note: byId('employeeActionNote'),
+                    proofContainer: byId('employeeProofContainer'),
+                    proofInput: byId('employeeProofImage'),
+                    previewWrapper: byId('employeeProofPreviewWrapper'),
+                    preview: byId('employeeProofPreview'),
+                    submit: byId('employeeActionSubmit')
+                };
+
+                if (!fields.actionType || !fields.submit) {
+                    console.error('Employee leave action fields are incomplete.');
+
+                    return;
+                }
+
+                let warning = byId('employeeActionWarning');
+
+                if (!warning) {
+                    warning = document.createElement('div');
+                    warning.id = 'employeeActionWarning';
+                    warning.className = 'alert alert-warning small mb-0';
+                    warning.textContent = 'This will update the selected leave record.';
+                    modalElement.querySelector('.modal-body')?.appendChild(warning);
+                }
+
+                const actionConfig = {
+                    first: {
+                        title: 'Mark 1st Notice Sent',
+                        subtitle: 'Record the first warning and upload picture proof.',
+                        submit: 'Mark 1st Notice',
+                        buttonClass: 'btn btn-info',
+                        alertClass: 'alert alert-info small mb-0',
+                        warning: 'The first warning will be recorded. The employee remains active or on leave.',
+                        requiresProof: true
+                    },
+                    second: {
+                        title: 'Mark 2nd Notice Sent',
+                        subtitle: 'Record the second warning and set the employee to Inactive.',
+                        submit: 'Mark 2nd Notice + Set Inactive',
+                        buttonClass: 'btn btn-warning',
+                        alertClass: 'alert alert-warning small mb-0',
+                        warning: 'The leave record and employee record will automatically become Inactive.',
+                        requiresProof: true
+                    },
+                    terminate: {
+                        title: 'Mark Final Notice Sent',
+                        subtitle: 'Record the final warning and terminate the employee record.',
+                        submit: 'Mark Final Notice',
+                        buttonClass: 'btn btn-danger',
+                        alertClass: 'alert alert-danger small mb-0',
+                        warning: 'The leave record and employee record will become Terminated.',
+                        requiresProof: true
+                    },
+                    cancel: {
+                        title: 'Cancel Leave',
+                        subtitle: 'Cancel the leave and return the employee to Active.',
+                        submit: 'Cancel Leave',
+                        buttonClass: 'btn btn-secondary',
+                        alertClass: 'alert alert-secondary small mb-0',
+                        warning: 'No picture proof is required. The employee will return to Active.',
+                        requiresProof: false
+                    },
+                    ready: {
+                        title: 'Mark Ready for Duty',
+                        subtitle: 'Complete the leave and return the employee to Active.',
+                        submit: 'Set Ready for Duty',
+                        buttonClass: 'btn btn-success',
+                        alertClass: 'alert alert-success small mb-0',
+                        warning: 'No picture proof is required. The leave will become Completed.',
+                        requiresProof: false
+                    }
+                };
+
+                let previewUrl = null;
+                let searchTimer = null;
+
+                const clearPreview = () => {
+                    if (previewUrl) {
+                        URL.revokeObjectURL(previewUrl);
+                        previewUrl = null;
+                    }
+
+                    if (fields.preview) {
+                        fields.preview.removeAttribute('src');
+                    }
+
+                    fields.previewWrapper?.classList.add('d-none');
+                };
+
+                const configureProof = (required) => {
+                    if (!fields.proofContainer || !fields.proofInput) {
+                        return;
+                    }
+
+                    fields.proofContainer.classList.toggle('d-none', !required);
+                    fields.proofInput.disabled = !required;
+                    fields.proofInput.required = required;
+
+                    if (!required) {
+                        fields.proofInput.value = '';
+                        clearPreview();
+                    }
+                };
+
+                const openActionModal = (button) => {
+                    const action = button.dataset.action || '';
+                    const url = button.dataset.url || '';
+                    const config = actionConfig[action];
+
+                    if (!config || !url) {
+                        console.error('Invalid employee leave action button.', {
+                            action,
+                            url
+                        });
+
+                        return;
+                    }
+
+                    form.reset();
+                    clearPreview();
+
+                    form.setAttribute('action', url);
+                    fields.actionType.value = action;
+
+                    if (fields.employee) {
+                        fields.employee.textContent =
+                            button.dataset.employee || 'No employee name';
+                    }
+
+                    if (fields.leaveType) {
+                        fields.leaveType.textContent =
+                            button.dataset.type || 'No leave type';
+                    }
+
+                    if (fields.garage) {
+                        fields.garage.textContent =
+                            `Garage: ${button.dataset.garage || 'No garage assigned'}`;
+                    }
+
+                    if (fields.title) {
+                        fields.title.textContent = config.title;
+                    }
+
+                    if (fields.subtitle) {
+                        fields.subtitle.textContent = config.subtitle;
+                    }
+
+                    fields.submit.textContent = config.submit;
+                    fields.submit.className = config.buttonClass;
+                    fields.submit.disabled = false;
+
+                    warning.className = config.alertClass;
+                    warning.textContent = config.warning;
+
+                    configureProof(config.requiresProof);
+                    modal.show();
+                };
+
+                const initializeTooltips = () => {
+                    if (!bootstrap.Tooltip) {
+                        return;
+                    }
+
+                    document
+                        .querySelectorAll('[data-bs-toggle="tooltip"]')
+                        .forEach((element) => {
+                            bootstrap.Tooltip.getInstance(element)?.dispose();
+
+                            bootstrap.Tooltip.getOrCreateInstance(element, {
+                                container: 'body',
+                                trigger: 'hover'
+                            });
+                        });
+                };
+
+                const loadTable = async (url) => {
+                    const response = await fetch(url, {
                         headers: {
-                            "X-Requested-With": "XMLHttpRequest"
+                            'X-Requested-With': 'XMLHttpRequest'
                         }
-                    })
-                    .then(response => response.text())
-                    .then(html => {
-                        document.getElementById("employeeLeaveTable").innerHTML = html;
-                        refreshBindings();
                     });
-            });
-        });
+
+                    if (!response.ok) {
+                        throw new Error(
+                            'Unable to refresh employee leave records.'
+                        );
+                    }
+
+                    tableContainer.innerHTML = await response.text();
+                    initializeTooltips();
+                };
+
+                document.addEventListener('click', (event) => {
+                    const actionButton = event.target.closest(
+                        '.employee-action-open-modal'
+                    );
+
+                    if (actionButton) {
+                        event.preventDefault();
+
+                        if (
+                            actionButton.classList.contains('disabled') ||
+                            actionButton.getAttribute('aria-disabled') === 'true'
+                        ) {
+                            return;
+                        }
+
+                        openActionModal(actionButton);
+
+                        return;
+                    }
+
+                    const paginationLink = event.target.closest(
+                        '#employeeLeaveTable .pagination a'
+                    );
+
+                    if (!paginationLink) {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    loadTable(paginationLink.href).catch(() => {
+                        window.location.href = paginationLink.href;
+                    });
+                });
+
+                fields.proofInput?.addEventListener('change', () => {
+                    clearPreview();
+
+                    const file = fields.proofInput.files?.[0];
+
+                    if (!file || !fields.preview) {
+                        return;
+                    }
+
+                    previewUrl = URL.createObjectURL(file);
+                    fields.preview.src = previewUrl;
+                    fields.previewWrapper?.classList.remove('d-none');
+                });
+
+                form.addEventListener('submit', (event) => {
+                    const actionUrl = form.getAttribute('action');
+
+                    if (!actionUrl || !fields.actionType.value) {
+                        event.preventDefault();
+                        console.error(
+                            'Employee leave form action is incomplete.'
+                        );
+
+                        return;
+                    }
+
+                    if (
+                        fields.proofInput?.required &&
+                        !fields.proofInput.files.length
+                    ) {
+                        event.preventDefault();
+                        fields.proofInput.focus();
+                        fields.proofInput.reportValidity();
+
+                        return;
+                    }
+
+                    fields.submit.disabled = true;
+                    fields.submit.innerHTML =
+                        '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Saving...';
+                });
+
+                modalElement.addEventListener('hidden.bs.modal', () => {
+                    form.reset();
+                    form.removeAttribute('action');
+                    fields.actionType.value = '';
+
+                    if (fields.proofInput) {
+                        fields.proofInput.required = false;
+                        fields.proofInput.disabled = true;
+                    }
+
+                    fields.proofContainer?.classList.add('d-none');
+                    fields.submit.disabled = false;
+                    fields.submit.textContent = 'Confirm';
+                    fields.submit.className = 'btn btn-primary';
+                    clearPreview();
+                });
+
+                const searchInput = document.getElementById('liveSearch');
+
+                searchInput?.addEventListener('input', function() {
+                    clearTimeout(searchTimer);
+
+                    searchTimer = window.setTimeout(() => {
+                        const url = new URL(window.location.href);
+                        const searchValue = this.value.trim();
+
+                        if (searchValue) {
+                            url.searchParams.set('search', searchValue);
+                        } else {
+                            url.searchParams.delete('search');
+                        }
+
+                        url.searchParams.delete('page');
+
+                        loadTable(url.toString()).catch(() => {
+                            window.location.href = url.toString();
+                        });
+                    }, 300);
+                });
+
+                initializeTooltips();
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener(
+                    'DOMContentLoaded',
+                    bootEmployeeLeavePage, {
+                        once: true
+                    }
+                );
+            } else {
+                bootEmployeeLeavePage();
+            }
+        })();
     </script>
 @endpush
 
@@ -514,6 +754,17 @@
             border: 1px solid var(--falcon-gray-200, #edf2f9);
             border-radius: .75rem;
             padding: 1rem;
+        }
+
+        .proof-preview-image {
+            display: block;
+            width: 100%;
+            max-height: 240px;
+            object-fit: contain;
+            border: 1px solid var(--falcon-gray-300, #d8e2ef);
+            border-radius: .75rem;
+            background: var(--falcon-gray-100, #f9fafd);
+            padding: .5rem;
         }
 
         .employee-leave-page .pagination {
