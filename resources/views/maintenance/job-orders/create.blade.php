@@ -179,9 +179,7 @@
                                 </label>
 
                                 <select name="bus_id" id="bus_id"
-                                    class="form-select js-choice @error('bus_id') is-invalid @enderror"
-                                    data-options='{"searchEnabled":true,"shouldSort":false,"placeholder":true,"placeholderValue":"Search bus no., plate no., company, or garage"}'
-                                    required>
+                                    class="form-select js-strict-bus-choice @error('bus_id') is-invalid @enderror" required>
                                     <option value="">Search and choose bus record</option>
 
                                     @foreach ($buses as $bus)
@@ -192,8 +190,10 @@
                                             data-operational-badge="{{ $bus->operational_status_badge_class }}"
                                             data-last-odometer="{{ $bus->latestJobOrderMaintenanceWithOdometer?->odometer_reading }}"
                                             @selected((string) old('bus_id') === (string) $bus->id)>
-                                            {{ $bus->bus_no }} — {{ $bus->plate_no ?? 'No Plate' }} —
-                                            {{ $bus->company ?? 'No Company' }} — {{ $bus->garage ?? 'No Garage' }}
+                                            {{ $bus->bus_no }}
+                                            — {{ $bus->plate_no ?: 'No Plate' }}
+                                            — {{ $bus->company ?: 'No Company' }}
+                                            — {{ $bus->garage ?: 'No Garage' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -445,32 +445,64 @@
             const selectedBusNo = document.getElementById('selected-bus-no');
             const selectedPlateNo = document.getElementById('selected-plate-no');
             const selectedGarage = document.getElementById('selected-garage');
-            const selectedOperationalStatus = document.getElementById('selected-operational-status');
+            const selectedOperationalStatus = document.getElementById(
+                'selected-operational-status'
+            );
 
-            const odometerComparison = document.getElementById('odometer-comparison');
+            const odometerComparison = document.getElementById(
+                'odometer-comparison'
+            );
 
             const previewBusNo = document.getElementById('preview-bus-no');
             const previewPlateNo = document.getElementById('preview-plate-no');
             const previewFullName = document.getElementById('preview-full-name');
             const previewOdometer = document.getElementById('preview-odometer');
-            const previewDescription = document.getElementById('preview-description');
-            const previewJobOrderNo = document.getElementById('preview-job-order-no');
-            const previewMechanics = document.getElementById('preview-mechanics');
-            const previewRepairTypes = document.getElementById('preview-repair-types');
+            const previewDescription = document.getElementById(
+                'preview-description'
+            );
+            const previewJobOrderNo = document.getElementById(
+                'preview-job-order-no'
+            );
+            const previewMechanics = document.getElementById(
+                'preview-mechanics'
+            );
+            const previewRepairTypes = document.getElementById(
+                'preview-repair-types'
+            );
 
-            if (window.Choices && busSelect && !busSelect.classList.contains('choices__input')) {
+            if (
+                window.Choices &&
+                busSelect &&
+                busSelect.dataset.choicesInitialized !== 'true'
+            ) {
                 new Choices(busSelect, {
+                    allowHTML: false,
                     searchEnabled: true,
+                    searchChoices: true,
                     shouldSort: false,
+                    searchFloor: 1,
+                    searchResultLimit: 100,
+                    searchFields: ['label'],
                     itemSelectText: '',
                     placeholder: true,
-                    placeholderValue: 'Search bus no., plate no., company, or garage',
-                    searchPlaceholderValue: 'Type bus no., plate no., company, or garage'
+                    placeholderValue: 'Search and choose bus record',
+                    searchPlaceholderValue: 'Search exact bus no., plate no., company, or garage',
+                    noResultsText: 'No matching bus record found',
+                    noChoicesText: 'No bus records available',
+                    fuseOptions: {
+                        threshold: 0,
+                        ignoreLocation: true,
+                        distance: 1000,
+                        minMatchCharLength: 1,
+                    },
                 });
+
+                busSelect.dataset.choicesInitialized = 'true';
             }
 
             function updateJobOrderNoPreview() {
-                previewJobOrderNo.textContent = jobOrderNoInput.value.trim() || 'Auto-generated';
+                previewJobOrderNo.textContent =
+                    jobOrderNoInput.value.trim() || 'Auto-generated';
             }
 
             function numberFormat(value) {
@@ -489,6 +521,7 @@
                     previewBusNo.textContent = 'Not selected';
                     previewPlateNo.textContent = '—';
                     updateOdometerComparison();
+
                     return;
                 }
 
@@ -496,15 +529,20 @@
                 const plateNo = selected.dataset.plateNo || 'No Plate';
                 const company = selected.dataset.company || 'No Company';
                 const garage = selected.dataset.garage || 'No Garage';
-                const operationalStatus = selected.dataset.operationalStatus || 'Unknown';
-                const operationalBadge = selected.dataset.operationalBadge ||
+                const operationalStatus =
+                    selected.dataset.operationalStatus || 'Unknown';
+                const operationalBadge =
+                    selected.dataset.operationalBadge ||
                     'badge-subtle-secondary text-secondary';
 
                 selectedBusNo.textContent = busNo;
                 selectedPlateNo.textContent = plateNo;
                 selectedGarage.textContent = garage;
+
                 selectedOperationalStatus.innerHTML =
-                    `<span class="badge rounded-pill ${operationalBadge}">${operationalStatus}</span>`;
+                    `<span class="badge rounded-pill ${operationalBadge}">` +
+                    `${operationalStatus}` +
+                    `</span>`;
 
                 selectedBusCard.classList.remove('d-none');
 
@@ -515,11 +553,13 @@
             }
 
             function updateRequesterPreview() {
-                previewFullName.textContent = fullNameInput.value.trim() || 'Not specified';
+                previewFullName.textContent =
+                    fullNameInput.value.trim() || 'Not specified';
             }
 
             function updateDescriptionPreview() {
-                previewDescription.textContent = descriptionInput.value.trim() ||
+                previewDescription.textContent =
+                    descriptionInput.value.trim() ||
                     'No work description encoded yet.';
             }
 
@@ -527,10 +567,16 @@
                 const selected = selectedOption();
 
                 if (!selected || !selected.value) {
-                    odometerComparison.className = 'alert alert-subtle-secondary mt-3 mb-0';
-                    odometerComparison.textContent = 'Select a bus to preview odometer comparison.';
-                    previewOdometer.textContent = odometerInput.value ? `${numberFormat(odometerInput.value)} km` :
+                    odometerComparison.className =
+                        'alert alert-subtle-secondary mt-3 mb-0';
+
+                    odometerComparison.textContent =
+                        'Select a bus to preview odometer comparison.';
+
+                    previewOdometer.textContent = odometerInput.value ?
+                        `${numberFormat(odometerInput.value)} km` :
                         'Not encoded';
+
                     return;
                 }
 
@@ -547,63 +593,115 @@
                     'Not encoded';
 
                 if (currentOdometer === null) {
-                    odometerComparison.className = 'alert alert-subtle-info mt-3 mb-0';
+                    odometerComparison.className =
+                        'alert alert-subtle-info mt-3 mb-0';
+
                     odometerComparison.textContent =
-                        'No current odometer reading encoded. The job order can still be saved.';
+                        'No current odometer reading encoded. ' +
+                        'The job order can still be saved.';
+
                     return;
                 }
 
                 if (lastOdometer === null) {
-                    odometerComparison.className = 'alert alert-subtle-primary mt-3 mb-0';
+                    odometerComparison.className =
+                        'alert alert-subtle-primary mt-3 mb-0';
+
                     odometerComparison.textContent =
-                        'No previous maintenance odometer reading found. This will become the first reading for this bus.';
+                        'No previous maintenance odometer reading found. ' +
+                        'This will become the first reading for this bus.';
+
                     return;
                 }
 
                 const difference = currentOdometer - lastOdometer;
 
                 if (difference < 0) {
-                    odometerComparison.className = 'alert alert-subtle-danger mt-3 mb-0';
+                    odometerComparison.className =
+                        'alert alert-subtle-danger mt-3 mb-0';
+
                     odometerComparison.textContent =
-                        `Warning: current reading is lower than the last reading by ${numberFormat(Math.abs(difference))} km.`;
+                        `Warning: current reading is lower than the last ` +
+                        `reading by ${numberFormat(Math.abs(difference))} km.`;
+
                     return;
                 }
 
-                odometerComparison.className = 'alert alert-subtle-success mt-3 mb-0';
+                odometerComparison.className =
+                    'alert alert-subtle-success mt-3 mb-0';
+
                 odometerComparison.textContent =
-                    `Current reading is ${numberFormat(difference)} km higher than the last maintenance reading.`;
+                    `Current reading is ${numberFormat(difference)} km ` +
+                    `higher than the last maintenance reading.`;
             }
 
             function updateRepairDetailsPreview() {
-                const mechanicNames = Array.from(document.querySelectorAll('input[name="mechanic_names[]"]'))
+                const mechanicNames = Array.from(
+                        document.querySelectorAll(
+                            'input[name="mechanic_names[]"]'
+                        )
+                    )
                     .map(input => input.value.trim())
                     .filter(Boolean);
 
-                const repairTypes = Array.from(document.querySelectorAll('input[name="repair_types[]"]:checked'))
+                const repairTypes = Array.from(
+                        document.querySelectorAll(
+                            'input[name="repair_types[]"]:checked'
+                        )
+                    )
                     .map(input => input.closest('label')?.innerText.trim())
                     .filter(Boolean);
 
-                previewMechanics.textContent = mechanicNames.length ? mechanicNames.join(', ') : 'Not assigned';
-                previewRepairTypes.textContent = repairTypes.length ? repairTypes.join(', ') : 'Not selected';
+                previewMechanics.textContent = mechanicNames.length ?
+                    mechanicNames.join(', ') :
+                    'Not assigned';
+
+                previewRepairTypes.textContent = repairTypes.length ?
+                    repairTypes.join(', ') :
+                    'Not selected';
             }
 
             document.addEventListener('input', function(event) {
-                if (event.target.matches('input[name="mechanic_names[]"]')) {
+                if (
+                    event.target.matches(
+                        'input[name="mechanic_names[]"]'
+                    )
+                ) {
                     updateRepairDetailsPreview();
                 }
             });
 
             document.addEventListener('change', function(event) {
-                if (event.target.matches('input[name="repair_types[]"]')) {
+                if (
+                    event.target.matches(
+                        'input[name="repair_types[]"]'
+                    )
+                ) {
                     updateRepairDetailsPreview();
                 }
             });
 
-            jobOrderNoInput.addEventListener('input', updateJobOrderNoPreview);
+            jobOrderNoInput.addEventListener(
+                'input',
+                updateJobOrderNoPreview
+            );
+
             busSelect.addEventListener('change', updateBusSection);
-            odometerInput.addEventListener('input', updateOdometerComparison);
-            fullNameInput.addEventListener('input', updateRequesterPreview);
-            descriptionInput.addEventListener('input', updateDescriptionPreview);
+
+            odometerInput.addEventListener(
+                'input',
+                updateOdometerComparison
+            );
+
+            fullNameInput.addEventListener(
+                'input',
+                updateRequesterPreview
+            );
+
+            descriptionInput.addEventListener(
+                'input',
+                updateDescriptionPreview
+            );
 
             updateJobOrderNoPreview();
             updateBusSection();
