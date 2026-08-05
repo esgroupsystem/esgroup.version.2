@@ -61,15 +61,35 @@
                                             </label>
                                         </div>
 
-                                        <select class="form-select js-choice" name="body_number" id="busnumber" size="1"
-                                            data-options='{"searchEnabled": true, "placeholder": true,"removeItemButton": true }' required>
+                                        <select class="form-select js-choice @error('bus_detail_id') is-invalid @enderror"
+                                            name="bus_detail_id" id="bus_detail_id"
+                                            data-options='{
+                                                    "searchEnabled": true,
+                                                    "placeholder": true,
+                                                    "removeItemButton": true,
+                                                    "itemSelectText": ""
+                                                }'
+                                            required>
                                             <option value="">Select Bus...</option>
+
                                             @foreach ($buses as $bus)
-                                                <option value="{{ $bus->body_number }}">
-                                                    {{ $bus->name }} — {{ $bus->body_number }}
+                                                <option value="{{ $bus->id }}" @selected((string) old('bus_detail_id') === (string) $bus->id)>
+                                                    {{ $bus->body_number ?: 'No Body Number' }}
+                                                    —
+                                                    {{ $bus->plate_number ?: 'No Plate Number' }}
+                                                    —
+                                                    {{ $bus->name ?: 'No Bus Name' }}
+                                                    —
+                                                    {{ $bus->garage ?: 'No Garage' }}
                                                 </option>
                                             @endforeach
                                         </select>
+
+                                        @error('bus_detail_id')
+                                            <div class="invalid-feedback">
+                                                {{ $message }}
+                                            </div>
+                                        @enderror
                                     </div>
 
                                     <div class="col-sm-4 mb-3">
@@ -84,17 +104,17 @@
                                                 class="text-danger">(required)</span></label>
                                         <select name="job_type" class="form-select" required>
                                             <option value="ACCIDENT">ACCIDENT</option>
-                                                <option value="COLLECTING FARE">COLLECTING FARE</option>
-                                                <option value="CUTTING FARE">CUTTING FARE</option>
-                                                <option value="RE- ISSUEING TICKET">RE- ISSUEING TICKET</option>
-                                                <option value="TAMPERING TICKET">TAMPERING TICKET</option>
-                                                <option value="UNREGISTERED TICKET">UNREGISTERED TICKET</option>
-                                                <option value="DELAYING ISSUANCE OF TICKET">DELAYING ISSUANCE OF TICKET</option>
-                                                <option value="ROLLING TICKETS">ROLLING TICKETS</option>
-                                                <option value="REMOVING HEADSTAB OF TICKET">REMOVING HEADSTAB OF TICKET</option>
-                                                <option value="USING STUB TICKET">USING STAB TICKET</option>
-                                                <option value="WRONG CLOSING / OPEN">WRONG CLOSING / OPEN</option>
-                                                <option value="OTHERS">OTHERS</option>
+                                            <option value="COLLECTING FARE">COLLECTING FARE</option>
+                                            <option value="CUTTING FARE">CUTTING FARE</option>
+                                            <option value="RE- ISSUEING TICKET">RE- ISSUEING TICKET</option>
+                                            <option value="TAMPERING TICKET">TAMPERING TICKET</option>
+                                            <option value="UNREGISTERED TICKET">UNREGISTERED TICKET</option>
+                                            <option value="DELAYING ISSUANCE OF TICKET">DELAYING ISSUANCE OF TICKET</option>
+                                            <option value="ROLLING TICKETS">ROLLING TICKETS</option>
+                                            <option value="REMOVING HEADSTAB OF TICKET">REMOVING HEADSTAB OF TICKET</option>
+                                            <option value="USING STUB TICKET">USING STAB TICKET</option>
+                                            <option value="WRONG CLOSING / OPEN">WRONG CLOSING / OPEN</option>
+                                            <option value="OTHERS">OTHERS</option>
                                         </select>
                                     </div>
 

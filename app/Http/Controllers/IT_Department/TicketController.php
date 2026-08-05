@@ -6,6 +6,7 @@ use App\Events\JobOrderCreated;
 use App\Exports\JobOrdersExport;
 use App\Helpers\Notifier;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ITDepartment\StoreJobOrderRequest;
 use App\Mail\JobOrderCreatedMail;
 use App\Models\BusDetail;
 use App\Models\JobOrder;
@@ -20,7 +21,6 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 
 class TicketController extends Controller
@@ -214,9 +214,22 @@ class TicketController extends Controller
 
     public function createjobordersIndex()
     {
-        $buses = BusDetail::orderBy('body_number')->get();
+        $buses = BusDetail::query()
+            ->select([
+                'id',
+                'garage',
+                'name',
+                'body_number',
+                'plate_number',
+            ])
+            ->orderBy('body_number')
+            ->orderBy('plate_number')
+            ->get();
 
-        return view('it_department.create_joborder', compact('buses'));
+        return view(
+            'it_department.create_joborder',
+            compact('buses')
+        );
     }
 
     public function view($id)
@@ -247,55 +260,55 @@ class TicketController extends Controller
         return view('it_department.view_joborder', compact('job', 'logs'));
     }
 
-    public function storeJoborders(Request $request)
+    public function storeJoborders(StoreJobOrderRequest $request)
     {
+        $validated = $request->validated();
+        $user = $request->user();
+
         try {
-            $validated = $request->validate([
-                'garage' => ['nullable'],
-                'bus_name' => ['nullable'],
-                'body_number' => ['required', 'string', 'max:255'],
-                'plate_number' => ['nullable', 'string', 'max:255'],
-                'job_name' => ['nullable', 'string', 'max:255'],
-                'job_type' => ['required', 'string', 'max:255'],
-                'job_datestart' => ['required', 'string', 'max:255'],
-                'job_time_start' => ['required', 'string', 'max:255'],
-                'job_time_end' => ['required', 'string', 'max:255'],
-                'job_sitNumber' => ['nullable', 'string', 'max:20'],
-                'job_remarks' => ['nullable', 'string'],
-                'job_status' => ['nullable'],
-                'job_assign_person' => ['nullable', 'string', 'max:255'],
-                'direction' => ['nullable', 'string', 'max:255'],
-                'driver_name' => ['nullable', 'string', 'max:255'],
-                'conductor_name' => ['nullable', 'string', 'max:255'],
-                'files.*' => ['required', 'file', 'max:1024000'],
-            ]);
-
-            $user = Auth::user();
-
             return DB::transaction(function () use ($validated, $request, $user) {
-                $bus = BusDetail::where('body_number', $validated['body_number'])->first();
+                /*
+                 * Lock the selected parent row until the job order insert finishes.
+                 * This prevents another request from deleting the bus between
+                 * validation and insertion.
+                 */
+                $bus = BusDetail::query()
+                    ->lockForUpdate()
+                    ->find($validated['bus_detail_id']);
 
                 if (! $bus) {
-                    flash('Selected bus does not exist.')->error();
-
-                    return back()->withInput();
+                    return back()
+                        ->withErrors([
+                            'bus_detail_id' => 'The selected bus no longer exists.',
+                        ])
+                        ->withInput();
                 }
+
+                $incidentDate = Carbon::createFromFormat(
+                    'd/m/y',
+                    $validated['job_datestart']
+                )->format('Y-m-d');
 
                 $job = JobOrder::create([
                     'bus_detail_id' => $bus->id,
-                    'created_by' => optional($user)->id,
+                    'created_by' => $user->id,
+
                     'job_name' => $validated['job_name'] ?? 'Job Order',
                     'job_type' => $validated['job_type'],
-                    'job_datestart' => $validated['job_datestart'],
+                    'job_datestart' => $incidentDate,
                     'job_time_start' => $validated['job_time_start'],
                     'job_time_end' => $validated['job_time_end'],
+
                     'job_sitNumber' => $validated['job_sitNumber'] ?? null,
                     'job_remarks' => $validated['job_remarks'] ?? null,
+
                     'approval_status' => 'Approval',
                     'job_status' => 'Approval',
+
                     'job_assign_person' => null,
                     'job_date_filled' => now(),
-                    'job_creator' => optional($user)->full_name,
+                    'job_creator' => $user->full_name ?? $user->username,
+
                     'driver_name' => $validated['driver_name'] ?? null,
                     'conductor_name' => $validated['conductor_name'] ?? null,
                     'direction' => $validated['direction'] ?? null,
@@ -306,10 +319,18 @@ class TicketController extends Controller
                         continue;
                     }
 
-                    $stored = $upload->store("joborders/{$job->id}", 'public');
+                    $storedPath = $upload->store(
+                        "joborders/{$job->id}",
+                        'public'
+                    );
 
-                    if (! $stored || ! Storage::disk('public')->exists($stored)) {
-                        continue;
+                    if (
+                        ! $storedPath
+                        || ! Storage::disk('public')->exists($storedPath)
+                    ) {
+                        throw new \RuntimeException(
+                            "Failed to store uploaded file: {$upload->getClientOriginalName()}"
+                        );
                     }
 
                     JobOrderFile::create([
@@ -317,7 +338,7 @@ class TicketController extends Controller
                         'file_name' => $upload->getClientOriginalName(),
                         'file_remarks' => null,
                         'file_notes' => null,
-                        'file_path' => $stored,
+                        'file_path' => $storedPath,
                     ]);
                 }
 
@@ -327,9 +348,11 @@ class TicketController extends Controller
                     'meta' => [
                         'job_type' => $job->job_type,
                         'status' => $job->job_status,
-                        'bus' => $bus->body_number,
+                        'bus_detail_id' => $bus->id,
+                        'body_number' => $bus->body_number,
+                        'plate_number' => $bus->plate_number,
                     ],
-                    'user_id' => optional($user)->id,
+                    'user_id' => $user->id,
                 ]);
 
                 $job->load('bus');
@@ -341,33 +364,41 @@ class TicketController extends Controller
                     new JobOrderCreatedMail($job)
                 );
 
+                Log::info('Job order created successfully', [
+                    'job_order_id' => $job->id,
+                    'bus_detail_id' => $bus->id,
+                    'body_number' => $bus->body_number,
+                    'created_by' => $user->id,
+                ]);
+
                 flash("Job Order #{$job->id} created successfully!")->success();
 
                 return redirect()->route('tickets.joborder.index');
-            });
-        } catch (ValidationException $e) {
-            Log::warning('Job Order Validation Failed', [
-                'route' => optional(request()->route())->getName(),
-                'errors' => $e->validator->errors()->toArray(),
-                'input' => request()->except(['files']),
-            ]);
-
-            flash('Validation failed. Please check the fields.')->error();
-
-            return back()->withErrors($e->validator)->withInput();
-        } catch (\Throwable $e) {
+            }, 3);
+        } catch (\Throwable $exception) {
             Log::error('Job Order Creation Error', [
-                'route' => optional(request()->route())->getName(),
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'input' => request()->except(['files']),
+                'route' => $request->route()?->getName(),
+                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'bus_detail_id' => $validated['bus_detail_id'] ?? null,
+                'user_id' => $user?->id,
+                'input' => $request->except([
+                    '_token',
+                    'files',
+                ]),
             ]);
 
             flash('Something went wrong while creating the job order.')->error();
 
             return back()
-                ->with('debug', app()->environment('local') ? $e->getMessage() : null)
+                ->with(
+                    'debug',
+                    app()->environment('local')
+                        ? $exception->getMessage()
+                        : null
+                )
                 ->withInput();
         }
     }
