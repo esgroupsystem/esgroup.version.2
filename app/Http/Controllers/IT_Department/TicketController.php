@@ -266,22 +266,20 @@ class TicketController extends Controller
         $user = $request->user();
 
         try {
-            return DB::transaction(function () use ($validated, $request, $user) {
-                /*
-                 * Lock the selected parent row until the job order insert finishes.
-                 * This prevents another request from deleting the bus between
-                 * validation and insertion.
-                 */
+            $job = DB::transaction(function () use (
+                $validated,
+                $request,
+                $user
+            ): JobOrder {
                 $bus = BusDetail::query()
+                    ->whereKey($validated['bus_detail_id'])
                     ->lockForUpdate()
-                    ->find($validated['bus_detail_id']);
+                    ->first();
 
                 if (! $bus) {
-                    return back()
-                        ->withErrors([
-                            'bus_detail_id' => 'The selected bus no longer exists.',
-                        ])
-                        ->withInput();
+                    throw new \RuntimeException(
+                        'The selected bus no longer exists.'
+                    );
                 }
 
                 $incidentDate = Carbon::createFromFormat(
@@ -307,7 +305,10 @@ class TicketController extends Controller
 
                     'job_assign_person' => null,
                     'job_date_filled' => now(),
-                    'job_creator' => $user->full_name ?? $user->username,
+                    'job_creator' => $user->full_name
+                        ?? $user->name
+                        ?? $user->username
+                        ?? 'System',
 
                     'driver_name' => $validated['driver_name'] ?? null,
                     'conductor_name' => $validated['conductor_name'] ?? null,
@@ -329,7 +330,7 @@ class TicketController extends Controller
                         || ! Storage::disk('public')->exists($storedPath)
                     ) {
                         throw new \RuntimeException(
-                            "Failed to store uploaded file: {$upload->getClientOriginalName()}"
+                            "Failed to save attachment: {$upload->getClientOriginalName()}"
                         );
                     }
 
@@ -355,27 +356,15 @@ class TicketController extends Controller
                     'user_id' => $user->id,
                 ]);
 
-                $job->load('bus');
-
-                event(new JobOrderCreated($job));
-
-                Notifier::notifyRoles(
-                    ['IT Head', 'IT Officer'],
-                    new JobOrderCreatedMail($job)
-                );
-
-                Log::info('Job order created successfully', [
+                Log::info('Job order database transaction completed.', [
                     'job_order_id' => $job->id,
                     'bus_detail_id' => $bus->id,
-                    'body_number' => $bus->body_number,
                     'created_by' => $user->id,
                 ]);
 
-                flash("Job Order #{$job->id} created successfully!")->success();
-
-                return redirect()->route('tickets.joborder.index');
+                return $job->load('bus');
             }, 3);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             Log::error('Job Order Creation Error', [
                 'route' => $request->route()?->getName(),
                 'message' => $exception->getMessage(),
@@ -390,17 +379,57 @@ class TicketController extends Controller
                 ]),
             ]);
 
-            flash('Something went wrong while creating the job order.')->error();
+            flash('Something went wrong while creating the job order.')
+                ->error();
 
             return back()
-                ->with(
-                    'debug',
-                    app()->environment('local')
+                ->withInput()
+                ->withErrors([
+                    'job_order' => app()->environment('local')
                         ? $exception->getMessage()
-                        : null
-                )
-                ->withInput();
+                        : 'Unable to create the job order.',
+                ]);
         }
+
+        /*
+         * These actions occur only after the job order transaction
+         * has committed successfully.
+         */
+
+        try {
+            event(new JobOrderCreated($job));
+        } catch (Throwable $exception) {
+            Log::error('Job-order database notification failed.', [
+                'job_order_id' => $job->id,
+                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+            ]);
+        }
+
+        try {
+            Notifier::notifyRoles(
+                [
+                    'IT Head',
+                    'IT Officer',
+                ],
+                new JobOrderCreatedMail($job)
+            );
+        } catch (Throwable $exception) {
+            /*
+             * Email queue failure must not invalidate or delete
+             * an already-created job order.
+             */
+            Log::error('Job-order email queueing failed.', [
+                'job_order_id' => $job->id,
+                'message' => $exception->getMessage(),
+                'exception' => $exception::class,
+            ]);
+        }
+
+        flash("Job Order #{$job->id} created successfully!")
+            ->success();
+
+        return redirect()->route('tickets.joborder.index');
     }
 
     public function destroy($id)
