@@ -35,49 +35,37 @@
     };
 
     try {
-        $jobDateInput = $job->job_datestart
-            ? Carbon::parse($job->job_datestart)->format('Y-m-d')
-            : '';
+        $jobDateInput = $job->job_datestart ? Carbon::parse($job->job_datestart)->format('Y-m-d') : '';
     } catch (\Throwable $exception) {
         $jobDateInput = '';
     }
 
     try {
-        $jobDateDisplay = $job->job_datestart
-            ? Carbon::parse($job->job_datestart)->format('F d, Y')
-            : 'N/A';
+        $jobDateDisplay = $job->job_datestart ? Carbon::parse($job->job_datestart)->format('F d, Y') : 'N/A';
     } catch (\Throwable $exception) {
         $jobDateDisplay = $job->job_datestart ?: 'N/A';
     }
 
     try {
-        $startTimeInput = $job->job_time_start
-            ? Carbon::parse($job->job_time_start)->format('H:i')
-            : '';
+        $startTimeInput = $job->job_time_start ? Carbon::parse($job->job_time_start)->format('H:i') : '';
     } catch (\Throwable $exception) {
         $startTimeInput = '';
     }
 
     try {
-        $endTimeInput = $job->job_time_end
-            ? Carbon::parse($job->job_time_end)->format('H:i')
-            : '';
+        $endTimeInput = $job->job_time_end ? Carbon::parse($job->job_time_end)->format('H:i') : '';
     } catch (\Throwable $exception) {
         $endTimeInput = '';
     }
 
     try {
-        $startTimeDisplay = $job->job_time_start
-            ? Carbon::parse($job->job_time_start)->format('h:i A')
-            : 'N/A';
+        $startTimeDisplay = $job->job_time_start ? Carbon::parse($job->job_time_start)->format('h:i A') : 'N/A';
     } catch (\Throwable $exception) {
         $startTimeDisplay = $job->job_time_start ?: 'N/A';
     }
 
     try {
-        $endTimeDisplay = $job->job_time_end
-            ? Carbon::parse($job->job_time_end)->format('h:i A')
-            : 'N/A';
+        $endTimeDisplay = $job->job_time_end ? Carbon::parse($job->job_time_end)->format('h:i A') : 'N/A';
     } catch (\Throwable $exception) {
         $endTimeDisplay = $job->job_time_end ?: 'N/A';
     }
@@ -195,32 +183,21 @@
 
                         <div class="col-lg-auto">
                             <div class="d-flex flex-wrap justify-content-lg-end gap-2">
-                                <button
-                                    type="button"
-                                    class="btn btn-falcon-default btn-sm"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#addNoteModal"
-                                >
+                                <button type="button" class="btn btn-falcon-default btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#addNoteModal">
                                     <span class="fas fa-plus me-1"></span>
                                     Add Note
                                 </button>
 
-                                <a
-                                    href="{{ route('tickets.joborder.print', $job->id) }}"
-                                    target="_blank"
-                                    rel="noopener"
-                                    class="btn btn-falcon-default btn-sm"
-                                >
+                                <a href="{{ route('tickets.joborder.print', $job->id) }}" target="_blank" rel="noopener"
+                                    class="btn btn-falcon-default btn-sm">
                                     <span class="fas fa-print me-1"></span>
                                     Print
                                 </a>
 
                                 @if ($job->job_status === 'Pending')
-                                    <form
-                                        action="{{ route('tickets.joborder.accept', $job->id) }}"
-                                        method="POST"
-                                        class="d-inline"
-                                    >
+                                    <form action="{{ route('tickets.joborder.accept', $job->id) }}" method="POST"
+                                        class="d-inline">
                                         @csrf
 
                                         <button type="submit" class="btn btn-success btn-sm">
@@ -229,11 +206,8 @@
                                         </button>
                                     </form>
                                 @elseif ($job->job_status === 'In Progress')
-                                    <form
-                                        action="{{ route('tickets.joborder.done', $job->id) }}"
-                                        method="POST"
-                                        class="d-inline"
-                                    >
+                                    <form action="{{ route('tickets.joborder.done', $job->id) }}" method="POST"
+                                        class="d-inline">
                                         @csrf
 
                                         <button type="submit" class="btn btn-primary btn-sm">
@@ -243,39 +217,10 @@
                                     </form>
                                 @endif
 
-                                <div class="dropdown">
-                                    <button
-                                        type="button"
-                                        class="btn btn-falcon-default btn-sm dropdown-toggle dropdown-caret-none"
-                                        data-bs-toggle="dropdown"
-                                        aria-expanded="false"
-                                        aria-label="More options"
-                                    >
-                                        <span class="fas fa-ellipsis-h"></span>
-                                    </button>
-
-                                    <div class="dropdown-menu dropdown-menu-end py-0">
-                                        <div class="py-2">
-                                            <a
-                                                class="dropdown-item"
-                                                href="{{ route('tickets.joborder.index') }}"
-                                            >
-                                                <span class="fas fa-arrow-left me-2"></span>
-                                                Back to Job Orders
-                                            </a>
-
-                                            <a
-                                                class="dropdown-item"
-                                                href="{{ route('tickets.joborder.print', $job->id) }}"
-                                                target="_blank"
-                                                rel="noopener"
-                                            >
-                                                <span class="fas fa-print me-2"></span>
-                                                Print Job Order
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
+                                <a href="{{ route('tickets.joborder.index') }}" class="btn btn-falcon-default btn-sm">
+                                    <span class="fas fa-arrow-left me-2"></span>
+                                    Back to Job Orders
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -389,11 +334,8 @@
 
                     {{-- Details --}}
                     <div class="card border-0 shadow-sm mb-3">
-                        <form
-                            method="POST"
-                            action="{{ route('tickets.joborder.update', $job->id) }}"
-                            id="jobOrderDetailsForm"
-                        >
+                        <form method="POST" action="{{ route('tickets.joborder.update', $job->id) }}"
+                            id="jobOrderDetailsForm">
                             @csrf
                             @method('PUT')
 
@@ -411,30 +353,19 @@
                                     </div>
 
                                     <div class="d-flex gap-2" id="detailActions">
-                                        <button
-                                            type="button"
-                                            class="btn btn-falcon-default btn-sm"
-                                            id="editBtn"
-                                        >
+                                        <button type="button" class="btn btn-falcon-default btn-sm" id="editBtn">
                                             <span class="fas fa-pencil-alt me-1"></span>
                                             Update Details
                                         </button>
 
-                                        <button
-                                            type="submit"
-                                            class="btn btn-success btn-sm d-none"
-                                            id="saveBtn"
-                                            disabled
-                                        >
+                                        <button type="submit" class="btn btn-success btn-sm d-none" id="saveBtn"
+                                            disabled>
                                             <span class="fas fa-save me-1"></span>
                                             Save Changes
                                         </button>
 
-                                        <button
-                                            type="button"
-                                            class="btn btn-falcon-default btn-sm d-none"
-                                            id="cancelBtn"
-                                        >
+                                        <button type="button" class="btn btn-falcon-default btn-sm d-none"
+                                            id="cancelBtn">
                                             <span class="fas fa-times me-1"></span>
                                             Cancel
                                         </button>
@@ -468,28 +399,10 @@
                                                         {{ $job->job_type ?: 'N/A' }}
                                                     </span>
 
-                                                    <select
-                                                        name="job_type"
-                                                        class="form-select editMode d-none"
-                                                    >
-                                                        @foreach ([
-                                                            'ACCIDENT',
-                                                            'COLLECTING FARE',
-                                                            'CUTTING FARE',
-                                                            'RE- ISSUEING TICKET',
-                                                            'TAMPERING TICKET',
-                                                            'UNREGISTERED TICKET',
-                                                            'DELAYING ISSUANCE OF TICKET',
-                                                            'ROLLING TICKETS',
-                                                            'REMOVING HEADSTAB OF TICKET',
-                                                            'USING STUB TICKET',
-                                                            'WRONG CLOSING / OPEN',
-                                                            'OTHERS',
-                                                        ] as $jobType)
-                                                            <option
-                                                                value="{{ $jobType }}"
-                                                                @selected(old('job_type', $job->job_type) === $jobType)
-                                                            >
+                                                    <select name="job_type" class="form-select editMode d-none">
+                                                        @foreach (['ACCIDENT', 'COLLECTING FARE', 'CUTTING FARE', 'RE- ISSUEING TICKET', 'TAMPERING TICKET', 'UNREGISTERED TICKET', 'DELAYING ISSUANCE OF TICKET', 'ROLLING TICKETS', 'REMOVING HEADSTAB OF TICKET', 'USING STUB TICKET', 'WRONG CLOSING / OPEN', 'OTHERS'] as $jobType)
+                                                            <option value="{{ $jobType }}"
+                                                                @selected(old('job_type', $job->job_type) === $jobType)>
                                                                 {{ $jobType }}
                                                             </option>
                                                         @endforeach
@@ -505,12 +418,9 @@
                                                         {{ $jobDateDisplay }}
                                                     </span>
 
-                                                    <input
-                                                        type="date"
-                                                        name="job_datestart"
+                                                    <input type="date" name="job_datestart"
                                                         class="form-control editMode d-none"
-                                                        value="{{ old('job_datestart', $jobDateInput) }}"
-                                                    >
+                                                        value="{{ old('job_datestart', $jobDateInput) }}">
                                                 </div>
                                             </div>
 
@@ -524,37 +434,23 @@
 
                                                     <div class="row g-2 editMode d-none">
                                                         <div class="col-sm-6">
-                                                            <label
-                                                                for="job_time_start"
-                                                                class="form-label fs-10 text-600"
-                                                            >
+                                                            <label for="job_time_start" class="form-label fs-10 text-600">
                                                                 Start time
                                                             </label>
 
-                                                            <input
-                                                                type="time"
-                                                                id="job_time_start"
-                                                                name="job_time_start"
-                                                                class="form-control"
-                                                                value="{{ old('job_time_start', $startTimeInput) }}"
-                                                            >
+                                                            <input type="time" id="job_time_start"
+                                                                name="job_time_start" class="form-control"
+                                                                value="{{ old('job_time_start', $startTimeInput) }}">
                                                         </div>
 
                                                         <div class="col-sm-6">
-                                                            <label
-                                                                for="job_time_end"
-                                                                class="form-label fs-10 text-600"
-                                                            >
+                                                            <label for="job_time_end" class="form-label fs-10 text-600">
                                                                 End time
                                                             </label>
 
-                                                            <input
-                                                                type="time"
-                                                                id="job_time_end"
-                                                                name="job_time_end"
+                                                            <input type="time" id="job_time_end" name="job_time_end"
                                                                 class="form-control"
-                                                                value="{{ old('job_time_end', $endTimeInput) }}"
-                                                            >
+                                                                value="{{ old('job_time_end', $endTimeInput) }}">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -568,21 +464,12 @@
                                                         {{ $job->direction ?: 'N/A' }}
                                                     </span>
 
-                                                    <select
-                                                        name="direction"
-                                                        class="form-select editMode d-none"
-                                                    >
-                                                        <option
-                                                            value="South Bound"
-                                                            @selected(old('direction', $job->direction) === 'South Bound')
-                                                        >
+                                                    <select name="direction" class="form-select editMode d-none">
+                                                        <option value="South Bound" @selected(old('direction', $job->direction) === 'South Bound')>
                                                             South Bound
                                                         </option>
 
-                                                        <option
-                                                            value="North Bound"
-                                                            @selected(old('direction', $job->direction) === 'North Bound')
-                                                        >
+                                                        <option value="North Bound" @selected(old('direction', $job->direction) === 'North Bound')>
                                                             North Bound
                                                         </option>
                                                     </select>
@@ -597,13 +484,10 @@
                                                         {{ $job->job_sitNumber ?: 'N/A' }}
                                                     </span>
 
-                                                    <input
-                                                        type="text"
-                                                        name="job_sitNumber"
+                                                    <input type="text" name="job_sitNumber"
                                                         class="form-control editMode d-none"
                                                         value="{{ old('job_sitNumber', $job->job_sitNumber) }}"
-                                                        placeholder="Enter seat number"
-                                                    >
+                                                        placeholder="Enter seat number">
                                                 </div>
                                             </div>
 
@@ -623,12 +507,7 @@
                                                         {{ $job->job_remarks ?: 'No remarks provided' }}
                                                     </span>
 
-                                                    <textarea
-                                                        name="job_remarks"
-                                                        class="form-control editMode d-none"
-                                                        rows="3"
-                                                        placeholder="Enter remarks"
-                                                    >{{ old('job_remarks', $job->job_remarks) }}</textarea>
+                                                    <textarea name="job_remarks" class="form-control editMode d-none" rows="3" placeholder="Enter remarks">{{ old('job_remarks', $job->job_remarks) }}</textarea>
                                                 </div>
                                             </div>
                                         </div>
@@ -712,13 +591,10 @@
                                                         {{ $job->driver_name ?: 'N/A' }}
                                                     </span>
 
-                                                    <input
-                                                        type="text"
-                                                        name="driver_name"
+                                                    <input type="text" name="driver_name"
                                                         class="form-control editMode d-none"
                                                         value="{{ old('driver_name', $job->driver_name) }}"
-                                                        placeholder="Enter driver name"
-                                                    >
+                                                        placeholder="Enter driver name">
                                                 </div>
                                             </div>
 
@@ -730,13 +606,10 @@
                                                         {{ $job->conductor_name ?: 'N/A' }}
                                                     </span>
 
-                                                    <input
-                                                        type="text"
-                                                        name="conductor_name"
+                                                    <input type="text" name="conductor_name"
                                                         class="form-control editMode d-none"
                                                         value="{{ old('conductor_name', $job->conductor_name) }}"
-                                                        placeholder="Enter conductor name"
-                                                    >
+                                                        placeholder="Enter conductor name">
                                                 </div>
                                             </div>
                                         </div>
@@ -761,12 +634,8 @@
                                     </p>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    class="btn btn-primary btn-sm"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#addFileModal"
-                                >
+                                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#addFileModal">
                                     <span class="fas fa-cloud-upload-alt me-1"></span>
                                     Upload Files
                                 </button>
@@ -791,11 +660,7 @@
                                                 'bmp',
                                             ]);
 
-                                            $isBrowserVideo = in_array($extension, [
-                                                'mp4',
-                                                'webm',
-                                                'ogg',
-                                            ]);
+                                            $isBrowserVideo = in_array($extension, ['mp4', 'webm', 'ogg']);
 
                                             $isVideo = $isBrowserVideo || $extension === 'avi';
 
@@ -814,28 +679,15 @@
                                             <div class="attachment-card h-100">
                                                 <div class="attachment-preview">
                                                     @if ($isImage)
-                                                        <a
-                                                            href="{{ $fileUrl }}"
-                                                            target="_blank"
-                                                            rel="noopener"
-                                                            class="d-block h-100"
-                                                        >
-                                                            <img
-                                                                src="{{ $fileUrl }}"
-                                                                alt="{{ $fileName }}"
-                                                                loading="lazy"
-                                                            >
+                                                        <a href="{{ $fileUrl }}" target="_blank" rel="noopener"
+                                                            class="d-block h-100">
+                                                            <img src="{{ $fileUrl }}" alt="{{ $fileName }}"
+                                                                loading="lazy">
                                                         </a>
                                                     @elseif ($isBrowserVideo)
-                                                        <video
-                                                            controls
-                                                            preload="metadata"
-                                                            class="w-100 h-100"
-                                                        >
-                                                            <source
-                                                                src="{{ $fileUrl }}"
-                                                                type="video/{{ $extension }}"
-                                                            >
+                                                        <video controls preload="metadata" class="w-100 h-100">
+                                                            <source src="{{ $fileUrl }}"
+                                                                type="video/{{ $extension }}">
                                                             Your browser does not support this video.
                                                         </video>
                                                     @elseif ($isVideo)
@@ -850,10 +702,8 @@
                                                 </div>
 
                                                 <div class="attachment-content">
-                                                    <div
-                                                        class="fw-semi-bold text-dark text-truncate"
-                                                        title="{{ $fileName }}"
-                                                    >
+                                                    <div class="fw-semi-bold text-dark text-truncate"
+                                                        title="{{ $fileName }}">
                                                         {{ $fileName }}
                                                     </div>
 
@@ -862,11 +712,8 @@
                                                             {{ $extension ?: 'FILE' }}
                                                         </span>
 
-                                                        <a
-                                                            href="{{ $fileUrl }}"
-                                                            download="{{ $fileName }}"
-                                                            class="btn btn-falcon-default btn-sm"
-                                                        >
+                                                        <a href="{{ $fileUrl }}" download="{{ $fileName }}"
+                                                            class="btn btn-falcon-default btn-sm">
                                                             <span class="fas fa-download me-1"></span>
                                                             Download
                                                         </a>
@@ -895,12 +742,8 @@
                                         Upload images, videos, or documents related to this job order.
                                     </p>
 
-                                    <button
-                                        type="button"
-                                        class="btn btn-primary btn-sm"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#addFileModal"
-                                    >
+                                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#addFileModal">
                                         <span class="fas fa-cloud-upload-alt me-1"></span>
                                         Upload First File
                                     </button>
@@ -924,7 +767,8 @@
 
                         <div class="card-body">
                             <div class="d-flex align-items-center mb-4">
-                                <div class="workflow-status-icon bg-{{ $statusConfig['color'] }}-subtle text-{{ $statusConfig['color'] }}">
+                                <div
+                                    class="workflow-status-icon bg-{{ $statusConfig['color'] }}-subtle text-{{ $statusConfig['color'] }}">
                                     <span class="{{ $statusConfig['icon'] }}"></span>
                                 </div>
 
@@ -955,8 +799,7 @@
 
                                 <div
                                     class="workflow-item
-                                        {{ in_array($job->job_status, ['In Progress', 'Completed']) ? 'completed' : '' }}"
-                                >
+                                        {{ in_array($job->job_status, ['In Progress', 'Completed']) ? 'completed' : '' }}">
                                     <div class="workflow-marker">
                                         <span class="fas fa-check"></span>
                                     </div>
@@ -971,9 +814,7 @@
                                     </div>
                                 </div>
 
-                                <div
-                                    class="workflow-item {{ $job->job_status === 'Completed' ? 'completed' : '' }}"
-                                >
+                                <div class="workflow-item {{ $job->job_status === 'Completed' ? 'completed' : '' }}">
                                     <div class="workflow-marker">
                                         <span class="fas fa-check"></span>
                                     </div>
@@ -981,20 +822,15 @@
                                     <div class="workflow-content">
                                         <div class="fw-semi-bold">Job completed</div>
                                         <small class="text-600">
-                                            {{ $job->job_status === 'Completed'
-                                                ? 'Task has been completed'
-                                                : 'Waiting for completion' }}
+                                            {{ $job->job_status === 'Completed' ? 'Task has been completed' : 'Waiting for completion' }}
                                         </small>
                                     </div>
                                 </div>
                             </div>
 
                             @if ($job->job_status === 'Pending')
-                                <form
-                                    action="{{ route('tickets.joborder.accept', $job->id) }}"
-                                    method="POST"
-                                    class="mt-4"
-                                >
+                                <form action="{{ route('tickets.joborder.accept', $job->id) }}" method="POST"
+                                    class="mt-4">
                                     @csrf
 
                                     <button type="submit" class="btn btn-success w-100">
@@ -1003,11 +839,8 @@
                                     </button>
                                 </form>
                             @elseif ($job->job_status === 'In Progress')
-                                <form
-                                    action="{{ route('tickets.joborder.done', $job->id) }}"
-                                    method="POST"
-                                    class="mt-4"
-                                >
+                                <form action="{{ route('tickets.joborder.done', $job->id) }}" method="POST"
+                                    class="mt-4">
                                     @csrf
 
                                     <button type="submit" class="btn btn-primary w-100">
@@ -1035,12 +868,8 @@
                                     </h5>
                                 </div>
 
-                                <button
-                                    type="button"
-                                    class="btn btn-falcon-default btn-sm"
-                                    data-bs-toggle="modal"
-                                    data-bs-target="#addNoteModal"
-                                >
+                                <button type="button" class="btn btn-falcon-default btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#addNoteModal">
                                     <span class="fas fa-plus me-1"></span>
                                     Add
                                 </button>
@@ -1095,12 +924,8 @@
                                         Record issues, findings, or additional information.
                                     </p>
 
-                                    <button
-                                        type="button"
-                                        class="btn btn-falcon-default btn-sm"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#addNoteModal"
-                                    >
+                                    <button type="button" class="btn btn-falcon-default btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#addNoteModal">
                                         <span class="fas fa-plus me-1"></span>
                                         Add First Note
                                     </button>
@@ -1133,14 +958,12 @@
                 </div>
 
                 <div class="card-body p-0">
-                    <div
-                        id="logList"
+                    <div id="logList"
                         data-list='{
                             "valueNames": ["log-user", "log-action", "log-meta", "log-date"],
                             "page": 5,
                             "pagination": true
-                        }'
-                    >
+                        }'>
                         <div class="list">
                             @forelse ($logs as $log)
                                 @php
@@ -1183,25 +1006,17 @@
                                                                 {{ ucfirst(str_replace('_', ' ', $key)) }}:
                                                             </span>
 
-                                                            @if (
-                                                                is_array($value) &&
-                                                                array_key_exists('old', $value) &&
-                                                                array_key_exists('new', $value)
-                                                            )
+                                                            @if (is_array($value) && array_key_exists('old', $value) && array_key_exists('new', $value))
                                                                 <span class="badge badge-subtle-danger ms-1">
                                                                     Old:
-                                                                    {{ is_scalar($value['old'])
-                                                                        ? $value['old']
-                                                                        : json_encode($value['old']) }}
+                                                                    {{ is_scalar($value['old']) ? $value['old'] : json_encode($value['old']) }}
                                                                 </span>
 
                                                                 <span class="fas fa-long-arrow-alt-right mx-1"></span>
 
                                                                 <span class="badge badge-subtle-success">
                                                                     New:
-                                                                    {{ is_scalar($value['new'])
-                                                                        ? $value['new']
-                                                                        : json_encode($value['new']) }}
+                                                                    {{ is_scalar($value['new']) ? $value['new'] : json_encode($value['new']) }}
                                                                 </span>
                                                             @elseif (is_scalar($value) || $value === null)
                                                                 {{ $value ?? 'N/A' }}
@@ -1246,21 +1061,13 @@
 
                         @if ($logs->count() > 5)
                             <div class="d-flex justify-content-center align-items-center gap-2 py-3">
-                                <button
-                                    type="button"
-                                    class="btn btn-falcon-default btn-sm"
-                                    data-list-pagination="prev"
-                                >
+                                <button type="button" class="btn btn-falcon-default btn-sm" data-list-pagination="prev">
                                     <span class="fas fa-chevron-left"></span>
                                 </button>
 
                                 <ul class="pagination pagination-sm mb-0"></ul>
 
-                                <button
-                                    type="button"
-                                    class="btn btn-falcon-default btn-sm"
-                                    data-list-pagination="next"
-                                >
+                                <button type="button" class="btn btn-falcon-default btn-sm" data-list-pagination="next">
                                     <span class="fas fa-chevron-right"></span>
                                 </button>
                             </div>
@@ -1272,19 +1079,9 @@
     </div>
 
     {{-- Add File Modal --}}
-    <div
-        class="modal fade"
-        id="addFileModal"
-        tabindex="-1"
-        aria-labelledby="addFileModalLabel"
-        aria-hidden="true"
-    >
+    <div class="modal fade" id="addFileModal" tabindex="-1" aria-labelledby="addFileModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form
-                id="uploadForm"
-                enctype="multipart/form-data"
-                class="modal-content border-0 shadow"
-            >
+            <form id="uploadForm" enctype="multipart/form-data" class="modal-content border-0 shadow">
                 @csrf
 
                 <div class="modal-header bg-body-tertiary border-bottom">
@@ -1298,12 +1095,7 @@
                         </p>
                     </div>
 
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close"
-                    ></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <div class="modal-body p-4">
@@ -1316,14 +1108,7 @@
                             Select files to upload
                         </label>
 
-                        <input
-                            type="file"
-                            name="files[]"
-                            id="fileInput"
-                            class="form-control"
-                            multiple
-                            required
-                        >
+                        <input type="file" name="files[]" id="fileInput" class="form-control" multiple required>
 
                         <small class="text-600 d-block mt-2">
                             Multiple files may be selected.
@@ -1331,30 +1116,16 @@
                     </div>
 
                     <div class="progress d-none mt-4" id="uploadProgressWrapper" style="height: 10px;">
-                        <div
-                            id="uploadProgress"
-                            class="progress-bar progress-bar-striped progress-bar-animated"
-                            role="progressbar"
-                            style="width: 0%"
-                            aria-valuenow="0"
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                        ></div>
+                        <div id="uploadProgress" class="progress-bar progress-bar-striped progress-bar-animated"
+                            role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0"
+                            aria-valuemax="100"></div>
                     </div>
 
-                    <div
-                        class="text-center fs-10 mt-2"
-                        id="uploadStatus"
-                        aria-live="polite"
-                    ></div>
+                    <div class="text-center fs-10 mt-2" id="uploadStatus" aria-live="polite"></div>
                 </div>
 
                 <div class="modal-footer bg-body-tertiary border-top">
-                    <button
-                        type="button"
-                        class="btn btn-falcon-default btn-sm"
-                        data-bs-dismiss="modal"
-                    >
+                    <button type="button" class="btn btn-falcon-default btn-sm" data-bs-dismiss="modal">
                         Cancel
                     </button>
 
@@ -1368,19 +1139,10 @@
     </div>
 
     {{-- Add Note Modal --}}
-    <div
-        class="modal fade"
-        id="addNoteModal"
-        tabindex="-1"
-        aria-labelledby="addNoteModalLabel"
-        aria-hidden="true"
-    >
+    <div class="modal fade" id="addNoteModal" tabindex="-1" aria-labelledby="addNoteModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <form
-                method="POST"
-                action="{{ route('tickets.joborder.addnote', $job->id) }}"
-                class="modal-content border-0 shadow"
-            >
+            <form method="POST" action="{{ route('tickets.joborder.addnote', $job->id) }}"
+                class="modal-content border-0 shadow">
                 @csrf
 
                 <div class="modal-header bg-body-tertiary border-bottom">
@@ -1394,12 +1156,7 @@
                         </p>
                     </div>
 
-                    <button
-                        type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close"
-                    ></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <div class="modal-body p-4">
@@ -1410,19 +1167,14 @@
 
                     <div class="note-reason-list mb-4">
                         @foreach ([
-                            'Defective DVR' => 'fas fa-hdd',
-                            'Camera not working' => 'fas fa-video-slash',
-                            'Weak signal / interference' => 'fas fa-signal',
-                            'Other' => 'fas fa-ellipsis-h',
-                        ] as $reason => $icon)
+            'Defective DVR' => 'fas fa-hdd',
+            'Camera not working' => 'fas fa-video-slash',
+            'Weak signal / interference' => 'fas fa-signal',
+            'Other' => 'fas fa-ellipsis-h',
+        ] as $reason => $icon)
                             <label class="note-reason-option">
-                                <input
-                                    type="radio"
-                                    name="reason"
-                                    value="{{ $reason }}"
-                                    class="form-check-input"
-                                    required
-                                >
+                                <input type="radio" name="reason" value="{{ $reason }}"
+                                    class="form-check-input" required>
 
                                 <span class="note-reason-icon">
                                     <span class="{{ $icon }}"></span>
@@ -1440,13 +1192,8 @@
                             Additional Details
                         </label>
 
-                        <textarea
-                            name="details"
-                            id="noteDetails"
-                            class="form-control"
-                            rows="4"
-                            placeholder="Enter additional details about the issue..."
-                        >{{ old('details') }}</textarea>
+                        <textarea name="details" id="noteDetails" class="form-control" rows="4"
+                            placeholder="Enter additional details about the issue...">{{ old('details') }}</textarea>
 
                         <small class="text-600">
                             Optional supporting information for this note.
@@ -1455,11 +1202,7 @@
                 </div>
 
                 <div class="modal-footer bg-body-tertiary border-top">
-                    <button
-                        type="button"
-                        class="btn btn-falcon-default btn-sm"
-                        data-bs-dismiss="modal"
-                    >
+                    <button type="button" class="btn btn-falcon-default btn-sm" data-bs-dismiss="modal">
                         Cancel
                     </button>
 
@@ -1477,11 +1220,9 @@
     <style>
         .job-order-header {
             background:
-                linear-gradient(
-                    135deg,
+                linear-gradient(135deg,
                     rgba(var(--falcon-primary-rgb, 44, 123, 229), 0.08),
-                    rgba(var(--falcon-info-rgb, 39, 188, 253), 0.03)
-                ),
+                    rgba(var(--falcon-info-rgb, 39, 188, 253), 0.03)),
                 var(--falcon-card-bg, #fff);
         }
 
@@ -1795,7 +1536,7 @@
 
 @push('scripts')
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', function() {
             const detailsForm = document.getElementById('jobOrderDetailsForm');
             const editBtn = document.getElementById('editBtn');
             const saveBtn = document.getElementById('saveBtn');
@@ -1804,20 +1545,19 @@
             const viewFields = document.querySelectorAll('.viewMode');
             const editFields = document.querySelectorAll('.editMode');
 
-            const editableInputs = detailsForm
-                ? detailsForm.querySelectorAll(
+            const editableInputs = detailsForm ?
+                detailsForm.querySelectorAll(
                     '.editMode input, .editMode select, .editMode textarea, input.editMode, select.editMode, textarea.editMode'
-                )
-                : [];
+                ) : [];
 
             const originalValues = new Map();
 
-            editableInputs.forEach(function (input) {
+            editableInputs.forEach(function(input) {
                 originalValues.set(input, input.value);
             });
 
             function hasChanges() {
-                return Array.from(editableInputs).some(function (input) {
+                return Array.from(editableInputs).some(function(input) {
                     return input.value !== originalValues.get(input);
                 });
             }
@@ -1833,11 +1573,11 @@
                 saveBtn?.classList.remove('d-none');
                 cancelBtn?.classList.remove('d-none');
 
-                viewFields.forEach(function (field) {
+                viewFields.forEach(function(field) {
                     field.classList.add('d-none');
                 });
 
-                editFields.forEach(function (field) {
+                editFields.forEach(function(field) {
                     field.classList.remove('d-none');
                 });
 
@@ -1845,7 +1585,7 @@
             }
 
             function disableEditMode() {
-                editableInputs.forEach(function (input) {
+                editableInputs.forEach(function(input) {
                     input.value = originalValues.get(input);
                 });
 
@@ -1857,11 +1597,11 @@
                     saveBtn.disabled = true;
                 }
 
-                editFields.forEach(function (field) {
+                editFields.forEach(function(field) {
                     field.classList.add('d-none');
                 });
 
-                viewFields.forEach(function (field) {
+                viewFields.forEach(function(field) {
                     field.classList.remove('d-none');
                 });
             }
@@ -1869,12 +1609,12 @@
             editBtn?.addEventListener('click', enableEditMode);
             cancelBtn?.addEventListener('click', disableEditMode);
 
-            editableInputs.forEach(function (input) {
+            editableInputs.forEach(function(input) {
                 input.addEventListener('input', updateSaveButtonState);
                 input.addEventListener('change', updateSaveButtonState);
             });
 
-            detailsForm?.addEventListener('submit', function () {
+            detailsForm?.addEventListener('submit', function() {
                 if (saveBtn) {
                     saveBtn.disabled = true;
                     saveBtn.innerHTML =
@@ -1919,7 +1659,7 @@
 
             addFileModal?.addEventListener('hidden.bs.modal', resetUploadState);
 
-            uploadBtn?.addEventListener('click', function () {
+            uploadBtn?.addEventListener('click', function() {
                 if (!fileInput || fileInput.files.length === 0) {
                     statusText.innerHTML =
                         '<span class="text-danger">' +
@@ -1958,7 +1698,7 @@
 
                 xhr.setRequestHeader('Accept', 'application/json');
 
-                xhr.upload.addEventListener('progress', function (event) {
+                xhr.upload.addEventListener('progress', function(event) {
                     if (!event.lengthComputable) {
                         return;
                     }
@@ -1975,7 +1715,7 @@
                         '<span class="text-600">Uploading files...</span>';
                 });
 
-                xhr.onload = function () {
+                xhr.onload = function() {
                     if (xhr.status >= 200 && xhr.status < 300) {
                         progressBar.style.width = '100%';
                         progressBar.setAttribute('aria-valuenow', '100');
@@ -1993,7 +1733,7 @@
                             'Upload completed successfully.' +
                             '</span>';
 
-                        window.setTimeout(function () {
+                        window.setTimeout(function() {
                             window.location.reload();
                         }, 700);
 
@@ -2040,7 +1780,7 @@
                         '<span class="fas fa-redo me-1"></span>Try Again';
                 };
 
-                xhr.onerror = function () {
+                xhr.onerror = function() {
                     progressBar.classList.remove(
                         'progress-bar-striped',
                         'progress-bar-animated',
