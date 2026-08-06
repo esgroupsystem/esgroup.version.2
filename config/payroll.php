@@ -20,6 +20,15 @@ return [
         'paid_hours_per_day' => 8,
         'paid_minutes_per_day' => 480,
 
+        /*
+         | Worked-time display stores paid work minutes, not raw clock span.
+         | Example: 7:00 AM to 4:00 PM = 540 clock minutes - 60 lunch minutes
+         | = 480 worked minutes / 8.00 worked hours.
+         */
+        'unpaid_break_minutes' => 60,
+        'unpaid_break_start' => '12:00',
+        'unpaid_break_end' => '13:00',
+
         'late_grace_minutes' => 15,
         'late_deduction_block_minutes' => 30,
 

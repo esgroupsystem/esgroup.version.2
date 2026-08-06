@@ -16,9 +16,11 @@ use Illuminate\Support\Facades\Schema;
 
 class DailyAttendanceSummaryService
 {
-    private const FULL_DAY_MINUTES = 540; // 9 hours
+    private const SCHEDULED_CLOCK_MINUTES = 540; // 9 clock hours, including lunch
 
-    private const HALF_DAY_MINUTES = 270; // 4.5 hours
+    private const FULL_DAY_PAID_MINUTES = 480; // 8 paid working hours
+
+    private const HALF_DAY_PAID_MINUTES = 240; // 4 paid working hours
 
     private const FULL_DAY_PAYABLE_DAYS = 1.00;
 
@@ -361,7 +363,9 @@ class DailyAttendanceSummaryService
         $lateMinutes = 0;
         $undertimeMinutes = 0;
         $overtimeMinutes = 0;
+        $clockWorkedMinutes = 0;
         $workedMinutes = 0;
+        $unpaidBreakMinutes = 0;
         $payableDays = 0.00;
         $payableHours = 0.00;
         $attendanceStatus = 'absent';
@@ -439,14 +443,25 @@ class DailyAttendanceSummaryService
         $hasAttendanceProof = $hasRawBiometrics || $hasAdjustment || $hasValidInOut;
 
         if ($hasValidInOut) {
-            $workedMinutes = (int) $actualTimeIn->diffInMinutes($actualTimeOut);
+            $clockWorkedMinutes = (int) $actualTimeIn->diffInMinutes($actualTimeOut);
+            $unpaidBreakMinutes = $this->unpaidBreakOverlapMinutes(
+                $workDate,
+                $actualTimeIn,
+                $actualTimeOut
+            );
+            $workedMinutes = max(0, $clockWorkedMinutes - $unpaidBreakMinutes);
+
+            if ($unpaidBreakMinutes > 0) {
+                $remarks[] = 'Unpaid lunch deducted from worked time: '.$unpaidBreakMinutes.' minute(s).';
+            }
         }
 
         $isAutomaticHalfDay = $this->isAutomaticHalfDay($actualTimeIn, $actualTimeOut);
 
         if ($isTyphoonDisasterAdjustment && $hasRawBiometrics) {
             $attendanceStatus = 'adjusted_present';
-            $workedMinutes = max($workedMinutes, self::FULL_DAY_MINUTES);
+            $clockWorkedMinutes = max($clockWorkedMinutes, self::SCHEDULED_CLOCK_MINUTES);
+            $workedMinutes = max($workedMinutes, self::FULL_DAY_PAID_MINUTES);
             $lateMinutes = 0;
             $undertimeMinutes = 0;
             $payableDays = self::FULL_DAY_PAYABLE_DAYS;
@@ -465,8 +480,9 @@ class DailyAttendanceSummaryService
                 $remarks[] = 'Holiday worked rate applied: '.$holidayRateLabel.'.';
             } elseif ($isAutomaticHalfDay) {
                 $attendanceStatus = 'half_day';
-                $workedMinutes = self::HALF_DAY_MINUTES;
-                $undertimeMinutes = self::FULL_DAY_MINUTES - self::HALF_DAY_MINUTES;
+                $clockWorkedMinutes = self::HALF_DAY_PAID_MINUTES;
+                $workedMinutes = self::HALF_DAY_PAID_MINUTES;
+                $undertimeMinutes = self::FULL_DAY_PAID_MINUTES - self::HALF_DAY_PAID_MINUTES;
                 $payableDays = self::HALF_DAY_PAYABLE_DAYS;
                 $payableHours = self::HALF_DAY_PAYABLE_HOURS;
 
@@ -514,15 +530,16 @@ class DailyAttendanceSummaryService
             $payableHours = 0.00;
         } elseif ($isAutomaticHalfDay) {
             $attendanceStatus = 'half_day';
-            $workedMinutes = self::HALF_DAY_MINUTES;
+            $clockWorkedMinutes = self::HALF_DAY_PAID_MINUTES;
+            $workedMinutes = self::HALF_DAY_PAID_MINUTES;
             $lateMinutes = 0;
-            $undertimeMinutes = self::FULL_DAY_MINUTES - self::HALF_DAY_MINUTES;
+            $undertimeMinutes = self::FULL_DAY_PAID_MINUTES - self::HALF_DAY_PAID_MINUTES;
             $payableDays = self::HALF_DAY_PAYABLE_DAYS;
             $payableHours = self::HALF_DAY_PAYABLE_HOURS;
 
             $remarks[] = 'No valid time out. Half day paid based on company policy.';
         } elseif ($isFlexible) {
-            if ($workedMinutes >= self::FULL_DAY_MINUTES) {
+            if ($clockWorkedMinutes >= self::SCHEDULED_CLOCK_MINUTES) {
                 $attendanceStatus = 'present';
                 $payableDays = self::FULL_DAY_PAYABLE_DAYS;
                 $payableHours = self::FULL_DAY_PAYABLE_HOURS;
@@ -530,9 +547,10 @@ class DailyAttendanceSummaryService
                 $remarks[] = 'Flexible shift completed 9 clock hours / 8 paid hours.';
             } else {
                 $attendanceStatus = 'undertime';
-                $undertimeMinutes = max(0, self::FULL_DAY_MINUTES - $workedMinutes);
+                $rawUndertimeMinutes = max(0, self::SCHEDULED_CLOCK_MINUTES - $clockWorkedMinutes);
+                $undertimeMinutes = $this->roundedUndertimeDeductionMinutes($rawUndertimeMinutes);
 
-                [$payableDays, $payableHours] = $this->payUnitsFromMinutes($workedMinutes);
+                [$payableDays, $payableHours] = $this->payUnitsAfterDeductions($undertimeMinutes);
 
                 $remarks[] = 'Flexible shift below 9 clock hours. Payable hours converted using 8 paid hours per day.';
             }
@@ -571,9 +589,8 @@ class DailyAttendanceSummaryService
                 $payableHours = self::FULL_DAY_PAYABLE_HOURS;
             } else {
                 $deductionMinutes = max(0, (int) $lateMinutes + (int) $undertimeMinutes);
-                $payableMinutes = max(0, self::FULL_DAY_MINUTES - $deductionMinutes);
 
-                [$payableDays, $payableHours] = $this->payUnitsFromMinutes($payableMinutes);
+                [$payableDays, $payableHours] = $this->payUnitsAfterDeductions($deductionMinutes);
 
                 $remarks[] = 'Late/undertime deducted from 8 paid hours while schedule remains 9 clock hours including lunch.';
             }
@@ -591,8 +608,8 @@ class DailyAttendanceSummaryService
             $remarks[] = 'Paid adjustment forced payable attendance.';
         }
 
-        if ($workedMinutes > self::FULL_DAY_MINUTES) {
-            $overtimeMinutes = $workedMinutes - self::FULL_DAY_MINUTES;
+        if ($clockWorkedMinutes > self::SCHEDULED_CLOCK_MINUTES) {
+            $overtimeMinutes = $clockWorkedMinutes - self::SCHEDULED_CLOCK_MINUTES;
         }
 
         $employeeBiometricId = ! empty($person['employee_biometric_id'])
@@ -653,6 +670,13 @@ class DailyAttendanceSummaryService
                 'payable_hours' => round((float) $payableHours, 2),
 
                 'remarks' => implode(' ', array_filter($remarks)),
+                'meta' => [
+                    'clock_worked_minutes' => max(0, (int) $clockWorkedMinutes),
+                    'unpaid_break_minutes' => max(0, (int) $unpaidBreakMinutes),
+                    'paid_worked_minutes' => max(0, (int) $workedMinutes),
+                    'scheduled_clock_minutes' => self::SCHEDULED_CLOCK_MINUTES,
+                    'paid_minutes_per_day' => self::FULL_DAY_PAID_MINUTES,
+                ],
             ]
         );
     }
@@ -841,17 +865,75 @@ class DailyAttendanceSummaryService
         return (int) (ceil($rawLateMinutes / $blockMinutes) * $blockMinutes);
     }
 
-    protected function payUnitsFromMinutes(int $minutes): array
+    protected function payUnitsAfterDeductions(int $deductionMinutes): array
     {
-        $payableClockMinutes = max(0, min(self::FULL_DAY_MINUTES, $minutes));
-        $deductedMinutes = max(0, self::FULL_DAY_MINUTES - $payableClockMinutes);
-        $paidMinutes = max(0, ((int) config('payroll.attendance.paid_minutes_per_day', 480)) - $deductedMinutes);
+        $paidMinutesPerDay = max(
+            1,
+            (int) config('payroll.attendance.paid_minutes_per_day', self::FULL_DAY_PAID_MINUTES)
+        );
+
+        $deductionMinutes = max(0, min($paidMinutesPerDay, $deductionMinutes));
+        $paidMinutes = max(0, $paidMinutesPerDay - $deductionMinutes);
         $paidHours = round($paidMinutes / 60, 2);
 
         return [
-            round($paidHours / self::FULL_DAY_PAYABLE_HOURS, 2),
+            round($paidMinutes / $paidMinutesPerDay, 2),
             $paidHours,
         ];
+    }
+
+    protected function unpaidBreakOverlapMinutes(
+        Carbon $workDate,
+        Carbon $actualTimeIn,
+        Carbon $actualTimeOut
+    ): int {
+        $configuredBreakMinutes = max(
+            0,
+            (int) config(
+                'payroll.attendance.unpaid_break_minutes',
+                self::SCHEDULED_CLOCK_MINUTES - self::FULL_DAY_PAID_MINUTES
+            )
+        );
+
+        if ($configuredBreakMinutes === 0 || $actualTimeOut->lessThanOrEqualTo($actualTimeIn)) {
+            return 0;
+        }
+
+        $breakStartValue = trim((string) config('payroll.attendance.unpaid_break_start', '12:00'));
+        $breakEndValue = trim((string) config('payroll.attendance.unpaid_break_end', '13:00'));
+
+        if ($breakStartValue === '' || $breakEndValue === '') {
+            return min($configuredBreakMinutes, max(0, (int) $actualTimeIn->diffInMinutes($actualTimeOut)));
+        }
+
+        $breakStart = Carbon::parse(
+            $workDate->toDateString().' '.$breakStartValue,
+            'Asia/Manila'
+        );
+        $breakEnd = Carbon::parse(
+            $workDate->toDateString().' '.$breakEndValue,
+            'Asia/Manila'
+        );
+
+        if ($breakEnd->lessThanOrEqualTo($breakStart)) {
+            $breakEnd->addDay();
+        }
+
+        $overlapStart = $actualTimeIn->greaterThan($breakStart)
+            ? $actualTimeIn->copy()
+            : $breakStart->copy();
+        $overlapEnd = $actualTimeOut->lessThan($breakEnd)
+            ? $actualTimeOut->copy()
+            : $breakEnd->copy();
+
+        if ($overlapEnd->lessThanOrEqualTo($overlapStart)) {
+            return 0;
+        }
+
+        return min(
+            $configuredBreakMinutes,
+            max(0, (int) ceil($overlapStart->floatDiffInMinutes($overlapEnd)))
+        );
     }
 
     protected function resolveHoliday(Carbon $workDate)
@@ -1086,12 +1168,12 @@ class DailyAttendanceSummaryService
 
     protected function isAutomaticHalfDay(?Carbon $actualTimeIn, ?Carbon $actualTimeOut): bool
     {
-        if (! $actualTimeIn) {
-            return false;
+        if (($actualTimeIn && ! $actualTimeOut) || (! $actualTimeIn && $actualTimeOut)) {
+            return true;
         }
 
-        if (! $actualTimeOut) {
-            return true;
+        if (! $actualTimeIn || ! $actualTimeOut) {
+            return false;
         }
 
         return $actualTimeOut->lessThanOrEqualTo($actualTimeIn);

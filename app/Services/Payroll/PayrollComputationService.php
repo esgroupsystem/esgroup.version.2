@@ -317,7 +317,7 @@ class PayrollComputationService
             'hourly_rate' => round((float) $rates['hourly_rate'], 2),
             'minute_rate' => round((float) $rates['minute_rate'], 4),
             'total_scheduled_days' => $this->scheduledWorkingDays($rows),
-            'total_worked_days' => round($totalWorkedMinutes / $this->scheduledClockMinutesPerDay(), 2),
+            'total_worked_days' => round($totalWorkedMinutes / $this->minutesPerDay(), 2),
             'total_payable_days' => round($totalSummaryPayableHours / $this->hoursPerDay(), 2),
             'total_payable_hours' => $totalSummaryPayableHours,
             'total_worked_minutes' => $totalWorkedMinutes,
@@ -1102,7 +1102,7 @@ class PayrollComputationService
             'absent_days' => $absentDays,
             'absence_rate_per_day' => round($absentRate, 6),
             'absence_deduction' => round($absentDays * $absentRate, 2),
-            'note' => 'Monthly cutoff basic pay is monthly salary / 2. Absence uses monthly salary * 12 / 365. Late uses grace and deduction blocks. Undertime uses 5-minute grace, then rounds up to 30-minute deduction blocks.',
+            'note' => 'Daily Attendance Summary is the payroll source of truth. Late and undertime deductions use the stored summary minutes multiplied by the employee minute rate. Automatic half day equals 240 paid minutes worked and 240 undertime minutes.',
         ];
     }
 
@@ -1509,16 +1509,18 @@ class PayrollComputationService
 
     protected function payableHours(object $row): float
     {
+        $summaryPayableHours = data_get($row, 'payable_hours');
+
+        if (is_numeric($summaryPayableHours)) {
+            return round(max(0, (float) $summaryPayableHours), 2);
+        }
+
         if ($this->isAbsent($row) || $this->statusIs($row, 'no_schedule') || $this->statusIs($row, 'holiday_unpaid')) {
             return 0.0;
         }
 
         if ($this->statusIs($row, 'leave')) {
             return $this->hoursPerDay();
-        }
-
-        if ($this->isHolidayRow($row) || $this->isRestDayRow($row)) {
-            return $this->premiumPayHours($row);
         }
 
         $lateMinutes = $this->payrollLateMinutesForRow($row);
@@ -1557,11 +1559,8 @@ class PayrollComputationService
     }
 
     /**
-     * Payroll-side late computation with company grace period.
-     *
-     * This keeps payroll aligned with Attendance Summary:
-     * Scheduled In 07:00 + 15-minute grace = late count starts at 07:15.
-     * Example: 07:18 = 3 minutes late, 07:38 = 23 minutes late.
+     * Read canonical late minutes from Daily Attendance Summary.
+     * Raw timestamp calculation remains only as a fallback for legacy rows.
      */
     protected function totalPayrollLateMinutes(Collection $rows): int
     {
@@ -1570,15 +1569,26 @@ class PayrollComputationService
 
     protected function payrollLateMinutesForRow(object $row): int
     {
-        if ($this->isAbsent($row) || $this->isRestDayRow($row) || $this->statusIs($row, 'leave')) {
+        if (
+            $this->isAbsent($row)
+            || $this->isRestDayRow($row)
+            || $this->statusIs($row, 'leave')
+            || (bool) data_get($row, 'ignore_late', false)
+        ) {
             return 0;
+        }
+
+        $summaryLateMinutes = data_get($row, 'late_minutes');
+
+        if (is_numeric($summaryLateMinutes)) {
+            return max(0, (int) $summaryLateMinutes);
         }
 
         $scheduledIn = $this->parsePayrollDateTime($row->scheduled_time_in ?? null, $row->work_date ?? null);
         $actualIn = $this->parsePayrollDateTime($row->actual_time_in ?? ($row->time_in ?? null), $row->work_date ?? null);
 
         if (! $scheduledIn || ! $actualIn) {
-            return $this->roundLateDeductionMinutes(max(0, (int) ($row->late_minutes ?? 0)), 0);
+            return 0;
         }
 
         if ($actualIn->lt($scheduledIn->copy()->subHours(12))) {
@@ -1603,8 +1613,19 @@ class PayrollComputationService
 
     protected function payrollUndertimeMinutesForRow(object $row): int
     {
-        if ($this->isAbsent($row) || $this->isRestDayRow($row) || $this->statusIs($row, 'leave')) {
+        if (
+            $this->isAbsent($row)
+            || $this->isRestDayRow($row)
+            || $this->statusIs($row, 'leave')
+            || (bool) data_get($row, 'ignore_undertime', false)
+        ) {
             return 0;
+        }
+
+        $summaryUndertimeMinutes = data_get($row, 'undertime_minutes');
+
+        if (is_numeric($summaryUndertimeMinutes)) {
+            return max(0, (int) $summaryUndertimeMinutes);
         }
 
         $scheduledIn = $this->parsePayrollDateTime($row->scheduled_time_in ?? null, $row->work_date ?? null);
@@ -1612,7 +1633,7 @@ class PayrollComputationService
         $actualOut = $this->parsePayrollDateTime($row->actual_time_out ?? ($row->time_out ?? null), $row->work_date ?? null);
 
         if (! $scheduledOut || ! $actualOut) {
-            return $this->roundUndertimeDeductionMinutes(max(0, (int) ($row->undertime_minutes ?? 0)));
+            return 0;
         }
 
         if ($scheduledIn && $scheduledOut->lessThanOrEqualTo($scheduledIn)) {
@@ -1723,20 +1744,19 @@ class PayrollComputationService
 
     protected function premiumPayHours(object $row): float
     {
-        $workedMinutes = max(0, (int) ($row->worked_minutes ?? 0));
+        $summaryPayableHours = data_get($row, 'payable_hours');
 
-        if ($workedMinutes <= 0 && isset($row->payable_hours)) {
-            return min($this->hoursPerDay(), max(0, (float) $row->payable_hours));
+        if (is_numeric($summaryPayableHours)) {
+            return round(min($this->hoursPerDay(), max(0, (float) $summaryPayableHours)), 2);
         }
+
+        $workedMinutes = max(0, (int) data_get($row, 'worked_minutes', 0));
 
         if ($workedMinutes <= 0) {
             return 0.0;
         }
 
-        $scheduledClockMinutes = max(1, $this->scheduledClockMinutesPerDay());
-        $fraction = min(1, $workedMinutes / $scheduledClockMinutes);
-
-        return round($this->hoursPerDay() * $fraction, 2);
+        return round(min($this->hoursPerDay(), $workedMinutes / 60), 2);
     }
 
     protected function hasApprovedHolidayAdjustment(object $employeeReference, Carbon $holidayDate): bool
