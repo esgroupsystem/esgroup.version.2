@@ -70,9 +70,9 @@
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Cutoff Type</label>
                                 <select name="cutoff_type" class="form-select">
-                                    <option value="first" {{ $cutoffType === 'first' ? 'selected' : '' }}>1st Cutoff(11-25)
+                                    <option value="second" {{ $cutoffType === 'second' ? 'selected' : '' }}>{{ config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)') }}
                                     </option>
-                                    <option value="second" {{ $cutoffType === 'second' ? 'selected' : '' }}>2nd Cutoff(26-10)
+                                    <option value="first" {{ $cutoffType === 'first' ? 'selected' : '' }}>{{ config('payroll.cutoff_display.first.full', '2nd Cutoff (11-25)') }}
                                     </option>
                                 </select>
                             </div>

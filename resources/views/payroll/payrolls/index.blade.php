@@ -369,12 +369,12 @@
                             <select id="cutoff-type" name="cutoff_type" class="form-select filter-control">
                                 <option value="">All cutoffs</option>
 
-                                <option value="first" @selected(request('cutoff_type') === 'first')>
-                                    1st Cutoff
+                                <option value="second" @selected(request('cutoff_type') === 'second')>
+                                    {{ config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)') }}
                                 </option>
 
-                                <option value="second" @selected(request('cutoff_type') === 'second')>
-                                    2nd Cutoff
+                                <option value="first" @selected(request('cutoff_type') === 'first')>
+                                    {{ config('payroll.cutoff_display.first.full', '2nd Cutoff (11-25)') }}
                                 </option>
                             </select>
                         </div>

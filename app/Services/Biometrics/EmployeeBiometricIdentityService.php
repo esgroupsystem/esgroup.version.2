@@ -49,7 +49,13 @@ class EmployeeBiometricIdentityService
             ! empty($model->employeeBiometric)
             && $model->employeeBiometric instanceof EmployeeBiometric
         ) {
-            return $model->employeeBiometric;
+            $employeeBiometric = $model->employeeBiometric;
+
+            if (! $onlyPayrollActive || $this->isPayrollActive($employeeBiometric)) {
+                return $employeeBiometric;
+            }
+
+            return null;
         }
 
         if (! empty($model->employee_biometric_id)) {
@@ -60,11 +66,12 @@ class EmployeeBiometricIdentityService
                 $query->payrollActive();
             }
 
-            $employeeBiometric = $query->first();
-
-            if ($employeeBiometric) {
-                return $employeeBiometric;
-            }
+            /*
+             * A canonical FK is authoritative. If that canonical employee is
+             * inactive or payroll-excluded, return null rather than falling
+             * back to reused legacy IDs that may belong to another account.
+             */
+            return $query->first();
         }
 
         return $this->resolve(
@@ -311,6 +318,15 @@ class EmployeeBiometricIdentityService
             : ($row->employee_name ?? null);
 
         return 'NAME:'.mb_strtoupper(trim((string) ($employeeName ?: 'UNKNOWN')));
+    }
+
+    private function isPayrollActive(EmployeeBiometric $employeeBiometric): bool
+    {
+        $employmentStatus = mb_strtolower(trim((string) ($employeeBiometric->employment_status ?? '')));
+        $employmentActive = $employmentStatus === '' || $employmentStatus === EmployeeBiometric::STATUS_ACTIVE;
+        $payrollIncluded = $employeeBiometric->is_payroll_active !== false;
+
+        return $employmentActive && $payrollIncluded;
     }
 
     public function clean(mixed $value): ?string

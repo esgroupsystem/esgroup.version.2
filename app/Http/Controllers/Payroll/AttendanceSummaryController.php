@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
 use App\Models\DailyAttendanceSummary;
-use App\Models\EmployeePlottingSchedule;
+use App\Models\EmployeeBiometric;
 use App\Services\Payroll\DailyAttendanceSummaryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceSummaryController extends Controller
 {
@@ -23,6 +23,7 @@ class AttendanceSummaryController extends Controller
         $search = trim((string) $request->search);
         $status = trim((string) $request->status);
         $dayType = trim((string) $request->day_type);
+        $groupName = trim((string) $request->group_name);
 
         [$startDate, $endDate, $cutoffLabel] = $this->resolveCutoffRange(
             $cutoffMonth,
@@ -30,12 +31,23 @@ class AttendanceSummaryController extends Controller
             $cutoffType
         );
 
-        $baseQuery = $this->summaryBaseQuery($startDate, $endDate, $search, $status, $dayType);
+        $baseQuery = $this->summaryBaseQuery(
+            $startDate,
+            $endDate,
+            $search,
+            $status,
+            $dayType,
+            $groupName
+        );
 
         $stats = $this->buildStats(clone $baseQuery);
+        $stats = array_merge(
+            $stats,
+            $this->buildRosterCoverageStats($startDate, $endDate, $groupName)
+        );
 
         $summaries = (clone $baseQuery)
-            ->with('employeeBiometric')
+            ->with(['employeeBiometric', 'plottingSchedule'])
             ->orderBy('work_date')
             ->orderBy('employee_name')
             ->paginate(25)
@@ -51,6 +63,7 @@ class AttendanceSummaryController extends Controller
 
         $statusOptions = $this->statusOptions();
         $dayTypeOptions = $this->dayTypeOptions();
+        $payrollGroups = $this->payrollGroups();
 
         return view('payroll.attendance_summary.index', compact(
             'summaries',
@@ -62,8 +75,10 @@ class AttendanceSummaryController extends Controller
             'search',
             'status',
             'dayType',
+            'groupName',
             'statusOptions',
-            'dayTypeOptions'
+            'dayTypeOptions',
+            'payrollGroups'
         ));
     }
 
@@ -73,6 +88,7 @@ class AttendanceSummaryController extends Controller
             'cutoff_month' => ['required', 'integer', 'min:1', 'max:12'],
             'cutoff_year' => ['required', 'integer', 'min:2000', 'max:2100'],
             'cutoff_type' => ['required', 'in:first,second'],
+            'group_name' => ['nullable', 'integer', 'in:1,2'],
         ]);
 
         @ini_set('max_execution_time', 300);
@@ -83,7 +99,35 @@ class AttendanceSummaryController extends Controller
             $request->cutoff_type
         );
 
-        $service->buildForPeriod($startDate, $endDate);
+        /*
+         * Rebuild all payroll-eligible employees. The summary service itself
+         * excludes inactive records and Payroll Inclusion OFF records.
+         */
+        try {
+            $service->buildForPeriod($startDate, $endDate);
+        } catch (\Throwable $exception) {
+            Log::error('Attendance Summary rebuild failed', [
+                'period_start' => $startDate->toDateString(),
+                'period_end' => $endDate->toDateString(),
+                'group_name' => $request->input('group_name'),
+                'message' => $exception->getMessage(),
+                'exception' => $exception,
+            ]);
+
+            return redirect()
+                ->route('attendance-summary.index', $request->only([
+                    'cutoff_month',
+                    'cutoff_year',
+                    'cutoff_type',
+                    'search',
+                    'status',
+                    'day_type',
+                    'group_name',
+                ]))
+                ->withErrors([
+                    'attendance_summary' => 'Attendance Summary rebuild failed. No partial failed-date data was committed. Check storage/logs for the exact error.',
+                ]);
+        }
 
         return redirect()
             ->route('attendance-summary.index', $request->only([
@@ -93,8 +137,9 @@ class AttendanceSummaryController extends Controller
                 'search',
                 'status',
                 'day_type',
+                'group_name',
             ]))
-            ->with('success', 'Attendance summary rebuilt successfully.');
+            ->with('success', 'Attendance summary rebuilt successfully for all Active payroll-included employees and roster coverage was verified.');
     }
 
     public function exportPayroll(Request $request)
@@ -108,6 +153,7 @@ class AttendanceSummaryController extends Controller
         $search = trim((string) $request->search);
         $status = trim((string) $request->status);
         $dayType = trim((string) $request->day_type);
+        $groupName = trim((string) $request->group_name);
 
         [$startDate, $endDate, $cutoffLabel] = $this->resolveCutoffRange(
             $cutoffMonth,
@@ -115,49 +161,89 @@ class AttendanceSummaryController extends Controller
             $cutoffType
         );
 
-        $summaryRows = $this->summaryBaseQuery($startDate, $endDate, $search, $status, $dayType)
+        $summaryRows = $this->summaryBaseQuery(
+            $startDate,
+            $endDate,
+            $search,
+            $status,
+            $dayType,
+            $groupName
+        )
             ->orderBy('employee_name')
             ->orderBy('work_date')
             ->get();
 
-        $masterEmployees = EmployeePlottingSchedule::query()
-            ->selectRaw("
-                MIN(biometric_employee_id) AS biometric_employee_id,
-                TRIM(employee_no) AS employee_no,
-                MIN(NULLIF(TRIM(employee_name), '')) AS employee_name
-            ")
-            ->whereNotNull('employee_no')
-            ->whereRaw("TRIM(employee_no) <> ''")
-            ->groupBy(DB::raw('TRIM(employee_no)'))
-            ->orderBy('employee_name')
-            ->get();
+        /*
+         * Export roster must come from EmployeeBiometric, not plotting
+         * schedules. An eligible employee without a plotted schedule must still
+         * be visible so HR can see and correct the missing schedule.
+         */
+        $masterEmployeesQuery = $this->eligibleEmployeeQuery($groupName);
 
-        $recordsByEmployee = $summaryRows->groupBy(fn ($row) => trim((string) $row->employee_no));
+        if ($search !== '' || $status !== '' || $dayType !== '') {
+            $matchingEmployeeIds = $summaryRows
+                ->pluck('employee_biometric_id')
+                ->filter()
+                ->map(fn ($id): int => (int) $id)
+                ->unique()
+                ->values();
 
-        $employees = $masterEmployees->map(function ($employee) use ($recordsByEmployee) {
+            $masterEmployeesQuery->whereIn('id', $matchingEmployeeIds);
+        }
 
-            $employeeNo = trim((string) $employee->employee_no);
-            $records = $recordsByEmployee->get($employeeNo, collect());
+        $masterEmployees = $masterEmployeesQuery->get();
+
+        $recordsByEmployee = $summaryRows->groupBy(
+            fn ($row): int => (int) $row->employee_biometric_id
+        );
+
+        $employees = $masterEmployees->map(function (EmployeeBiometric $employee) use ($recordsByEmployee): array {
+            $records = $recordsByEmployee->get((int) $employee->id, collect());
 
             return [
-                'employee_name' => $employee->employee_name,
-                'employee_no' => $employeeNo,
-                'biometric_employee_id' => $employee->biometric_employee_id,
+                'employee_biometric_id' => $employee->id,
+                'employee_name' => $employee->effective_name,
+                'employee_no' => $employee->effective_employee_no,
+                'biometric_employee_id' => $employee->legacy_biometric_employee_id,
+                'group_name' => $employee->group_name,
                 'records' => $records,
-
                 'total_late_minutes' => $records->sum('late_minutes'),
                 'total_undertime_minutes' => $records->sum('undertime_minutes'),
                 'total_worked_minutes' => $records->sum('worked_minutes'),
                 'total_payable_days' => $records->sum('payable_days'),
                 'total_payable_hours' => $records->sum('payable_hours'),
+                'total_absent_count' => $records->where('attendance_status', 'absent')->count(),
+                'total_review_count' => $records->whereIn('attendance_status', [
+                    'half_day',
+                    'incomplete_log',
+                    'no_schedule',
+                    'holiday_unpaid',
+                    'absent',
+                ])->count(),
+                'total_holiday_paid_count' => $records->filter(
+                    fn ($record): bool => (bool) $record->is_holiday && (float) $record->payable_days > 0
+                )->count(),
+                'total_holiday_unpaid_count' => $records->where('attendance_status', 'holiday_unpaid')->count(),
             ];
         });
 
         $employeePages = $employees->chunk(9);
 
-        $stats = $this->buildStats($this->summaryBaseQuery($startDate, $endDate, $search, $status, $dayType));
+        $stats = $this->buildStats($this->summaryBaseQuery(
+            $startDate,
+            $endDate,
+            $search,
+            $status,
+            $dayType,
+            $groupName
+        ));
+        $stats = array_merge(
+            $stats,
+            $this->buildRosterCoverageStats($startDate, $endDate, $groupName)
+        );
 
         return view('payroll.attendance_summary.export-payroll', compact(
+            'employees',
             'employeePages',
             'summaryRows',
             'stats',
@@ -167,7 +253,8 @@ class AttendanceSummaryController extends Controller
             'cutoffLabel',
             'search',
             'status',
-            'dayType'
+            'dayType',
+            'groupName'
         ));
     }
 
@@ -176,14 +263,22 @@ class AttendanceSummaryController extends Controller
         Carbon $endDate,
         ?string $search = null,
         ?string $status = null,
-        ?string $dayType = null
+        ?string $dayType = null,
+        ?string $groupName = null
     ) {
         return DailyAttendanceSummary::query()
-            ->with('employeeBiometric')
+            ->with(['employeeBiometric', 'plottingSchedule'])
             ->whereBetween('work_date', [
                 $startDate->toDateString(),
                 $endDate->toDateString(),
             ])
+            ->whereHas('employeeBiometric', function ($employeeQuery) use ($groupName): void {
+                $employeeQuery->payrollActive();
+
+                if ($groupName !== null && trim($groupName) !== '') {
+                    $employeeQuery->where('group_name', trim($groupName));
+                }
+            })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('employee_name', 'like', "%{$search}%")
@@ -248,6 +343,87 @@ class AttendanceSummaryController extends Controller
                     ]);
                 }
             });
+    }
+
+    protected function eligibleEmployeeQuery(?string $groupName = null, ?string $search = null)
+    {
+        return EmployeeBiometric::query()
+            ->payrollActive()
+            ->when($groupName !== null && trim($groupName) !== '', function ($query) use ($groupName): void {
+                $query->where('group_name', trim($groupName));
+            })
+            ->when($search, function ($query) use ($search): void {
+                $query->where(function ($query) use ($search): void {
+                    $query->where('display_name', 'like', "%{$search}%")
+                        ->orWhere('source_employee_name', 'like', "%{$search}%")
+                        ->orWhere('display_employee_no', 'like', "%{$search}%")
+                        ->orWhere('source_employee_no', 'like', "%{$search}%")
+                        ->orWhere('source_employee_id', 'like', "%{$search}%")
+                        ->orWhere('source_crosschex_id', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('display_name')
+            ->orderBy('source_employee_name')
+            ->orderBy('id');
+    }
+
+    protected function buildRosterCoverageStats(
+        Carbon $startDate,
+        Carbon $endDate,
+        ?string $groupName = null
+    ): array {
+        /*
+         * Roster coverage is intentionally independent of search/status/day
+         * filters. It answers the audit question: "How many employees should
+         * exist in this payroll group for this cutoff?"
+         */
+        $eligibleIds = $this->eligibleEmployeeQuery($groupName)
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values();
+
+        $summaryEmployeeIds = DailyAttendanceSummary::query()
+            ->whereBetween('work_date', [
+                $startDate->toDateString(),
+                $endDate->toDateString(),
+            ])
+            ->whereIn('employee_biometric_id', $eligibleIds)
+            ->pluck('employee_biometric_id')
+            ->filter()
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
+
+        $missingIds = $eligibleIds->diff($summaryEmployeeIds)->values();
+
+        $missingEmployees = EmployeeBiometric::query()
+            ->whereIn('id', $missingIds)
+            ->orderBy('display_name')
+            ->orderBy('source_employee_name')
+            ->get()
+            ->map(fn (EmployeeBiometric $employee): array => [
+                'id' => (int) $employee->id,
+                'employee_no' => $employee->effective_employee_no,
+                'employee_name' => $employee->effective_name,
+                'group_name' => $employee->group_name,
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'eligible_employees' => $eligibleIds->count(),
+            'summary_employees' => $summaryEmployeeIds->count(),
+            'missing_summary_employees' => $missingIds->count(),
+            'missing_summary_employee_list' => $missingEmployees,
+        ];
+    }
+
+    protected function payrollGroups(): array
+    {
+        return [
+            (string) EmployeeBiometric::PAYROLL_GROUP_MIRASOL => 'Mirasol / Balintawak Payroll',
+            (string) EmployeeBiometric::PAYROLL_GROUP_GONZALES => 'Gonzales Payroll',
+        ];
     }
 
     protected function buildStats($baseQuery): array
@@ -462,7 +638,7 @@ class AttendanceSummaryController extends Controller
         if ($type === 'first') {
             $startDate = Carbon::create($year, $month, 11, 0, 0, 0, 'Asia/Manila')->startOfDay();
             $endDate = Carbon::create($year, $month, 25, 23, 59, 59, 'Asia/Manila')->endOfDay();
-            $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' (1st Cutoff)';
+            $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' | '.config('payroll.cutoff_display.first.full', '2nd Cutoff (11-25)');
 
             return [$startDate, $endDate, $label];
         }
@@ -473,7 +649,7 @@ class AttendanceSummaryController extends Controller
             ->day(10)
             ->endOfDay();
 
-        $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' (2nd Cutoff)';
+        $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' | '.config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)');
 
         return [$startDate, $endDate, $label];
     }

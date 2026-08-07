@@ -19,7 +19,7 @@ class PayrollDeductionService
         private readonly GovernmentDeductionService $governmentDeductionService
     ) {}
 
-    public function computeRates(float $basicSalary, string $rateType): array
+    public function computeRates(float $basicSalary, string $rateType, ?float $paidHoursPerDay = null): array
     {
         if ($basicSalary <= 0) {
             return [
@@ -35,7 +35,8 @@ class PayrollDeductionService
             ? ($basicSalary * $this->annualMonths()) / $this->annualDays()
             : $basicSalary;
 
-        $hourlyRate = $dailyRate / $this->paidHoursPerDay();
+        $paidHoursPerDay = max(1, (float) ($paidHoursPerDay ?? $this->paidHoursPerDay()));
+        $hourlyRate = $dailyRate / $paidHoursPerDay;
         $perMinuteRate = $hourlyRate / $this->minutesPerHour();
 
         return [

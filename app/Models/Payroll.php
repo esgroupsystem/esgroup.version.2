@@ -64,10 +64,20 @@ class Payroll extends Model
     protected function cutoffLabel(): Attribute
     {
         return Attribute::get(function (): string {
-            $type = $this->cutoff_type === 'first' ? '1st Cutoff' : '2nd Cutoff';
-            $monthLabel = now()->setDate((int) $this->cutoff_year, (int) $this->cutoff_month, 1)->format('F Y');
+            // Legacy database mapping is intentionally preserved:
+            // `first`  = 11-25 = business 2nd cutoff
+            // `second` = 26-10 = business 1st cutoff
+            $type = (string) $this->cutoff_type;
+            $display = (string) config(
+                "payroll.cutoff_display.{$type}.full",
+                $type === 'first' ? '2nd Cutoff (11-25)' : '1st Cutoff (26-10)'
+            );
 
-            return $type.' - '.$monthLabel;
+            $monthLabel = now()
+                ->setDate((int) $this->cutoff_year, (int) $this->cutoff_month, 1)
+                ->format('F Y');
+
+            return $display.' - '.$monthLabel;
         });
     }
 

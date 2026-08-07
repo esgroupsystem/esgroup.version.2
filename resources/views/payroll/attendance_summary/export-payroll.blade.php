@@ -217,6 +217,11 @@
 <body>
     @php
         $exportRows = $summaryRows ?? ($rows ?? collect());
+        $exportGroupLabel = match ((string) ($groupName ?? '')) {
+            '1' => 'Mirasol / Balintawak Payroll',
+            '2' => 'Gonzales Payroll',
+            default => 'All Payroll Groups',
+        };
     @endphp
 
     <div class="toolbar">
@@ -233,15 +238,16 @@
             <div class="report-header">
                 <h1>Payroll Attendance Summary</h1>
                 <div class="sub">
-                    Cutoff: {{ $cutoffLabel }} |
+                    Cutoff: {{ $cutoffLabel }} | {{ $exportGroupLabel }} |
                     Page {{ $pageIndex + 1 }} of {{ $employeePages->count() }}
                 </div>
             </div>
 
             <div class="summary-line">
                 <div>
-                    <strong>Employees</strong><br>
-                    {{ number_format($employees->count()) }}
+                    <strong>Roster</strong><br>
+                    {{ number_format((int) ($stats['eligible_employees'] ?? $employees->count())) }} eligible
+                    / {{ number_format($employees->count()) }} shown
                 </div>
 
                 <div>
@@ -299,6 +305,12 @@
                             <span>Emp No: {{ $employee['employee_no'] ?: '—' }}</span>
                             <span>Bio ID: {{ $employee['biometric_employee_id'] ?: '—' }}</span>
                         </div>
+
+                        @if ($employee['records']->isEmpty())
+                            <div class="status-danger" style="font-size: 7.5px; padding: 2px; margin-bottom: 3px;">
+                                NO ATTENDANCE SUMMARY — REBUILD / CHECK SCHEDULE
+                            </div>
+                        @endif
 
                         <table>
                             <thead>

@@ -36,6 +36,8 @@
                                 data-empno="{{ $resolvedPerson['employee_no'] }}"
                                 data-name="{{ $resolvedPerson['employee_name'] }}"
                                 data-crosschex="{{ $resolvedPerson['crosschex_id'] }}"
+                                data-paid-work-hours="{{ $person->paid_work_hours ?? 8 }}"
+                                data-workday-label="{{ $person->workday_label ?? '8 hrs + 1 hr lunch' }}"
                                 data-search="{{ strtolower(trim(($resolvedPerson['canonical_id'] ?? '') . ' ' . ($resolvedPerson['employee_name'] ?? '') . ' ' . ($resolvedPerson['employee_no'] ?? '') . ' ' . ($resolvedPerson['legacy_id'] ?? '') . ' ' . ($resolvedPerson['crosschex_id'] ?? ''))) }}">
                                 <div class="fw-semibold text-dark">{{ $resolvedPerson['employee_name'] }}</div>
                                 <div class="small text-muted">
@@ -43,6 +45,7 @@
                                     {{ $resolvedPerson['employee_no'] ?: 'No Employee No' }}
                                     {{ $resolvedPerson['legacy_id'] ? '| Legacy: ' . $resolvedPerson['legacy_id'] : '' }}
                                     {{ $resolvedPerson['crosschex_id'] ? '| CrossChex: ' . $resolvedPerson['crosschex_id'] : '' }}
+                                    | {{ $person->workday_label ?? '8 hrs + 1 hr lunch' }}
                                 </div>
                             </button>
                         @endforeach

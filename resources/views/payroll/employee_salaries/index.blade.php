@@ -517,19 +517,19 @@
 
                         <div class="d-flex flex-wrap align-items-center gap-2">
                             <span class="salary-schedule-badge bg-primary-subtle text-primary">
-                                1st
+                                {{ config('payroll.cutoff_display.second.label', '1st Cutoff') }} | {{ config('payroll.cutoff_display.second.range', '26-10') }}
                             </span>
 
                             <span class="fs-10 text-700 me-2">
-                                Apply on first cutoff only
+                                Apply on business 1st cutoff only
                             </span>
 
                             <span class="salary-schedule-badge bg-info-subtle text-info">
-                                2nd
+                                {{ config('payroll.cutoff_display.first.label', '2nd Cutoff') }} | {{ config('payroll.cutoff_display.first.range', '11-25') }}
                             </span>
 
                             <span class="fs-10 text-700 me-2">
-                                Apply on second cutoff only
+                                Apply on business 2nd cutoff only
                             </span>
 
                             <span class="salary-schedule-badge bg-success-subtle text-success">

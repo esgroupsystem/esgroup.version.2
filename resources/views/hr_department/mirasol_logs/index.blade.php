@@ -121,12 +121,12 @@
 
                             <div class="col-auto">
                                 <select name="cutoff_type" class="form-select form-select-sm">
-                                    <option value="11_25" {{ $cutoffType === '11_25' ? 'selected' : '' }}>
-                                        11 - 25
+                                    <option value="26_10" {{ $cutoffType === '26_10' ? 'selected' : '' }}>
+                                        {{ config('payroll.cutoff_display_by_range.26_10', '1st Cutoff (26-10)') }}
                                     </option>
 
-                                    <option value="26_10" {{ $cutoffType === '26_10' ? 'selected' : '' }}>
-                                        26 - 10
+                                    <option value="11_25" {{ $cutoffType === '11_25' ? 'selected' : '' }}>
+                                        {{ config('payroll.cutoff_display_by_range.11_25', '2nd Cutoff (11-25)') }}
                                     </option>
                                 </select>
                             </div>
@@ -153,8 +153,8 @@
                                 <th style="width:110px;">Day Off</th>
                                 <th style="width:110px;">Time In</th>
                                 <th style="width:110px;">Time Out</th>
-                                <th style="width:100px;">Worked</th>
-                                <th style="width:100px;">Required</th>
+                                <th style="width:100px;">Clock Span</th>
+                                <th style="width:100px;">Required Clock</th>
                                 <th style="width:100px;">Late</th>
                                 <th style="width:100px;">Undertime</th>
                                 <th style="width:180px;">Attendance Status</th>
@@ -208,10 +208,10 @@
                                         @if (($r['schedule_status'] ?? null) === 'scheduled')
                                             @if (($r['shift_mode'] ?? '') === 'Flexible')
                                                 <div class="fw-semibold text-info">
-                                                    Flexible - 9 Hours Required
+                                                    Flexible - {{ $r['required_hours_label'] ?? '—' }} Clock Hours Required
                                                 </div>
                                                 <div class="fs-11 text-muted">
-                                                    No fixed Time In / Time Out
+                                                    {{ number_format(((int) ($r['paid_work_minutes'] ?? 480)) / 60, 0) }} paid hour(s) + lunch; no fixed Time In / Time Out
                                                 </div>
                                             @else
                                                 <div class="fw-semibold text-success">

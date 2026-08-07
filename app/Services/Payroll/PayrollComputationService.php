@@ -3,6 +3,7 @@
 namespace App\Services\Payroll;
 
 use App\Models\DailyAttendanceSummary;
+use App\Models\EmployeeBiometric;
 use App\Models\Holiday;
 use App\Models\PaymentLog;
 use App\Models\Payroll;
@@ -22,6 +23,7 @@ class PayrollComputationService
         protected PayrollPeriodService $periodService,
         protected GovernmentDeductionService $governmentDeductionService,
         protected PaymentLogService $paymentLogService,
+        protected PayrollEmployeeRosterService $employeeRosterService,
     ) {}
 
     public function generate(array $data, ?int $userId = null): Payroll
@@ -32,71 +34,85 @@ class PayrollComputationService
             (string) $data['cutoff_type']
         );
 
+        $garageGroup = (int) $data['garage_group'];
+
         $contribution = $this->periodService->contributionMonth(
             (int) $data['cutoff_month'],
             (int) $data['cutoff_year'],
             (string) $data['cutoff_type']
         );
 
+        /*
+         * Payroll uniqueness is per payroll group + cutoff.
+         * Mirasol/Balintawak and Gonzales are separate payroll rosters and may
+         * legitimately generate payroll for the same cutoff period.
+         */
         $existing = Payroll::query()
             ->where('cutoff_month', (int) $data['cutoff_month'])
             ->where('cutoff_year', (int) $data['cutoff_year'])
             ->where('cutoff_type', (string) $data['cutoff_type'])
+            ->where('garage_group', (string) $garageGroup)
             ->first();
 
         if ($existing) {
             throw ValidationException::withMessages([
-                'cutoff_type' => 'Payroll already exists for this cutoff. Delete the draft first if you need to regenerate.',
+                'cutoff_type' => 'Payroll already exists for this payroll group and cutoff. Delete the draft first if you need to regenerate.',
             ]);
         }
+
+        /*
+         * IMPORTANT: employee_biometrics is the canonical payroll roster.
+         * Attendance Summary is calculation input, not the source of who is
+         * included. This guarantees that every Active + Payroll Inclusion ON
+         * employee in the selected group appears in payroll.
+         */
+        $roster = $this->employeeRosterService->forGroup($garageGroup);
+
+        if ($roster->isEmpty()) {
+            throw ValidationException::withMessages([
+                'garage_group' => 'No Active employees with Payroll Inclusion ON were found in the selected payroll group.',
+            ]);
+        }
+
+        $rosterIds = $roster
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values();
 
         $summaries = DailyAttendanceSummary::query()
             ->with('employeeBiometric')
-            ->whereBetween(
-                'work_date',
-                [
-                    $startDate->toDateString(),
-                    $endDate->toDateString(),
-                ]
-            )
-->when(
-    ! empty($data['garage_group']),
-    function ($query) use ($data) {
-
-        $query->whereHas(
-            'employeeBiometric',
-            function ($employeeQuery) use ($data) {
-
-                $employeeQuery->where(
-                    'group_name',
-                    $data['garage_group']
-                );
-
-            }
-        );
-
-    }
-)
-            ->where(function ($query): void {
-
-                $query->whereHas(
-                    'employeeBiometric',
-                    fn ($employeeQuery) => $employeeQuery->payrollActive()
-                )
-                    ->orWhereNull('employee_biometric_id');
-
-            })
-            ->orderBy('employee_name')
+            ->whereBetween('work_date', [
+                $startDate->toDateString(),
+                $endDate->toDateString(),
+            ])
+            ->whereIn('employee_biometric_id', $rosterIds)
+            ->orderBy('employee_biometric_id')
             ->orderBy('work_date')
             ->get();
 
-        if ($summaries->isEmpty()) {
-            throw ValidationException::withMessages([
-                'cutoff_type' => 'No daily attendance summaries found for the selected cutoff.',
-            ]);
-        }
+        $summaryEmployeeIds = $summaries
+            ->pluck('employee_biometric_id')
+            ->filter()
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
 
-        return DB::transaction(function () use ($data, $startDate, $endDate, $contribution, $summaries, $userId): Payroll {
+        $missingSummaryEmployeeIds = $rosterIds
+            ->diff($summaryEmployeeIds)
+            ->values();
+
+        return DB::transaction(function () use (
+            $data,
+            $startDate,
+            $endDate,
+            $contribution,
+            $garageGroup,
+            $roster,
+            $summaries,
+            $summaryEmployeeIds,
+            $missingSummaryEmployeeIds,
+            $userId
+        ): Payroll {
             $payroll = Payroll::create([
                 'payroll_number' => $this->periodService->generatePayrollNumber(
                     (int) $data['cutoff_year'],
@@ -107,7 +123,7 @@ class PayrollComputationService
                 'cutoff_month' => (int) $data['cutoff_month'],
                 'cutoff_year' => (int) $data['cutoff_year'],
                 'cutoff_type' => (string) $data['cutoff_type'],
-                'garage_group' => $data['garage_group'],
+                'garage_group' => (string) $garageGroup,
                 'contribution_month' => $contribution['month'],
                 'contribution_year' => $contribution['year'],
                 'period_start' => $startDate->toDateString(),
@@ -123,29 +139,183 @@ class PayrollComputationService
                     'late_grace_minutes' => (int) config('payroll.attendance.late_grace_minutes', 15),
                     'contribution_cycle_start' => $contribution['cycle_start']->toDateString(),
                     'contribution_cycle_end' => $contribution['cycle_end']->toDateString(),
+                    'roster_audit' => [
+                        'source' => 'employee_biometrics',
+                        'rule' => 'employment_status=active AND payroll_inclusion=on AND selected_payroll_group',
+                        'eligible_employee_count' => $roster->count(),
+                        'employees_with_summary_rows' => $summaryEmployeeIds->count(),
+                        'employees_without_summary_rows' => $missingSummaryEmployeeIds->count(),
+                        'missing_summary_employee_biometric_ids' => $missingSummaryEmployeeIds->all(),
+                    ],
                 ],
             ]);
 
-            $summaries->groupBy(fn ($row): string => $this->employeeGroupKey($row))->each(function (Collection $rows) use ($payroll, $startDate, $endDate, $data, $userId): void {
-                $this->createPayrollItem($payroll, $rows, $startDate, $endDate, (string) $data['cutoff_type'], $userId);
-            });
+            $summariesByEmployee = $summaries->groupBy(
+                fn ($row): int => (int) $row->employee_biometric_id
+            );
+
+            foreach ($roster as $employee) {
+                $rows = $summariesByEmployee->get((int) $employee->id, collect());
+
+                if ($rows->isEmpty()) {
+                    $this->createMissingSummaryPayrollItem(
+                        $payroll,
+                        $employee,
+                        $startDate,
+                        $endDate,
+                        $userId
+                    );
+
+                    continue;
+                }
+
+                $this->createPayrollItem(
+                    $payroll,
+                    $rows,
+                    $startDate,
+                    $endDate,
+                    (string) $data['cutoff_type'],
+                    $userId
+                );
+            }
+
+            $createdItemCount = PayrollItem::query()
+                ->where('payroll_id', $payroll->id)
+                ->count();
+
+            if ($createdItemCount !== $roster->count()) {
+                throw new \RuntimeException(sprintf(
+                    'Payroll roster integrity check failed. Eligible employees: %d; generated payroll items: %d.',
+                    $roster->count(),
+                    $createdItemCount
+                ));
+            }
 
             return $payroll->load(['items', 'paymentLogs']);
         });
     }
 
+    protected function createMissingSummaryPayrollItem(
+        Payroll $payroll,
+        EmployeeBiometric $employee,
+        Carbon $startDate,
+        Carbon $endDate,
+        ?int $userId
+    ): PayrollItem {
+        $reference = $this->employeeReferenceFromBiometric($employee);
+        $rates = $this->resolveEmployeeRates($reference, $this->hoursPerDay());
+        $coverage = $this->summaryCoverage(collect(), $startDate, $endDate);
+
+        /*
+         * The employee must remain visible in payroll, but missing Attendance
+         * Summary data must never silently create payable salary. The safe
+         * fallback item is therefore zero-pay and explicitly tagged for review.
+         */
+        $item = PayrollItem::create([
+            'payroll_id' => $payroll->id,
+            'employee_biometric_id' => $employee->id,
+            'employee_id' => $rates['employee_id'],
+            'payroll_employee_salary_id' => $rates['salary_id'],
+            'biometric_employee_id' => $reference->biometric_employee_id,
+            'employee_no' => $reference->employee_no,
+            'employee_name' => $reference->employee_name,
+            'crosschex_id' => $reference->crosschex_id,
+            'rate_type' => $rates['rate_type'],
+            'monthly_rate' => round((float) $rates['monthly_rate'], 2),
+            'daily_rate' => round((float) $rates['daily_rate'], 2),
+            'hourly_rate' => round((float) $rates['hourly_rate'], 4),
+            'minute_rate' => round((float) $rates['minute_rate'], 4),
+            'total_scheduled_days' => 0,
+            'total_worked_days' => 0,
+            'total_payable_days' => 0,
+            'total_payable_hours' => 0,
+            'total_worked_minutes' => 0,
+            'total_late_minutes' => 0,
+            'total_undertime_minutes' => 0,
+            'total_overtime_minutes' => 0,
+            'total_absent_days' => 0,
+            'total_rest_day_worked' => 0,
+            'total_holiday_worked' => 0,
+            'total_leave_days' => 0,
+            'regular_pay' => 0,
+            'gross_pay' => 0,
+            'late_deduction' => 0,
+            'undertime_deduction' => 0,
+            'absence_deduction' => 0,
+            'overtime_pay' => 0,
+            'holiday_pay' => 0,
+            'rest_day_pay' => 0,
+            'leave_pay' => 0,
+            'taxable_compensation' => 0,
+            'sss_employee' => 0,
+            'sss_employer' => 0,
+            'sss_ec' => 0,
+            'philhealth_employee' => 0,
+            'philhealth_employer' => 0,
+            'pagibig_employee' => 0,
+            'pagibig_employer' => 0,
+            'withholding_tax' => 0,
+            'total_employee_government_deductions' => 0,
+            'total_employer_government_contributions' => 0,
+            'other_additions' => 0,
+            'other_deductions' => 0,
+            'net_pay' => 0,
+            'meta' => [
+                'roster_inclusion' => [
+                    'source' => 'employee_biometrics',
+                    'employee_biometric_id' => $employee->id,
+                    'employment_status' => $employee->employment_status,
+                    'is_payroll_active' => (bool) ($employee->is_payroll_active ?? true),
+                    'group_name' => $employee->group_name,
+                ],
+                'attendance_summary_coverage' => $coverage,
+                'audit_issues' => ['missing_attendance_summary'],
+                'safe_zero_pay' => true,
+                'safe_zero_pay_reason' => 'Employee is payroll-eligible but has no Attendance Summary rows for this cutoff.',
+                'salary_profile_found' => ! empty($rates['salary_id']),
+            ],
+        ]);
+
+        $this->createFutureReportPlaceholders($payroll, $item, $userId);
+
+        return $item;
+    }
+
+    protected function employeeReferenceFromBiometric(EmployeeBiometric $employee): object
+    {
+        return (object) [
+            'employee_biometric_id' => (int) $employee->id,
+            'biometric_employee_id' => $employee->legacy_biometric_employee_id,
+            'employee_no' => $employee->effective_employee_no,
+            'employee_name' => $employee->effective_name,
+            'crosschex_id' => $employee->source_crosschex_id,
+        ];
+    }
+
     protected function createPayrollItem(Payroll $payroll, Collection $rows, Carbon $startDate, Carbon $endDate, string $cutoffType, ?int $userId): PayrollItem
     {
         $first = $rows->first();
-        $rates = $this->resolveEmployeeRates($first);
+        $summaryCoverage = $this->summaryCoverage($rows, $startDate, $endDate);
+        $paidMinutesPerDay = $this->paidMinutesPerDayForRows($rows);
+        $paidHoursPerDay = round($paidMinutesPerDay / 60, 2);
+        $scheduledClockMinutesPerDay = $this->scheduledClockMinutesForRows($rows);
+
+        $rates = $this->resolveEmployeeRates($first, $paidHoursPerDay);
 
         $isMonthlyEmployee = strtolower((string) $rates['rate_type']) === 'monthly';
 
         if ($isMonthlyEmployee) {
-            $rates = $this->applyMonthlyDivisorRates($rates, $payroll);
+            $rates = $this->applyMonthlyDivisorRates(
+                $rates,
+                $payroll,
+                $paidHoursPerDay,
+                $scheduledClockMinutesPerDay
+            );
         }
 
         $totalWorkedMinutes = (int) $rows->sum(fn ($row): int => (int) ($row->worked_minutes ?? 0));
+        $totalWorkedDays = $this->totalWorkedDayEquivalent($rows);
+        $totalPayableDays = $this->totalPayableDayEquivalent($rows);
         $totalLateMinutes = $this->totalPayrollLateMinutes($rows);
         $totalUndertimeMinutes = (int) $rows->sum(fn ($row): int => $this->payrollUndertimeMinutesForRow($row));
         $totalAbsentDays = (float) $rows->filter(fn ($row): bool => $this->isAbsent($row))->count();
@@ -227,13 +397,21 @@ class PayrollComputationService
 
         $taxableCompensation = $grossPay;
 
-        $currentGovernmentBasis = round(
-            max(0, $regularPay - $attendanceDeductionForNet)
-            + $holiday['government_basis']
-            + $leavePay
-            + $restDay['government_basis'],
-            2
-        );
+        /*
+         * SSS contribution basis must use the employee's TOTAL ACTUAL
+         * remuneration for the contribution month. In this payroll module,
+         * gross_pay is the amount earned before government and salary/loan
+         * deductions, so it includes the recurring allowance and other
+         * additions that form part of compensation.
+         *
+         * Regression example (John Gabriel Medina):
+         *   Previous 2nd cutoff gross = PHP 11,784.92
+         *   Current 1st cutoff gross  = PHP  9,117.80
+         *   Monthly SSS compensation  = PHP 20,902.72
+         *   MSC                       = PHP 21,000.00
+         *   Employee SSS              = PHP 1,050.00
+         */
+        $currentGovernmentBasis = round(max(0, $grossPay), 2);
 
         $monthlyCycleBasis = $this->monthlyCycleGovernmentBasis(
             $payroll,
@@ -317,8 +495,8 @@ class PayrollComputationService
             'hourly_rate' => round((float) $rates['hourly_rate'], 2),
             'minute_rate' => round((float) $rates['minute_rate'], 4),
             'total_scheduled_days' => $this->scheduledWorkingDays($rows),
-            'total_worked_days' => round($totalWorkedMinutes / $this->minutesPerDay(), 2),
-            'total_payable_days' => round($totalSummaryPayableHours / $this->hoursPerDay(), 2),
+            'total_worked_days' => $totalWorkedDays,
+            'total_payable_days' => $totalPayableDays,
             'total_payable_hours' => $totalSummaryPayableHours,
             'total_worked_minutes' => $totalWorkedMinutes,
             'total_late_minutes' => $totalLateMinutes,
@@ -352,6 +530,15 @@ class PayrollComputationService
             'other_deductions' => $otherDeductions,
             'net_pay' => $netPay,
             'meta' => [
+                'roster_inclusion' => [
+                    'source' => 'employee_biometrics',
+                    'employee_biometric_id' => $first->employee_biometric_id ?? null,
+                    'included' => true,
+                ],
+                'attendance_summary_coverage' => $summaryCoverage,
+                'audit_issues' => $summaryCoverage['missing_days'] > 0
+                    ? ['missing_attendance_summary_days']
+                    : [],
                 'pay_architecture' => [
                     'money_model' => $isMonthlyEmployee
                         ? 'monthly_salary_divided_by_2_less_attendance_loss'
@@ -367,9 +554,9 @@ class PayrollComputationService
                         ? 'Regular pay is fixed monthly salary divided by 2. Daily/hourly/minute rates are used only for deductions and premiums.'
                         : 'Regular pay is payable hours multiplied by hourly rate.',
                 ],
-                'hours_per_day' => $this->hoursPerDay(),
-                'paid_minutes_per_day' => $this->minutesPerDay(),
-                'scheduled_clock_minutes_per_day' => $this->scheduledClockMinutesPerDay(),
+                'hours_per_day' => $paidHoursPerDay,
+                'paid_minutes_per_day' => $paidMinutesPerDay,
+                'scheduled_clock_minutes_per_day' => $scheduledClockMinutesPerDay,
                 'attendance_deductions_are_deducted_from_monthly_base' => $isMonthlyEmployee,
                 'government_schedule' => $government['schedule_meta'] ?? config('payroll.government_deduction_schedule'),
                 'government_raw_before_schedule' => $governmentRaw,
@@ -530,12 +717,22 @@ class PayrollComputationService
         ];
     }
 
-    protected function applyMonthlyDivisorRates(array $rates, Payroll $payroll): array
+    protected function applyMonthlyDivisorRates(
+        array $rates,
+        Payroll $payroll,
+        ?float $paidHoursPerDay = null,
+        ?int $scheduledClockMinutesPerDay = null
+    ): array
     {
         $monthlyRate = round((float) ($rates['monthly_rate'] ?? 0), 2);
+        $paidHoursPerDay = max(1, (float) ($paidHoursPerDay ?? $this->hoursPerDay()));
+        $scheduledClockMinutesPerDay = max(
+            (int) round($paidHoursPerDay * 60),
+            (int) ($scheduledClockMinutesPerDay ?? $this->scheduledClockMinutesPerDay())
+        );
 
         $dailyRate = $monthlyRate > 0 ? ($monthlyRate * 12) / 365 : 0.0;
-        $hourlyRate = $dailyRate > 0 ? $dailyRate / $this->hoursPerDay() : 0.0;
+        $hourlyRate = $dailyRate > 0 ? $dailyRate / $paidHoursPerDay : 0.0;
         $minuteRate = $hourlyRate > 0 ? $hourlyRate / 60 : 0.0;
 
         $rates['daily_rate'] = round($dailyRate, 6);
@@ -556,10 +753,10 @@ class PayrollComputationService
             'hourly_rate_display' => round($hourlyRate, 2),
             'minute_rate' => round($minuteRate, 6),
             'minute_rate_display' => round($minuteRate, 2),
-            'paid_hours_per_day' => $this->hoursPerDay(),
-            'scheduled_clock_hours_per_day' => round($this->scheduledClockMinutesPerDay() / 60, 2),
+            'paid_hours_per_day' => $paidHoursPerDay,
+            'scheduled_clock_hours_per_day' => round($scheduledClockMinutesPerDay / 60, 2),
             'daily_rate_formula' => 'monthly_salary * 12 / 365',
-            'hourly_rate_formula' => 'daily_rate / 8',
+            'hourly_rate_formula' => 'daily_rate / paid_hours_per_day',
             'minute_rate_formula' => 'hourly_rate / 60',
             'cutoff_base_formula' => 'monthly_salary / 2',
         ];
@@ -600,7 +797,38 @@ class PayrollComputationService
         );
     }
 
-    protected function resolveEmployeeRates(object $summary): array
+    protected function summaryCoverage(Collection $rows, Carbon $startDate, Carbon $endDate): array
+    {
+        $expectedDates = collect();
+        $cursor = $startDate->copy()->startOfDay();
+        $lastDate = $endDate->copy()->startOfDay();
+
+        while ($cursor->lte($lastDate)) {
+            $expectedDates->push($cursor->toDateString());
+            $cursor->addDay();
+        }
+
+        $actualDates = $rows
+            ->map(fn ($row): string => $this->dateString($row->work_date))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $missingDates = $expectedDates
+            ->diff($actualDates)
+            ->values();
+
+        return [
+            'expected_calendar_days' => $expectedDates->count(),
+            'summary_rows' => $rows->count(),
+            'unique_summary_dates' => $actualDates->count(),
+            'missing_days' => $missingDates->count(),
+            'missing_dates' => $missingDates->all(),
+            'is_complete' => $missingDates->isEmpty(),
+        ];
+    }
+
+    protected function resolveEmployeeRates(object $summary, ?float $paidHoursPerDay = null): array
     {
         if (! class_exists(PayrollEmployeeSalary::class)) {
             return $this->emptyRatePayload();
@@ -612,39 +840,44 @@ class PayrollComputationService
             $query->where('is_active', true);
         }
 
-        $matched = false;
+        /*
+         * Canonical identity is authoritative. Never OR a canonical employee
+         * FK with weak legacy identifiers because CrossChex employee IDs can
+         * overlap between accounts. Doing so can attach another employee's
+         * salary profile to the current payroll item.
+         */
+        if (! empty($summary->employee_biometric_id)) {
+            $query->where('employee_biometric_id', (int) $summary->employee_biometric_id);
+        } else {
+            $matched = false;
 
-        $query->where(function ($q) use ($summary, &$matched): void {
-            if (! empty($summary->employee_biometric_id)) {
-                $q->orWhere('employee_biometric_id', (int) $summary->employee_biometric_id);
-                $matched = true;
+            $query->where(function ($q) use ($summary, &$matched): void {
+                if (! empty($summary->biometric_employee_id)) {
+                    $q->orWhere('biometric_employee_id', $summary->biometric_employee_id);
+                    $matched = true;
+                }
+
+                if (! empty($summary->employee_no)) {
+                    $q->orWhere('employee_no', $summary->employee_no);
+                    $matched = true;
+                }
+
+                if (! empty($summary->crosschex_id)) {
+                    $q->orWhere('crosschex_id', $summary->crosschex_id);
+                    $matched = true;
+                }
+
+                if (! empty($summary->employee_name)) {
+                    $q->orWhereRaw('LOWER(TRIM(employee_name)) = ?', [
+                        mb_strtolower(trim((string) $summary->employee_name)),
+                    ]);
+                    $matched = true;
+                }
+            });
+
+            if (! $matched) {
+                return $this->emptyRatePayload();
             }
-
-            if (! empty($summary->biometric_employee_id)) {
-                $q->orWhere('biometric_employee_id', $summary->biometric_employee_id);
-                $matched = true;
-            }
-
-            if (! empty($summary->employee_no)) {
-                $q->orWhere('employee_no', $summary->employee_no);
-                $matched = true;
-            }
-
-            if (! empty($summary->crosschex_id)) {
-                $q->orWhere('crosschex_id', $summary->crosschex_id);
-                $matched = true;
-            }
-
-            if (! empty($summary->employee_name)) {
-                $q->orWhereRaw('LOWER(TRIM(employee_name)) = ?', [
-                    mb_strtolower(trim((string) $summary->employee_name)),
-                ]);
-                $matched = true;
-            }
-        });
-
-        if (! $matched) {
-            return $this->emptyRatePayload();
         }
 
         $salary = $query
@@ -658,6 +891,7 @@ class PayrollComputationService
 
         $rateType = strtolower((string) ($salary->rate_type ?? 'daily'));
         $basicSalary = (float) ($salary->basic_salary ?? 0);
+        $paidHoursPerDay = max(1, (float) ($paidHoursPerDay ?? $this->hoursPerDay()));
 
         if ($rateType === 'monthly') {
             $monthlyRate = $basicSalary;
@@ -667,7 +901,7 @@ class PayrollComputationService
             $monthlyRate = $dailyRate > 0 ? ($dailyRate * 365) / 12 : 0.0;
         }
 
-        $hourlyRate = $dailyRate > 0 ? $dailyRate / $this->hoursPerDay() : 0.0;
+        $hourlyRate = $dailyRate > 0 ? $dailyRate / $paidHoursPerDay : 0.0;
         $minuteRate = $hourlyRate > 0 ? $hourlyRate / 60 : 0.0;
 
         return [
@@ -1006,6 +1240,7 @@ class PayrollComputationService
                 ->where('cutoff_month', $previous['month'])
                 ->where('cutoff_year', $previous['year'])
                 ->where('cutoff_type', 'second')
+                ->where('garage_group', (string) $payroll->garage_group)
                 ->latest('id')
                 ->first();
 
@@ -1043,7 +1278,8 @@ class PayrollComputationService
             'current_cutoff_basis' => round($currentBasis, 2),
             'previous_cutoff_basis' => round($previousBasis, 2),
             'previous_second_payroll_item_id' => $previousItem?->id,
-            'cycle_rule' => 'previous_second_cutoff_plus_current_first_cutoff',
+            'basis_source' => 'gross_pay_before_government_and_salary_loan_deductions',
+            'cycle_rule' => 'previous_second_cutoff_gross_plus_current_first_cutoff_gross',
             'warning' => $payroll->cutoff_type === 'first' && ! $previousItem
                 ? 'Previous 2nd cutoff payroll item not found; government basis used current cutoff only.'
                 : null,
@@ -1052,30 +1288,23 @@ class PayrollComputationService
 
     protected function governmentBasisFromPreviousItem(PayrollItem $item): float
     {
+        /*
+         * IMPORTANT: gross_pay is now the authoritative SSS compensation basis.
+         * Prefer it even when an older payroll item contains the legacy meta basis,
+         * because the legacy basis excluded recurring allowances and therefore
+         * understated the employee's monthly SSS compensation.
+         */
+        if (is_numeric($item->gross_pay)) {
+            return max(0, round((float) $item->gross_pay, 2));
+        }
+
         $metaBasis = data_get($item->meta, 'government_monthly_cycle_basis.current_cutoff_basis');
 
         if (is_numeric($metaBasis)) {
             return max(0, round((float) $metaBasis, 2));
         }
 
-        /*
-         | Fallback for older payroll items that do not have the government basis
-         | saved in meta yet.
-         */
-        $attendanceLoss = round(
-            (float) ($item->late_deduction ?? 0)
-            + (float) ($item->undertime_deduction ?? 0)
-            + (float) ($item->absence_deduction ?? 0),
-            2
-        );
-
-        return round(
-            max(0, (float) ($item->regular_pay ?? 0) - $attendanceLoss)
-            + (float) ($item->holiday_pay ?? 0)
-            + (float) ($item->leave_pay ?? 0)
-            + (float) ($item->rest_day_pay ?? 0),
-            2
-        );
+        return 0.00;
     }
 
     protected function computeAttendanceDeductions(Collection $rows, array $rates, int $lateMinutes, int $undertimeMinutes, float $absentDays): array
@@ -1102,7 +1331,7 @@ class PayrollComputationService
             'absent_days' => $absentDays,
             'absence_rate_per_day' => round($absentRate, 6),
             'absence_deduction' => round($absentDays * $absentRate, 2),
-            'note' => 'Daily Attendance Summary is the payroll source of truth. Late and undertime deductions use the stored summary minutes multiplied by the employee minute rate. Automatic half day equals 240 paid minutes worked and 240 undertime minutes.',
+            'note' => 'Daily Attendance Summary is the payroll source of truth. Late and undertime deductions use the stored summary minutes multiplied by the employee minute rate. Automatic half day is one-half of the employee schedule paid minutes.',
         ];
     }
 
@@ -1519,15 +1748,93 @@ class PayrollComputationService
             return 0.0;
         }
 
+        $paidMinutesPerDay = $this->paidMinutesForRow($row);
+
         if ($this->statusIs($row, 'leave')) {
-            return $this->hoursPerDay();
+            return round($paidMinutesPerDay / 60, 2);
         }
 
         $lateMinutes = $this->payrollLateMinutesForRow($row);
         $undertimeMinutes = $this->payrollUndertimeMinutesForRow($row);
-        $deductedMinutes = min($this->minutesPerDay(), $lateMinutes + $undertimeMinutes);
+        $deductedMinutes = min($paidMinutesPerDay, $lateMinutes + $undertimeMinutes);
 
-        return round(max(0, $this->minutesPerDay() - $deductedMinutes) / 60, 2);
+        return round(max(0, $paidMinutesPerDay - $deductedMinutes) / 60, 2);
+    }
+
+    protected function totalWorkedDayEquivalent(Collection $rows): float
+    {
+        return round($rows->sum(function ($row): float {
+            $paidMinutesPerDay = $this->paidMinutesForRow($row);
+
+            return max(0, (int) data_get($row, 'worked_minutes', 0)) / $paidMinutesPerDay;
+        }), 2);
+    }
+
+    protected function totalPayableDayEquivalent(Collection $rows): float
+    {
+        return round($rows->sum(function ($row): float {
+            $summaryPayableDays = data_get($row, 'payable_days');
+
+            if (is_numeric($summaryPayableDays)) {
+                return max(0, (float) $summaryPayableDays);
+            }
+
+            return $this->payableHours($row) / $this->paidHoursForRow($row);
+        }), 2);
+    }
+
+    protected function paidMinutesPerDayForRows(Collection $rows): int
+    {
+        $minutes = $rows
+            ->map(fn ($row): int => $this->paidMinutesForRow($row))
+            ->filter(fn (int $value): bool => $value > 0)
+            ->countBy()
+            ->sortDesc()
+            ->keys()
+            ->first();
+
+        return max(60, (int) ($minutes ?: $this->minutesPerDay()));
+    }
+
+    protected function scheduledClockMinutesForRows(Collection $rows): int
+    {
+        $minutes = $rows
+            ->map(function ($row): int {
+                $metaMinutes = data_get($row, 'meta.scheduled_clock_minutes');
+
+                return is_numeric($metaMinutes)
+                    ? max(60, (int) $metaMinutes)
+                    : $this->paidMinutesForRow($row) + 60;
+            })
+            ->filter(fn (int $value): bool => $value > 0)
+            ->countBy()
+            ->sortDesc()
+            ->keys()
+            ->first();
+
+        return max(60, (int) ($minutes ?: $this->scheduledClockMinutesPerDay()));
+    }
+
+    protected function paidHoursForRow(object $row): float
+    {
+        return round($this->paidMinutesForRow($row) / 60, 2);
+    }
+
+    protected function paidMinutesForRow(object $row): int
+    {
+        $metaMinutes = data_get($row, 'meta.paid_minutes_per_day');
+
+        if (is_numeric($metaMinutes) && (int) $metaMinutes > 0) {
+            return max(60, (int) $metaMinutes);
+        }
+
+        $metaHours = data_get($row, 'meta.paid_work_hours');
+
+        if (is_numeric($metaHours) && (float) $metaHours > 0) {
+            return max(60, (int) round((float) $metaHours * 60));
+        }
+
+        return max(60, $this->minutesPerDay());
     }
 
     protected function isAbsent(object $row): bool
@@ -1558,6 +1865,58 @@ class PayrollComputationService
         return strtolower(str_replace(' ', '_', (string) ($row->attendance_status ?? ''))) === $status;
     }
 
+    protected function isFlexibleAttendanceRow(object $row): bool
+    {
+        if (method_exists($row, 'isFlexibleShift')) {
+            return $row->isFlexibleShift();
+        }
+
+        $metaMode = strtolower((string) data_get($row, 'meta.schedule_mode', ''));
+
+        if ($metaMode === 'flexible') {
+            return true;
+        }
+
+        return str_contains(strtolower((string) ($row->shift_name ?? '')), 'flexible');
+    }
+
+    protected function clockWorkedMinutesForRow(object $row): ?int
+    {
+        $metaMinutes = data_get($row, 'meta.clock_worked_minutes');
+
+        if (is_numeric($metaMinutes)) {
+            return max(0, (int) $metaMinutes);
+        }
+
+        $actualIn = $this->parsePayrollDateTime($row->actual_time_in ?? ($row->time_in ?? null), $row->work_date ?? null);
+        $actualOut = $this->parsePayrollDateTime($row->actual_time_out ?? ($row->time_out ?? null), $row->work_date ?? null);
+
+        if (! $actualIn || ! $actualOut) {
+            return null;
+        }
+
+        if ($actualOut->lessThanOrEqualTo($actualIn)) {
+            $actualOut->addDay();
+        }
+
+        return max(0, (int) $actualIn->diffInMinutes($actualOut));
+    }
+
+    protected function scheduledClockMinutesForRow(object $row): int
+    {
+        if (method_exists($row, 'scheduledClockMinutes')) {
+            return max(60, $row->scheduledClockMinutes());
+        }
+
+        $metaMinutes = data_get($row, 'meta.scheduled_clock_minutes');
+
+        if (is_numeric($metaMinutes) && (int) $metaMinutes > 0) {
+            return max(60, (int) $metaMinutes);
+        }
+
+        return $this->paidMinutesForRow($row) + 60;
+    }
+
     /**
      * Read canonical late minutes from Daily Attendance Summary.
      * Raw timestamp calculation remains only as a fallback for legacy rows.
@@ -1582,6 +1941,13 @@ class PayrollComputationService
 
         if (is_numeric($summaryLateMinutes)) {
             return max(0, (int) $summaryLateMinutes);
+        }
+
+        // Flexible shifts have no fixed Time In, therefore they can never be
+        // late against a plotted clock-in. Their compliance is based on total
+        // required clock minutes and is handled through undertime instead.
+        if ($this->isFlexibleAttendanceRow($row)) {
+            return 0;
         }
 
         $scheduledIn = $this->parsePayrollDateTime($row->scheduled_time_in ?? null, $row->work_date ?? null);
@@ -1626,6 +1992,25 @@ class PayrollComputationService
 
         if (is_numeric($summaryUndertimeMinutes)) {
             return max(0, (int) $summaryUndertimeMinutes);
+        }
+
+        if ($this->isFlexibleAttendanceRow($row)) {
+            if ($this->statusIs($row, 'half_day')) {
+                return (int) round($this->paidMinutesForRow($row) / 2);
+            }
+
+            $clockWorkedMinutes = $this->clockWorkedMinutesForRow($row);
+
+            if ($clockWorkedMinutes === null) {
+                return 0;
+            }
+
+            $rawUndertimeMinutes = max(
+                0,
+                $this->scheduledClockMinutesForRow($row) - $clockWorkedMinutes
+            );
+
+            return $this->roundUndertimeDeductionMinutes($rawUndertimeMinutes);
         }
 
         $scheduledIn = $this->parsePayrollDateTime($row->scheduled_time_in ?? null, $row->work_date ?? null);
@@ -1744,10 +2129,11 @@ class PayrollComputationService
 
     protected function premiumPayHours(object $row): float
     {
+        $paidHoursPerDay = $this->paidHoursForRow($row);
         $summaryPayableHours = data_get($row, 'payable_hours');
 
         if (is_numeric($summaryPayableHours)) {
-            return round(min($this->hoursPerDay(), max(0, (float) $summaryPayableHours)), 2);
+            return round(min($paidHoursPerDay, max(0, (float) $summaryPayableHours)), 2);
         }
 
         $workedMinutes = max(0, (int) data_get($row, 'worked_minutes', 0));
@@ -1756,7 +2142,7 @@ class PayrollComputationService
             return 0.0;
         }
 
-        return round(min($this->hoursPerDay(), $workedMinutes / 60), 2);
+        return round(min($paidHoursPerDay, $workedMinutes / 60), 2);
     }
 
     protected function hasApprovedHolidayAdjustment(object $employeeReference, Carbon $holidayDate): bool

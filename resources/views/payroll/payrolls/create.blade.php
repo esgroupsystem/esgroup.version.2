@@ -622,18 +622,11 @@
                                                     @error('cutoff_type') is-invalid @enderror"
                                                 required
                                             >
-                                                <option
-                                                    value="first"
-                                                    @selected(
-                                                        old(
-                                                            'cutoff_type',
-                                                            $defaultCutoffType
-                                                        ) === 'first'
-                                                    )
-                                                >
-                                                    1st Cutoff (11–25)
-                                                </option>
-
+                                                {{--
+                                                    Legacy values are intentionally preserved:
+                                                    second = 26-10 = business 1st cutoff
+                                                    first  = 11-25 = business 2nd cutoff
+                                                --}}
                                                 <option
                                                     value="second"
                                                     @selected(
@@ -643,7 +636,19 @@
                                                         ) === 'second'
                                                     )
                                                 >
-                                                    2nd Cutoff (26–10 next month)
+                                                    {{ config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)') }} - crosses to next month
+                                                </option>
+
+                                                <option
+                                                    value="first"
+                                                    @selected(
+                                                        old(
+                                                            'cutoff_type',
+                                                            $defaultCutoffType
+                                                        ) === 'first'
+                                                    )
+                                                >
+                                                    {{ config('payroll.cutoff_display.first.full', '2nd Cutoff (11-25)') }}
                                                 </option>
                                             </select>
 
@@ -665,9 +670,9 @@
                                                         </div>
 
                                                         <div class="fs-10 text-600">
-                                                            A second cutoff ending on February 10 and a first
-                                                            cutoff covering February 11–25 are assigned to the
-                                                            February contribution month. Government contribution
+                                                            Business 1st cutoff covers the 26th through the 10th,
+                                                            while business 2nd cutoff covers the 11th through the 25th.
+                                                            Both are assigned to the same contribution month. Government contribution
                                                             schedules remain configurable through
                                                             <code>config/payroll.php</code>.
                                                         </div>

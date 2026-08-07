@@ -38,7 +38,46 @@
         $workedMinutes = (int) ($row->worked_minutes ?? 0);
         $overtimeMinutes = (int) ($row->overtime_minutes ?? 0);
 
-        $hasSchedule = !empty($row->scheduled_time_in) && !empty($row->scheduled_time_out);
+        $metaScheduleMode = strtolower((string) data_get($row, 'meta.schedule_mode', ''));
+        $legacyFlexibleText = strtolower(trim(implode(' ', array_filter([
+            (string) ($row->schedule_remarks ?? ''),
+            (string) ($row->remarks ?? ''),
+        ]))));
+
+        $isFlexible = method_exists($row, 'isFlexibleShift')
+            ? $row->isFlexibleShift()
+            : (
+                $metaScheduleMode === 'flexible'
+                || str_contains(strtolower((string) ($row->shift_name ?? '')), 'flexible')
+                || str_contains($legacyFlexibleText, 'flexible shift')
+            );
+
+        $metaHasConfiguredSchedule = filter_var(
+            data_get($row, 'meta.has_configured_schedule'),
+            FILTER_VALIDATE_BOOL,
+            FILTER_NULL_ON_FAILURE
+        );
+
+        $hasSchedule = method_exists($row, 'hasConfiguredSchedule')
+            ? $row->hasConfiguredSchedule()
+            : (
+                $isFlexible
+                || $metaHasConfiguredSchedule === true
+                || !empty($row->plotting_schedule_id)
+                || (!empty($row->scheduled_time_in) && !empty($row->scheduled_time_out))
+            );
+
+        $paidMinutesPerDay = method_exists($row, 'paidMinutesPerDay')
+            ? $row->paidMinutesPerDay()
+            : max(60, (int) data_get($row, 'meta.paid_minutes_per_day', 480));
+
+        $scheduledClockMinutes = method_exists($row, 'scheduledClockMinutes')
+            ? $row->scheduledClockMinutes()
+            : max(
+                $paidMinutesPerDay,
+                (int) data_get($row, 'meta.scheduled_clock_minutes', $paidMinutesPerDay + 60)
+            );
+
         $hasActualIn = !empty($row->actual_time_in);
         $hasActualOut = !empty($row->actual_time_out);
 
@@ -143,6 +182,10 @@
             'undertime_minutes' => $undertimeMinutes,
             'worked_hours' => $workedMinutes / 60,
             'overtime_hours' => $overtimeMinutes / 60,
+            'is_flexible' => $isFlexible,
+            'has_schedule' => $hasSchedule,
+            'paid_hours_per_day' => round($paidMinutesPerDay / 60, 2),
+            'scheduled_clock_hours' => round($scheduledClockMinutes / 60, 2),
         ];
     });
 
@@ -409,17 +452,31 @@
                             </td>
 
                             <td>
-                                <div class="audit-time-box">
-                                    <div class="audit-time-line">
-                                        <span>In</span>
-                                        <span>{{ $formatTime($row->scheduled_time_in) }}</span>
+                                @if ($audit['is_flexible'])
+                                    <div class="d-flex flex-column gap-1">
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle align-self-start">
+                                            Flexible Shift
+                                        </span>
+                                        <strong class="text-dark">
+                                            {{ number_format($audit['scheduled_clock_hours'], $audit['scheduled_clock_hours'] == floor($audit['scheduled_clock_hours']) ? 0 : 2) }} clock hr(s)
+                                        </strong>
+                                        <small class="text-muted">
+                                            {{ number_format($audit['paid_hours_per_day'], $audit['paid_hours_per_day'] == floor($audit['paid_hours_per_day']) ? 0 : 2) }} paid hr(s) + lunch; no fixed Time In/Out
+                                        </small>
                                     </div>
+                                @else
+                                    <div class="audit-time-box">
+                                        <div class="audit-time-line">
+                                            <span>In</span>
+                                            <span>{{ $formatTime($row->scheduled_time_in) }}</span>
+                                        </div>
 
-                                    <div class="audit-time-line">
-                                        <span>Out</span>
-                                        <span>{{ $formatTime($row->scheduled_time_out) }}</span>
+                                        <div class="audit-time-line">
+                                            <span>Out</span>
+                                            <span>{{ $formatTime($row->scheduled_time_out) }}</span>
+                                        </div>
                                     </div>
-                                </div>
+                                @endif
                             </td>
 
                             <td>

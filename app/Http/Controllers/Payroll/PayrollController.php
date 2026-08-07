@@ -142,28 +142,30 @@ class PayrollController extends Controller
         $item->load(['employeeBiometric', 'paymentLogs']);
 
         $summaries = DailyAttendanceSummary::query()
-            ->with('employeeBiometric')
+            ->with(['employeeBiometric', 'plottingSchedule'])
             ->whereBetween('work_date', [
                 $payroll->period_start->toDateString(),
                 $payroll->period_end->toDateString(),
             ])
-            ->where(function ($query) use ($item): void {
-                if (! empty($item->employee_biometric_id)) {
-                    $query->orWhere('employee_biometric_id', (int) $item->employee_biometric_id);
-                }
+            ->when(
+                ! empty($item->employee_biometric_id),
+                fn ($query) => $query->where('employee_biometric_id', (int) $item->employee_biometric_id),
+                function ($query) use ($item): void {
+                    $query->where(function ($query) use ($item): void {
+                        if (! empty($item->biometric_employee_id)) {
+                            $query->orWhere('biometric_employee_id', $item->biometric_employee_id);
+                        }
 
-                if (! empty($item->biometric_employee_id)) {
-                    $query->orWhere('biometric_employee_id', $item->biometric_employee_id);
-                }
+                        if (! empty($item->employee_no)) {
+                            $query->orWhere('employee_no', $item->employee_no);
+                        }
 
-                if (! empty($item->employee_no)) {
-                    $query->orWhere('employee_no', $item->employee_no);
+                        if (! empty($item->employee_name)) {
+                            $query->orWhere('employee_name', $item->employee_name);
+                        }
+                    });
                 }
-
-                if (! empty($item->employee_name)) {
-                    $query->orWhere('employee_name', $item->employee_name);
-                }
-            })
+            )
             ->orderBy('work_date')
             ->get();
 
@@ -174,6 +176,22 @@ class PayrollController extends Controller
     {
         if ($payroll->status === 'finalized') {
             return back()->with('success', 'Payroll is already finalized.');
+        }
+
+        $payroll->loadMissing('items');
+
+        $incompleteSummaryItems = $payroll->items->filter(function (PayrollItem $item): bool {
+            return (bool) data_get($item->meta, 'safe_zero_pay', false)
+                || (int) data_get($item->meta, 'attendance_summary_coverage.missing_days', 0) > 0;
+        });
+
+        if ($incompleteSummaryItems->isNotEmpty()) {
+            return back()->withErrors([
+                'payroll' => sprintf(
+                    'Cannot finalize payroll. %d employee(s) have missing Attendance Summary coverage. Rebuild the cutoff and regenerate this draft payroll first.',
+                    $incompleteSummaryItems->count()
+                ),
+            ]);
         }
 
         DB::transaction(function () use ($payroll): void {

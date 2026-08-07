@@ -527,6 +527,23 @@
                                             'leave' => 'primary',
                                             default => 'dark',
                                         };
+                                        $legacyFlexibleText = strtolower(trim(implode(' ', array_filter([
+                                            (string) ($row->schedule_remarks ?? ''),
+                                            (string) ($row->remarks ?? ''),
+                                        ]))));
+                                        $isFlexible = method_exists($row, 'isFlexibleShift')
+                                            ? $row->isFlexibleShift()
+                                            : (
+                                                strtolower((string) data_get($row, 'meta.schedule_mode', '')) === 'flexible'
+                                                || str_contains(strtolower((string) $row->shift_name), 'flexible')
+                                                || str_contains($legacyFlexibleText, 'flexible shift')
+                                            );
+                                        $scheduledClockMinutes = method_exists($row, 'scheduledClockMinutes')
+                                            ? $row->scheduledClockMinutes()
+                                            : max(60, (int) data_get($row->meta, 'scheduled_clock_minutes', 540));
+                                        $paidMinutesPerDay = method_exists($row, 'paidMinutesPerDay')
+                                            ? $row->paidMinutesPerDay()
+                                            : max(60, (int) data_get($row->meta, 'paid_minutes_per_day', 480));
                                     @endphp
 
                                     <tr>
@@ -541,9 +558,17 @@
                                         </td>
 
                                         <td class="text-nowrap">
-                                            {{ $row->scheduled_time_in ? \Carbon\Carbon::parse($row->scheduled_time_in)->format('h:i A') : '--' }}
-                                            -
-                                            {{ $row->scheduled_time_out ? \Carbon\Carbon::parse($row->scheduled_time_out)->format('h:i A') : '--' }}
+                                            @if ($isFlexible)
+                                                <span class="badge bg-info-subtle text-info border border-info-subtle">Flexible</span>
+                                                <div class="small text-muted mt-1">
+                                                    {{ number_format($scheduledClockMinutes / 60, ($scheduledClockMinutes / 60) == floor($scheduledClockMinutes / 60) ? 0 : 2) }} clock hr(s) /
+                                                    {{ number_format($paidMinutesPerDay / 60, ($paidMinutesPerDay / 60) == floor($paidMinutesPerDay / 60) ? 0 : 2) }} paid hr(s)
+                                                </div>
+                                            @else
+                                                {{ $row->scheduled_time_in ? \Carbon\Carbon::parse($row->scheduled_time_in)->format('h:i A') : '--' }}
+                                                -
+                                                {{ $row->scheduled_time_out ? \Carbon\Carbon::parse($row->scheduled_time_out)->format('h:i A') : '--' }}
+                                            @endif
                                         </td>
 
                                         <td class="text-nowrap">

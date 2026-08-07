@@ -98,7 +98,10 @@ class EmployeeBiometric extends Model
     public function scopePayrollActive(Builder $query): Builder
     {
         return $query
-            ->where('is_payroll_active', true)
+            ->where(function (Builder $query): void {
+                $query->where('is_payroll_active', true)
+                    ->orWhereNull('is_payroll_active');
+            })
             ->where(function (Builder $query): void {
                 $query->whereNull('employment_status')
                     ->orWhere('employment_status', self::STATUS_ACTIVE);

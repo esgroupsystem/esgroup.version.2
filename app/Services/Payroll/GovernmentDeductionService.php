@@ -4,25 +4,9 @@ namespace App\Services\Payroll;
 
 class GovernmentDeductionService
 {
-    private const SSS_EMPLOYEE_RATE = 0.05;
-
-    private const SSS_EMPLOYER_RATE = 0.10;
-
-    private const SSS_MINIMUM_MSC = 5000.00;
-
-    private const SSS_MAXIMUM_MSC = 35000.00;
-
-    private const SSS_MSC_INCREMENT = 500.00;
-
-    private const SSS_FIRST_MIDDLE_RANGE = 5250.00;
-
-    private const SSS_MAXIMUM_RANGE_START = 34750.00;
-
-    private const SSS_EC_LOW_AMOUNT = 10.00;
-
-    private const SSS_EC_HIGH_AMOUNT = 30.00;
-
-    private const SSS_EC_LOW_MSC_MAXIMUM = 14500.00;
+    public function __construct(
+        private readonly SssContributionService $sssContributionService
+    ) {}
 
     private const PHILHEALTH_PREMIUM_RATE = 0.05;
 
@@ -59,6 +43,16 @@ class GovernmentDeductionService
             'sss_employee' => $sss['employee'],
             'sss_employer' => $sss['employer'],
             'sss_ec' => $sss['ec'],
+            'sss_employee_regular_ss' => $sss['employee_regular_ss'],
+            'sss_employee_mpf' => $sss['employee_mpf'],
+            'sss_employer_regular_ss' => $sss['employer_regular_ss'],
+            'sss_employer_mpf' => $sss['employer_mpf'],
+            'sss_employer_total_with_ec' => $sss['employer_total_with_ec'],
+            'sss_total_contribution' => $sss['total_contribution'],
+            'sss_compensation_range_minimum' => $sss['range_minimum'],
+            'sss_compensation_range_maximum' => $sss['range_maximum'],
+            'sss_circular_number' => $sss['circular_number'],
+            'sss_effective_from' => $sss['effective_from'],
             'philhealth_employee' => $philHealth['employee'],
             'philhealth_employer' => $philHealth['employer'],
             'pagibig_employee' => $pagibig['employee'],
@@ -158,6 +152,28 @@ class GovernmentDeductionService
                 'monthly_ec_share' => $this->money(
                     $monthlyGovernment['sss_ec'] ?? 0
                 ),
+                'monthly_employee_regular_ss' => $this->money(
+                    $monthlyGovernment['sss_employee_regular_ss'] ?? 0
+                ),
+                'monthly_employee_mpf' => $this->money(
+                    $monthlyGovernment['sss_employee_mpf'] ?? 0
+                ),
+                'monthly_employer_regular_ss' => $this->money(
+                    $monthlyGovernment['sss_employer_regular_ss'] ?? 0
+                ),
+                'monthly_employer_mpf' => $this->money(
+                    $monthlyGovernment['sss_employer_mpf'] ?? 0
+                ),
+                'monthly_total_contribution' => $this->money(
+                    $monthlyGovernment['sss_total_contribution'] ?? 0
+                ),
+                'monthly_salary_credit' => $this->money(
+                    $monthlyGovernment['sss_msc'] ?? 0
+                ),
+                'compensation_range_minimum' => $monthlyGovernment['sss_compensation_range_minimum'] ?? null,
+                'compensation_range_maximum' => $monthlyGovernment['sss_compensation_range_maximum'] ?? null,
+                'circular_number' => $monthlyGovernment['sss_circular_number'] ?? '2024-006',
+                'effective_from' => $monthlyGovernment['sss_effective_from'] ?? '2025-01-01',
                 'deducted_employee_share' => $government['sss_employee'],
                 'scheduled_employer_share' => $government['sss_employer'],
                 'scheduled_ec_share' => $government['sss_ec'],
@@ -290,27 +306,7 @@ class GovernmentDeductionService
 
     protected function computeSss(float $monthlyBasic): array
     {
-        $compensation = $this->money($monthlyBasic);
-
-        if ($compensation <= 0) {
-            return [
-                'employee' => 0.00,
-                'employer' => 0.00,
-                'ec' => 0.00,
-                'msc' => 0.00,
-            ];
-        }
-
-        $msc = $this->sssMonthlySalaryCredit($compensation);
-
-        return [
-            'employee' => $this->money($msc * self::SSS_EMPLOYEE_RATE),
-            'employer' => $this->money($msc * self::SSS_EMPLOYER_RATE),
-            'ec' => $msc <= self::SSS_EC_LOW_MSC_MAXIMUM
-                ? self::SSS_EC_LOW_AMOUNT
-                : self::SSS_EC_HIGH_AMOUNT,
-            'msc' => $msc,
-        ];
+        return $this->sssContributionService->compute($monthlyBasic);
     }
 
     protected function computePhilHealth(float $monthlyBasic): array
@@ -365,27 +361,6 @@ class GovernmentDeductionService
             'employer' => $this->money($fundSalary * self::PAGIBIG_EMPLOYER_RATE),
             'fund_salary' => $this->money($fundSalary),
         ];
-    }
-
-    private function sssMonthlySalaryCredit(float $compensation): float
-    {
-        if ($compensation < self::SSS_FIRST_MIDDLE_RANGE) {
-            return self::SSS_MINIMUM_MSC;
-        }
-
-        if ($compensation >= self::SSS_MAXIMUM_RANGE_START) {
-            return self::SSS_MAXIMUM_MSC;
-        }
-
-        $step = (int) floor(
-            ($compensation - self::SSS_FIRST_MIDDLE_RANGE)
-            / self::SSS_MSC_INCREMENT
-        ) + 1;
-
-        return min(
-            self::SSS_MAXIMUM_MSC,
-            self::SSS_MINIMUM_MSC + ($step * self::SSS_MSC_INCREMENT)
-        );
     }
 
     private function money(mixed $value): float

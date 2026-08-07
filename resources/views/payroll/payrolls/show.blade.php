@@ -10,6 +10,8 @@
         $num = fn($value, $decimals = 2) => number_format((float) $value, $decimals);
 
         $totalEmployees = (int) data_get($totals, 'employees', $items->count());
+        $eligibleRosterCount = (int) data_get($payroll->meta, 'roster_audit.eligible_employee_count', $totalEmployees);
+        $missingSummaryEmployees = (int) data_get($payroll->meta, 'roster_audit.employees_without_summary_rows', 0);
 
         $totalRegularPay = (float) data_get($totals, 'regular_pay', $items->sum('regular_pay'));
         $totalGrossPay = (float) data_get($totals, 'gross_pay', $items->sum('gross_pay'));
@@ -63,11 +65,13 @@
                 $netPay = (float) ($item->net_pay ?? 0);
                 $payableDays = (float) ($item->total_payable_days ?? 0);
                 $payableHours = (float) ($item->total_payable_hours ?? 0);
+                $missingSummaryDays = (int) data_get($item->meta, 'attendance_summary_coverage.missing_days', 0);
 
                 $deductions =
                     (float) ($item->total_employee_government_deductions ?? 0) + (float) ($item->other_deductions ?? 0);
 
-                return $regularPay <= 0 ||
+                return $missingSummaryDays > 0 ||
+                    $regularPay <= 0 ||
                     $grossPay <= 0 ||
                     $netPay <= 0 ||
                     ($payableDays <= 0 && $payableHours <= 0) ||
@@ -283,6 +287,22 @@
                 </div>
             @endif
 
+            @if ($missingSummaryEmployees > 0)
+                <div class="alert alert-danger border-0 shadow-sm">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="fas fa-user-times mt-1"></i>
+                        <div>
+                            <div class="fw-bold">Attendance Summary coverage is incomplete.</div>
+                            <div class="fs-10">
+                                {{ number_format($missingSummaryEmployees) }} payroll-eligible employee(s) have no summary rows for this cutoff.
+                                They are still included below as zero-pay <strong>No Summary</strong> records so nobody disappears silently.
+                                Rebuild Attendance Summary and regenerate this draft before finalizing.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="card border-0 shadow-sm mb-3 payroll-header-card">
                 <div class="card-header bg-body-tertiary border-bottom py-3">
                     <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3">
@@ -323,6 +343,11 @@
                                     {{ optional($payroll->period_start)->format('M d, Y') }}
                                     -
                                     {{ optional($payroll->period_end)->format('M d, Y') }}
+                                </span>
+
+                                <span>
+                                    <i class="fas fa-layer-group me-1 text-primary"></i>
+                                    {{ $payroll->garage_group_label }}
                                 </span>
 
                                 <span>
@@ -370,7 +395,12 @@
                             <div class="payroll-soft-box">
                                 <div class="payroll-kpi-label">Employees</div>
                                 <div class="payroll-kpi-value">{{ number_format($totalEmployees) }}</div>
-                                <div class="payroll-kpi-note">Included records</div>
+                                <div class="payroll-kpi-note">
+                                    Roster: {{ number_format($eligibleRosterCount) }} eligible
+                                    @if ($missingSummaryEmployees > 0)
+                                        | {{ number_format($missingSummaryEmployees) }} missing summary
+                                    @endif
+                                </div>
                             </div>
                         </div>
 
@@ -629,6 +659,21 @@
                                         $itemPayableHours = (float) ($item->total_payable_hours ?? 0);
 
                                         $auditBadges = [];
+                                        $missingSummaryDays = (int) data_get(
+                                            $item->meta,
+                                            'attendance_summary_coverage.missing_days',
+                                            0,
+                                        );
+                                        $safeZeroPay = (bool) data_get($item->meta, 'safe_zero_pay', false);
+
+                                        if ($safeZeroPay) {
+                                            $auditBadges[] = ['label' => 'No Summary', 'tone' => 'danger'];
+                                        } elseif ($missingSummaryDays > 0) {
+                                            $auditBadges[] = [
+                                                'label' => 'Summary Gap ' . $missingSummaryDays . 'd',
+                                                'tone' => 'warning',
+                                            ];
+                                        }
 
                                         if ($itemRegularPay <= 0) {
                                             $auditBadges[] = ['label' => 'No Regular', 'tone' => 'danger'];

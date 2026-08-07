@@ -42,6 +42,13 @@
             $adjustmentCount = (int) ($stats['adjustment'] ?? 0);
             $regularShiftCount = (int) ($stats['regular_shift'] ?? 0);
             $flexibleShiftCount = (int) ($stats['flexible_shift'] ?? 0);
+            $eligibleEmployees = (int) ($stats['eligible_employees'] ?? 0);
+            $summaryEmployees = (int) ($stats['summary_employees'] ?? 0);
+            $missingSummaryEmployees = (int) ($stats['missing_summary_employees'] ?? 0);
+            $missingSummaryEmployeeList = collect($stats['missing_summary_employee_list'] ?? []);
+            $selectedGroupLabel = $groupName !== ''
+                ? ($payrollGroups[(string) $groupName] ?? ('Payroll Group '.$groupName))
+                : 'All Payroll Groups';
 
             $totalLateMinutes = (float) ($stats['total_late_minutes'] ?? 0);
             $totalUndertimeMinutes = (float) ($stats['total_undertime_minutes'] ?? 0);
@@ -174,6 +181,16 @@
                                     {{ number_format($totalRecords) }} record(s)
                                 </span>
 
+                                <span class="badge rounded-pill bg-light text-dark border px-3 py-2">
+                                    <span class="fas fa-users me-1"></span>
+                                    {{ $selectedGroupLabel }}
+                                </span>
+
+                                <span class="badge rounded-pill bg-light text-dark border px-3 py-2">
+                                    <span class="fas fa-user-check me-1"></span>
+                                    {{ number_format($eligibleEmployees) }} payroll eligible
+                                </span>
+
                                 <span
                                     class="badge rounded-pill bg-success-subtle text-success border border-success-subtle px-3 py-2">
                                     <span class="fas fa-coins me-1"></span>
@@ -200,6 +217,7 @@
                                 <input type="hidden" name="search" value="{{ $search }}">
                                 <input type="hidden" name="status" value="{{ $status }}">
                                 <input type="hidden" name="day_type" value="{{ $dayType }}">
+                                <input type="hidden" name="group_name" value="{{ $groupName }}">
 
                                 <button type="submit" class="btn btn-success w-100">
                                     <span class="fas fa-sync-alt me-1"></span>
@@ -218,6 +236,39 @@
                             </small>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <div class="alert {{ $missingSummaryEmployees > 0 ? 'alert-danger bg-soft-danger' : 'alert-success bg-soft-success' }} border-200">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-2">
+                    <div class="d-flex align-items-start gap-2">
+                        <span class="fas {{ $missingSummaryEmployees > 0 ? 'fa-user-times' : 'fa-users-cog' }} mt-1"></span>
+                        <div>
+                            <div class="fw-bold">Payroll Roster Coverage — {{ $selectedGroupLabel }}</div>
+                            <div class="fs-10">
+                                Eligible: <strong>{{ number_format($eligibleEmployees) }}</strong> |
+                                With Attendance Summary: <strong>{{ number_format($summaryEmployees) }}</strong> |
+                                Missing Summary: <strong>{{ number_format($missingSummaryEmployees) }}</strong>.
+                                Eligibility is based only on Active status, Payroll Inclusion ON, and payroll group.
+                            </div>
+
+                            @if ($missingSummaryEmployeeList->isNotEmpty())
+                                <div class="fs-10 mt-1">
+                                    <strong>Missing:</strong>
+                                    {{ $missingSummaryEmployeeList->take(10)->map(fn ($employee) => ($employee['employee_name'] ?? 'Unknown').' ['.($employee['employee_no'] ?? 'No Emp No').']')->implode(', ') }}
+                                    @if ($missingSummaryEmployeeList->count() > 10)
+                                        and {{ number_format($missingSummaryEmployeeList->count() - 10) }} more
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    @if ($missingSummaryEmployees > 0)
+                        <span class="badge badge-phoenix badge-phoenix-danger px-3 py-2">Rebuild required</span>
+                    @else
+                        <span class="badge badge-phoenix badge-phoenix-success px-3 py-2">Roster covered</span>
+                    @endif
                 </div>
             </div>
 
@@ -371,7 +422,7 @@
                                     <div>
                                         <div class="fw-bold text-900">Flexible Shift</div>
                                         <div class="text-600 fs-10">
-                                            Flexible shift requires 9 worked hours for full payable day.
+                                            Flexible shift follows each employee's selected workday: 9 clock hours for 8 paid hours, or 10 clock hours for 9 paid hours, including lunch.
                                         </div>
                                     </div>
                                 </div>
@@ -441,12 +492,25 @@
                             <div class="col-md-3 col-xl-2">
                                 <label class="form-label fw-semibold">Cutoff</label>
                                 <select name="cutoff_type" class="form-select">
-                                    <option value="first" {{ $cutoffType === 'first' ? 'selected' : '' }}>
-                                        1st Cutoff (11-25)
-                                    </option>
                                     <option value="second" {{ $cutoffType === 'second' ? 'selected' : '' }}>
-                                        2nd Cutoff (26-10)
+                                        {{ config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)') }}
                                     </option>
+                                    <option value="first" {{ $cutoffType === 'first' ? 'selected' : '' }}>
+                                        {{ config('payroll.cutoff_display.first.full', '2nd Cutoff (11-25)') }}
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3 col-xl-2">
+                                <label class="form-label fw-semibold">Payroll Group</label>
+                                <select name="group_name" class="form-select">
+                                    <option value="">All Payroll Groups</option>
+                                    @foreach ($payrollGroups as $value => $label)
+                                        <option value="{{ $value }}"
+                                            {{ (string) $groupName === (string) $value ? 'selected' : '' }}>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
 

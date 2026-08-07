@@ -622,16 +622,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/save', 'save')
                 ->middleware('permission:payroll-plotting.update')
                 ->name('save');
-
-            // Optional: quick-fill (apply default shifts to the table)
-            Route::post('/quick-fill', 'quickFill')
-                ->middleware('permission:payroll-plotting.update')
-                ->name('quick-fill');
-
-            // Optional: employee search suggestions
-            Route::get('/search-suggestions', 'searchSuggestions')
-                ->middleware('permission:payroll-plotting.view')
-                ->name('search-suggestions');
         });
 
     /*
@@ -719,7 +709,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->middleware('permission:attendance-summary.create')
                 ->name('rebuild');
 
-            Route::get('/attendance-summary/export-payroll', 'exportPayroll')
+            Route::get('/export-payroll', 'exportPayroll')
                 ->middleware('permission:attendance-summary.export')
                 ->name('export-payroll');
         });

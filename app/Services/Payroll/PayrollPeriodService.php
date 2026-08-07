@@ -26,8 +26,9 @@ class PayrollPeriodService
     /**
      * Return payroll cutoff range.
      *
-     * 1st cutoff: 11 to 25
-     * 2nd cutoff: 26 to 10 next month
+     * Legacy internal mapping (do not rename without a data migration):
+     * - `first`  = 11 to 25 = BUSINESS 2ND CUTOFF
+     * - `second` = 26 to 10 next month = BUSINESS 1ST CUTOFF
      */
     public function resolveCutoffRange(int $month, int $year, string $cutoffType): array
     {
@@ -49,10 +50,10 @@ class PayrollPeriodService
     /**
      * Government contribution month.
      *
-     * Company rule:
-     * Jan 26 - Feb 10 = 2nd cutoff
-     * Feb 11 - Feb 25 = 1st cutoff
-     * Both belong to February contribution cycle.
+     * Company display rule:
+     * Jan 26 - Feb 10 = BUSINESS 1ST CUTOFF (legacy key: `second`)
+     * Feb 11 - Feb 25 = BUSINESS 2ND CUTOFF (legacy key: `first`)
+     * Both belong to the February contribution cycle.
      */
     public function contributionMonth(int $month, int $year, string $cutoffType): array
     {
@@ -81,8 +82,9 @@ class PayrollPeriodService
     }
 
     /**
-     * Used when 1st cutoff needs to check the previous 2nd cutoff
-     * for whole-month government contribution basis.
+     * Legacy helper name retained for compatibility. Internally, `first` means
+     * 11-25 (business 2nd cutoff) and it checks the prior `second` record, which
+     * means 26-10 (business 1st cutoff), for the monthly contribution basis.
      */
     public function previousSecondCutoffForFirst(int $month, int $year): array
     {
@@ -134,9 +136,8 @@ class PayrollPeriodService
     /**
      * Generate unique payroll number.
      *
-     * Example:
-     * PR-202602-1 = first cutoff
-     * PR-202601-2 = second cutoff
+     * Payroll-number suffixes are legacy internal identifiers and are unchanged.
+     * Display names are resolved separately through config/payroll.php.
      */
     public function generatePayrollNumber(
         int $year,

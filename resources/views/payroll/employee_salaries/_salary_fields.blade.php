@@ -3,10 +3,16 @@
 
     $salary = $salary ?? null;
 
+    // Legacy schedule keys are preserved. Only the business-facing tags change.
+    $businessFirstCutoffLabel = config('payroll.cutoff_display.second.label', '1st Cutoff');
+    $businessFirstCutoffRange = config('payroll.cutoff_display.second.range', '26-10');
+    $businessSecondCutoffLabel = config('payroll.cutoff_display.first.label', '2nd Cutoff');
+    $businessSecondCutoffRange = config('payroll.cutoff_display.first.range', '11-25');
+
     $scheduleOptions = [
         'none' => 'No Deduction / Not Applicable',
-        'first_cutoff' => '1st Cutoff Only',
-        'second_cutoff' => '2nd Cutoff Only',
+        'second_cutoff' => $businessFirstCutoffLabel.' Only ('.$businessFirstCutoffRange.')',
+        'first_cutoff' => $businessSecondCutoffLabel.' Only ('.$businessSecondCutoffRange.')',
         'every_cutoff' => 'Every Cutoff',
     ];
 
@@ -46,6 +52,11 @@
     ];
 @endphp
 
+@if (! isset($salary))
+    <input type="hidden" id="preview_paid_hours_per_day" value="8">
+    <input type="hidden" id="preview_workday_label" value="8 hrs + 1 hr lunch">
+@endif
+
 <div class="col-md-4">
     <label class="form-label">Employee No</label>
     <input type="text" name="employee_no" id="employee_no" class="form-control {{ $errors->has('employee_no') ? 'is-invalid' : '' }}" value="{{ $value('employee_no') }}" readonly>
@@ -61,7 +72,10 @@
 <div class="col-12">
     <hr>
     <h6 class="text-800 mb-1"><span class="fas fa-calculator text-primary me-2"></span>Rate Computation</h6>
-    <p class="text-muted small mb-0">OT, late, undertime, and absent deductions are computed from basic salary.</p>
+    <p class="text-muted small mb-0">
+        OT, late, undertime, and absent deductions are computed from basic salary using the employee's saved
+        Work Schedule. Current preview: <strong id="preview_workday_rule">8 hrs + 1 hr lunch</strong>.
+    </p>
 </div>
 
 <div class="col-md-3">
@@ -102,7 +116,11 @@
 <div class="col-12">
     <hr>
     <h6 class="text-800 mb-1"><span class="fas fa-shield-alt text-success me-2"></span>Government Contributions</h6>
-    <p class="text-muted small mb-0">Choose when SSS, Pag-IBIG, and PhilHealth will be deducted.</p>
+    <p class="text-muted small mb-0">
+        SSS uses Circular No. {{ config('sss.business_employee.circular_number', '2024-006') }}, effective
+        {{ \Carbon\Carbon::parse(config('sss.business_employee.effective_from', '2025-01-01'))->format('F Y') }}.
+        The employee share is selected from the official Monthly Salary Credit bracket, not from a flat estimate.
+    </p>
 </div>
 
 <div class="col-md-4">
@@ -134,9 +152,52 @@
 
 <div class="col-12">
     <div class="row g-3">
-        <div class="col-md-4"><div class="border rounded-3 p-3 h-100"><div class="text-muted small">Monthly SSS Employee Share</div><div class="fs-5 fw-bold" id="preview_monthly_sss">0.00</div></div></div>
-        <div class="col-md-4"><div class="border rounded-3 p-3 h-100"><div class="text-muted small">Monthly Pag-IBIG Employee Share</div><div class="fs-5 fw-bold" id="preview_monthly_pagibig">0.00</div></div></div>
-        <div class="col-md-4"><div class="border rounded-3 p-3 h-100"><div class="text-muted small">Monthly PhilHealth Employee Share</div><div class="fs-5 fw-bold" id="preview_monthly_philhealth">0.00</div></div></div>
+        <div class="col-md-6 col-xl-3">
+            <div class="border border-success-subtle bg-success-subtle rounded-3 p-3 h-100">
+                <div class="text-muted small">SSS Monthly Salary Credit</div>
+                <div class="fs-5 fw-bold" id="preview_sss_msc">0.00</div>
+                <div class="small text-muted">Official bracket basis</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="border rounded-3 p-3 h-100">
+                <div class="text-muted small">SSS Employee Share (5%)</div>
+                <div class="fs-5 fw-bold" id="preview_monthly_sss">0.00</div>
+                <div class="small text-muted">Payroll deduction</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="border rounded-3 p-3 h-100">
+                <div class="text-muted small">SSS Employer Share (10%)</div>
+                <div class="fs-5 fw-bold" id="preview_sss_employer">0.00</div>
+                <div class="small text-muted">Excludes EC</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="border rounded-3 p-3 h-100">
+                <div class="text-muted small">Employer EC</div>
+                <div class="fs-5 fw-bold" id="preview_sss_ec">0.00</div>
+                <div class="small text-muted">Employer-only contribution</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-4">
+            <div class="border rounded-3 p-3 h-100">
+                <div class="text-muted small">Total SSS Contribution</div>
+                <div class="fs-5 fw-bold" id="preview_sss_total">0.00</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-4">
+            <div class="border rounded-3 p-3 h-100">
+                <div class="text-muted small">Monthly Pag-IBIG Employee Share</div>
+                <div class="fs-5 fw-bold" id="preview_monthly_pagibig">0.00</div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-4">
+            <div class="border rounded-3 p-3 h-100">
+                <div class="text-muted small">Monthly PhilHealth Employee Share</div>
+                <div class="fs-5 fw-bold" id="preview_monthly_philhealth">0.00</div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -293,9 +354,9 @@
     <h6 class="text-800 mb-1"><span class="fas fa-receipt text-info me-2"></span>Live Payroll Preview</h6>
 </div>
 
-<div class="col-md-4"><div class="card border-0 bg-body-tertiary h-100"><div class="card-body"><div class="text-muted small">Monthly Basic Salary Equivalent</div><div class="fs-4 fw-bold" id="preview_monthly_basic">0.00</div><div class="small text-muted">Daily employees use basic salary × 22 days.</div></div></div></div>
-<div class="col-md-4"><div class="card border-primary h-100"><div class="card-header py-2 bg-primary text-white">1st Cutoff Preview</div><div class="card-body small"><div class="d-flex justify-content-between"><span>Gross Preview</span><strong id="first_gross">0.00</strong></div><div class="d-flex justify-content-between"><span>Total Deductions</span><strong id="first_deductions">0.00</strong></div><hr><div class="d-flex justify-content-between fs-6"><span>Estimated Net</span><strong id="first_net">0.00</strong></div></div></div></div>
-<div class="col-md-4"><div class="card border-info h-100"><div class="card-header py-2 bg-info text-white">2nd Cutoff Preview</div><div class="card-body small"><div class="d-flex justify-content-between"><span>Gross Preview</span><strong id="second_gross">0.00</strong></div><div class="d-flex justify-content-between"><span>Total Deductions</span><strong id="second_deductions">0.00</strong></div><hr><div class="d-flex justify-content-between fs-6"><span>Estimated Net</span><strong id="second_net">0.00</strong></div></div></div></div>
+<div class="col-md-4"><div class="card border-0 bg-body-tertiary h-100"><div class="card-body"><div class="text-muted small">Monthly Basic Salary Equivalent</div><div class="fs-4 fw-bold" id="preview_monthly_basic">0.00</div><div class="small text-muted">Daily employees use daily rate × 365 ÷ 12, matching payroll rate conversion.</div></div></div></div>
+<div class="col-md-4"><div class="card border-primary h-100"><div class="card-header py-2 bg-primary text-white">{{ $businessSecondCutoffLabel }} Preview ({{ $businessSecondCutoffRange }})</div><div class="card-body small"><div class="d-flex justify-content-between"><span>Gross Preview</span><strong id="first_gross">0.00</strong></div><div class="d-flex justify-content-between"><span>Total Deductions</span><strong id="first_deductions">0.00</strong></div><hr><div class="d-flex justify-content-between fs-6"><span>Estimated Net</span><strong id="first_net">0.00</strong></div></div></div></div>
+<div class="col-md-4"><div class="card border-info h-100"><div class="card-header py-2 bg-info text-white">{{ $businessFirstCutoffLabel }} Preview ({{ $businessFirstCutoffRange }})</div><div class="card-body small"><div class="d-flex justify-content-between"><span>Gross Preview</span><strong id="second_gross">0.00</strong></div><div class="d-flex justify-content-between"><span>Total Deductions</span><strong id="second_deductions">0.00</strong></div><hr><div class="d-flex justify-content-between fs-6"><span>Estimated Net</span><strong id="second_net">0.00</strong></div></div></div></div>
 
 <div class="col-12"><hr></div>
 

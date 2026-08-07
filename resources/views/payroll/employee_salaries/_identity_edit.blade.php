@@ -16,3 +16,11 @@
     <input type="text" name="crosschex_id" class="form-control {{ $errors->has('crosschex_id') ? 'is-invalid' : '' }}" value="{{ old('crosschex_id', $salary->crosschex_id) }}" readonly>
     <div class="invalid-feedback">{{ $errors->first('crosschex_id') }}</div>
 </div>
+
+@php
+    $editSchedule = $salary->employeeBiometric?->plottingSchedules?->first();
+    $editPaidHours = $editSchedule?->paidWorkHours() ?? 8;
+    $editWorkdayLabel = $editSchedule?->resolvedWorkdayType()->shortLabel() ?? '8 hrs + 1 hr lunch';
+@endphp
+<input type="hidden" id="preview_paid_hours_per_day" value="{{ $editPaidHours }}">
+<input type="hidden" id="preview_workday_label" value="{{ $editWorkdayLabel }}">

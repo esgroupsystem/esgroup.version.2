@@ -138,4 +138,141 @@ class DailyAttendanceSummary extends Model
             $query->payrollActive();
         });
     }
+
+    public function isFlexibleShift(): bool
+    {
+        $metaScheduleMode = strtolower(trim((string) data_get($this->meta, 'schedule_mode', '')));
+
+        if ($metaScheduleMode === 'flexible') {
+            return true;
+        }
+
+        $shiftName = strtolower(trim((string) $this->shift_name));
+
+        if (str_contains($shiftName, 'flexible')) {
+            return true;
+        }
+
+        if ($this->relationLoaded('plottingSchedule') && $this->plottingSchedule) {
+            if (method_exists($this->plottingSchedule, 'isFlexibleShift')) {
+                return $this->plottingSchedule->isFlexibleShift();
+            }
+
+            if (str_contains(strtolower((string) $this->plottingSchedule->shift_name), 'flexible')) {
+                return true;
+            }
+        }
+
+        /*
+         * Backward compatibility for attendance summaries generated before
+         * schedule_mode/shift_name snapshots were consistently stored.
+         * Those rows already contain remarks such as:
+         * "Flexible shift completed 10 clock hours / 9 paid hours."
+         */
+        $legacyText = strtolower(trim(implode(' ', array_filter([
+            (string) $this->schedule_remarks,
+            (string) $this->remarks,
+        ]))));
+
+        return str_contains($legacyText, 'flexible shift');
+    }
+
+    public function paidMinutesPerDay(): int
+    {
+        $metaMinutes = data_get($this->meta, 'paid_minutes_per_day');
+
+        if (is_numeric($metaMinutes) && (int) $metaMinutes > 0) {
+            return max(60, (int) $metaMinutes);
+        }
+
+        $metaHours = data_get($this->meta, 'paid_work_hours');
+
+        if (is_numeric($metaHours) && (float) $metaHours > 0) {
+            return max(60, (int) round((float) $metaHours * 60));
+        }
+
+        return max(60, (int) config('payroll.attendance.paid_minutes_per_day', 480));
+    }
+
+    public function scheduledClockMinutes(): int
+    {
+        $metaMinutes = data_get($this->meta, 'scheduled_clock_minutes');
+
+        if (is_numeric($metaMinutes) && (int) $metaMinutes > 0) {
+            return max(60, (int) $metaMinutes);
+        }
+
+        return $this->paidMinutesPerDay()
+            + max(0, (int) config('payroll.attendance.unpaid_break_minutes', 60));
+    }
+
+    public function hasConfiguredSchedule(): bool
+    {
+        $attendanceStatus = strtolower(str_replace([' ', '-'], '_', (string) $this->attendance_status));
+        $scheduleStatus = strtolower(str_replace([' ', '-'], '_', (string) $this->schedule_status));
+        $shiftName = strtolower(trim((string) $this->shift_name));
+
+        /*
+         * Flexible shifts intentionally have no fixed Time In / Time Out.
+         * Check flexible evidence before legacy no_schedule snapshots because
+         * older rows can have schedule_status=no_schedule while their remarks
+         * and metadata correctly identify the employee as Flexible Shift.
+         */
+        if ($this->isFlexibleShift()) {
+            return true;
+        }
+
+        $metaHasConfiguredSchedule = data_get($this->meta, 'has_configured_schedule');
+
+        if (filter_var($metaHasConfiguredSchedule, FILTER_VALIDATE_BOOL, FILTER_NULL_ON_FAILURE) === true) {
+            return true;
+        }
+
+        if (! empty($this->plotting_schedule_id)) {
+            return true;
+        }
+
+        if ($attendanceStatus === 'no_schedule' || $scheduleStatus === 'no_schedule' || $shiftName === 'no schedule') {
+            return false;
+        }
+
+        if (in_array($scheduleStatus, [
+            'rest_day',
+            'day_off',
+            'leave',
+            'on_leave',
+            'paid_leave',
+            'holiday',
+            'paid_holiday',
+        ], true)) {
+            return true;
+        }
+
+        return ! empty($this->scheduled_time_in) && ! empty($this->scheduled_time_out);
+    }
+
+    public function requiresFixedScheduleTimes(): bool
+    {
+        if ($this->isFlexibleShift()) {
+            return false;
+        }
+
+        $attendanceStatus = strtolower(str_replace([' ', '-'], '_', (string) $this->attendance_status));
+        $scheduleStatus = strtolower(str_replace([' ', '-'], '_', (string) $this->schedule_status));
+        $shiftName = strtolower(trim((string) $this->shift_name));
+
+        if ($attendanceStatus === 'no_schedule' || $scheduleStatus === 'no_schedule' || $shiftName === 'no schedule') {
+            return false;
+        }
+
+        return ! in_array($scheduleStatus, [
+            'rest_day',
+            'day_off',
+            'leave',
+            'on_leave',
+            'paid_leave',
+            'holiday',
+            'paid_holiday',
+        ], true);
+    }
 }

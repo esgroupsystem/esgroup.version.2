@@ -2,20 +2,23 @@
 
 namespace App\Http\Controllers\Payroll;
 
+use App\Enums\WorkdayType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Payroll\SaveEmployeePlottingScheduleRequest;
 use App\Models\EmployeeBiometric;
 use App\Models\EmployeePlottingSchedule;
 use App\Services\Biometrics\EmployeeBiometricIdentityService;
+use App\Services\Payroll\EmployeePlottingScheduleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\View\View;
 
 class EmployeePlottingScheduleController extends Controller
 {
     public function __construct(
-        private readonly EmployeeBiometricIdentityService $identityService
+        private readonly EmployeeBiometricIdentityService $identityService,
+        private readonly EmployeePlottingScheduleService $scheduleService
     ) {}
 
     /**
@@ -130,7 +133,28 @@ class EmployeePlottingScheduleController extends Controller
             'inactive' => EmployeeBiometric::query()->inactive()->count(),
             'regular' => $schedules->where('shift_name', 'Regular Shift')->count(),
             'flexible' => $schedules->where('shift_name', 'Flexible Shift')->count(),
+            'eight_hours' => $schedules->filter(
+                fn (EmployeePlottingSchedule $schedule): bool => $schedule->resolvedWorkdayType() === WorkdayType::EightHours
+            )->count(),
+            'nine_hours' => $schedules->filter(
+                fn (EmployeePlottingSchedule $schedule): bool => $schedule->resolvedWorkdayType() === WorkdayType::NineHours
+            )->count(),
         ];
+
+        $workdayOptions = WorkdayType::options();
+        $workdayRules = collect(WorkdayType::cases())
+            ->mapWithKeys(fn (WorkdayType $type): array => [
+                $type->value => [
+                    'label' => $type->label(),
+                    'short_label' => $type->shortLabel(),
+                    'paid_hours' => $type->paidHours(),
+                    'paid_minutes' => $type->paidMinutes(),
+                    'lunch_minutes' => $type->lunchMinutes(),
+                    'clock_minutes' => $type->clockMinutes(),
+                ],
+            ])
+            ->all();
+        $weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
         return view('payroll.plotting.index', compact(
             'employees',
@@ -140,100 +164,24 @@ class EmployeePlottingScheduleController extends Controller
             'shift',
             'groupName',
             'groups',
-            'stats'
+            'stats',
+            'workdayOptions',
+            'workdayRules',
+            'weekdays'
         ));
     }
 
     /**
      * Save one permanent schedule per active biometric employee.
      */
-    public function save(Request $request): RedirectResponse
+    public function save(SaveEmployeePlottingScheduleRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'schedule' => ['nullable', 'array'],
-            'schedule.*.employee_biometric_id' => ['required', 'integer', 'exists:employee_biometrics,id'],
-            'schedule.*.status' => ['required', 'string', 'in:scheduled,rest_day,inactive'],
-            'schedule.*.shift_name' => ['required', 'string', 'in:Regular Shift,Flexible Shift'],
-            'schedule.*.time_in' => ['nullable', 'date_format:H:i'],
-            'schedule.*.time_out' => ['nullable', 'date_format:H:i'],
-            'schedule.*.grace_minutes' => ['nullable', 'integer', 'min:0', 'max:240'],
-            'schedule.*.day_off' => ['nullable', 'string', 'in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday'],
-            'schedule.*.remarks' => ['nullable', 'string', 'max:255'],
-        ]);
-
-        $rows = $validated['schedule'] ?? [];
-
-        foreach ($rows as $index => $row) {
-            $status = $row['status'] ?? 'scheduled';
-            $shiftName = $row['shift_name'] ?? 'Regular Shift';
-            $timeIn = $row['time_in'] ?? null;
-            $timeOut = $row['time_out'] ?? null;
-
-            if ($status === 'scheduled' && $shiftName === 'Regular Shift' && (blank($timeIn) || blank($timeOut))) {
-                return back()
-                    ->withInput()
-                    ->withErrors([
-                        "schedule.{$index}.time_in" => 'Regular Shift must have both Time In and Time Out before saving permanent schedule.',
-                    ]);
-            }
-
-            if ($status === 'scheduled' && $shiftName === 'Regular Shift' && $timeIn === $timeOut) {
-                return back()
-                    ->withInput()
-                    ->withErrors([
-                        "schedule.{$index}.time_out" => 'Time In and Time Out cannot be the same for Regular Shift.',
-                    ]);
-            }
-        }
-
-        DB::transaction(function () use ($rows): void {
-            foreach ($rows as $row) {
-                $employee = EmployeeBiometric::query()
-                    ->whereKey((int) $row['employee_biometric_id'])
-                    ->first();
-
-                if (! $employee) {
-                    continue;
-                }
-
-                $snapshot = $this->identityService->snapshot($employee);
-
-                $status = $row['status'] ?? 'scheduled';
-                $shiftName = $row['shift_name'] ?? 'Regular Shift';
-                $isFlexible = $shiftName === 'Flexible Shift';
-                $isNonWorkingStatus = in_array($status, ['rest_day', 'inactive'], true);
-
-                if ($status === 'inactive') {
-                    $employee->markPayrollInactive($row['remarks'] ?? 'Marked inactive from schedule plotting.');
-                }
-
-                $payload = [
-                    'employee_biometric_id' => $employee->id,
-                    'crosschex_id' => $snapshot['crosschex_id'],
-                    'biometric_employee_id' => $snapshot['biometric_employee_id'],
-                    'employee_no' => $snapshot['employee_no'],
-                    'employee_name' => $snapshot['employee_name'],
-                    'work_date' => null,
-                    'shift_name' => $shiftName,
-                    'time_in' => ($isFlexible || $isNonWorkingStatus) ? null : ($row['time_in'] ?? null),
-                    'time_out' => ($isFlexible || $isNonWorkingStatus) ? null : ($row['time_out'] ?? null),
-                    'grace_minutes' => (int) ($row['grace_minutes'] ?? 15),
-                    'status' => $status,
-                    'day_off' => $row['day_off'] ?? null,
-                    'remarks' => $row['remarks'] ?? null,
-                ];
-
-                EmployeePlottingSchedule::query()
-                    ->where('employee_biometric_id', $employee->id)
-                    ->whereNull('work_date')
-                    ->delete();
-
-                EmployeePlottingSchedule::query()->create($payload);
-            }
-        });
+        $this->scheduleService->savePermanentSchedules(
+            $request->validated('schedule', [])
+        );
 
         return redirect()
             ->route('payroll-plotting.index', $request->only(['search', 'status', 'shift', 'group_name']))
-            ->with('success', 'Permanent schedule saved successfully. Please rebuild Attendance Summary before payroll checking.');
+            ->with('success', 'Permanent schedule saved successfully. Rebuild Attendance Summary before payroll checking.');
     }
 }

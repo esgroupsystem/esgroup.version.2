@@ -365,7 +365,8 @@
                 <h1>Employee Payslip Export</h1>
                 <div class="sub">
                     Payroll: {{ $payroll->payroll_number }} |
-                    Cutoff: {{ $periodLabel }} |
+                    Cutoff: {{ $payroll->cutoff_label }} |
+                    Period: {{ $periodLabel }} |
                     Page {{ $pageIndex + 1 }} of {{ $pageCount }}
                 </div>
             </div>

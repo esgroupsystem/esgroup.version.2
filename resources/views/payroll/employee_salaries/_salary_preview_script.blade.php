@@ -1,8 +1,10 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const workingDaysPerMonth = 22;
-        const hoursPerDay = 8;
+        const annualCalendarDays = 365;
+        const annualMonths = 12;
+        let previewHoursPerDay = Math.max(1, numberValue('preview_paid_hours_per_day') || 8);
         const minutesPerHour = 60;
+        const sssRules = @json(config('sss.business_employee'));
         const loanPrefixes = ['sss_loan', 'pagibig_loan', 'philhealth_loan', 'cash_advance', 'other_loan'];
 
         function input(id) { return document.getElementById(id); }
@@ -38,14 +40,18 @@
             const rateType = stringValue('rate_type', 'daily');
             const basicSalary = numberValue('basic_salary');
             if (basicSalary <= 0) { return 0; }
-            return rateType === 'monthly' ? basicSalary : basicSalary * workingDaysPerMonth;
+            return rateType === 'monthly' ? basicSalary : (basicSalary * annualCalendarDays) / annualMonths;
         }
 
         function computeSalaryRates() {
             const rateType = stringValue('rate_type', 'daily');
             const basicSalary = numberValue('basic_salary');
-            const dailyRate = basicSalary > 0 ? (rateType === 'monthly' ? basicSalary / workingDaysPerMonth : basicSalary) : 0;
-            const hourlyRate = dailyRate / hoursPerDay;
+            const dailyRate = basicSalary > 0
+                ? (rateType === 'monthly' ? (basicSalary * annualMonths) / annualCalendarDays : basicSalary)
+                : 0;
+            previewHoursPerDay = Math.max(1, numberValue('preview_paid_hours_per_day') || previewHoursPerDay || 8);
+            const hourlyRate = dailyRate / previewHoursPerDay;
+            setText('preview_workday_rule', stringValue('preview_workday_label', `${previewHoursPerDay} paid hours`));
             const perMinuteRate = hourlyRate / minutesPerHour;
 
             setInputValue('ot_rate_per_hour', hourlyRate, 2);
@@ -56,12 +62,42 @@
 
         function sssMonthlySalaryCredit(monthlySalary) {
             if (monthlySalary <= 0) { return 0; }
-            if (monthlySalary < 5250) { return 5000; }
-            if (monthlySalary >= 34750) { return 35000; }
-            return Math.round(monthlySalary / 500) * 500;
+
+            const minimumMsc = Number(sssRules.minimum_msc);
+            const maximumMsc = Number(sssRules.maximum_msc);
+            const increment = Number(sssRules.msc_increment);
+            const firstMiddleRange = Number(sssRules.first_middle_range);
+            const maximumRangeStart = Number(sssRules.maximum_range_start);
+
+            if (monthlySalary < firstMiddleRange) { return minimumMsc; }
+            if (monthlySalary >= maximumRangeStart) { return maximumMsc; }
+
+            const step = Math.floor((monthlySalary - firstMiddleRange) / increment) + 1;
+            return Math.min(maximumMsc, minimumMsc + (step * increment));
         }
 
-        function sssEmployeeShare(monthlySalary) { return sssMonthlySalaryCredit(monthlySalary) * 0.05; }
+        function sssBreakdown(monthlySalary) {
+            if (monthlySalary <= 0) {
+                return { msc: 0, employee: 0, employer: 0, ec: 0, total: 0 };
+            }
+
+            const msc = sssMonthlySalaryCredit(monthlySalary);
+            const employee = msc * Number(sssRules.employee_rate);
+            const employer = msc * Number(sssRules.employer_rate);
+            const ec = msc <= Number(sssRules.ec_low_msc_maximum)
+                ? Number(sssRules.ec_low_amount)
+                : Number(sssRules.ec_high_amount);
+
+            return {
+                msc,
+                employee,
+                employer,
+                ec,
+                total: employee + employer + ec
+            };
+        }
+
+        function sssEmployeeShare(monthlySalary) { return sssBreakdown(monthlySalary).employee; }
 
         function pagibigEmployeeShare(monthlySalary) {
             if (monthlySalary <= 0) { return 0; }
@@ -226,7 +262,8 @@
             computeSalaryRates();
 
             const monthlyBasic = monthlyBasicSalary();
-            const monthlySss = sssEmployeeShare(monthlyBasic);
+            const sss = sssBreakdown(monthlyBasic);
+            const monthlySss = sss.employee;
             const monthlyPagibig = pagibigEmployeeShare(monthlyBasic);
             const monthlyPhilhealth = philhealthEmployeeShare(monthlyBasic);
 
@@ -258,6 +295,10 @@
 
             setText('preview_monthly_basic', money(monthlyBasic));
             setText('preview_monthly_sss', money(monthlySss));
+            setText('preview_sss_msc', money(sss.msc));
+            setText('preview_sss_employer', money(sss.employer));
+            setText('preview_sss_ec', money(sss.ec));
+            setText('preview_sss_total', money(sss.total));
             setText('preview_monthly_pagibig', money(monthlyPagibig));
             setText('preview_monthly_philhealth', money(monthlyPhilhealth));
             setText('first_gross', money(firstGross));
@@ -319,6 +360,12 @@
                     if (employeeNameInput) { employeeNameInput.value = name; }
                     if (crosschexInput) { crosschexInput.value = option.dataset.crosschex || ''; }
 
+                    const paidHoursInput = input('preview_paid_hours_per_day');
+                    const workdayLabelInput = input('preview_workday_label');
+                    if (paidHoursInput) { paidHoursInput.value = option.dataset.paidWorkHours || '8'; }
+                    if (workdayLabelInput) { workdayLabelInput.value = option.dataset.workdayLabel || '8 hrs + 1 hr lunch'; }
+
+                    computePreview();
                     hideDropdown();
                 });
             });

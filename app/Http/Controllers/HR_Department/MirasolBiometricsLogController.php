@@ -17,8 +17,6 @@ use Illuminate\Validation\ValidationException;
 
 class MirasolBiometricsLogController extends Controller
 {
-    private const FLEXIBLE_REQUIRED_MINUTES = 540; // 9 hours
-
     public function index(Request $request)
     {
         [$defaultCutoffMonth, $defaultCutoffYear, $defaultCutoffType] = $this->getDefaultCutoff();
@@ -132,6 +130,11 @@ class MirasolBiometricsLogController extends Controller
                     'scheduled_time_out' => null,
                     'grace_minutes' => 15,
                     'day_off' => null,
+                    'day_offs' => [],
+                    'workday_type' => null,
+                    'paid_work_minutes' => 480,
+                    'lunch_break_minutes' => 60,
+                    'required_clock_minutes' => 540,
                     'remarks' => null,
 
                     'actual_time_in' => $logRow['actual_time_in'] ?? null,
@@ -365,10 +368,10 @@ class MirasolBiometricsLogController extends Controller
     private function schedulePayload(EmployeePlottingSchedule $schedule, Carbon $date): array
     {
         $shiftName = $schedule->shift_name ?: 'Regular Shift';
-        $dayOff = $schedule->day_off ?: null;
+        $dayOffs = $schedule->resolvedDayOffs();
         $status = $schedule->status ?: 'scheduled';
 
-        if ($dayOff && strtolower($dayOff) === strtolower($date->format('l'))) {
+        if ($schedule->isDayOffOn($date)) {
             $status = 'rest_day';
         }
 
@@ -379,7 +382,12 @@ class MirasolBiometricsLogController extends Controller
             'scheduled_time_in' => $this->normalizeTime($schedule->time_in),
             'scheduled_time_out' => $this->normalizeTime($schedule->time_out),
             'grace_minutes' => (int) ($schedule->grace_minutes ?? 15),
-            'day_off' => $dayOff,
+            'day_off' => $dayOffs !== [] ? implode(', ', $dayOffs) : null,
+            'day_offs' => $dayOffs,
+            'workday_type' => $schedule->resolvedWorkdayType()->value,
+            'paid_work_minutes' => $schedule->paidWorkMinutes(),
+            'lunch_break_minutes' => $schedule->lunchBreakMinutes(),
+            'required_clock_minutes' => $schedule->requiredClockMinutes(),
             'remarks' => $schedule->remarks,
         ];
     }
@@ -450,13 +458,13 @@ class MirasolBiometricsLogController extends Controller
                 $attendanceNote = 'Incomplete biometric logs.';
                 $attendanceClass = 'warning';
             } elseif ($isFlexible) {
-                $requiredMinutes = self::FLEXIBLE_REQUIRED_MINUTES;
+                $requiredMinutes = max(60, (int) ($row['required_clock_minutes'] ?? 540));
 
                 if ($workedMinutes === null) {
                     $attendanceNote = 'Incomplete biometric logs.';
                     $attendanceClass = 'warning';
                 } elseif ($workedMinutes >= $requiredMinutes) {
-                    $attendanceNote = 'Completed Flexible 9 Hours';
+                    $attendanceNote = 'Completed Flexible '.round($requiredMinutes / 60, 2).' Clock Hours';
                     $attendanceClass = 'success';
                 } else {
                     $undertimeMinutes = $requiredMinutes - $workedMinutes;
@@ -502,8 +510,9 @@ class MirasolBiometricsLogController extends Controller
         }
 
         $row['shift_mode'] = $isFlexible ? 'Flexible' : 'Regular';
-        $row['required_minutes'] = $isFlexible ? self::FLEXIBLE_REQUIRED_MINUTES : null;
-        $row['required_hours_label'] = $isFlexible ? '09:00' : '—';
+        $requiredMinutes = max(60, (int) ($row['required_clock_minutes'] ?? 540));
+        $row['required_minutes'] = $isFlexible ? $requiredMinutes : null;
+        $row['required_hours_label'] = $isFlexible ? $this->formatMinutesToHours($requiredMinutes) : '—';
 
         $row['late_minutes'] = $lateMinutes;
         $row['undertime_minutes'] = $undertimeMinutes;
@@ -714,11 +723,11 @@ class MirasolBiometricsLogController extends Controller
         if ($cutoffType === '11_25') {
             $startDate = Carbon::create($year, $month, 11)->startOfDay();
             $endDate = Carbon::create($year, $month, 25)->startOfDay();
-            $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y');
+            $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' | '.config('payroll.cutoff_display_by_range.11_25', '2nd Cutoff (11-25)');
         } else {
             $startDate = Carbon::create($year, $month, 26)->startOfDay();
             $endDate = Carbon::create($year, $month, 26)->addMonth()->day(10)->startOfDay();
-            $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y');
+            $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' | '.config('payroll.cutoff_display_by_range.26_10', '1st Cutoff (26-10)');
         }
 
         return [$startDate, $endDate, $label];

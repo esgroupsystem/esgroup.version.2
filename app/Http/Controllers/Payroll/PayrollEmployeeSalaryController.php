@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
 use App\Models\EmployeeBiometric;
+use App\Models\EmployeePlottingSchedule;
 use App\Models\PayrollEmployeeSalary;
 use App\Services\Biometrics\EmployeeBiometricIdentityService;
 use App\Services\Payroll\PayrollDeductionService;
@@ -116,7 +117,8 @@ class PayrollEmployeeSalaryController extends Controller
 
         $computed = $this->deductionService->computeRates(
             (float) $validated['basic_salary'],
-            $validated['rate_type']
+            $validated['rate_type'],
+            $this->paidHoursForEmployee($employee->id)
         );
 
         DB::transaction(function () use ($validated, $computed, $employee): void {
@@ -132,7 +134,12 @@ class PayrollEmployeeSalaryController extends Controller
 
     public function edit(PayrollEmployeeSalary $payrollEmployeeSalary): View
     {
-        $payrollEmployeeSalary->load(['otherDeductions', 'employeeBiometric']);
+        $payrollEmployeeSalary->load([
+            'otherDeductions',
+            'employeeBiometric.plottingSchedules' => fn ($query) => $query
+                ->whereNull('work_date')
+                ->latest('id'),
+        ]);
 
         return view('payroll.employee_salaries.edit', [
             'salary' => $payrollEmployeeSalary,
@@ -149,7 +156,8 @@ class PayrollEmployeeSalaryController extends Controller
 
         $computed = $this->deductionService->computeRates(
             (float) $validated['basic_salary'],
-            $validated['rate_type']
+            $validated['rate_type'],
+            $this->paidHoursForEmployee($employee->id)
         );
 
         DB::transaction(function () use ($payrollEmployeeSalary, $validated, $computed, $employee): void {
@@ -299,6 +307,11 @@ class PayrollEmployeeSalaryController extends Controller
         $allowedGroups = session('payroll_allowed_groups');
 
         return EmployeeBiometric::query()
+            ->with([
+                'plottingSchedules' => fn ($query) => $query
+                    ->whereNull('work_date')
+                    ->latest('id'),
+            ])
             ->payrollActive()
             ->when(
                 $allowedGroups !== 'all',
@@ -319,6 +332,7 @@ class PayrollEmployeeSalaryController extends Controller
             ->get()
             ->map(function (EmployeeBiometric $employee) {
                 $snapshot = $this->identityService->snapshot($employee);
+                $schedule = $employee->plottingSchedules->first();
 
                 return (object) [
                     'employee_biometric_id' => $employee->id,
@@ -329,9 +343,24 @@ class PayrollEmployeeSalaryController extends Controller
                     'group_name' => $employee->group_name,
                     'last_check_time' => $employee->last_check_time,
                     'total_logs' => $employee->total_logs,
+                    'workday_type' => $schedule?->resolvedWorkdayType()->value ?? 'eight_hours',
+                    'paid_work_hours' => $schedule?->paidWorkHours() ?? 8.0,
+                    'workday_label' => $schedule?->resolvedWorkdayType()->shortLabel() ?? '8 hrs + 1 hr lunch',
                 ];
             })
             ->values();
+    }
+
+    private function paidHoursForEmployee(int $employeeBiometricId): float
+    {
+        $schedule = EmployeePlottingSchedule::query()
+            ->where('employee_biometric_id', $employeeBiometricId)
+            ->whereNull('work_date')
+            ->latest('id')
+            ->first();
+
+        return $schedule?->paidWorkHours()
+            ?? max(1, (float) config('payroll.salary_rate.paid_hours_per_day', 8));
     }
 
     private function rules(?PayrollEmployeeSalary $salary = null): array

@@ -75,8 +75,40 @@
                                 : 'NO STATUS';
 
                             $workedHours = ((int) $row->worked_minutes) / 60;
-                            $isFlexible = str_contains(strtolower((string) $row->shift_name), 'flexible');
+                            $paidMinutesPerDay = max(60, (int) data_get($row->meta, 'paid_minutes_per_day', 480));
+                            $scheduledClockMinutes = max(
+                                $paidMinutesPerDay,
+                                (int) data_get($row->meta, 'scheduled_clock_minutes', $paidMinutesPerDay + 60)
+                            );
+                            $paidHoursPerDay = $paidMinutesPerDay / 60;
+                            $scheduledClockHours = $scheduledClockMinutes / 60;
+                            $metaScheduleMode = strtolower((string) data_get($row, 'meta.schedule_mode', ''));
+                            $legacyFlexibleText = strtolower(trim(implode(' ', array_filter([
+                                (string) ($row->schedule_remarks ?? ''),
+                                (string) ($row->remarks ?? ''),
+                            ]))));
+                            $isFlexible = method_exists($row, 'isFlexibleShift')
+                                ? $row->isFlexibleShift()
+                                : (
+                                    $metaScheduleMode === 'flexible'
+                                    || str_contains(strtolower((string) $row->shift_name), 'flexible')
+                                    || str_contains($legacyFlexibleText, 'flexible shift')
+                                );
+                            $metaHasConfiguredSchedule = filter_var(
+                                data_get($row, 'meta.has_configured_schedule'),
+                                FILTER_VALIDATE_BOOL,
+                                FILTER_NULL_ON_FAILURE
+                            );
+                            $hasConfiguredSchedule = method_exists($row, 'hasConfiguredSchedule')
+                                ? $row->hasConfiguredSchedule()
+                                : (
+                                    $isFlexible
+                                    || $metaHasConfiguredSchedule === true
+                                    || ! empty($row->plotting_schedule_id)
+                                    || (! empty($row->scheduled_time_in) && ! empty($row->scheduled_time_out))
+                                );
                             $isNoSchedule =
+                                ! $hasConfiguredSchedule ||
                                 ($row->attendance_status ?? '') === 'no_schedule' ||
                                 strtolower((string) $row->shift_name) === 'no schedule';
 
@@ -133,7 +165,10 @@
                                         <span class="fas fa-stopwatch me-1"></span>
                                         {{ $row->shift_name ?: 'Flexible Shift' }}
                                     </div>
-                                    <div class="text-muted fs-11">Required: 9 worked hours</div>
+                                    <div class="text-muted fs-11">
+                                        Required: {{ number_format($scheduledClockHours, $scheduledClockHours == floor($scheduledClockHours) ? 0 : 2) }} clock hours
+                                        ({{ number_format($paidHoursPerDay, $paidHoursPerDay == floor($paidHoursPerDay) ? 0 : 2) }} paid + lunch)
+                                    </div>
                                 @elseif ($row->scheduled_time_in || $row->scheduled_time_out)
                                     <div class="fw-semibold text-dark">
                                         {{ $row->scheduled_time_in ? \Carbon\Carbon::parse($row->scheduled_time_in)->format('h:i A') : '—' }}
@@ -142,6 +177,7 @@
                                     </div>
                                     <div class="text-muted fs-11">
                                         {{ $row->shift_name ?: 'Regular Shift' }} |
+                                        {{ number_format($paidHoursPerDay, $paidHoursPerDay == floor($paidHoursPerDay) ? 0 : 2) }} paid hr(s) + lunch |
                                         Grace: {{ (int) $row->grace_minutes }} min
                                     </div>
                                 @else

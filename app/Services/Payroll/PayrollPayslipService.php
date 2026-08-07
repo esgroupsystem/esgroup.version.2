@@ -242,14 +242,14 @@ class PayrollPayslipService
         Collection $adjustmentGroups
     ): float {
         $baseDays = $this->baseDaysPerCutoff();
-        $paidMinutesPerDay = $this->paidMinutesPerDay();
+        $fallbackPaidMinutesPerDay = $this->paidMinutesPerDay(null, $item);
 
         if ($rows->isEmpty()) {
             $absentDays = max(0, (float) $item->total_absent_days);
             $lateMinutes = max(0, (int) $item->total_late_minutes);
             $undertimeMinutes = max(0, (int) $item->total_undertime_minutes);
 
-            $minuteDeductionDays = ($lateMinutes + $undertimeMinutes) / $paidMinutesPerDay;
+            $minuteDeductionDays = ($lateMinutes + $undertimeMinutes) / $fallbackPaidMinutesPerDay;
 
             return round(
                 max(0, min($baseDays, $baseDays - $absentDays - $minuteDeductionDays)),
@@ -257,10 +257,7 @@ class PayrollPayslipService
             );
         }
 
-        $deductionDays = $rows->sum(function ($row) use (
-            $adjustmentGroups,
-            $paidMinutesPerDay
-        ): float {
+        $deductionDays = $rows->sum(function ($row) use ($adjustmentGroups): float {
             $adjustments = $adjustmentGroups->get(
                 $this->employeeDateKey($row),
                 collect()
@@ -286,6 +283,7 @@ class PayrollPayslipService
 
             $lateMinutes = max(0, (int) ($row->late_minutes ?? 0));
             $undertimeMinutes = max(0, (int) ($row->undertime_minutes ?? 0));
+            $paidMinutesPerDay = $this->paidMinutesPerDay($row);
             $minuteDeductionDays = ($lateMinutes + $undertimeMinutes) / $paidMinutesPerDay;
 
             $partialDayDeduction = $this->partialDayDeduction($row);
@@ -338,8 +336,26 @@ class PayrollPayslipService
         return self::DEFAULT_BASE_DAYS_PER_CUTOFF;
     }
 
-    protected function paidMinutesPerDay(): float
+    protected function paidMinutesPerDay(?object $row = null, ?PayrollItem $item = null): float
     {
+        foreach ([
+            data_get($row, 'meta.paid_minutes_per_day'),
+            data_get($item, 'meta.paid_minutes_per_day'),
+        ] as $minutes) {
+            if (is_numeric($minutes) && (float) $minutes > 0) {
+                return max(60.00, (float) $minutes);
+            }
+        }
+
+        foreach ([
+            data_get($row, 'meta.paid_work_hours'),
+            data_get($item, 'meta.hours_per_day'),
+        ] as $hours) {
+            if (is_numeric($hours) && (float) $hours > 0) {
+                return max(60.00, (float) $hours * 60);
+            }
+        }
+
         $configuredMinutes = (float) config(
             'payroll.attendance.paid_minutes_per_day',
             0
@@ -673,10 +689,7 @@ class PayrollPayslipService
         if (isset($row->payable_hours)) {
             return round(
                 max(0, (float) $row->payable_hours)
-                    / max(0.01, (float) config(
-                        'payroll.attendance.paid_hours_per_day',
-                        self::DEFAULT_PAID_HOURS_PER_DAY
-                    )),
+                    / max(0.01, $this->paidMinutesPerDay($row) / 60),
                 4
             );
         }

@@ -3,20 +3,55 @@
 return [
     /*
     |--------------------------------------------------------------------------
+    | Payroll Cutoff Display Tags
+    |--------------------------------------------------------------------------
+    |
+    | IMPORTANT: The database values `first` and `second` are legacy internal
+    | keys and are intentionally NOT changed by this update. Only the user-facing
+    | business tags are changed:
+    |
+    | - Internal `second` = 26th to 10th = BUSINESS 1ST CUTOFF
+    | - Internal `first`  = 11th to 25th = BUSINESS 2ND CUTOFF
+    |
+    | Keeping the stored keys unchanged prevents any change to attendance,
+    | payroll computation, government deductions, historical records, and APIs.
+    |
+    */
+    'cutoff_display' => [
+        'first' => [
+            'label' => '2nd Cutoff',
+            'range' => '11-25',
+            'full' => '2nd Cutoff (11-25)',
+        ],
+        'second' => [
+            'label' => '1st Cutoff',
+            'range' => '26-10',
+            'full' => '1st Cutoff (26-10)',
+        ],
+    ],
+
+    'cutoff_display_by_range' => [
+        '11_25' => '2nd Cutoff (11-25)',
+        '26_10' => '1st Cutoff (26-10)',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Attendance payroll rules
     |--------------------------------------------------------------------------
     |
-    | Company standard:
-    | - Employee stays in the workplace for 9 clock hours.
-    | - Only 8 hours are paid work hours because 1 hour is lunch.
-    | - Payroll rates use 8 paid hours.
-    | - Attendance schedule validation still uses 9 clock hours.
+    | Default / legacy standard:
+    | - 8 paid work hours + 1 unpaid lunch hour = 9 clock hours.
+    | - Permanent Work Schedule may override this per employee with either:
+    |   8 paid hours + 1 lunch hour, or 9 paid hours + 1 lunch hour.
+    | - These values remain the safe fallback for legacy attendance rows.
     |
     */
 
     'attendance' => [
         'scheduled_hours_per_day' => 9,
         'scheduled_minutes_per_day' => 540,
+        // Fallback only. Permanent schedule may use 8 or 9 paid hours.
         'paid_hours_per_day' => 8,
         'paid_minutes_per_day' => 480,
 
@@ -64,7 +99,7 @@ return [
     |
     | Daily rate is used only for deductions and premiums:
     | daily_rate = monthly_salary * 12 / 365
-    | hourly_rate = daily_rate / 8
+    | hourly_rate = daily_rate / employee_schedule_paid_hours
     | minute_rate = hourly_rate / 60
     |
     */
@@ -124,8 +159,11 @@ return [
     | Government Contribution Basis
     |--------------------------------------------------------------------------
     |
-    | SSS uses the actual contribution-cycle compensation and the official MSC
-    | bracket. PhilHealth uses fixed monthly basic salary and must not be reduced
+    | SSS uses the employee's actual GROSS compensation for the contribution
+    | cycle (business 1st cutoff: 26-10 + business 2nd cutoff: 11-25), then
+    | applies the official MSC bracket. This includes recurring allowances/additions that
+    | form part of remuneration. PhilHealth uses fixed monthly basic salary and
+    | must not be reduced
     | by absence, tardiness, undertime, or leave-without-pay deductions.
     | Pag-IBIG uses fixed monthly basic salary with a P10,000 maximum fund salary.
     |
@@ -138,9 +176,10 @@ return [
     ],
 
     /*
-    | Deduct the complete monthly statutory contribution on the first cutoff.
-    | This is the cutoff where the system already has both halves of the monthly
-    | contribution cycle: previous second cutoff + current first cutoff.
+    | Deduct the complete monthly statutory contribution when both halves of the
+    | monthly cycle are available. The legacy internal key `first_cutoff` means
+    | 11-25, which is the BUSINESS 2ND CUTOFF under the display convention above.
+    | Do not rename these stored schedule keys without a dedicated data migration.
     */
     'government_deduction_schedule' => [
         'sss' => 'first_cutoff',

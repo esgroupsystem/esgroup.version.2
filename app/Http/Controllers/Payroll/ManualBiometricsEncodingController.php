@@ -363,11 +363,11 @@ class ManualBiometricsEncodingController extends Controller
         if ($type === 'first') {
             $startDate = $baseMonth->copy()->day(11)->startOfDay();
             $endDate = $baseMonth->copy()->day(25)->endOfDay();
-            $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y');
+            $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' | '.config('payroll.cutoff_display.first.full', '2nd Cutoff (11-25)');
         } else {
             $startDate = $baseMonth->copy()->day(26)->startOfDay();
             $endDate = $baseMonth->copy()->addMonth()->day(10)->endOfDay();
-            $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y');
+            $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' | '.config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)');
         }
 
         return [$startDate, $endDate, $label];
