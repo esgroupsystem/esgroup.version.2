@@ -47,6 +47,71 @@ class PayrollPeriodService
         ];
     }
 
+
+    /**
+     * Resolve the payroll cutoff that contains a specific calendar date.
+     *
+     * Business labels:
+     * - 26-10 = 1st cutoff (legacy key: second)
+     * - 11-25 = 2nd cutoff (legacy key: first)
+     */
+    public function cutoffContainingDate(string|Carbon $date): array
+    {
+        $date = $date instanceof Carbon
+            ? $date->copy()->timezone('Asia/Manila')
+            : Carbon::parse($date, 'Asia/Manila');
+
+        $day = (int) $date->day;
+
+        if ($day >= 11 && $day <= 25) {
+            [$start, $end] = $this->resolveCutoffRange((int) $date->month, (int) $date->year, 'first');
+
+            return [
+                'month' => (int) $date->month,
+                'year' => (int) $date->year,
+                'type' => 'first',
+                'start' => $start,
+                'end' => $end,
+            ];
+        }
+
+        if ($day >= 26) {
+            [$start, $end] = $this->resolveCutoffRange((int) $date->month, (int) $date->year, 'second');
+
+            return [
+                'month' => (int) $date->month,
+                'year' => (int) $date->year,
+                'type' => 'second',
+                'start' => $start,
+                'end' => $end,
+            ];
+        }
+
+        $previousMonth = $date->copy()->subMonthNoOverflow();
+        [$start, $end] = $this->resolveCutoffRange((int) $previousMonth->month, (int) $previousMonth->year, 'second');
+
+        return [
+            'month' => (int) $previousMonth->month,
+            'year' => (int) $previousMonth->year,
+            'type' => 'second',
+            'start' => $start,
+            'end' => $end,
+        ];
+    }
+
+    /**
+     * Return the cutoff immediately after the cutoff containing the given date.
+     * Used by Offset adjustments because company policy pays transferred time in
+     * the NEXT payroll, never in the cutoff where the offset target date falls.
+     */
+    public function nextCutoffAfterDate(string|Carbon $date): array
+    {
+        $current = $this->cutoffContainingDate($date);
+        $nextDate = $current['end']->copy()->addDay()->startOfDay();
+
+        return $this->cutoffContainingDate($nextDate);
+    }
+
     /**
      * Government contribution month.
      *

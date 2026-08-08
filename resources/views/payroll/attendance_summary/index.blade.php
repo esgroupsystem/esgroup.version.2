@@ -338,8 +338,7 @@
                                     <div>
                                         <div class="fw-bold text-900">Adjustments</div>
                                         <div class="text-600 fs-10">
-                                            Approved/manual adjustment time, paid leave, offset, or paid adjustment can
-                                            qualify attendance.
+                                            Approved manual time and paid leave can qualify attendance. Approved Offset credit can cover eligible late, undertime, partial-day, or absence shortage without creating separate cash pay.
                                         </div>
                                     </div>
                                 </div>

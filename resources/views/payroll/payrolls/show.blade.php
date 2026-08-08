@@ -19,11 +19,12 @@
         $totalHolidayPay = (float) data_get($totals, 'holiday_pay', $items->sum('holiday_pay'));
         $totalRestDayPay = (float) data_get($totals, 'rest_day_pay', $items->sum('rest_day_pay'));
         $totalOvertimePay = (float) data_get($totals, 'overtime_pay', $items->sum('overtime_pay'));
+        $totalNightDifferentialPay = (float) data_get($totals, 'night_differential_pay', $items->sum('night_differential_pay'));
         $totalLeavePay = (float) data_get($totals, 'leave_pay', $items->sum('leave_pay'));
         $totalOtherAdditions = (float) data_get($totals, 'other_additions', $items->sum('other_additions'));
 
         $totalAdditions =
-            $totalHolidayPay + $totalRestDayPay + $totalOvertimePay + $totalLeavePay + $totalOtherAdditions;
+            $totalHolidayPay + $totalRestDayPay + $totalOvertimePay + $totalNightDifferentialPay + $totalLeavePay + $totalOtherAdditions;
 
         $totalGovernmentDeductions = (float) data_get(
             $totals,
@@ -44,6 +45,7 @@
                 return (float) ($item->holiday_pay ?? 0) +
                     (float) ($item->rest_day_pay ?? 0) +
                     (float) ($item->overtime_pay ?? 0) +
+                    (float) ($item->night_differential_pay ?? 0) +
                     (float) ($item->leave_pay ?? 0) +
                     (float) ($item->other_additions ?? 0) >
                     0;
@@ -416,7 +418,7 @@
                             <div class="payroll-soft-box">
                                 <div class="payroll-kpi-label">Additions</div>
                                 <div class="payroll-kpi-value text-info">{{ $money($totalAdditions) }}</div>
-                                <div class="payroll-kpi-note">Holiday, rest, OT</div>
+                                <div class="payroll-kpi-note">Holiday, rest, OT, night diff, adjustments</div>
                             </div>
                         </div>
 
@@ -638,6 +640,7 @@
                                         $itemHolidayPay = (float) ($item->holiday_pay ?? 0);
                                         $itemRestDayPay = (float) ($item->rest_day_pay ?? 0);
                                         $itemOvertimePay = (float) ($item->overtime_pay ?? 0);
+                                        $itemNightDifferentialPay = (float) ($item->night_differential_pay ?? 0);
                                         $itemLeavePay = (float) ($item->leave_pay ?? 0);
                                         $itemOtherAdditions = (float) ($item->other_additions ?? 0);
 
@@ -645,6 +648,7 @@
                                             $itemHolidayPay +
                                             $itemRestDayPay +
                                             $itemOvertimePay +
+                                            $itemNightDifferentialPay +
                                             $itemLeavePay +
                                             $itemOtherAdditions;
 
@@ -665,6 +669,10 @@
                                             0,
                                         );
                                         $safeZeroPay = (bool) data_get($item->meta, 'safe_zero_pay', false);
+                                        $adjustmentTags = collect(data_get($item->meta, 'adjustment_tags', []));
+                                        $paidAdjustmentTags = $adjustmentTags->filter(
+                                            fn($tag) => (bool) data_get($tag, 'paid_this_cutoff', false),
+                                        );
 
                                         if ($safeZeroPay) {
                                             $auditBadges[] = ['label' => 'No Summary', 'tone' => 'danger'];
@@ -699,6 +707,18 @@
                                             $auditBadges[] = ['label' => 'Additions', 'tone' => 'info'];
                                         }
 
+                                        if ($paidAdjustmentTags->isNotEmpty()) {
+                                            $auditBadges[] = [
+                                                'label' => 'ADJ Paid ' . $paidAdjustmentTags->count(),
+                                                'tone' => 'primary',
+                                            ];
+                                        } elseif ($adjustmentTags->isNotEmpty()) {
+                                            $auditBadges[] = [
+                                                'label' => 'ADJ ' . $adjustmentTags->count(),
+                                                'tone' => 'info',
+                                            ];
+                                        }
+
                                         $hasDanger = collect($auditBadges)->contains(
                                             fn($badge) => $badge['tone'] === 'danger',
                                         );
@@ -727,6 +747,19 @@
                                                 <span class="meta">
                                                     — {{ $item->employee_no ?: 'No Employee No' }}
                                                 </span>
+
+                                                @if ($adjustmentTags->isNotEmpty())
+                                                    <span class="meta d-block mt-1">
+                                                        @foreach ($adjustmentTags->take(3) as $tag)
+                                                            <span class="badge badge-subtle-{{ data_get($tag, 'paid_this_cutoff') ? 'success' : 'info' }} text-{{ data_get($tag, 'paid_this_cutoff') ? 'success' : 'info' }} me-1">
+                                                                {{ data_get($tag, 'label', 'Adjustment') }}
+                                                                @if ((float) data_get($tag, 'amount', 0) > 0)
+                                                                    {{ $money(data_get($tag, 'amount')) }}
+                                                                @endif
+                                                            </span>
+                                                        @endforeach
+                                                    </span>
+                                                @endif
                                             </div>
                                         </td>
 

@@ -117,6 +117,16 @@
             z-index: 2;
         }
 
+        .employee-company {
+            font-size: 7px;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            color: #555;
+            letter-spacing: .25px;
+            margin-bottom: 1px;
+        }
+
         .employee-name {
             font-weight: bold;
             font-size: 9.5px;
@@ -440,6 +450,10 @@
                                     @endif
 
                                     <div class="employee-card-content">
+                                        <div class="employee-company">
+                                            {{ $slip['company_name'] ?: 'NO COMPANY / NOT TAGGED' }}
+                                        </div>
+
                                         <div class="employee-name">
                                             {{ $slip['employee_name'] ?: 'NO NAME' }}
                                         </div>

@@ -18,9 +18,10 @@
         $adjustment?->offset_source_date ? $adjustment->offset_source_date->format('Y-m-d') : '',
     );
 
-    $isPaid = old('is_paid', $adjustment->is_paid ?? true);
-    $ignoreLate = old('ignore_late', $adjustment->ignore_late ?? true);
-    $ignoreUndertime = old('ignore_undertime', $adjustment->ignore_undertime ?? true);
+    $typeRules = \App\Models\PayrollAttendanceAdjustment::rulesFor($selectedType);
+    $isPaid = old('is_paid', $adjustment->is_paid ?? ($typeRules['default_paid'] ?? false));
+    $ignoreLate = old('ignore_late', $adjustment->ignore_late ?? ($typeRules['default_ignore_late'] ?? false));
+    $ignoreUndertime = old('ignore_undertime', $adjustment->ignore_undertime ?? ($typeRules['default_ignore_undertime'] ?? false));
 
     $resolvePerson = function ($person) {
         $canonicalId = $person->employee_biometric_id ?? $person->id ?? null;
@@ -128,6 +129,7 @@
                         <input type="hidden" name="crosschex_id" id="crosschex_id"
                             value="{{ old('crosschex_id', $adjustment->crosschex_id ?? '') }}">
 
+                        <input type="hidden" id="adjustment_record_id" value="{{ $adjustment?->id ?? '' }}">
                         <input type="hidden" name="offset_proof_verified" id="offset_proof_verified" value="0">
                         <input type="hidden" name="offset_proof_time_in" id="offset_proof_time_in" value="">
                         <input type="hidden" name="offset_proof_time_out" id="offset_proof_time_out" value="">
@@ -252,18 +254,18 @@
             <div class="card-header bg-primary-subtle">
                 <h6 class="mb-0 text-primary">
                     <span class="fas fa-clock me-2"></span>
-                    Manual Time In / Time Out
+                    <span id="manual_time_title">Manual Time In / Time Out</span>
                 </h6>
             </div>
 
             <div class="card-body">
-                <div class="alert alert-primary-subtle border-0">
-                    Use this for Change Schedule and Official Business.
+                <div class="alert alert-primary-subtle border-0" id="manual_time_help">
+                    Change Schedule modifies expected schedule time. Official Business / Holiday Work may provide approved actual time. Overtime uses the approved OT interval only.
                 </div>
 
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Adjusted Time In</label>
+                        <label class="form-label fw-semibold" id="adjusted_time_in_label">Adjusted Time In</label>
                         <input type="time" name="adjusted_time_in" id="adjusted_time_in" class="form-control"
                             value="{{ old('adjusted_time_in', $adjustment->adjusted_time_in ?? '') }}">
 
@@ -273,7 +275,7 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Adjusted Time Out</label>
+                        <label class="form-label fw-semibold" id="adjusted_time_out_label">Adjusted Time Out</label>
                         <input type="time" name="adjusted_time_out" id="adjusted_time_out" class="form-control"
                             value="{{ old('adjusted_time_out', $adjustment->adjusted_time_out ?? '') }}">
 
@@ -289,19 +291,20 @@
             <div class="card-header bg-warning-subtle">
                 <h6 class="mb-0 text-warning">
                     <span class="fas fa-exchange-alt me-2"></span>
-                    Offset Proof from Biometrics
+                    Offset / Company Compensatory Leave Proof
                 </h6>
             </div>
 
             <div class="card-body">
                 <div class="alert alert-warning-subtle border-0">
-                    Select the original date where the employee actually timed in/out.
-                    The system will check biometrics logs as proof before saving.
+                    <strong>Normal Offset rule:</strong> select the earlier source date where the employee rendered verified excess time beyond the required shift.
+                    Only excess minutes not already assigned to another Offset request may be used. The approved company credit covers eligible late, undertime, partial-day, or absence shortage on the target date. <strong>No separate cash Offset payment is created, and approved OT remains payable separately.</strong><br>
+                    <span class="text-warning-emphasis">Payroll safeguard:</span> Offset never cancels an employee's separately approved overtime entitlement.
                 </div>
 
                 <div class="row g-3 align-items-end">
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Biometric Proof Date</label>
+                    <div class="col-md-5">
+                        <label class="form-label fw-semibold">Source Excess-Time Date</label>
                         <input type="date" name="offset_source_date" id="offset_source_date" class="form-control"
                             value="{{ $offsetSourceDate }}">
 
@@ -310,11 +313,25 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Hours to Transfer</label>
+                        <div class="input-group">
+                            <input type="number" name="offset_hours" id="offset_hours" class="form-control"
+                                min="0.01" max="24" step="0.01"
+                                value="{{ old('offset_hours', $adjustment?->approved_minutes ? number_format($adjustment->approved_minutes / 60, 2, '.', '') : '') }}"
+                                placeholder="e.g. 1.50">
+                            <span class="input-group-text">hr</span>
+                        </div>
+                        @error('offset_hours')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-4">
                         <button type="button" id="check_offset_proof_btn" class="btn btn-falcon-warning w-100"
                             data-url="{{ route('payroll-attendance-adjustments.offset-proof') }}">
                             <span class="fas fa-search me-1"></span>
-                            Check Biometrics Proof
+                            Check Available Offset Credit
                         </button>
                     </div>
                 </div>
@@ -370,8 +387,8 @@
                     <label class="form-check-label fw-semibold" for="is_paid">
                         Paid Adjustment
                     </label>
-                    <div class="fs-10 text-600">
-                        Include this adjustment as payable in payroll computation.
+                    <div class="fs-10 text-600" id="is_paid_help">
+                        Include this adjustment as payable attendance where the selected type allows it.
                     </div>
                 </div>
 
@@ -383,8 +400,8 @@
                     <label class="form-check-label fw-semibold" for="ignore_late">
                         Ignore Late
                     </label>
-                    <div class="fs-10 text-600">
-                        Late deduction will not apply for the adjusted date.
+                    <div class="fs-10 text-600" id="ignore_late_help">
+                        Late deduction will not apply when the adjustment type allows this effect.
                     </div>
                 </div>
 
@@ -396,17 +413,13 @@
                     <label class="form-check-label fw-semibold" for="ignore_undertime">
                         Ignore Undertime
                     </label>
-                    <div class="fs-10 text-600">
-                        Undertime deduction will not apply for the adjusted date.
+                    <div class="fs-10 text-600" id="ignore_undertime_help">
+                        Undertime deduction will not apply when the adjustment type allows this effect.
                     </div>
                 </div>
 
-                <div class="alert alert-info-subtle border-0 mt-3 mb-0 fs-10">
-                    <strong>Guide:</strong><br>
-                    Sick Leave and Medical Leave do not need time.<br>
-                    Offset requires biometric proof.<br>
-                    OB and Change Schedule need manual time in/out.<br>
-                    Typhoon / Disaster pays all employees with time-in as whole day.
+                <div class="alert alert-info-subtle border-0 mt-3 mb-0 fs-10" id="adjustment_rule_guide">
+                    <strong>Adjustment rules are type-controlled.</strong> Select an adjustment type to see its exact payroll behavior.
                 </div>
             </div>
         </div>
@@ -694,7 +707,7 @@
                                     <div class="fw-semibold">${escapeHtml(employeeName)}</div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="fs-10 text-600">Proof Date</div>
+                                    <div class="fs-10 text-600">Source Date</div>
                                     <div class="fw-semibold">${escapeHtml(proofDate)}</div>
                                 </div>
                             </div>
@@ -790,13 +803,23 @@
             setOffsetProofHiddenFields(proof);
 
             openBiometricsModal(
-                '<span class="fas fa-check-circle me-2"></span> Biometrics Proof Found',
+                '<span class="fas fa-check-circle me-2"></span> Offset Source Verified',
                 `Employee: <strong>${escapeHtml(proof.employee_name || employeeName)}</strong> | Date: <strong>${escapeHtml(proof.date || proofDate)}</strong>`,
                 `
                     <div class="alert alert-success border-0 shadow-sm">
                         <div class="fw-semibold">
                             <span class="fas fa-check-circle me-1"></span>
-                            Biometrics logs were found for this employee on the selected date.
+                            Biometrics logs were found and the Offset request passed the source/target validation.
+                            Requested: <strong>${escapeHtml(proof.requested_hours ?? 0)} hr</strong> |
+                            Target: <strong>${escapeHtml(proof.target_date || 'N/A')}</strong>
+                        </div>
+                        <div class="fs-10 mt-1">
+                            Canonical Bio ID: <strong>#${escapeHtml(proof.employee_biometric_id || 'N/A')}</strong> |
+                            Match: <strong>${escapeHtml(proof.identity_match || 'canonical employee')}</strong>
+                            ${proof.crosschex_account ? ' | Account: <strong>' + escapeHtml(proof.crosschex_account) + '</strong>' : ''}
+                        </div>
+                        <div class="fs-10 mt-1">
+                            Only logs belonging to the selected employee are included in this proof.
                         </div>
                     </div>
 
@@ -846,12 +869,12 @@
                         <div class="col-md-2">
                             <div class="card border shadow-none h-100">
                                 <div class="card-body">
-                                    <div class="fs-10 text-600">Accumulated</div>
+                                    <div class="fs-10 text-600">Available Offset</div>
                                     <div class="fw-bold text-info">
-                                        ${escapeHtml(accumulatedHoursLabel)}
+                                        ${escapeHtml((proof.approved_hours ?? 0) + ' hr')}
                                     </div>
                                     <div class="fs-10 text-600 mt-1">
-                                        Total duration
+                                        Unused excess time only
                                     </div>
                                 </div>
                             </div>
@@ -942,18 +965,22 @@
         function syncSelectedEmployee() {
             const picker = el('employee_picker');
             const typeSelect = el('adjustment_type');
+            const canonicalIdInput = el('employee_biometric_id');
             const biometricIdInput = el('biometric_employee_id');
             const employeeNoInput = el('employee_no');
             const employeeNameInput = el('employee_name');
+            const crosschexIdInput = el('crosschex_id');
 
-            if (!picker || !biometricIdInput || !employeeNoInput || !employeeNameInput) {
+            if (!picker || !canonicalIdInput || !biometricIdInput || !employeeNoInput || !employeeNameInput) {
                 return;
             }
 
             if (typeSelect && typeSelect.value === 'typhoon_disaster') {
+                canonicalIdInput.value = '';
                 biometricIdInput.value = '';
                 employeeNoInput.value = '';
                 employeeNameInput.value = '';
+                if (crosschexIdInput) crosschexIdInput.value = '';
                 resetOffsetProofHiddenFields();
                 return;
             }
@@ -961,16 +988,20 @@
             const selected = picker.options[picker.selectedIndex];
 
             if (!selected || !selected.value) {
+                canonicalIdInput.value = '';
                 biometricIdInput.value = '';
                 employeeNoInput.value = '';
                 employeeNameInput.value = '';
+                if (crosschexIdInput) crosschexIdInput.value = '';
                 resetOffsetProofHiddenFields();
                 return;
             }
 
+            canonicalIdInput.value = selected.dataset.employeeBiometricId || selected.value || '';
             biometricIdInput.value = selected.dataset.biometricId || '';
             employeeNoInput.value = selected.dataset.employeeNo || '';
             employeeNameInput.value = selected.dataset.employeeName || '';
+            if (crosschexIdInput) crosschexIdInput.value = selected.dataset.crosschexId || '';
 
             resetOffsetProofHiddenFields();
         }
@@ -986,7 +1017,8 @@
                 'date_to',
                 'adjusted_time_in',
                 'adjusted_time_out',
-                'offset_source_date'
+                'offset_source_date',
+                'offset_hours'
             ].forEach(function(id) {
                 const field = el(id);
 
@@ -1018,6 +1050,77 @@
             }
         }
 
+        function setSwitchState(id, checked, disabled, helpText) {
+            const input = el(id);
+            const help = el(id + '_help');
+
+            if (input) {
+                input.checked = checked;
+                input.disabled = disabled;
+            }
+
+            if (help && helpText) {
+                help.textContent = helpText;
+            }
+        }
+
+        function setManualTimeLabels(type) {
+            const title = el('manual_time_title');
+            const help = el('manual_time_help');
+            const inLabel = el('adjusted_time_in_label');
+            const outLabel = el('adjusted_time_out_label');
+
+            const content = {
+                change_schedule: {
+                    title: 'Temporary Scheduled Time In / Time Out',
+                    help: 'Changes the EXPECTED schedule for this date. Actual attendance still comes from biometrics.',
+                    inLabel: 'New Scheduled Time In',
+                    outLabel: 'New Scheduled Time Out'
+                },
+                official_business: {
+                    title: 'Approved Official Business Time',
+                    help: 'Approved OB time may substitute actual attendance for this date and ignores late/undertime.',
+                    inLabel: 'Approved OB Time In',
+                    outLabel: 'Approved OB Time Out'
+                },
+                holiday_work: {
+                    title: 'Approved Holiday Work Time',
+                    help: 'Use when holiday actual Time In/Out needs approved manual correction or proof. Regular 2.0x and Special 1.3x premiums are automatic from the Holiday Calendar.',
+                    inLabel: 'Approved Holiday Time In',
+                    outLabel: 'Approved Holiday Time Out'
+                },
+                overtime: {
+                    title: 'Approved Overtime Interval',
+                    help: 'Enter only the OT period. New OT requests are PENDING until Head Manager approval. Ordinary-day OT = daily rate / 8 × 125% × approved OT hours.',
+                    inLabel: 'OT Start Time',
+                    outLabel: 'OT End Time'
+                }
+            }[type] || {};
+
+            if (title) title.textContent = content.title || 'Manual Time In / Time Out';
+            if (help) help.textContent = content.help || 'Enter the approved adjustment time interval.';
+            if (inLabel) inLabel.textContent = content.inLabel || 'Adjusted Time In';
+            if (outLabel) outLabel.textContent = content.outLabel || 'Adjusted Time Out';
+        }
+
+        function setAdjustmentRuleGuide(type) {
+            const guide = el('adjustment_rule_guide');
+            if (!guide) return;
+
+            const guides = {
+                sick_leave: '<strong>Sick Leave:</strong> date range only. Paid by default; no manual time. Late and undertime are ignored.',
+                medical_leave: '<strong>Medical Leave:</strong> date range only. Paid by default; no manual time. Late and undertime are ignored.',
+                change_schedule: '<strong>Change Schedule:</strong> changes scheduled Time In/Out only. It does not create extra pay by itself.',
+                offset: '<strong>Offset / Company Compensatory Leave:</strong> use verified excess work from an earlier source date as a company attendance credit on the target date. No cash addition is created. OT approval/pay remains separate; only minutes already allocated to another Offset request are unavailable.',
+                official_business: '<strong>Official Business:</strong> approved manual actual time is payable and late/undertime are ignored.',
+                holiday_work: '<strong>Holiday Work:</strong> manual approved actual Time In/Out correction/proof for a plotted holiday. Normal holiday premium is automatic from Holiday Calendar + valid attendance.',
+                overtime: '<strong>Overtime:</strong> payroll ignores automatic/raw excess time. Only an APPROVED OT adjustment is paid. Ordinary day = daily rate / 8 × 125%.',
+                typhoon_disaster: '<strong>Typhoon / Disaster:</strong> applies to all active payroll employees with a biometric time-in on the selected date; paid whole day and late/UT ignored.'
+            };
+
+            guide.innerHTML = guides[type] || '<strong>Select an adjustment type</strong> to view its payroll rule.';
+        }
+
         function refreshAdjustmentFields() {
             const typeSelect = el('adjustment_type');
             const workDateLabel = el('work_date_label');
@@ -1027,84 +1130,78 @@
             const timeInInput = el('adjusted_time_in');
             const timeOutInput = el('adjusted_time_out');
             const offsetSourceDateInput = el('offset_source_date');
+            const offsetHoursInput = el('offset_hours');
+            const adjustmentRecordIdInput = el('adjustment_record_id');
 
-            if (!typeSelect) {
-                return;
-            }
+            if (!typeSelect) return;
 
             const type = typeSelect.value;
-
             hideAllSections();
+            setAdjustmentRuleGuide(type);
+            setManualTimeLabels(type);
 
             setEmployeePickerMode(
                 type !== 'typhoon_disaster',
-                type === 'typhoon_disaster' ?
-                'Employee selection is skipped. This applies to all employees with time-in on the selected date.' :
-                'Required for individual adjustments. Automatically skipped for Typhoon / Disaster.'
+                type === 'typhoon_disaster'
+                    ? 'Employee selection is skipped. This applies to all employees with time-in on the selected date.'
+                    : 'Required for individual adjustments.'
             );
+
+            // UI mirrors server-enforced semantics. Leave paid status remains
+            // editable so HR can mark an unsupported/unpaid leave when needed.
+            if (type === 'sick_leave' || type === 'medical_leave') {
+                setSwitchState('is_paid', true, false, 'Paid by default. Turn off only when company leave balance/policy makes this leave unpaid.');
+                setSwitchState('ignore_late', true, true, 'Leave ignores late by rule.');
+                setSwitchState('ignore_undertime', true, true, 'Leave ignores undertime by rule.');
+            } else if (type === 'official_business') {
+                setSwitchState('is_paid', true, true, 'Official Business is payable attendance.');
+                setSwitchState('ignore_late', true, true, 'Official Business ignores late by rule.');
+                setSwitchState('ignore_undertime', true, true, 'Official Business ignores undertime by rule.');
+            } else if (type === 'typhoon_disaster') {
+                setSwitchState('is_paid', true, true, 'Typhoon / Disaster is paid for qualifying employees with time-in.');
+                setSwitchState('ignore_late', true, true, 'Late is ignored by rule.');
+                setSwitchState('ignore_undertime', true, true, 'Undertime is ignored by rule.');
+            } else {
+                setSwitchState('is_paid', false, true,
+                    type === 'offset' ? 'Offset is a company attendance credit. It restores eligible shortage, creates no separate cash payment, and does not cancel separately approved OT.' :
+                    type === 'overtime' ? 'OT is a premium payment after approval, not a generic paid attendance adjustment.' :
+                    type === 'holiday_work' ? 'Holiday Work is manual attendance proof/correction; holiday premium is automatic from the Holiday Calendar.' :
+                    'This adjustment does not create generic paid attendance by itself.');
+                setSwitchState('ignore_late', type === 'holiday_work', true,
+                    type === 'holiday_work' ? 'Holiday Work ignores late for the approved holiday interval.' : 'Late handling follows attendance unless the adjustment rule says otherwise.');
+                setSwitchState('ignore_undertime', type === 'holiday_work', true,
+                    type === 'holiday_work' ? 'Holiday Work ignores undertime for the approved holiday interval.' : 'Undertime handling follows attendance unless the adjustment rule says otherwise.');
+            }
 
             if (type === 'sick_leave' || type === 'medical_leave') {
                 showSection('leave');
-
-                if (dateFromInput) {
-                    dateFromInput.required = true;
-                }
-
-                if (dateToInput) {
-                    dateToInput.required = true;
-                }
+                if (dateFromInput) dateFromInput.required = true;
+                if (dateToInput) dateToInput.required = true;
             }
 
-            if (type === 'change_schedule' || type === 'official_business' || type === 'holiday_work' || type ===
-                'overtime') {
+            if (['change_schedule', 'official_business', 'holiday_work', 'overtime'].includes(type)) {
                 showSection('single-date');
                 showSection('manual-time');
-
-                if (workDateLabel) {
-                    workDateLabel.textContent = 'Work Date';
-                }
-
-                if (workDateInput) {
-                    workDateInput.required = true;
-                }
-
-                if (timeInInput) {
-                    timeInInput.required = true;
-                }
-
-                if (timeOutInput) {
-                    timeOutInput.required = true;
-                }
+                if (workDateLabel) workDateLabel.textContent = 'Work Date';
+                if (workDateInput) workDateInput.required = true;
+                if (timeInInput) timeInInput.required = true;
+                if (timeOutInput) timeOutInput.required = true;
             }
 
             if (type === 'offset') {
                 showSection('single-date');
                 showSection('offset');
-
-                if (workDateLabel) {
-                    workDateLabel.textContent = 'Transfer / Offset Date';
-                }
-
-                if (workDateInput) {
-                    workDateInput.required = true;
-                }
-
-                if (offsetSourceDateInput) {
-                    offsetSourceDateInput.required = true;
-                }
+                if (workDateLabel) workDateLabel.textContent = 'Offset Target Date';
+                if (workDateInput) workDateInput.required = true;
+                if (offsetSourceDateInput) offsetSourceDateInput.required = true;
+                if (offsetHoursInput) offsetHoursInput.required = true;
             }
 
             if (type === 'typhoon_disaster') {
                 showSection('single-date');
                 showSection('disaster');
-
-                if (workDateLabel) {
-                    workDateLabel.textContent = 'Typhoon / Disaster Date';
-                }
-
-                if (workDateInput) {
-                    workDateInput.required = true;
-                }
+                if (workDateLabel) workDateLabel.textContent = 'Typhoon / Disaster Date';
+                if (workDateInput) workDateInput.required = true;
             }
 
             syncSelectedEmployee();
@@ -1117,41 +1214,49 @@
             }
 
             if (!button) {
-                openErrorModal('Check Biometrics Proof button was not found.');
+                openErrorModal('Check Available Offset Credit button was not found.');
                 return;
             }
 
             const typeSelect = el('adjustment_type');
+            const canonicalIdInput = el('employee_biometric_id');
             const biometricIdInput = el('biometric_employee_id');
             const employeeNoInput = el('employee_no');
             const employeeNameInput = el('employee_name');
             const offsetSourceDateInput = el('offset_source_date');
+            const workDateInput = el('work_date');
+            const offsetHoursInput = el('offset_hours');
+            const adjustmentRecordIdInput = el('adjustment_record_id');
 
             if (!typeSelect || typeSelect.value !== 'offset') {
                 openErrorModal('Please select Offset as adjustment type first.');
                 return;
             }
 
-            if (!biometricIdInput || !employeeNameInput || !offsetSourceDateInput) {
+            if (!canonicalIdInput || !biometricIdInput || !employeeNameInput || !offsetSourceDateInput || !workDateInput || !offsetHoursInput) {
                 openErrorModal(
                     'Required fields are missing.',
-                    'Please check biometric_employee_id, employee_name, and offset_source_date.'
+                    'Please check the employee, Offset target date, source date, and hours to transfer.'
                 );
                 return;
             }
 
+            const canonicalId = canonicalIdInput.value.trim();
             const biometricId = biometricIdInput.value.trim();
             const employeeNo = employeeNoInput ? employeeNoInput.value.trim() : '';
             const employeeName = employeeNameInput.value.trim();
             const offsetSourceDate = offsetSourceDateInput.value.trim();
+            const targetDate = workDateInput.value.trim();
+            const offsetHours = offsetHoursInput.value.trim();
 
-            if (!biometricId || !employeeName || !offsetSourceDate) {
+            if (!canonicalId || !employeeName || !offsetSourceDate || !targetDate || !offsetHours) {
                 openErrorModal(
-                    'Please select employee and biometric proof date first.',
+                    'Please complete the Offset details first.',
                     `
-                        Bio ID: ${escapeHtml(biometricId || 'empty')} |
                         Employee: ${escapeHtml(employeeName || 'empty')} |
-                        Proof Date: ${escapeHtml(offsetSourceDate || 'empty')}
+                        Target: ${escapeHtml(targetDate || 'empty')} |
+                        Source: ${escapeHtml(offsetSourceDate || 'empty')} |
+                        Hours: ${escapeHtml(offsetHours || 'empty')}
                     `
                 );
                 return;
@@ -1165,11 +1270,18 @@
             }
 
             const params = new URLSearchParams({
+                employee_biometric_id: canonicalId,
                 biometric_employee_id: biometricId,
                 employee_no: employeeNo,
                 employee_name: employeeName,
-                offset_source_date: offsetSourceDate
+                offset_source_date: offsetSourceDate,
+                work_date: targetDate,
+                offset_hours: offsetHours
             });
+
+            if (adjustmentRecordIdInput && adjustmentRecordIdInput.value.trim() !== '') {
+                params.set('adjustment_id', adjustmentRecordIdInput.value.trim());
+            }
 
             const controller = new AbortController();
 
@@ -1243,7 +1355,7 @@
                 button.disabled = false;
                 button.innerHTML = `
                     <span class="fas fa-search me-1"></span>
-                    Check Biometrics Proof
+                    Check Available Offset Credit
                 `;
             }
         }
@@ -1264,6 +1376,17 @@
 
             if (offsetSourceDateInput) {
                 offsetSourceDateInput.addEventListener('change', resetOffsetProofHiddenFields);
+            }
+
+            const workDateInput = el('work_date');
+            const offsetHoursInput = el('offset_hours');
+
+            if (workDateInput) {
+                workDateInput.addEventListener('change', resetOffsetProofHiddenFields);
+            }
+
+            if (offsetHoursInput) {
+                offsetHoursInput.addEventListener('input', resetOffsetProofHiddenFields);
             }
 
             if (checkButton) {

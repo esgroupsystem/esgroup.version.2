@@ -16,6 +16,7 @@ class PayrollItem extends Model
         'biometric_employee_id',
         'employee_no',
         'employee_name',
+        'company_name_snapshot',
         'crosschex_id',
 
         'rate_type',
@@ -32,6 +33,7 @@ class PayrollItem extends Model
         'total_late_minutes',
         'total_undertime_minutes',
         'total_overtime_minutes',
+        'total_night_differential_minutes',
         'total_absent_days',
         'total_rest_day_worked',
         'total_holiday_worked',
@@ -45,6 +47,7 @@ class PayrollItem extends Model
         'absence_deduction',
 
         'overtime_pay',
+        'night_differential_pay',
         'holiday_pay',
         'rest_day_pay',
         'leave_pay',
@@ -93,6 +96,7 @@ class PayrollItem extends Model
         'total_late_minutes' => 'integer',
         'total_undertime_minutes' => 'integer',
         'total_overtime_minutes' => 'integer',
+        'total_night_differential_minutes' => 'integer',
 
         'total_absent_days' => 'decimal:2',
         'total_rest_day_worked' => 'decimal:2',
@@ -107,6 +111,7 @@ class PayrollItem extends Model
         'absence_deduction' => 'decimal:2',
 
         'overtime_pay' => 'decimal:2',
+        'night_differential_pay' => 'decimal:2',
         'holiday_pay' => 'decimal:2',
         'rest_day_pay' => 'decimal:2',
         'leave_pay' => 'decimal:2',

@@ -24,6 +24,7 @@ class PayrollEmployeeRosterService
     public function queryForGroup(int|string $groupName): Builder
     {
         return EmployeeBiometric::query()
+            ->with('company')
             ->payrollActive()
             ->where('group_name', (string) $groupName)
             ->orderByRaw("CASE WHEN NULLIF(TRIM(display_name), '') IS NULL THEN 1 ELSE 0 END")

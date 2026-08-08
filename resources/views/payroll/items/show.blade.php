@@ -24,6 +24,9 @@
                 $holidayBreakdown = data_get($item->meta, 'holiday_breakdown', []);
                 $restDayBreakdown = data_get($item->meta, 'rest_day_breakdown', []);
                 $manualAdjustments = data_get($item->meta, 'manual_adjustments', []);
+                $overtimeBreakdown = data_get($item->meta, 'overtime_breakdown', []);
+                $nightDifferentialBreakdown = data_get($item->meta, 'night_differential', []);
+                $adjustmentTags = collect(data_get($item->meta, 'adjustment_tags', []));
 
                 $baseCutoffPay = (float) data_get($payArchitecture, 'base_cutoff_pay', $item->regular_pay);
                 $payModel = (string) data_get($payArchitecture, 'money_model', $item->rate_type);
@@ -39,17 +42,28 @@
                 $restDayPay = (float) ($item->rest_day_pay ?? 0);
                 $leavePay = (float) ($item->leave_pay ?? 0);
                 $overtimePay = (float) ($item->overtime_pay ?? 0);
+                $nightDifferentialPay = (float) ($item->night_differential_pay ?? 0);
+                $manualAdjustmentPay = (float) data_get($manualAdjustments, 'additions', 0);
                 $grossPay = (float) $item->gross_pay;
                 $netPay = (float) $item->net_pay;
 
                 $totalAdditions = round(
-                    (float) $item->other_additions + $holidayPay + $restDayPay + $leavePay + $overtimePay,
+                    (float) $item->other_additions
+                    + $holidayPay
+                    + $restDayPay
+                    + $leavePay
+                    + $overtimePay
+                    + $nightDifferentialPay,
                     2,
                 );
 
                 $workedHoursTotal = (float) ($summaries->sum('worked_minutes') / 60);
                 $lateMinutesTotal = (int) $summaries->sum('late_minutes');
                 $undertimeMinutesTotal = (int) $summaries->sum('undertime_minutes');
+                $approvedOvertimeMinutes = (int) ($item->total_overtime_minutes ?? 0);
+                $approvedOvertimeHours = round($approvedOvertimeMinutes / 60, 2);
+                $nightDifferentialMinutes = (int) ($item->total_night_differential_minutes ?? 0);
+                $nightDifferentialHours = round($nightDifferentialMinutes / 60, 2);
 
                 $totalHolidayWorked = (int) data_get(
                     $holidayBreakdown,
@@ -181,7 +195,7 @@
                                 </h4>
 
                                 <small class="text-muted">
-                                    Allowance, holiday, rest, leave, OT
+                                    Allowance, holiday, rest, leave, approved OT, night diff, adjustments
                                 </small>
                             </div>
                         </div>
@@ -338,11 +352,33 @@
                                     </tr>
 
                                     <tr>
-                                        <td class="text-muted">Overtime Pay</td>
+                                        <td class="text-muted">
+                                            Approved Overtime Pay
+                                            <small class="text-muted">({{ number_format($approvedOvertimeHours, 2) }} hr)</small>
+                                        </td>
                                         <td class="text-end text-info">
                                             + {{ $money($overtimePay) }}
                                         </td>
                                     </tr>
+
+                                    <tr>
+                                        <td class="text-muted">
+                                            Night Differential
+                                            <small class="text-muted">({{ number_format($nightDifferentialHours, 2) }} hr, 10PM-6AM)</small>
+                                        </td>
+                                        <td class="text-end text-primary">
+                                            + {{ $money($nightDifferentialPay) }}
+                                        </td>
+                                    </tr>
+
+                                    @if ($manualAdjustmentPay > 0)
+                                        <tr>
+                                            <td class="text-muted">Manual Payroll Adjustment Pay</td>
+                                            <td class="text-end text-success">
+                                                + {{ $money($manualAdjustmentPay) }}
+                                            </td>
+                                        </tr>
+                                    @endif
 
                                     <tr class="table-info">
                                         <td class="fw-bold">Gross Pay</td>
@@ -504,6 +540,16 @@
                             </div>
 
                             <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">Approved OT</span>
+                                <strong>{{ number_format($approvedOvertimeHours, 2) }} hr</strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">Night Differential</span>
+                                <strong>{{ number_format($nightDifferentialHours, 2) }} hr</strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between border-bottom py-2">
                                 <span class="text-muted">Holiday Worked</span>
                                 <strong>{{ $totalHolidayWorked }}</strong>
                             </div>
@@ -515,6 +561,65 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="col-12">
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-body-tertiary border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <h6 class="mb-0">
+                                <i class="fas fa-tags me-2 text-primary"></i>
+                                Adjustments Applied / Paid This Cutoff
+                            </h6>
+                            <span class="badge bg-primary-subtle text-primary">
+                                {{ $adjustmentTags->count() }} adjustment{{ $adjustmentTags->count() === 1 ? '' : 's' }}
+                            </span>
+                        </div>
+
+                        <div class="card-body">
+                            @if ($adjustmentTags->isEmpty())
+                                <div class="text-muted small">
+                                    No approved payroll adjustments or premium authorizations are applied to this cutoff.
+                                </div>
+                            @else
+                                <div class="row g-2">
+                                    @foreach ($adjustmentTags as $tag)
+                                        @php
+                                            $tagAmount = (float) data_get($tag, 'amount', 0);
+                                            $paidThisCutoff = (bool) data_get($tag, 'paid_this_cutoff', false);
+                                            $tagLabel = data_get($tag, 'label', data_get($tag, 'type', 'Adjustment'));
+                                            $tagDate = data_get($tag, 'date', data_get($tag, 'work_date', data_get($tag, 'effective_date')));
+                                            $effect = data_get($tag, 'effect', 'Payroll adjustment');
+                                        @endphp
+                                        <div class="col-md-6 col-xl-4">
+                                            <div class="border rounded-3 p-3 h-100">
+                                                <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                                                    <div class="fw-semibold">{{ $tagLabel }}</div>
+                                                    @if ($paidThisCutoff)
+                                                        <span class="badge bg-success-subtle text-success">Paid This Cutoff</span>
+                                                    @else
+                                                        <span class="badge bg-info-subtle text-info">Applied</span>
+                                                    @endif
+                                                </div>
+                                                <div class="small text-muted">{{ $effect }}</div>
+                                                @if ($tagDate)
+                                                    <div class="small text-muted mt-1">
+                                                        <i class="fas fa-calendar-day me-1"></i>{{ \Carbon\Carbon::parse($tagDate)->format('M d, Y') }}
+                                                    </div>
+                                                @endif
+                                                @if ($tagAmount > 0)
+                                                    <div class="fw-bold text-success mt-2">+ {{ $money($tagAmount) }}</div>
+                                                @endif
+                                                @if (data_get($tag, 'reason'))
+                                                    <div class="small text-muted mt-1">{{ data_get($tag, 'reason') }}</div>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             @include('payroll.items.partials.attendance-audit-table', [

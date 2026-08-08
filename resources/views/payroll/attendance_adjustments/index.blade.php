@@ -721,6 +721,22 @@
                                                 <span class="fas {{ $typeConfig['icon'] }} me-2"></span>
                                                 {{ $item->type_label }}
                                             </span>
+
+                                            <div class="mt-2">
+                                                @if ($item->status === \App\Models\PayrollAttendanceAdjustment::STATUS_PENDING)
+                                                    <span class="badge bg-warning-subtle text-warning">
+                                                        <span class="fas fa-hourglass-half me-1"></span>Pending Approval
+                                                    </span>
+                                                @elseif ($item->status === \App\Models\PayrollAttendanceAdjustment::STATUS_REJECTED)
+                                                    <span class="badge bg-danger-subtle text-danger">
+                                                        <span class="fas fa-times-circle me-1"></span>Rejected
+                                                    </span>
+                                                @else
+                                                    <span class="badge bg-success-subtle text-success">
+                                                        <span class="fas fa-check-circle me-1"></span>Approved
+                                                    </span>
+                                                @endif
+                                            </div>
                                         </td>
 
                                         {{-- Period --}}
@@ -759,6 +775,24 @@
                                                     <span class="fas fa-check-circle me-1"></span>
                                                     Biometrics verified
                                                 </div>
+
+                                                <div class="fs-10 text-info mt-1">
+                                                    <span class="fas fa-random me-1"></span>
+                                                    Compensatory time credit for target attendance date
+                                                </div>
+
+                                                @if ($item->approved_minutes)
+                                                    <div class="fs-10 text-600 mt-1">
+                                                        Available credit: {{ number_format($item->approved_minutes / 60, 2) }} hr(s)
+                                                    </div>
+                                                @endif
+
+                                                @if ($item->paidPayroll)
+                                                    <div class="fs-10 text-primary mt-1">
+                                                        <span class="fas fa-check-double me-1"></span>
+                                                        Applied in {{ $item->paidPayroll->payroll_number }}
+                                                    </div>
+                                                @endif
                                             @else
                                                 <span class="text-400">Not applicable</span>
                                             @endif
@@ -767,32 +801,45 @@
                                         {{-- Payroll Effect --}}
                                         <td class="effect-cell">
                                             <div class="d-flex flex-wrap gap-1">
-                                                @if ($item->is_paid)
+                                                @if ($item->adjustment_type === \App\Models\PayrollAttendanceAdjustment::TYPE_OFFSET)
+                                                    <span class="badge payroll-effect-badge bg-info-subtle text-info">
+                                                        <span class="fas fa-random me-1"></span>Comp Time Credit
+                                                    </span>
+                                                @elseif ($item->adjustment_type === \App\Models\PayrollAttendanceAdjustment::TYPE_OVERTIME)
+                                                    <span class="badge payroll-effect-badge {{ $item->status === 'approved' ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning' }}">
+                                                        <span class="fas fa-business-time me-1"></span>
+                                                        {{ $item->status === 'approved' ? 'OT Pay Authorized' : 'No OT Pay Yet' }}
+                                                    </span>
+                                                @elseif ($item->adjustment_type === \App\Models\PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK)
+                                                    <span class="badge payroll-effect-badge bg-primary-subtle text-primary">
+                                                        <span class="fas fa-percentage me-1"></span>Holiday Premium
+                                                    </span>
+                                                @elseif ($item->is_paid)
                                                     <span class="badge payroll-effect-badge bg-success-subtle text-success">
-                                                        <span class="fas fa-coins me-1"></span>
-                                                        Paid
+                                                        <span class="fas fa-coins me-1"></span>Paid Attendance
                                                     </span>
                                                 @else
                                                     <span class="badge payroll-effect-badge bg-secondary-subtle text-secondary">
-                                                        <span class="fas fa-ban me-1"></span>
-                                                        Unpaid
+                                                        <span class="fas fa-cog me-1"></span>Attendance Rule Only
                                                     </span>
                                                 @endif
 
                                                 @if ($item->ignore_late)
                                                     <span class="badge payroll-effect-badge bg-info-subtle text-info">
-                                                        <span class="fas fa-forward me-1"></span>
-                                                        Ignore Late
+                                                        <span class="fas fa-forward me-1"></span>Ignore Late
                                                     </span>
                                                 @endif
 
                                                 @if ($item->ignore_undertime)
                                                     <span class="badge payroll-effect-badge bg-warning-subtle text-warning">
-                                                        <span class="fas fa-hourglass-end me-1"></span>
-                                                        Ignore UT
+                                                        <span class="fas fa-hourglass-end me-1"></span>Ignore UT
                                                     </span>
                                                 @endif
                                             </div>
+
+                                            @if ($item->adjustment_type === \App\Models\PayrollAttendanceAdjustment::TYPE_OVERTIME)
+                                                <div class="fs-10 text-600 mt-2">Ordinary-day formula: Daily Rate ÷ 8 × 125% × approved OT hours.</div>
+                                            @endif
                                         </td>
 
                                         {{-- Encoded --}}
@@ -826,6 +873,35 @@
                                         {{-- Actions --}}
                                         <td class="action-cell text-end pe-4">
                                             <div class="d-inline-flex align-items-center gap-1">
+                                                @if ($item->isApprovalRequired()
+                                                    && $item->status === \App\Models\PayrollAttendanceAdjustment::STATUS_PENDING)
+                                                    @can('payroll.finalize')
+                                                        @php($isOtApproval = $item->adjustment_type === \App\Models\PayrollAttendanceAdjustment::TYPE_OVERTIME)
+                                                        <form method="POST" action="{{ route('payroll-attendance-adjustments.approve', $item) }}" class="d-inline"
+                                                            onsubmit="return confirm('{{ $isOtApproval ? 'Approve this overtime adjustment for payroll payment?' : 'Approve this Offset credit and apply it to the target attendance date?' }}');">
+                                                            @csrf
+                                                            <button type="submit" class="btn btn-falcon-success btn-sm action-button"
+                                                                title="{{ $isOtApproval ? 'Approve OT' : 'Approve Offset' }} (Head Manager / Payroll Finalizer)">
+                                                                <span class="fas fa-check"></span>
+                                                            </button>
+                                                        </form>
+
+                                                        <form method="POST" action="{{ route('payroll-attendance-adjustments.reject', $item) }}" class="d-inline"
+                                                            onsubmit="return confirm('{{ $isOtApproval ? 'Reject this overtime adjustment? It will not be paid.' : 'Reject this Offset request? No compensatory credit will be applied.' }}');">
+                                                            @csrf
+                                                            <input type="hidden" name="rejection_reason" value="Rejected by Head Manager / authorized payroll finalizer from adjustment list.">
+                                                            <button type="submit" class="btn btn-falcon-danger btn-sm action-button"
+                                                                title="{{ $isOtApproval ? 'Reject OT' : 'Reject Offset' }} (Head Manager / Payroll Finalizer)">
+                                                                <span class="fas fa-times"></span>
+                                                            </button>
+                                                        </form>
+                                                    @else
+                                                        <span class="badge bg-warning-subtle text-warning" title="Requires a user with Payroll Finalize permission">
+                                                            Manager Approval Required
+                                                        </span>
+                                                    @endcan
+                                                @endif
+
                                                 <a
                                                     href="{{ route('payroll-attendance-adjustments.edit', $item) }}"
                                                     class="btn btn-falcon-warning btn-sm action-button"

@@ -19,7 +19,7 @@ class PayrollPayslipService
     public function build(Payroll $payroll): array
     {
         $payroll->load([
-            'items.employeeBiometric',
+            'items.employeeBiometric.company',
             'items' => fn ($query) => $query->orderBy('employee_name'),
             'generator',
             'finalizer',
@@ -78,6 +78,9 @@ class PayrollPayslipService
 
         return [
             'item' => $item,
+            'company_name' => $item->company_name_snapshot
+                ?: $item->employeeBiometric?->company?->name
+                ?: 'No Company / Not Tagged',
             'employee_name' => $item->employee_name ?: 'Unknown Employee',
             'employee_biometric_id' => $item->employee_biometric_id ?: null,
             'employee_no' => $item->employee_no ?: '—',
@@ -122,8 +125,10 @@ class PayrollPayslipService
         );
 
         $overtimePay = round((float) $item->overtime_pay, 2);
+        $nightDifferentialPay = round((float) ($item->night_differential_pay ?? 0), 2);
         $restDayPay = round((float) $item->rest_day_pay, 2);
         $holidayPay = round((float) $item->holiday_pay, 2);
+        $otBreakdown = $this->overtimePayslipBreakdown($item);
 
         $regularPayAmount = $this->regularPayAmount(
             $item,
@@ -131,6 +136,7 @@ class PayrollPayslipService
             $allowance,
             $adjustment,
             $overtimePay,
+            $nightDifferentialPay,
             $restDayPay,
             $holidayPay
         );
@@ -143,28 +149,28 @@ class PayrollPayslipService
             ],
             [
                 'label' => 'Overtime (Reg.)',
-                'unit' => number_format(((float) $item->total_overtime_minutes) / 60, 2),
-                'amount' => $overtimePay,
+                'unit' => number_format($otBreakdown['regular']['hours'], 2),
+                'amount' => $otBreakdown['regular']['amount'],
             ],
             [
                 'label' => 'Overtime (RD. or Sp. Day)',
-                'unit' => '0.00',
-                'amount' => 0.00,
+                'unit' => number_format($otBreakdown['rest_special']['hours'], 2),
+                'amount' => $otBreakdown['rest_special']['amount'],
             ],
             [
                 'label' => 'Overtime (Reg. Holiday)',
-                'unit' => '0.00',
-                'amount' => 0.00,
+                'unit' => number_format($otBreakdown['regular_holiday']['hours'], 2),
+                'amount' => $otBreakdown['regular_holiday']['amount'],
             ],
             [
                 'label' => 'Overtime (Reg. Hday on RD)',
-                'unit' => '0.00',
-                'amount' => 0.00,
+                'unit' => number_format($otBreakdown['regular_holiday_rest']['hours'], 2),
+                'amount' => $otBreakdown['regular_holiday_rest']['amount'],
             ],
             [
-                'label' => 'Night Shift Hours',
-                'unit' => '0.00',
-                'amount' => 0.00,
+                'label' => 'Night Differential (10PM-6AM)',
+                'unit' => number_format(((float) ($item->total_night_differential_minutes ?? 0)) / 60, 2),
+                'amount' => $nightDifferentialPay,
             ],
             [
                 'label' => 'Restday/Special Holiday',
@@ -194,6 +200,43 @@ class PayrollPayslipService
         ];
     }
 
+    protected function overtimePayslipBreakdown(PayrollItem $item): array
+    {
+        $groups = [
+            'regular' => ['hours' => 0.0, 'amount' => 0.0],
+            'rest_special' => ['hours' => 0.0, 'amount' => 0.0],
+            'regular_holiday' => ['hours' => 0.0, 'amount' => 0.0],
+            'regular_holiday_rest' => ['hours' => 0.0, 'amount' => 0.0],
+        ];
+
+        foreach ((array) data_get($item->meta, 'overtime_breakdown.details', []) as $detail) {
+            $multiplier = round((float) ($detail['day_multiplier'] ?? 1), 2);
+            $key = match (true) {
+                $multiplier >= 2.60 => 'regular_holiday_rest',
+                $multiplier >= 2.00 => 'regular_holiday',
+                $multiplier > 1.00 => 'rest_special',
+                default => 'regular',
+            };
+
+            $groups[$key]['hours'] += (float) ($detail['hours'] ?? 0);
+            $groups[$key]['amount'] += (float) ($detail['amount'] ?? 0);
+        }
+
+        // Legacy payroll item fallback: old metadata did not have OT details.
+        if (array_sum(array_column($groups, 'hours')) <= 0 && (int) $item->total_overtime_minutes > 0) {
+            $groups['regular']['hours'] = ((int) $item->total_overtime_minutes) / 60;
+            $groups['regular']['amount'] = (float) $item->overtime_pay;
+        }
+
+        foreach ($groups as &$group) {
+            $group['hours'] = round($group['hours'], 2);
+            $group['amount'] = round($group['amount'], 2);
+        }
+        unset($group);
+
+        return $groups;
+    }
+
     /**
      * Return the actual regular-pay amount represented by the computed
      * Regular Days Worked value.
@@ -209,6 +252,7 @@ class PayrollPayslipService
         float $allowance,
         float $adjustment,
         float $overtimePay,
+        float $nightDifferentialPay,
         float $restDayPay,
         float $holidayPay
     ): float {
@@ -218,6 +262,7 @@ class PayrollPayslipService
             max(0, $allowance)
             + max(0, $adjustment)
             + max(0, $overtimePay)
+            + max(0, $nightDifferentialPay)
             + max(0, $restDayPay)
             + max(0, $holidayPay),
             2
@@ -321,14 +366,36 @@ class PayrollPayslipService
 
     protected function hasPaidAttendanceAdjustment(Collection $adjustments): bool
     {
-        $label = $this->adjustmentLabel($adjustments);
+        return $adjustments->contains(function ($adjustment): bool {
+            $status = strtolower((string) ($adjustment->status ?? PayrollAttendanceAdjustment::STATUS_APPROVED));
 
-        return in_array($label, [
-            'OB',
-            'OFFSET',
-            'ADJ',
-            'ADJ+',
-        ], true);
+            if ($status !== PayrollAttendanceAdjustment::STATUS_APPROVED) {
+                return false;
+            }
+
+            $type = strtolower((string) ($adjustment->adjustment_type ?? ''));
+
+            /*
+             * Offset is intentionally NOT treated as paid attendance on the
+             * source work date. Company policy defers its payment to the next
+             * payroll cutoff, so it must never restore current-cutoff regular
+             * days in the payslip attendance presentation.
+             */
+            if ($type === PayrollAttendanceAdjustment::TYPE_OFFSET) {
+                return false;
+            }
+
+            if (! (bool) ($adjustment->is_paid ?? false)) {
+                return false;
+            }
+
+            return in_array($type, [
+                PayrollAttendanceAdjustment::TYPE_SICK_LEAVE,
+                PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE,
+                PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS,
+                PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER,
+            ], true);
+        });
     }
 
     protected function baseDaysPerCutoff(): float

@@ -150,6 +150,15 @@ return [
         'special_not_worked_multiplier' => 0.00,
     ],
 
+    'premiums' => [
+        'standard_daily_hours' => 8,
+        'overtime_multiplier' => 1.25,
+        'premium_day_overtime_multiplier' => 1.30,
+        'night_differential_percent' => 0.10,
+        'night_start' => '22:00',
+        'night_end' => '06:00',
+    ],
+
     'overtime' => [
         'regular_multiplier' => 1.25,
     ],

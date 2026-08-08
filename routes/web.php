@@ -685,6 +685,14 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->middleware('permission:payroll-attendance-adjustments.update')
                 ->name('update');
 
+            Route::post('/{payrollAttendanceAdjustment}/approve', 'approve')
+                ->middleware('permission:payroll.finalize')
+                ->name('approve');
+
+            Route::post('/{payrollAttendanceAdjustment}/reject', 'reject')
+                ->middleware('permission:payroll.finalize')
+                ->name('reject');
+
             Route::delete('/{payrollAttendanceAdjustment}', 'destroy')
                 ->middleware('permission:payroll-attendance-adjustments.delete')
                 ->name('destroy');

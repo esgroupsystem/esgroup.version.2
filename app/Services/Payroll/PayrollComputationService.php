@@ -24,6 +24,7 @@ class PayrollComputationService
         protected GovernmentDeductionService $governmentDeductionService,
         protected PaymentLogService $paymentLogService,
         protected PayrollEmployeeRosterService $employeeRosterService,
+        protected PayrollPremiumService $premiumService,
     ) {}
 
     public function generate(array $data, ?int $userId = null): Payroll
@@ -80,7 +81,7 @@ class PayrollComputationService
             ->values();
 
         $summaries = DailyAttendanceSummary::query()
-            ->with('employeeBiometric')
+            ->with('employeeBiometric.company')
             ->whereBetween('work_date', [
                 $startDate->toDateString(),
                 $endDate->toDateString(),
@@ -219,6 +220,7 @@ class PayrollComputationService
             'biometric_employee_id' => $reference->biometric_employee_id,
             'employee_no' => $reference->employee_no,
             'employee_name' => $reference->employee_name,
+            'company_name_snapshot' => $employee->company?->name,
             'crosschex_id' => $reference->crosschex_id,
             'rate_type' => $rates['rate_type'],
             'monthly_rate' => round((float) $rates['monthly_rate'], 2),
@@ -233,6 +235,7 @@ class PayrollComputationService
             'total_late_minutes' => 0,
             'total_undertime_minutes' => 0,
             'total_overtime_minutes' => 0,
+            'total_night_differential_minutes' => 0,
             'total_absent_days' => 0,
             'total_rest_day_worked' => 0,
             'total_holiday_worked' => 0,
@@ -243,6 +246,7 @@ class PayrollComputationService
             'undertime_deduction' => 0,
             'absence_deduction' => 0,
             'overtime_pay' => 0,
+            'night_differential_pay' => 0,
             'holiday_pay' => 0,
             'rest_day_pay' => 0,
             'leave_pay' => 0,
@@ -321,10 +325,15 @@ class PayrollComputationService
         $totalAbsentDays = (float) $rows->filter(fn ($row): bool => $this->isAbsent($row))->count();
         $totalLeaveDays = (int) $rows->filter(fn ($row): bool => $this->statusIs($row, 'leave'))->count();
 
-        $approvedOtDates = $this->getApprovedOvertimeDates($first, $startDate, $endDate);
-        $totalOvertimeMinutes = (int) $rows
-            ->filter(fn ($row): bool => in_array($this->dateString($row->work_date), $approvedOtDates, true))
-            ->sum(fn ($row): int => (int) ($row->overtime_minutes ?? 0));
+        // Raw attendance excess is audit-only. Payroll OT is created ONLY
+        // from an approved Overtime adjustment interval.
+        $overtime = $this->computeApprovedOvertime($first, $rows, $startDate, $endDate, $rates);
+        $totalOvertimeMinutes = (int) $overtime['minutes'];
+
+        // Night differential is automatic from actual worked overlap between
+        // 10:00 PM and 6:00 AM. No adjustment filing is required.
+        $nightDifferential = $this->computeNightDifferential($rows, $rates, $overtime);
+        $totalNightDifferentialMinutes = (int) $nightDifferential['minutes'];
 
         $regularRows = $rows->reject(
             fn ($row): bool => $this->isHolidayRow($row)
@@ -371,10 +380,17 @@ class PayrollComputationService
 
         $holiday = $this->computeHolidayPay($rows, $rates, $first, $isMonthlyEmployee);
         $restDay = $this->computeRestDayPay($rows, $rates);
-        $overtimePay = round(($totalOvertimeMinutes / 60) * (float) $rates['ot_rate_per_hour'], 2);
+        $overtimePay = round((float) $overtime['pay'], 2);
+        $nightDifferentialPay = round((float) $nightDifferential['pay'], 2);
 
         $allowancePerCutoff = round(((float) ($rates['allowance'] ?? 0)) / 2, 2);
-        $manualAdjustments = $this->computeApprovedPayrollAdjustments($first, $startDate, $endDate);
+        $manualAdjustments = $this->computeApprovedPayrollAdjustments(
+            $first,
+            $startDate,
+            $endDate,
+            $rates,
+            $payroll
+        );
 
         $salaryDeductions = $this->resolveSalaryDeductions($rates, $payroll, $first);
         $salaryDeductionAmount = round(array_sum(array_column($salaryDeductions, 'amount')), 2);
@@ -391,6 +407,7 @@ class PayrollComputationService
             + $restDay['rest_day_pay']
             + $leavePay
             + $overtimePay
+            + $nightDifferentialPay
             + $otherAdditions,
             2
         );
@@ -488,6 +505,7 @@ class PayrollComputationService
             'biometric_employee_id' => $first->biometric_employee_id ?? null,
             'employee_no' => $first->employee_no ?? null,
             'employee_name' => $first->employee_name ?: 'Unknown Employee',
+            'company_name_snapshot' => $first->employeeBiometric?->company?->name,
             'crosschex_id' => $first->crosschex_id ?? null,
             'rate_type' => $rates['rate_type'],
             'monthly_rate' => $rates['monthly_rate'],
@@ -502,6 +520,7 @@ class PayrollComputationService
             'total_late_minutes' => $totalLateMinutes,
             'total_undertime_minutes' => $totalUndertimeMinutes,
             'total_overtime_minutes' => $totalOvertimeMinutes,
+            'total_night_differential_minutes' => $totalNightDifferentialMinutes,
             'total_absent_days' => $totalAbsentDays,
             'total_rest_day_worked' => $restDay['worked_days'],
             'total_holiday_worked' => $holiday['worked_days'],
@@ -512,6 +531,7 @@ class PayrollComputationService
             'undertime_deduction' => $attendanceDeductions['undertime_deduction'],
             'absence_deduction' => $attendanceDeductions['absence_deduction'],
             'overtime_pay' => $overtimePay,
+            'night_differential_pay' => $nightDifferentialPay,
             'holiday_pay' => $holiday['holiday_pay'],
             'rest_day_pay' => $restDay['rest_day_pay'],
             'leave_pay' => $leavePay,
@@ -571,9 +591,14 @@ class PayrollComputationService
                 'attendance_deductions' => $attendanceDeductions,
                 'holiday_breakdown' => $holiday,
                 'rest_day_breakdown' => $restDay,
+                'overtime_breakdown' => $overtime,
+                'night_differential' => $nightDifferential,
+                'adjustment_tags' => $this->buildAdjustmentTags($manualAdjustments, $overtime, $holiday, $rows),
                 'daily_status_breakdown' => $rows->groupBy(fn ($row) => strtolower((string) ($row->attendance_status ?? 'none')))->map->count()->toArray(),
             ],
         ]);
+
+        $this->markOneTimeAdjustmentsApplied($manualAdjustments, $overtime, $holiday, $payroll, $item);
 
         $this->paymentLogService->logPayrollItem($payroll, $item, $salaryDeductions, $userId);
         $this->createFutureReportPlaceholders($payroll, $item, $userId);
@@ -616,46 +641,71 @@ class PayrollComputationService
         $payableHours = 0.0;
         $workedDays = 0;
         $paidNotWorkedDays = 0;
+        $dailyRate = max(0, (float) ($rates['daily_rate'] ?? 0));
+        $standardHours = $this->premiumService->standardDailyHours();
 
         foreach ($rows->filter(fn ($row): bool => $this->isHolidayRow($row)) as $row) {
             $date = $this->dateString($row->work_date);
             $holidayType = $this->holidayType($row);
             $isRegular = str_contains($holidayType, 'regular');
             $hasWork = $this->hasValidTimeInOut($row);
-            $hasHolidayAdjustment = $this->hasApprovedHolidayAdjustment($employeeReference, Carbon::parse($date));
+            $holidayAdjustment = $this->approvedHolidayAdjustment($employeeReference, Carbon::parse($date));
+            $hasHolidayAdjustment = $holidayAdjustment !== null;
             $previousDayQualified = $this->isEligibleForHolidayNotWorked($employeeReference, Carbon::parse($date));
 
-            $premiumMultiplier = $isRegular
-                ? (float) config('payroll.holiday.regular_worked_premium', 1.00)
-                : (float) config('payroll.holiday.special_worked_premium', 0.30);
+            $defaults = Holiday::standardMultipliers($isRegular ? Holiday::TYPE_REGULAR : Holiday::TYPE_SPECIAL);
+            $storedWorkedMultiplier = is_numeric(data_get($row, 'holiday_worked_multiplier'))
+                ? (float) data_get($row, 'holiday_worked_multiplier')
+                : (float) $defaults['worked_multiplier'];
+            $storedNotWorkedMultiplier = is_numeric(data_get($row, 'holiday_not_worked_multiplier'))
+                ? (float) data_get($row, 'holiday_not_worked_multiplier')
+                : (float) $defaults['not_worked_multiplier'];
 
-            $workedHours = $this->premiumPayHours($row);
+            // Never pay below the statutory holiday/rest-day floor. The holiday
+            // master multiplier can still be overridden upward for company policy.
+            $statutoryWorkedMultiplier = $this->dayBaseMultiplier($row);
+            $workedMultiplier = max($storedWorkedMultiplier, $statutoryWorkedMultiplier);
+            $workedHours = min($standardHours, $this->premiumPayHours($row));
+            $workedFraction = $standardHours > 0 ? min(1.0, $workedHours / $standardHours) : 0.0;
             $amount = 0.0;
             $remarks = null;
+            $payrollAdditionMultiplier = $isMonthlyEmployee
+                ? max(0, $workedMultiplier - 1.0)
+                : $workedMultiplier;
 
-            if ($hasWork && $hasHolidayAdjustment && $previousDayQualified) {
+            if ($hasWork) {
+                /*
+                 * Holiday Calendar + actual attendance is sufficient to release
+                 * the statutory/company holiday premium. A Holiday Work
+                 * adjustment remains useful as an approved manual-time proof
+                 * when biometrics are missing or need correction, but payroll
+                 * must not withhold an otherwise valid holiday premium merely
+                 * because no separate adjustment was filed.
+                 */
                 $workedDays++;
                 $payableHours += $workedHours;
-
-                $amount = round(
-                    $workedHours * (float) $rates['hourly_rate'] * $premiumMultiplier,
-                    2
+                $amount = round($dailyRate * $workedFraction * $payrollAdditionMultiplier, 2);
+                $remarks = sprintf(
+                    '%s holiday work: %.2fx total rate; payroll addition factor %.2fx because %s.',
+                    $hasHolidayAdjustment ? 'Adjustment-confirmed' : 'Attendance-confirmed',
+                    $workedMultiplier,
+                    $payrollAdditionMultiplier,
+                    $isMonthlyEmployee ? 'monthly cutoff base already contains 1.00x ordinary salary' : 'holiday hours are excluded from ordinary hourly base pay'
                 );
-
-                $remarks = $isRegular
-                    ? 'Paid regular holiday worked premium only: holiday hours * hourly rate * 1.00.'
-                    : 'Paid special holiday worked premium only: holiday hours * hourly rate * 0.30.';
-            } elseif ($hasWork && ! $hasHolidayAdjustment) {
-                $remarks = 'No holiday premium. Employee has time-in/out but no approved/plotted payroll adjustment for holiday work.';
-            } elseif ($hasWork && ! $previousDayQualified) {
-                $remarks = 'No holiday premium. Employee did not work or qualify on the day before the holiday.';
-            } elseif ($previousDayQualified && $isRegular) {
+            } elseif ($isRegular && $previousDayQualified) {
                 $paidNotWorkedDays++;
+
+                if (! $isMonthlyEmployee && $storedNotWorkedMultiplier > 0) {
+                    $amount = round($dailyRate * $storedNotWorkedMultiplier, 2);
+                }
+
                 $remarks = $isMonthlyEmployee
-                    ? 'Regular holiday not worked: no extra addition because monthly cutoff basic pay is already fixed at monthly salary / 2.'
-                    : 'Regular holiday not worked: no extra addition under the selected company formula.';
+                    ? 'Regular holiday not worked and qualified: 1.00x is already included in monthly cutoff basic pay.'
+                    : sprintf('Regular holiday not worked and qualified: %.2fx daily rate.', $storedNotWorkedMultiplier);
             } else {
-                $remarks = 'Holiday unpaid. Previous day did not qualify and no approved holiday work adjustment exists.';
+                $remarks = $isRegular
+                    ? 'Regular holiday not worked: previous-day qualification was not met.'
+                    : 'Special non-working holiday not worked: no work, no pay unless a more favorable company policy applies.';
             }
 
             $holidayPay += $amount;
@@ -666,9 +716,14 @@ class PayrollComputationService
                 'holiday_type' => $holidayType,
                 'has_valid_time_in_out' => $hasWork,
                 'has_approved_holiday_adjustment' => $hasHolidayAdjustment,
+                'holiday_adjustment_id' => $holidayAdjustment?->id,
                 'previous_day_qualified' => $previousDayQualified,
                 'paid_hours' => round($workedHours, 2),
-                'premium_multiplier' => $premiumMultiplier,
+                'configured_worked_multiplier' => round($storedWorkedMultiplier, 2),
+                'statutory_worked_multiplier' => round($statutoryWorkedMultiplier, 2),
+                'total_worked_multiplier' => round($workedMultiplier, 2),
+                'payroll_addition_multiplier' => round($payrollAdditionMultiplier, 2),
+                'not_worked_multiplier' => round($storedNotWorkedMultiplier, 2),
                 'amount' => $amount,
                 'remarks' => $remarks,
             ];
@@ -739,7 +794,10 @@ class PayrollComputationService
         $rates['hourly_rate'] = round($hourlyRate, 6);
         $rates['minute_rate'] = round($minuteRate, 6);
 
-        $rates['ot_rate_per_hour'] = round($hourlyRate * (float) config('payroll.overtime.regular_multiplier', 1.25), 6);
+        // Company/legal OT basis is always daily rate / 8 hours. A 9-hour
+        // plotted workday must not dilute the statutory overtime hourly base.
+        $rates['ot_rate_per_hour'] = $this->premiumService->overtimeHourlyRate($dailyRate, 1.0);
+        $rates['night_differential_rate_per_hour'] = $this->premiumService->nightDifferentialHourlyRate($dailyRate, 1.0);
         $rates['late_deduction_per_minute'] = round($minuteRate, 6);
         $rates['undertime_deduction_per_minute'] = round($minuteRate, 6);
         $rates['absent_deduction_per_day'] = round($dailyRate, 6);
@@ -758,6 +816,8 @@ class PayrollComputationService
             'daily_rate_formula' => 'monthly_salary * 12 / 365',
             'hourly_rate_formula' => 'daily_rate / paid_hours_per_day',
             'minute_rate_formula' => 'hourly_rate / 60',
+            'overtime_rate_formula' => 'daily_rate / 8 * 125% on ordinary day; statutory premium-day multiplier applies on rest/holiday',
+            'night_differential_rate_formula' => 'daily_rate / 8 * applicable day multiplier * 10%',
             'cutoff_base_formula' => 'monthly_salary / 2',
         ];
 
@@ -1349,70 +1409,515 @@ class PayrollComputationService
         return max(0, (int) config('payroll.attendance.late_grace_minutes', 15));
     }
 
-    protected function computeApprovedPayrollAdjustments(object $summary, Carbon $startDate, Carbon $endDate): array
-    {
+    protected function computeApprovedPayrollAdjustments(
+        object $summary,
+        Carbon $startDate,
+        Carbon $endDate,
+        array $rates,
+        Payroll $payroll
+    ): array {
         if (! class_exists(PayrollAttendanceAdjustment::class)) {
-            return ['additions' => 0, 'deductions' => 0, 'details' => []];
-        }
-
-        $query = PayrollAttendanceAdjustment::query()
-            ->whereBetween('work_date', [$startDate->toDateString(), $endDate->toDateString()]);
-
-        $matched = false;
-        $query->where(function ($q) use ($summary, &$matched): void {
-            if (! empty($summary->employee_biometric_id)) {
-                $q->orWhere('employee_biometric_id', (int) $summary->employee_biometric_id);
-                $matched = true;
-            }
-
-            if (! empty($summary->biometric_employee_id)) {
-                $q->orWhere('biometric_employee_id', $summary->biometric_employee_id);
-                $matched = true;
-            }
-
-            if (! empty($summary->employee_no)) {
-                $q->orWhere('employee_no', $summary->employee_no);
-                $matched = true;
-            }
-
-            if (! empty($summary->employee_name)) {
-                $q->orWhere('employee_name', $summary->employee_name);
-                $matched = true;
-            }
-        });
-
-        if (! $matched) {
-            return ['additions' => 0, 'deductions' => 0, 'details' => []];
-        }
-
-        if ($this->columnExists('payroll_attendance_adjustments', 'status')) {
-            $query->where('status', 'approved');
-        }
-
-        $rows = $query->get();
-        $additions = 0.0;
-        $deductions = 0.0;
-        $details = [];
-
-        foreach ($rows as $row) {
-            $type = strtolower((string) ($row->adjustment_type ?? $row->type ?? ''));
-            $amount = round((float) ($row->amount ?? 0), 2);
-
-            if (in_array($type, ['addition', 'add', 'allowance', 'bonus'], true)) {
-                $additions += $amount;
-            } elseif (in_array($type, ['deduction', 'deduct'], true)) {
-                $deductions += $amount;
-            }
-
-            $details[] = [
-                'date' => $this->dateString($row->work_date),
-                'type' => $type,
-                'amount' => $amount,
-                'remarks' => $row->remarks ?? null,
+            return [
+                'additions' => 0,
+                'deductions' => 0,
+                'details' => [],
+                'applied_offset_ids' => [],
             ];
         }
 
-        return ['additions' => round($additions, 2), 'deductions' => round($deductions, 2), 'details' => $details];
+        $query = PayrollAttendanceAdjustment::query()->approved();
+        $this->applyAdjustmentEmployeeMatch($query, $summary);
+
+        $periodStart = $startDate->toDateString();
+        $periodEnd = $endDate->toDateString();
+
+        $query->where(function ($workQuery) use ($periodStart, $periodEnd): void {
+            $workQuery->whereRaw('COALESCE(date_from, work_date) <= ?', [$periodEnd])
+                ->whereRaw('COALESCE(date_to, work_date) >= ?', [$periodStart]);
+        });
+
+        $rows = $query->orderBy('work_date')->orderBy('id')->get();
+        $additions = 0.0;
+        $deductions = 0.0;
+        $details = [];
+        $appliedOffsetIds = [];
+
+        foreach ($rows as $row) {
+            $type = (string) $row->adjustment_type;
+            $rowFrom = $row->date_from?->toDateString() ?? $row->work_date?->toDateString();
+            $rowTo = $row->date_to?->toDateString() ?? $rowFrom;
+            $inCurrentWorkPeriod = $rowFrom && $rowTo
+                && $rowFrom <= $periodEnd
+                && $rowTo >= $periodStart;
+
+            $amount = 0.0;
+            $paidThisCutoff = false;
+            $effect = 'Applied';
+            $offsetAppliedMinutes = 0;
+
+            if ($type === PayrollAttendanceAdjustment::TYPE_OFFSET) {
+                $targetDate = $row->work_date?->toDateString();
+
+                if ($targetDate) {
+                    $targetSummaryQuery = DailyAttendanceSummary::query()
+                        ->whereDate('work_date', $targetDate);
+                    $this->applySummaryEmployeeMatch($targetSummaryQuery, $summary);
+                    $targetSummary = $targetSummaryQuery->first();
+
+                    $offsetAppliedMinutes = max(
+                        0,
+                        (int) data_get($targetSummary?->meta, 'offset_applied_minutes', 0)
+                    );
+                }
+
+                if ($offsetAppliedMinutes > 0) {
+                    $effect = 'Compensatory Offset applied: '.number_format($offsetAppliedMinutes / 60, 2).' hour(s) covered attendance shortage';
+                    $appliedOffsetIds[] = (int) $row->id;
+                } else {
+                    $effect = 'Offset approved; no attendance shortage consumed in this cutoff';
+                }
+            } elseif ($type === PayrollAttendanceAdjustment::TYPE_CHANGE_SCHEDULE) {
+                $effect = 'Schedule changed for attendance computation';
+            } elseif (in_array($type, [
+                PayrollAttendanceAdjustment::TYPE_SICK_LEAVE,
+                PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE,
+                PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS,
+                PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER,
+            ], true)) {
+                $paidThisCutoff = (bool) $row->is_paid && $inCurrentWorkPeriod;
+                $effect = $paidThisCutoff ? 'Paid attendance adjustment' : 'Attendance adjustment';
+            } elseif ($type === PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK) {
+                $effect = 'Holiday-work authorization; premium calculated separately';
+            } elseif ($type === PayrollAttendanceAdjustment::TYPE_OVERTIME) {
+                $effect = 'Overtime authorization; premium calculated separately';
+            }
+
+            $details[] = [
+                'id' => (int) $row->id,
+                'date' => $row->work_date?->toDateString(),
+                'date_from' => $rowFrom,
+                'date_to' => $rowTo,
+                'type' => $type,
+                'type_label' => $row->type_label,
+                'status' => $row->status ?: PayrollAttendanceAdjustment::STATUS_APPROVED,
+                'is_paid' => (bool) $row->is_paid,
+                'in_current_work_period' => $inCurrentWorkPeriod,
+                'payroll_effective_date' => $row->payroll_effective_date?->toDateString(),
+                'approved_minutes' => max(0, (int) ($row->approved_minutes ?? 0)),
+                'offset_applied_minutes' => max(0, (int) $offsetAppliedMinutes),
+                'amount' => $amount,
+                'paid_this_cutoff' => $paidThisCutoff,
+                'effect' => $effect,
+                'reason' => $row->reason,
+                'remarks' => $row->remarks,
+            ];
+        }
+
+        return [
+            'additions' => round($additions, 2),
+            'deductions' => round($deductions, 2),
+            'details' => $details,
+            'applied_offset_ids' => array_values(array_unique($appliedOffsetIds)),
+        ];
+    }
+
+    protected function computeApprovedOvertime(
+        object $employeeReference,
+        Collection $summaryRows,
+        Carbon $startDate,
+        Carbon $endDate,
+        array $rates
+    ): array {
+        $query = PayrollAttendanceAdjustment::query()
+            ->approved()
+            ->where('adjustment_type', PayrollAttendanceAdjustment::TYPE_OVERTIME)
+            ->whereBetween('work_date', [$startDate->toDateString(), $endDate->toDateString()]);
+
+        $this->applyAdjustmentEmployeeMatch($query, $employeeReference);
+
+        $adjustments = $query->orderBy('work_date')->orderBy('id')->get();
+        $minutes = 0;
+        $pay = 0.0;
+        $details = [];
+        $dailyRate = max(0, (float) ($rates['daily_rate'] ?? 0));
+
+        foreach ($adjustments as $adjustment) {
+            $date = $adjustment->work_date?->toDateString();
+
+            if (! $date) {
+                continue;
+            }
+
+            $interval = $this->premiumService->interval(
+                $date,
+                $adjustment->adjusted_time_in,
+                $adjustment->adjusted_time_out
+            );
+
+            if (! $interval || (int) $interval['minutes'] <= 0) {
+                continue;
+            }
+
+            $summaryRow = $summaryRows->first(
+                fn ($row): bool => $this->dateString($row->work_date) === $date
+            );
+            $dayMultiplier = $summaryRow ? $this->dayBaseMultiplier($summaryRow) : 1.0;
+            $hourlyRate = $this->premiumService->overtimeHourlyRate($dailyRate, $dayMultiplier);
+            $rowMinutes = (int) $interval['minutes'];
+            $rowPay = round(($rowMinutes / 60) * $hourlyRate, 2);
+
+            $minutes += $rowMinutes;
+            $pay += $rowPay;
+
+            $details[] = [
+                'adjustment_id' => (int) $adjustment->id,
+                'date' => $date,
+                'time_in' => $adjustment->adjusted_time_in,
+                'time_out' => $adjustment->adjusted_time_out,
+                'minutes' => $rowMinutes,
+                'hours' => round($rowMinutes / 60, 2),
+                'day_multiplier' => round($dayMultiplier, 2),
+                'hourly_rate' => round($hourlyRate, 4),
+                'amount' => $rowPay,
+                'formula' => $dayMultiplier > 1
+                    ? 'daily_rate / 8 * applicable premium-day rate * 130% * OT hours'
+                    : 'daily_rate / 8 * 125% * approved OT hours',
+                'reason' => $adjustment->reason,
+            ];
+        }
+
+        return [
+            'minutes' => $minutes,
+            'hours' => round($minutes / 60, 2),
+            'pay' => round($pay, 2),
+            'requires_adjustment' => true,
+            'approval_rule' => 'Only APPROVED overtime adjustment intervals are payable. Raw attendance excess is not automatically paid.',
+            'details' => $details,
+        ];
+    }
+
+    protected function computeNightDifferential(Collection $rows, array $rates, array $overtime = []): array
+    {
+        $minutes = 0;
+        $pay = 0.0;
+        $details = [];
+        $dailyRate = max(0, (float) ($rates['daily_rate'] ?? 0));
+        $approvedOvertimeDetails = collect($overtime['details'] ?? []);
+
+        foreach ($rows as $row) {
+            $actualIn = $this->parsePayrollDateTime(
+                $row->actual_time_in ?? ($row->time_in ?? null),
+                $row->work_date ?? null
+            );
+            $actualOut = $this->parsePayrollDateTime(
+                $row->actual_time_out ?? ($row->time_out ?? null),
+                $row->work_date ?? null
+            );
+
+            if (! $actualIn || ! $actualOut) {
+                continue;
+            }
+
+            if ($actualOut->lessThanOrEqualTo($actualIn)) {
+                $actualOut->addDay();
+            }
+
+            $rowMinutes = $this->premiumService->nightDifferentialMinutes($actualIn, $actualOut);
+
+            if ($rowMinutes <= 0) {
+                continue;
+            }
+
+            $dayMultiplier = $this->dayBaseMultiplier($row);
+            $regularNightHourlyRate = $this->premiumService->nightDifferentialHourlyRate($dailyRate, $dayMultiplier);
+            $overtimeNightMinutes = 0;
+            $overtimeNightPay = 0.0;
+            $overtimeNightDetails = [];
+
+            foreach ($approvedOvertimeDetails as $otDetail) {
+                $otDate = (string) ($otDetail['date'] ?? '');
+                $otTimeIn = $otDetail['time_in'] ?? null;
+                $otTimeOut = $otDetail['time_out'] ?? null;
+
+                if ($otDate === '' || ! $otTimeIn || ! $otTimeOut) {
+                    continue;
+                }
+
+                $otInterval = $this->premiumService->interval($otDate, $otTimeIn, $otTimeOut);
+
+                if (! $otInterval) {
+                    continue;
+                }
+
+                $overlapMinutes = $this->premiumService->nightDifferentialOverlapMinutes(
+                    $actualIn,
+                    $actualOut,
+                    $otInterval['start'],
+                    $otInterval['end']
+                );
+
+                if ($overlapMinutes <= 0) {
+                    continue;
+                }
+
+                $approvedOtHourlyRate = max(0, (float) ($otDetail['hourly_rate'] ?? 0));
+                $otNdHourlyPremium = $this->premiumService->nightDifferentialOnOvertimeHourlyRate(
+                    $approvedOtHourlyRate
+                );
+                $overlapPay = round(($overlapMinutes / 60) * $otNdHourlyPremium, 2);
+
+                $overtimeNightMinutes += $overlapMinutes;
+                $overtimeNightPay += $overlapPay;
+                $overtimeNightDetails[] = [
+                    'adjustment_id' => $otDetail['adjustment_id'] ?? null,
+                    'minutes' => $overlapMinutes,
+                    'hours' => round($overlapMinutes / 60, 2),
+                    'approved_ot_hourly_rate' => round($approvedOtHourlyRate, 4),
+                    'night_differential_hourly_premium' => round($otNdHourlyPremium, 4),
+                    'amount' => $overlapPay,
+                ];
+            }
+
+            // There should normally be one OT filing per employee/work date.
+            // Cap the overlap defensively so duplicate/overlapping approvals can
+            // never convert more than the row's actual night work into OT-night.
+            $overtimeNightMinutes = min($rowMinutes, $overtimeNightMinutes);
+            $regularNightMinutes = max(0, $rowMinutes - $overtimeNightMinutes);
+            $regularNightPay = round(($regularNightMinutes / 60) * $regularNightHourlyRate, 2);
+            $rowPay = round($regularNightPay + $overtimeNightPay, 2);
+
+            $minutes += $rowMinutes;
+            $pay += $rowPay;
+
+            $details[] = [
+                'date' => $this->dateString($row->work_date),
+                'actual_time_in' => $actualIn->toDateTimeString(),
+                'actual_time_out' => $actualOut->toDateTimeString(),
+                'minutes' => $rowMinutes,
+                'hours' => round($rowMinutes / 60, 2),
+                'regular_night_minutes' => $regularNightMinutes,
+                'overtime_night_minutes' => $overtimeNightMinutes,
+                'day_multiplier' => round($dayMultiplier, 2),
+                'regular_night_hourly_rate' => round($regularNightHourlyRate, 4),
+                'regular_night_pay' => $regularNightPay,
+                'overtime_night_pay' => round($overtimeNightPay, 2),
+                'overtime_night_details' => $overtimeNightDetails,
+                'amount' => $rowPay,
+                'coverage' => '10:00 PM - 6:00 AM',
+                'formula' => 'ordinary/premium night hours: daily_rate / 8 * applicable day multiplier * 10%; approved OT-night overlap: approved OT hourly rate * 10%',
+            ];
+        }
+
+        return [
+            'minutes' => $minutes,
+            'hours' => round($minutes / 60, 2),
+            'pay' => round($pay, 2),
+            'coverage' => '22:00-06:00',
+            'details' => $details,
+        ];
+    }
+
+    protected function dayBaseMultiplier(object $row): float
+    {
+        $isHoliday = $this->isHolidayRow($row);
+        $isRestDay = $this->isRestDayRow($row) || (bool) data_get($row, 'is_rest_day', false);
+
+        if ($isHoliday) {
+            $type = $this->holidayType($row);
+            $isRegular = str_contains($type, 'regular');
+
+            if ($isRegular) {
+                return $isRestDay ? 2.60 : 2.00;
+            }
+
+            return $isRestDay ? 1.50 : 1.30;
+        }
+
+        return $isRestDay ? 1.30 : 1.00;
+    }
+
+    protected function applyAdjustmentEmployeeMatch($query, object $reference): void
+    {
+        if (! empty($reference->employee_biometric_id)) {
+            $query->where('employee_biometric_id', (int) $reference->employee_biometric_id);
+
+            return;
+        }
+
+        $query->where(function ($q) use ($reference): void {
+            $hasIdentity = false;
+
+            foreach ([
+                'biometric_employee_id' => $reference->biometric_employee_id ?? null,
+                'employee_no' => $reference->employee_no ?? null,
+                'employee_name' => $reference->employee_name ?? null,
+            ] as $column => $value) {
+                if ($value !== null && trim((string) $value) !== '') {
+                    $q->orWhere($column, $value);
+                    $hasIdentity = true;
+                }
+            }
+
+            if (! $hasIdentity) {
+                $q->whereRaw('1 = 0');
+            }
+        });
+    }
+
+    protected function applySummaryEmployeeMatch($query, object $reference): void
+    {
+        if (! empty($reference->employee_biometric_id)) {
+            $query->where('employee_biometric_id', (int) $reference->employee_biometric_id);
+
+            return;
+        }
+
+        $query->where(function ($q) use ($reference): void {
+            $hasIdentity = false;
+
+            foreach ([
+                'biometric_employee_id' => $reference->biometric_employee_id ?? null,
+                'employee_no' => $reference->employee_no ?? null,
+                'employee_name' => $reference->employee_name ?? null,
+            ] as $column => $value) {
+                if ($value !== null && trim((string) $value) !== '') {
+                    $q->orWhere($column, $value);
+                    $hasIdentity = true;
+                }
+            }
+
+            if (! $hasIdentity) {
+                $q->whereRaw('1 = 0');
+            }
+        });
+    }
+
+    protected function markOneTimeAdjustmentsApplied(
+        array $manualAdjustments,
+        array $overtime,
+        array $holiday,
+        Payroll $payroll,
+        PayrollItem $item
+    ): void {
+        /*
+         * Link one-time attendance/premium authorizations to the draft payroll that
+         * consumed them. Foreign keys are nullOnDelete, so deleting a draft
+         * safely releases them for correction/regeneration. Range leave/OB
+         * adjustments are deliberately not linked because a single range can
+         * legitimately span more than one cutoff.
+         */
+        $ids = collect($manualAdjustments['applied_offset_ids'] ?? [])
+            ->merge(collect($overtime['details'] ?? [])->pluck('adjustment_id'))
+            ->merge(collect($holiday['details'] ?? [])->pluck('holiday_adjustment_id'))
+            ->map(fn ($id): int => (int) $id)
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        PayrollAttendanceAdjustment::query()
+            ->whereIn('id', $ids)
+            ->where(function ($query) use ($payroll): void {
+                $query->whereNull('paid_payroll_id')
+                    ->orWhere('paid_payroll_id', $payroll->id);
+            })
+            ->update([
+                'paid_payroll_id' => $payroll->id,
+                'paid_payroll_item_id' => $item->id,
+                'updated_at' => now('Asia/Manila'),
+            ]);
+    }
+
+    protected function buildAdjustmentTags(
+        array $manualAdjustments,
+        array $overtime,
+        array $holiday,
+        Collection $summaryRows
+    ): array {
+        $tags = [];
+
+        foreach ($manualAdjustments['details'] ?? [] as $detail) {
+            if (! ($detail['in_current_work_period'] ?? false) && ! ($detail['paid_this_cutoff'] ?? false)) {
+                continue;
+            }
+
+            $tags[] = [
+                'source' => 'adjustment',
+                'adjustment_id' => $detail['id'] ?? null,
+                'type' => $detail['type'] ?? 'adjustment',
+                'label' => $detail['type_label'] ?? 'Adjustment',
+                'date' => $detail['date'] ?? $detail['date_from'] ?? null,
+                'amount' => round((float) ($detail['amount'] ?? 0), 2),
+                'paid_this_cutoff' => (bool) ($detail['paid_this_cutoff'] ?? false),
+                'effect' => $detail['effect'] ?? null,
+            ];
+        }
+
+        foreach ($overtime['details'] ?? [] as $detail) {
+            $tags[] = [
+                'source' => 'overtime',
+                'adjustment_id' => $detail['adjustment_id'] ?? null,
+                'type' => PayrollAttendanceAdjustment::TYPE_OVERTIME,
+                'label' => 'Approved Overtime',
+                'date' => $detail['date'] ?? null,
+                'amount' => round((float) ($detail['amount'] ?? 0), 2),
+                'paid_this_cutoff' => true,
+                'effect' => round((float) ($detail['hours'] ?? 0), 2).' approved OT hour(s)',
+            ];
+        }
+
+        foreach ($holiday['details'] ?? [] as $detail) {
+            if (! ($detail['has_approved_holiday_adjustment'] ?? false)) {
+                continue;
+            }
+
+            $tags[] = [
+                'source' => 'holiday_work',
+                'adjustment_id' => $detail['holiday_adjustment_id'] ?? null,
+                'type' => PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK,
+                'label' => 'Holiday Work',
+                'date' => $detail['date'] ?? null,
+                'amount' => round((float) ($detail['amount'] ?? 0), 2),
+                'paid_this_cutoff' => (float) ($detail['amount'] ?? 0) > 0,
+                'effect' => sprintf('%.2fx holiday rate', (float) ($detail['total_worked_multiplier'] ?? 0)),
+            ];
+        }
+
+        // Global Typhoon / Disaster adjustments are attached to the Daily
+        // Attendance Summary rather than an employee-specific adjustment row.
+        // Tag only the employees/dates where the adjustment was actually
+        // applied, so payroll does not claim a global adjustment paid an
+        // employee who had no qualifying time-in.
+        foreach ($summaryRows as $row) {
+            if ((string) ($row->adjustment_type ?? '') !== PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER) {
+                continue;
+            }
+
+            $paid = (bool) ($row->adjustment_is_paid ?? false)
+                && (float) ($row->payable_days ?? 0) > 0;
+
+            $tags[] = [
+                'source' => 'typhoon_disaster',
+                'adjustment_id' => $row->attendance_adjustment_id ?? null,
+                'type' => PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER,
+                'label' => 'Typhoon / Disaster',
+                'date' => $this->dateString($row->work_date),
+                'amount' => 0.00,
+                'paid_this_cutoff' => $paid,
+                'effect' => $paid
+                    ? 'Whole-day paid attendance adjustment applied'
+                    : 'Disaster adjustment recorded; no qualifying paid attendance',
+            ];
+        }
+
+        return collect($tags)->unique(fn (array $tag): string => implode('|', [
+            $tag['source'] ?? '',
+            $tag['adjustment_id'] ?? '',
+            $tag['date'] ?? '',
+        ]))->values()->all();
     }
 
     protected function createFutureReportPlaceholders(Payroll $payroll, PayrollItem $item, ?int $userId): void
@@ -2145,54 +2650,22 @@ class PayrollComputationService
         return round(min($paidHoursPerDay, $workedMinutes / 60), 2);
     }
 
-    protected function hasApprovedHolidayAdjustment(object $employeeReference, Carbon $holidayDate): bool
-    {
+    protected function approvedHolidayAdjustment(
+        object $employeeReference,
+        Carbon $holidayDate
+    ): ?PayrollAttendanceAdjustment {
         if (! class_exists(PayrollAttendanceAdjustment::class)) {
-            return false;
+            return null;
         }
 
         $query = PayrollAttendanceAdjustment::query()
-            ->whereDate('work_date', $holidayDate->toDateString());
+            ->approved()
+            ->whereDate('work_date', $holidayDate->toDateString())
+            ->where('adjustment_type', PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK);
 
-        $matched = false;
-        $query->where(function ($q) use ($employeeReference, &$matched): void {
-            if (! empty($employeeReference->biometric_employee_id)) {
-                $q->orWhere('biometric_employee_id', $employeeReference->biometric_employee_id);
-                $matched = true;
-            }
+        $this->applyAdjustmentEmployeeMatch($query, $employeeReference);
 
-            if (! empty($employeeReference->employee_no)) {
-                $q->orWhere('employee_no', $employeeReference->employee_no);
-                $matched = true;
-            }
-
-            if (! empty($employeeReference->employee_name)) {
-                $q->orWhere('employee_name', $employeeReference->employee_name);
-                $matched = true;
-            }
-        });
-
-        if (! $matched) {
-            return false;
-        }
-
-        if ($this->columnExists('payroll_attendance_adjustments', 'status')) {
-            $query->where('status', 'approved');
-        } elseif ($this->columnExists('payroll_attendance_adjustments', 'is_approved')) {
-            $query->where('is_approved', true);
-        }
-
-        return $query->where(function ($q): void {
-            $q->where('is_paid', true)
-                ->orWhere('adjustment_type', PayrollAttendanceAdjustment::TYPE_CHANGE_SCHEDULE)
-                ->orWhere('adjustment_type', PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS)
-                ->orWhere('adjustment_type', PayrollAttendanceAdjustment::TYPE_OFFSET)
-                ->orWhere('adjustment_type', 'holiday_work')
-                ->orWhere('adjustment_type', 'holiday')
-                ->orWhere('adjustment_type', 'overtime')
-                ->orWhereNotNull('adjusted_time_in')
-                ->orWhereNotNull('adjusted_time_out');
-        })->exists();
+        return $query->latest('id')->first();
     }
 
     protected function holidayDateColumn(): ?string

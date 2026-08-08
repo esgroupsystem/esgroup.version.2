@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Payroll\GeneratePayrollRequest;
 use App\Models\DailyAttendanceSummary;
 use App\Models\Payroll;
+use App\Models\PayrollAttendanceAdjustment;
 use App\Models\PayrollItem;
 use App\Services\Payroll\DailyAttendanceSummaryService;
 use App\Services\Payroll\PayrollComputationService;
@@ -128,7 +129,7 @@ class PayrollController extends Controller
 
     public function show(Payroll $payroll)
     {
-        $payroll->load(['items.employeeBiometric', 'items.paymentLogs', 'generator', 'finalizer']);
+        $payroll->load(['items.employeeBiometric.company', 'items.paymentLogs', 'generator', 'finalizer']);
 
         $totals = $this->totals($payroll);
 
@@ -139,7 +140,7 @@ class PayrollController extends Controller
     {
         abort_if((int) $item->payroll_id !== (int) $payroll->id, 404);
 
-        $item->load(['employeeBiometric', 'paymentLogs']);
+        $item->load(['employeeBiometric.company', 'paymentLogs']);
 
         $summaries = DailyAttendanceSummary::query()
             ->with(['employeeBiometric', 'plottingSchedule'])
@@ -192,6 +193,105 @@ class PayrollController extends Controller
                     $incompleteSummaryItems->count()
                 ),
             ]);
+        }
+
+        $legacyDeferredOffsetItems = $payroll->items->filter(function (PayrollItem $item): bool {
+            return collect(data_get($item->meta, 'manual_adjustments.details', []))
+                ->contains(function ($detail): bool {
+                    if (! is_array($detail)) {
+                        return false;
+                    }
+
+                    return (string) ($detail['type'] ?? '') === PayrollAttendanceAdjustment::TYPE_OFFSET
+                        && (
+                            (string) ($detail['effect'] ?? '') === 'Deferred offset payment'
+                            || (bool) ($detail['paid_this_cutoff'] ?? false)
+                        );
+                });
+        });
+
+        if ($legacyDeferredOffsetItems->isNotEmpty()) {
+            return back()->withErrors([
+                'payroll' => sprintf(
+                    'Cannot finalize payroll. %d employee item(s) still contain the old deferred-cash Offset computation. Delete/regenerate this draft payroll under the new normal Offset policy first.',
+                    $legacyDeferredOffsetItems->count()
+                ),
+            ]);
+        }
+
+        $payrollEmployeeIds = $payroll->items
+            ->pluck('employee_biometric_id')
+            ->filter()
+            ->map(fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
+
+        $pendingApprovalCount = PayrollAttendanceAdjustment::query()
+            ->pending()
+            ->whereIn('adjustment_type', [
+                PayrollAttendanceAdjustment::TYPE_OVERTIME,
+                PayrollAttendanceAdjustment::TYPE_OFFSET,
+            ])
+            ->whereBetween('work_date', [
+                $payroll->period_start->toDateString(),
+                $payroll->period_end->toDateString(),
+            ])
+            ->whereIn('employee_biometric_id', $payrollEmployeeIds)
+            ->count();
+
+        if ($pendingApprovalCount > 0) {
+            return back()->withErrors([
+                'payroll' => sprintf(
+                    'Cannot finalize payroll. %d OT/Offset adjustment(s) in this cutoff are still pending Head Manager approval/rejection. Resolve them, rebuild Attendance Summary when Offset is involved, then regenerate the draft payroll.',
+                    $pendingApprovalCount
+                ),
+            ]);
+        }
+
+        /*
+         * A payroll draft is a financial snapshot. If an approved attendance
+         * adjustment was created/approved/edited after the draft was generated,
+         * the current item amounts can be stale (most importantly OT approval).
+         * Block finalization until the draft is regenerated from the latest
+         * approved adjustment state.
+         */
+        if ($payroll->generated_at) {
+            $approvedAdjustmentChanges = PayrollAttendanceAdjustment::query()
+                ->approved()
+                ->where('updated_at', '>', $payroll->generated_at)
+                ->where(function ($query) use ($payroll): void {
+                    $query->whereNull('paid_payroll_id')
+                        ->orWhere('paid_payroll_id', '!=', $payroll->id);
+                })
+                ->where(function ($query) use ($payroll): void {
+                    $start = $payroll->period_start->toDateString();
+                    $end = $payroll->period_end->toDateString();
+
+                    $query
+                        ->whereBetween('work_date', [$start, $end])
+                        ->orWhere(function ($rangeQuery) use ($start, $end): void {
+                            $rangeQuery
+                                ->whereNotNull('date_from')
+                                ->whereRaw('COALESCE(date_from, work_date) <= ?', [$end])
+                                ->whereRaw('COALESCE(date_to, work_date) >= ?', [$start]);
+                        })
+                        ->orWhereBetween('payroll_effective_date', [$start, $end]);
+                })
+                ->where(function ($query) use ($payrollEmployeeIds): void {
+                    $query
+                        ->whereIn('employee_biometric_id', $payrollEmployeeIds)
+                        ->orWhere('adjustment_type', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER);
+                })
+                ->count();
+
+            if ($approvedAdjustmentChanges > 0) {
+                return back()->withErrors([
+                    'payroll' => sprintf(
+                        'Cannot finalize payroll. %d approved adjustment(s) changed after this draft was generated. Regenerate the draft so OT, offset, leave, holiday-work, and attendance effects are recalculated before finalization.',
+                        $approvedAdjustmentChanges
+                    ),
+                ]);
+            }
         }
 
         DB::transaction(function () use ($payroll): void {
@@ -250,6 +350,8 @@ class PayrollController extends Controller
             'holiday_pay' => round((float) $items->sum('holiday_pay'), 2),
             'rest_day_pay' => round((float) $items->sum('rest_day_pay'), 2),
             'overtime_pay' => round((float) $items->sum('overtime_pay'), 2),
+            'night_differential_pay' => round((float) $items->sum('night_differential_pay'), 2),
+            'leave_pay' => round((float) $items->sum('leave_pay'), 2),
 
             'late_deduction' => round((float) $items->sum('late_deduction'), 2),
             'undertime_deduction' => round((float) $items->sum('undertime_deduction'), 2),

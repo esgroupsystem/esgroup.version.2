@@ -215,8 +215,18 @@ class DailyAttendanceSummaryService
             });
 
         PayrollAttendanceAdjustment::query()
-            ->whereDate('work_date', $workDate->toDateString())
+            ->approved()
             ->where('adjustment_type', '!=', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)
+            ->where(function ($query) use ($workDate): void {
+                $date = $workDate->toDateString();
+                $query->whereDate('work_date', $date)
+                    ->orWhere(function ($rangeQuery) use ($date): void {
+                        $rangeQuery->whereNotNull('date_from')
+                            ->whereNotNull('date_to')
+                            ->whereDate('date_from', '<=', $date)
+                            ->whereDate('date_to', '>=', $date);
+                    });
+            })
             ->get()
             ->each(function (PayrollAttendanceAdjustment $row) use ($people): void {
                 $employee = $this->identityService->resolveFromModel($row, true);
@@ -339,13 +349,12 @@ class DailyAttendanceSummaryService
         $schedule = $this->resolveScheduleForPersonDate($person, $workDate);
         $logs = $this->logsForPersonDate($person, $workDate, $schedule);
 
-        $adjustment = PayrollAttendanceAdjustment::query()
-            ->whereDate('work_date', $workDate->toDateString())
-            ->where(function ($query) use ($person) {
-                $this->applyAdjustmentPersonMatch($query, $person);
-            })
-            ->latest('id')
-            ->first();
+        $adjustments = $this->applicableAdjustmentsForPersonDate($person, $workDate);
+        $adjustment = $this->attendanceAdjustmentForSummary($adjustments);
+        $offsetAdjustment = $adjustments->first(
+            fn (PayrollAttendanceAdjustment $row): bool =>
+                $row->adjustment_type === PayrollAttendanceAdjustment::TYPE_OFFSET
+        );
 
         $globalDisasterAdjustment = $this->globalDisasterAdjustmentForDate($workDate);
 
@@ -361,6 +370,7 @@ class DailyAttendanceSummaryService
             $schedule,
             $logs,
             $adjustment,
+            $offsetAdjustment,
             $holiday
         );
     }
@@ -368,6 +378,7 @@ class DailyAttendanceSummaryService
     protected function globalDisasterAdjustmentForDate(Carbon $workDate): ?PayrollAttendanceAdjustment
     {
         return PayrollAttendanceAdjustment::query()
+            ->approved()
             ->whereDate('work_date', $workDate->toDateString())
             ->where('adjustment_type', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)
             ->latest('id')
@@ -377,6 +388,54 @@ class DailyAttendanceSummaryService
     protected function isTyphoonDisasterAdjustment(?PayrollAttendanceAdjustment $adjustment): bool
     {
         return $adjustment?->adjustment_type === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
+    }
+
+    protected function applicableAdjustmentsForPersonDate(array $person, Carbon $workDate): Collection
+    {
+        $date = $workDate->toDateString();
+
+        return PayrollAttendanceAdjustment::query()
+            ->approved()
+            ->where('adjustment_type', '!=', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)
+            ->where(function ($query) use ($date): void {
+                $query->whereDate('work_date', $date)
+                    ->orWhere(function ($rangeQuery) use ($date): void {
+                        $rangeQuery->whereNotNull('date_from')
+                            ->whereNotNull('date_to')
+                            ->whereDate('date_from', '<=', $date)
+                            ->whereDate('date_to', '>=', $date);
+                    });
+            })
+            ->where(function ($query) use ($person): void {
+                $this->applyAdjustmentPersonMatch($query, $person);
+            })
+            ->latest('id')
+            ->get();
+    }
+
+    protected function attendanceAdjustmentForSummary(Collection $adjustments): ?PayrollAttendanceAdjustment
+    {
+        // Overtime is a payroll authorization interval only. It must never
+        // replace normal attendance actual/scheduled time in Daily Summary.
+        $eligible = $adjustments->reject(
+            fn (PayrollAttendanceAdjustment $adjustment): bool =>
+                $adjustment->adjustment_type === PayrollAttendanceAdjustment::TYPE_OVERTIME
+        );
+
+        $priority = [
+            PayrollAttendanceAdjustment::TYPE_CHANGE_SCHEDULE => 100,
+            PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS => 90,
+            PayrollAttendanceAdjustment::TYPE_SICK_LEAVE => 80,
+            PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE => 80,
+            PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK => 70,
+            PayrollAttendanceAdjustment::TYPE_OFFSET => 10,
+        ];
+
+        return $eligible
+            ->sortByDesc(fn (PayrollAttendanceAdjustment $adjustment): int =>
+                (int) ($priority[$adjustment->adjustment_type] ?? 0)
+            )
+            ->first();
     }
 
     protected function resolveScheduleForPersonDate(array $person, Carbon $workDate): ?EmployeePlottingSchedule
@@ -422,6 +481,7 @@ class DailyAttendanceSummaryService
         ?EmployeePlottingSchedule $schedule,
         Collection $logs,
         ?PayrollAttendanceAdjustment $adjustment,
+        ?PayrollAttendanceAdjustment $offsetAdjustment,
         $holiday
     ): DailyAttendanceSummary {
         $remarks = [];
@@ -460,11 +520,12 @@ class DailyAttendanceSummaryService
         $holidayName = $this->holidayName($holiday);
         $holidayType = $this->holidayType($holiday);
 
-        $hasAdjustment = ! is_null($adjustment);
-        $adjustmentType = $adjustment?->adjustment_type;
-        $adjustmentRemarks = $adjustment?->remarks;
-        $adjustmentReason = $adjustment?->reason;
-        $adjustmentIsPaid = $this->adjustmentQualifiesForPay($adjustment);
+        $effectiveAdjustment = $adjustment ?? $offsetAdjustment;
+        $hasAdjustment = ! is_null($effectiveAdjustment);
+        $adjustmentType = $effectiveAdjustment?->adjustment_type;
+        $adjustmentRemarks = $effectiveAdjustment?->remarks;
+        $adjustmentReason = $effectiveAdjustment?->reason;
+        $adjustmentIsPaid = $this->adjustmentQualifiesForPay($effectiveAdjustment);
 
         $isTyphoonDisasterAdjustment = $this->isTyphoonDisasterAdjustment($adjustment);
         $ignoreLate = (bool) ($adjustment?->ignore_late ?? false) || $isTyphoonDisasterAdjustment;
@@ -503,36 +564,55 @@ class DailyAttendanceSummaryService
         }
 
         if ($adjustment) {
-            if (! empty($adjustment->adjusted_time_in)) {
-                $actualTimeIn = Carbon::parse(
-                    $workDate->toDateString().' '.$adjustment->adjusted_time_in,
-                    'Asia/Manila'
-                );
+            $manualMode = (string) data_get(
+                PayrollAttendanceAdjustment::rulesFor((string) $adjustment->adjustment_type),
+                'manual_time_mode',
+                'none'
+            );
 
-                $remarks[] = 'Adjusted time in applied.';
-            }
-
-            if (! empty($adjustment->adjusted_time_out)) {
-                $actualTimeOut = Carbon::parse(
-                    $workDate->toDateString().' '.$adjustment->adjusted_time_out,
-                    'Asia/Manila'
-                );
-
-                $remarks[] = 'Adjusted time out applied.';
-            }
-
-            if ($actualTimeIn && $actualTimeOut && $actualTimeOut->lessThanOrEqualTo($actualTimeIn)) {
-                if ($this->scheduleIsOvernight($scheduledTimeIn, $scheduledTimeOut)) {
-                    $actualTimeOut->addDay();
-                } else {
-                    $actualTimeOut = null;
-                    $remarks[] = 'Adjusted time out is not later than time in. Treated as no valid time out.';
+            if ($manualMode === 'schedule') {
+                // Change Schedule modifies the expected schedule only; employee
+                // biometrics remain the actual attendance source.
+                $scheduledTimeIn = $this->normalizeTime($adjustment->adjusted_time_in);
+                $scheduledTimeOut = $this->normalizeTime($adjustment->adjusted_time_out);
+                $scheduleStatus = 'scheduled';
+                $remarks[] = 'Approved change-schedule time applied to scheduled Time In/Out.';
+            } elseif ($manualMode === 'actual') {
+                // Official Business / Holiday Work may substitute approved actual
+                // times when biometric evidence is unavailable/incomplete.
+                if (! empty($adjustment->adjusted_time_in)) {
+                    $actualTimeIn = Carbon::parse(
+                        $workDate->toDateString().' '.$adjustment->adjusted_time_in,
+                        'Asia/Manila'
+                    );
                 }
+
+                if (! empty($adjustment->adjusted_time_out)) {
+                    $actualTimeOut = Carbon::parse(
+                        $workDate->toDateString().' '.$adjustment->adjusted_time_out,
+                        'Asia/Manila'
+                    );
+                }
+
+                if ($actualTimeIn && $actualTimeOut && $actualTimeOut->lessThanOrEqualTo($actualTimeIn)) {
+                    $actualTimeOut->addDay();
+                }
+
+                $remarks[] = 'Approved manual actual Time In/Out applied.';
             }
 
-            if (! empty($adjustment->adjusted_day_type)) {
-                $scheduleStatus = $adjustment->adjusted_day_type;
-                $remarks[] = 'Adjusted day type applied.';
+            // Leave/day-type adjustments affect attendance classification. Offset
+            // and overtime are deliberately not converted into a paid day here.
+            if (in_array($adjustment->adjustment_type, [
+                PayrollAttendanceAdjustment::TYPE_SICK_LEAVE,
+                PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE,
+            ], true)) {
+                $scheduleStatus = $adjustment->adjusted_day_type ?: 'leave';
+                $remarks[] = 'Approved leave day type applied.';
+            }
+
+            if ($adjustment->adjustment_type === PayrollAttendanceAdjustment::TYPE_OFFSET) {
+                $remarks[] = 'Approved Offset request found. Source excess time will be applied as compensatory attendance credit on this target date; no separate cash Offset payment is created.';
             }
         }
 
@@ -550,7 +630,9 @@ class DailyAttendanceSummaryService
         $isFlexible = $this->isFlexibleShift($shiftName);
 
         $hasValidInOut = $actualTimeIn && $actualTimeOut && $actualTimeOut->gt($actualTimeIn);
-        $hasAttendanceProof = $hasRawBiometrics || $hasAdjustment || $hasValidInOut;
+        $hasAttendanceProof = $hasRawBiometrics
+            || $this->adjustmentProvidesAttendanceProof($adjustment)
+            || $hasValidInOut;
 
         if ($hasValidInOut) {
             $clockWorkedMinutes = (int) $actualTimeIn->diffInMinutes($actualTimeOut);
@@ -612,11 +694,17 @@ class DailyAttendanceSummaryService
                 $remarks[] = 'Holiday unpaid. Previous day did not qualify.';
             }
         } elseif ($isLeave) {
-            $attendanceStatus = 'leave';
-            $payableDays = self::FULL_DAY_PAYABLE_DAYS;
-            $payableHours = $fullDayPayableHours;
-
-            $remarks[] = 'Paid leave/day type applied.';
+            if ($adjustmentIsPaid) {
+                $attendanceStatus = 'leave';
+                $payableDays = self::FULL_DAY_PAYABLE_DAYS;
+                $payableHours = $fullDayPayableHours;
+                $remarks[] = 'Paid leave/day type applied.';
+            } else {
+                $attendanceStatus = 'leave_unpaid';
+                $payableDays = 0.00;
+                $payableHours = 0.00;
+                $remarks[] = 'Unpaid leave/day type applied.';
+            }
         } elseif ($isRestDay) {
             $payableDays = self::FULL_DAY_PAYABLE_DAYS;
             $payableHours = $fullDayPayableHours;
@@ -631,7 +719,9 @@ class DailyAttendanceSummaryService
                 $attendanceStatus = 'rest_day';
                 $remarks[] = 'Paid rest day/day off.';
             }
-        } elseif (! $schedule && ! $adjustmentIsPaid) {
+        } elseif (! $schedule
+            && $adjustment?->adjustment_type !== PayrollAttendanceAdjustment::TYPE_CHANGE_SCHEDULE
+            && ! $adjustmentIsPaid) {
             $attendanceStatus = 'no_schedule';
             $payableDays = 0.00;
             $payableHours = 0.00;
@@ -719,6 +809,76 @@ class DailyAttendanceSummaryService
             $remarks[] = 'Paid adjustment forced payable attendance.';
         }
 
+        $offsetAppliedMinutes = 0;
+
+        if (
+            $offsetAdjustment
+            && ! $offsetAdjustment->isDeferredOffset()
+            && $schedule
+            && ! $isHoliday
+            && ! $isRestDay
+            && ! $isLeave
+        ) {
+            $offsetAvailableMinutes = max(0, (int) ($offsetAdjustment->approved_minutes ?? 0));
+            $currentPayableMinutes = min(
+                $paidMinutesPerDay,
+                max(0, (int) round((float) $payableHours * 60))
+            );
+            $targetShortageMinutes = max(0, $paidMinutesPerDay - $currentPayableMinutes);
+            $offsetAppliedMinutes = min($offsetAvailableMinutes, $targetShortageMinutes);
+
+            if ($offsetAppliedMinutes > 0) {
+                $remainingCredit = $offsetAppliedMinutes;
+
+                // Offset first neutralizes undertime, then late. Any remaining
+                // credit restores an absent/partial day's payable minutes.
+                $utCovered = min(max(0, (int) $undertimeMinutes), $remainingCredit);
+                $undertimeMinutes -= $utCovered;
+                $remainingCredit -= $utCovered;
+
+                $lateCovered = min(max(0, (int) $lateMinutes), $remainingCredit);
+                $lateMinutes -= $lateCovered;
+                $remainingCredit -= $lateCovered;
+
+                $newPayableMinutes = min(
+                    $paidMinutesPerDay,
+                    $currentPayableMinutes + $offsetAppliedMinutes
+                );
+
+                $payableHours = round($newPayableMinutes / 60, 2);
+                $payableDays = round($newPayableMinutes / $paidMinutesPerDay, 2);
+
+                $remainingShortageMinutes = max(0, $paidMinutesPerDay - $newPayableMinutes);
+                $remainingAttendanceDeductionMinutes = max(0, (int) $lateMinutes + (int) $undertimeMinutes);
+
+                if ($remainingAttendanceDeductionMinutes < $remainingShortageMinutes) {
+                    // A partial Offset against a previously absent/incomplete
+                    // day must leave the uncovered portion deductible. Record
+                    // it as undertime so payroll does not accidentally pay the
+                    // uncredited balance.
+                    $undertimeMinutes += $remainingShortageMinutes - $remainingAttendanceDeductionMinutes;
+                }
+
+                if ($newPayableMinutes >= $paidMinutesPerDay) {
+                    $lateMinutes = 0;
+                    $undertimeMinutes = 0;
+                    $attendanceStatus = 'adjusted_present';
+                } elseif ($newPayableMinutes <= $halfDayPaidMinutes) {
+                    $attendanceStatus = 'half_day';
+                } else {
+                    $attendanceStatus = 'undertime';
+                }
+
+                $remarks[] = sprintf(
+                    'Offset applied: %d minute(s) of approved company compensatory-leave credit from %s covered attendance shortage on this date. No separate cash Offset pay.',
+                    $offsetAppliedMinutes,
+                    $offsetAdjustment->offset_source_date?->format('M d, Y') ?? 'source date'
+                );
+            } elseif ($offsetAvailableMinutes > 0) {
+                $remarks[] = 'Offset credit exists but this date has no attendance shortage to cover, so no Offset minutes were consumed.';
+            }
+        }
+
         if ($clockWorkedMinutes > $scheduledClockMinutes) {
             $overtimeMinutes = $clockWorkedMinutes - $scheduledClockMinutes;
         }
@@ -750,7 +910,7 @@ class DailyAttendanceSummaryService
                 'employee_name' => $this->cleanString($person['employee_name'] ?? null),
 
                 'plotting_schedule_id' => $schedule?->id,
-                'attendance_adjustment_id' => $adjustment?->id,
+                'attendance_adjustment_id' => $effectiveAdjustment?->id,
                 'holiday_id' => data_get($holiday, 'id'),
                 'crosschex_id' => $this->cleanString($person['crosschex_id'] ?? $schedule?->crosschex_id),
 
@@ -776,15 +936,17 @@ class DailyAttendanceSummaryService
                 'is_holiday' => $isHoliday,
                 'holiday_name' => $holidayName,
                 'holiday_type' => $holidayType,
+                'holiday_worked_multiplier' => $holiday?->worked_multiplier,
+                'holiday_not_worked_multiplier' => $holiday?->not_worked_multiplier,
 
                 'is_rest_day' => $isRestDay,
                 'is_leave' => $isLeave,
 
                 'has_adjustment' => $hasAdjustment,
                 'adjustment_type' => $adjustmentType,
-                'adjusted_time_in' => $adjustment?->adjusted_time_in,
-                'adjusted_time_out' => $adjustment?->adjusted_time_out,
-                'adjusted_day_type' => $adjustment?->adjusted_day_type,
+                'adjusted_time_in' => $effectiveAdjustment?->adjusted_time_in,
+                'adjusted_time_out' => $effectiveAdjustment?->adjusted_time_out,
+                'adjusted_day_type' => $effectiveAdjustment?->adjusted_day_type,
                 'adjustment_is_paid' => $adjustmentIsPaid,
                 'ignore_late' => $ignoreLate,
                 'ignore_undertime' => $ignoreUndertime,
@@ -809,6 +971,11 @@ class DailyAttendanceSummaryService
                     'paid_worked_minutes' => max(0, (int) $workedMinutes),
                     'scheduled_clock_minutes' => $scheduledClockMinutes,
                     'paid_minutes_per_day' => $paidMinutesPerDay,
+                    'offset_adjustment_id' => $offsetAdjustment?->id,
+                    'offset_source_date' => $offsetAdjustment?->offset_source_date?->toDateString(),
+                    'offset_available_minutes' => max(0, (int) ($offsetAdjustment?->approved_minutes ?? 0)),
+                    'offset_applied_minutes' => max(0, (int) $offsetAppliedMinutes),
+                    'offset_mode' => $offsetAdjustment ? 'compensatory_time' : null,
                 ],
             ]
         );
@@ -1156,13 +1323,9 @@ class DailyAttendanceSummaryService
             return true;
         }
 
-        $adjustment = PayrollAttendanceAdjustment::query()
-            ->whereDate('work_date', $date->toDateString())
-            ->where(function ($query) use ($person): void {
-                $this->applyAdjustmentPersonMatch($query, $person);
-            })
-            ->latest('id')
-            ->first();
+        $adjustment = $this->attendanceAdjustmentForSummary(
+            $this->applicableAdjustmentsForPersonDate($person, $date)
+        );
 
         /*
          | Paid adjustment / official business / adjusted present before holiday.
@@ -1191,39 +1354,49 @@ class DailyAttendanceSummaryService
             return false;
         }
 
-        if ((bool) ($adjustment->is_paid ?? false)) {
-            return true;
+        if ($adjustment->status === PayrollAttendanceAdjustment::STATUS_REJECTED
+            || $adjustment->status === PayrollAttendanceAdjustment::STATUS_PENDING) {
+            return false;
         }
 
-        if ($this->isTyphoonDisasterAdjustment($adjustment)) {
-            return true;
+        if ($adjustment->isDeferredOffset()) {
+            return false;
         }
 
-        $adjustmentType = strtolower((string) ($adjustment->adjustment_type ?? ''));
-        $adjustedDayType = strtolower((string) ($adjustment->adjusted_day_type ?? ''));
+        return match ($adjustment->adjustment_type) {
+            PayrollAttendanceAdjustment::TYPE_SICK_LEAVE,
+            PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE,
+            PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS,
+            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER => (bool) $adjustment->is_paid,
 
-        $paidKeywords = [
-            'paid',
-            'leave',
-            'offset',
-            'official',
-            'ob',
-            'holiday',
-            'rest_day',
-            'rest day',
-            'day_off',
-            'day off',
-            'typhoon',
-            'disaster',
-        ];
+            // These types authorize schedule/premium handling but do not make
+            // the attendance day itself a generic paid adjustment.
+            PayrollAttendanceAdjustment::TYPE_CHANGE_SCHEDULE,
+            PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK,
+            PayrollAttendanceAdjustment::TYPE_OVERTIME,
+            PayrollAttendanceAdjustment::TYPE_OFFSET => false,
 
-        foreach ($paidKeywords as $keyword) {
-            if (str_contains($adjustmentType, $keyword) || str_contains($adjustedDayType, $keyword)) {
-                return true;
-            }
+            default => (bool) $adjustment->is_paid,
+        };
+    }
+
+    protected function adjustmentProvidesAttendanceProof(?PayrollAttendanceAdjustment $adjustment): bool
+    {
+        if (! $adjustment || $adjustment->status === PayrollAttendanceAdjustment::STATUS_REJECTED) {
+            return false;
         }
 
-        return ! empty($adjustment->adjusted_time_in) && ! empty($adjustment->adjusted_time_out);
+        return match ($adjustment->adjustment_type) {
+            PayrollAttendanceAdjustment::TYPE_SICK_LEAVE,
+            PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE,
+            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER => $this->adjustmentQualifiesForPay($adjustment),
+
+            PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS,
+            PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK => ! empty($adjustment->adjusted_time_in)
+                && ! empty($adjustment->adjusted_time_out),
+
+            default => false,
+        };
     }
 
     protected function holidayWorkedPayDays(?string $holidayType): array
@@ -1233,13 +1406,13 @@ class DailyAttendanceSummaryService
         if (str_contains($type, 'special') || str_contains($type, 'non') || str_contains($type, '30')) {
             return [
                 1.00,
-                'Special holiday work detected. Payroll will add only +30% premium after approved adjustment validation.',
+                'Special holiday work detected. Payroll applies the automatic 1.30x holiday rate (monthly payroll adds the +30% premium portion).',
             ];
         }
 
         return [
             1.00,
-            'Regular holiday work detected. Payroll will add only +100% premium after approved adjustment validation.',
+            'Regular holiday work detected. Payroll applies the automatic 2.00x holiday rate (monthly payroll adds the +100% premium portion).',
         ];
     }
 
