@@ -63,10 +63,17 @@ class GovernmentDeductionService
             ),
             'sss_basis' => $sssMonthlyBasic,
             'sss_msc' => $sss['msc'],
+            'sss_regular_ss_msc' => $sss['regular_ss_msc'],
+            'sss_mpf_msc' => $sss['mpf_msc'],
             'philhealth_basis' => $philHealthMonthlyBasic,
             'philhealth_salary_base' => $philHealth['salary_base'],
+            'philhealth_premium_rate' => $philHealth['premium_rate'],
+            'philhealth_total' => $philHealth['total'],
             'pagibig_basis' => $pagibigMonthlyBasic,
             'pagibig_fund_salary' => $pagibig['fund_salary'],
+            'pagibig_employee_rate' => $pagibig['employee_rate'],
+            'pagibig_employer_rate' => $pagibig['employer_rate'],
+            'pagibig_total' => $pagibig['total'],
         ]);
     }
 
@@ -180,17 +187,36 @@ class GovernmentDeductionService
             ],
             'philhealth' => [
                 'schedule' => $this->normalizeSchedule($schedules['philhealth']),
+                'premium_rate' => (float) ($monthlyGovernment['philhealth_premium_rate'] ?? self::PHILHEALTH_PREMIUM_RATE),
+                'salary_base' => $this->money($monthlyGovernment['philhealth_salary_base'] ?? 0),
                 'monthly_employee_share' => $this->money(
                     $monthlyGovernment['philhealth_employee'] ?? 0
                 ),
+                'monthly_employer_share' => $this->money(
+                    $monthlyGovernment['philhealth_employer'] ?? 0
+                ),
+                'monthly_total' => $this->money(
+                    $monthlyGovernment['philhealth_total'] ?? 0
+                ),
                 'deducted_employee_share' => $government['philhealth_employee'],
+                'scheduled_employer_share' => $government['philhealth_employer'],
             ],
             'pagibig' => [
                 'schedule' => $this->normalizeSchedule($schedules['pagibig']),
+                'fund_salary' => $this->money($monthlyGovernment['pagibig_fund_salary'] ?? 0),
+                'employee_rate' => (float) ($monthlyGovernment['pagibig_employee_rate'] ?? 0),
+                'employer_rate' => (float) ($monthlyGovernment['pagibig_employer_rate'] ?? self::PAGIBIG_EMPLOYER_RATE),
                 'monthly_employee_share' => $this->money(
                     $monthlyGovernment['pagibig_employee'] ?? 0
                 ),
+                'monthly_employer_share' => $this->money(
+                    $monthlyGovernment['pagibig_employer'] ?? 0
+                ),
+                'monthly_total' => $this->money(
+                    $monthlyGovernment['pagibig_total'] ?? 0
+                ),
                 'deducted_employee_share' => $government['pagibig_employee'],
+                'scheduled_employer_share' => $government['pagibig_employer'],
             ],
             'withholding_tax' => [
                 'schedule' => 'none',
@@ -203,10 +229,17 @@ class GovernmentDeductionService
         foreach ([
             'sss_basis',
             'sss_msc',
+            'sss_regular_ss_msc',
+            'sss_mpf_msc',
             'philhealth_basis',
             'philhealth_salary_base',
+            'philhealth_premium_rate',
+            'philhealth_total',
             'pagibig_basis',
             'pagibig_fund_salary',
+            'pagibig_employee_rate',
+            'pagibig_employer_rate',
+            'pagibig_total',
         ] as $key) {
             if (array_key_exists($key, $monthlyGovernment)) {
                 $government[$key] = $monthlyGovernment[$key];
@@ -318,6 +351,8 @@ class GovernmentDeductionService
                 'employee' => 0.00,
                 'employer' => 0.00,
                 'salary_base' => 0.00,
+                'premium_rate' => self::PHILHEALTH_PREMIUM_RATE,
+                'total' => 0.00,
             ];
         }
 
@@ -336,6 +371,8 @@ class GovernmentDeductionService
                 $monthlyPremium * self::PHILHEALTH_EMPLOYER_SHARE
             ),
             'salary_base' => $this->money($salaryBase),
+            'premium_rate' => self::PHILHEALTH_PREMIUM_RATE,
+            'total' => $this->money($monthlyPremium),
         ];
     }
 
@@ -348,6 +385,9 @@ class GovernmentDeductionService
                 'employee' => 0.00,
                 'employer' => 0.00,
                 'fund_salary' => 0.00,
+                'employee_rate' => 0.00,
+                'employer_rate' => self::PAGIBIG_EMPLOYER_RATE,
+                'total' => 0.00,
             ];
         }
 
@@ -356,10 +396,16 @@ class GovernmentDeductionService
             ? self::PAGIBIG_LOW_EMPLOYEE_RATE
             : self::PAGIBIG_REGULAR_EMPLOYEE_RATE;
 
+        $employee = $this->money($fundSalary * $employeeRate);
+        $employer = $this->money($fundSalary * self::PAGIBIG_EMPLOYER_RATE);
+
         return [
-            'employee' => $this->money($fundSalary * $employeeRate),
-            'employer' => $this->money($fundSalary * self::PAGIBIG_EMPLOYER_RATE),
+            'employee' => $employee,
+            'employer' => $employer,
             'fund_salary' => $this->money($fundSalary),
+            'employee_rate' => $employeeRate,
+            'employer_rate' => self::PAGIBIG_EMPLOYER_RATE,
+            'total' => $this->money($employee + $employer),
         ];
     }
 

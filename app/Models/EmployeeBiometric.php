@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class EmployeeBiometric extends Model
 {
@@ -72,6 +73,18 @@ class EmployeeBiometric extends Model
     public function salaryProfiles(): HasMany
     {
         return $this->hasMany(PayrollEmployeeSalary::class, 'employee_biometric_id');
+    }
+
+    public function activeSalaryProfile(): HasOne
+    {
+        return $this->hasOne(PayrollEmployeeSalary::class, 'employee_biometric_id')
+            ->where('is_active', true)
+            ->latestOfMany();
+    }
+
+    public function benefitContributionRecords(): HasMany
+    {
+        return $this->hasMany(BenefitContributionRecord::class, 'employee_biometric_id');
     }
 
     public function payrollItems(): HasMany

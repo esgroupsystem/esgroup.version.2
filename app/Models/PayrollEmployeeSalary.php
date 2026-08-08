@@ -113,6 +113,11 @@ class PayrollEmployeeSalary extends Model
         return $this->belongsTo(EmployeeBiometric::class, 'employee_biometric_id');
     }
 
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }
+
     public function otherDeductions(): HasMany
     {
         return $this->hasMany(PayrollEmployeeSalaryOtherDeduction::class, 'payroll_employee_salary_id')

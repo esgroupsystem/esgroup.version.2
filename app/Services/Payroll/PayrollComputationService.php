@@ -44,6 +44,41 @@ class PayrollComputationService
         );
 
         /*
+         * The business 2nd cutoff (11-25 / legacy key `first`) closes the
+         * government contribution month. It cannot be generated accurately
+         * until the business 1st cutoff (26-10 / legacy key `second`) is locked.
+         * This prevents SSS from being calculated from only one half of the month.
+         */
+        if ((string) $data['cutoff_type'] === 'first') {
+            $openingPayroll = Payroll::query()
+                ->where('contribution_month', (int) $contribution['month'])
+                ->where('contribution_year', (int) $contribution['year'])
+                ->where('garage_group', (string) $garageGroup)
+                ->where('cutoff_type', 'second')
+                ->latest('id')
+                ->first();
+
+            if (! $openingPayroll) {
+                throw ValidationException::withMessages([
+                    'cutoff_type' => sprintf(
+                        'Generate and finalize the 1st cutoff (26-10) for %s first. The 2nd cutoff must use both cutoff gross amounts for the exact monthly SSS/MPF computation.',
+                        $contribution['label']
+                    ),
+                ]);
+            }
+
+            if ($openingPayroll->status !== 'finalized') {
+                throw ValidationException::withMessages([
+                    'cutoff_type' => sprintf(
+                        'Finalize payroll %s (%s) before generating the 2nd cutoff. This locks the 1st-cutoff gross used by the monthly SSS/MPF calculation.',
+                        $openingPayroll->payroll_number,
+                        $openingPayroll->cutoff_label
+                    ),
+                ]);
+            }
+        }
+
+        /*
          * Payroll uniqueness is per payroll group + cutoff.
          * Mirasol/Balintawak and Gonzales are separate payroll rosters and may
          * legitimately generate payroll for the same cutoff period.
@@ -1291,16 +1326,19 @@ class PayrollComputationService
         $previousBasis = 0.00;
 
         if ($payroll->cutoff_type === 'first') {
-            $previous = $this->periodService->previousSecondCutoffForFirst(
-                (int) $payroll->cutoff_month,
-                (int) $payroll->cutoff_year
-            );
-
+            /*
+             * Resolve the opening cutoff by CONTRIBUTION MONTH, not by legacy
+             * cutoff-month arithmetic. Example: June 26-July 10 is stored under
+             * cutoff_month=June but contribution_month=July. Querying the
+             * contribution period directly is less error-prone and exactly
+             * matches the Benefits Records monthly cycle.
+             */
             $previousPayroll = Payroll::query()
-                ->where('cutoff_month', $previous['month'])
-                ->where('cutoff_year', $previous['year'])
+                ->where('contribution_month', (int) $payroll->contribution_month)
+                ->where('contribution_year', (int) $payroll->contribution_year)
                 ->where('cutoff_type', 'second')
                 ->where('garage_group', (string) $payroll->garage_group)
+                ->where('status', 'finalized')
                 ->latest('id')
                 ->first();
 
@@ -1339,9 +1377,9 @@ class PayrollComputationService
             'previous_cutoff_basis' => round($previousBasis, 2),
             'previous_second_payroll_item_id' => $previousItem?->id,
             'basis_source' => 'gross_pay_before_government_and_salary_loan_deductions',
-            'cycle_rule' => 'previous_second_cutoff_gross_plus_current_first_cutoff_gross',
+            'cycle_rule' => 'business_1st_26_10_gross_plus_business_2nd_11_25_gross',
             'warning' => $payroll->cutoff_type === 'first' && ! $previousItem
-                ? 'Previous 2nd cutoff payroll item not found; government basis used current cutoff only.'
+                ? 'Finalized business 1st cutoff payroll item not found; this draft should not be finalized.'
                 : null,
         ];
     }

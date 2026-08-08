@@ -9,7 +9,9 @@ use App\Models\DailyAttendanceSummary;
 use App\Models\Payroll;
 use App\Models\PayrollAttendanceAdjustment;
 use App\Models\PayrollItem;
+use App\Services\Payroll\BenefitContributionPostingService;
 use App\Services\Payroll\DailyAttendanceSummaryService;
+use App\Services\Payroll\MonthlyGovernmentReconciliationService;
 use App\Services\Payroll\PayrollComputationService;
 use App\Services\Payroll\PayrollPayslipService;
 use App\Services\Payroll\PayrollPeriodService;
@@ -18,8 +20,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Throwable;
 
 class PayrollController extends Controller
 {
@@ -27,6 +31,8 @@ class PayrollController extends Controller
         protected PayrollPeriodService $periodService,
         protected PayrollComputationService $payrollComputationService,
         protected PayrollPayslipService $payrollPayslipService,
+        protected BenefitContributionPostingService $benefitContributionPostingService,
+        protected MonthlyGovernmentReconciliationService $monthlyGovernmentReconciliationService,
     ) {}
 
     public function index(Request $request)
@@ -294,15 +300,69 @@ class PayrollController extends Controller
             }
         }
 
-        DB::transaction(function () use ($payroll): void {
-            $payroll->update([
-                'status' => 'finalized',
-                'finalized_by' => auth()->id(),
-                'finalized_at' => now('Asia/Manila'),
-            ]);
-        });
+        $postedBenefitRecords = 0;
 
-        return back()->with('success', 'Payroll finalized successfully.');
+        try {
+            DB::transaction(function () use ($payroll, &$postedBenefitRecords): void {
+                $lockedPayroll = Payroll::query()
+                    ->lockForUpdate()
+                    ->findOrFail($payroll->id);
+
+                if ($lockedPayroll->status === 'finalized') {
+                    return;
+                }
+
+                $finalizedAt = now('Asia/Manila');
+                $userId = auth()->id();
+
+                // The business 2nd cutoff (11-25 / legacy key `first`) closes
+                // the contribution month. Reconcile it against the already
+                // finalized business 1st cutoff (26-10) before locking payroll.
+                // This guarantees that SSS/MPF uses the WHOLE monthly gross.
+                $this->monthlyGovernmentReconciliationService->reconcileClosingCutoff(
+                    $lockedPayroll,
+                    false,
+                    'payroll_finalize'
+                );
+
+                $lockedPayroll->update([
+                    'status' => 'finalized',
+                    'finalized_by' => $userId,
+                    'finalized_at' => $finalizedAt,
+                ]);
+
+                // The official monthly Benefits Records ledger is part of the
+                // same atomic transaction. The opening 26-10 cutoff returns 0
+                // records because the contribution month is not complete yet.
+                $postedBenefitRecords = $this->benefitContributionPostingService->postForPayroll(
+                    $lockedPayroll->fresh(),
+                    $userId,
+                    $finalizedAt
+                );
+            }, 3);
+        } catch (ValidationException $exception) {
+            return back()->withErrors($exception->errors());
+        } catch (Throwable $exception) {
+            Log::error('Payroll finalization / Benefits Records posting failed.', [
+                'payroll_id' => $payroll->id,
+                'payroll_number' => $payroll->payroll_number,
+                'user_id' => auth()->id(),
+                'exception' => $exception,
+            ]);
+
+            return back()->withErrors([
+                'payroll' => 'Payroll finalization failed and was rolled back. No Benefits Records were posted. Please review the application log and try again.',
+            ]);
+        }
+
+        $successMessage = (string) $payroll->cutoff_type === 'second'
+            ? 'Payroll finalized successfully. This is the 1st cutoff (26-10); monthly Benefits Records will be posted after the 2nd cutoff (11-25) is finalized.'
+            : sprintf(
+                'Payroll finalized successfully. Exact monthly government contributions were reconciled from both cutoffs and %d Benefits Record(s) were posted.',
+                $postedBenefitRecords
+            );
+
+        return back()->with('success', $successMessage);
     }
 
     public function destroy(Payroll $payroll): RedirectResponse

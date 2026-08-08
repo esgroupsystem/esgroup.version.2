@@ -378,12 +378,18 @@
 
                             @if ($payroll->status !== 'finalized')
                                 <form method="POST" action="{{ route('payroll.finalize', $payroll) }}"
-                                    onsubmit="return confirm('Finalize this payroll?')">
+                                    id="payrollFinalizeForm">
                                     @csrf
 
-                                    <button type="submit" class="btn btn-falcon-primary btn-sm">
-                                        <i class="fas fa-lock me-1"></i>
-                                        Finalize
+                                    <button type="submit" class="btn btn-falcon-primary btn-sm" id="payrollFinalizeButton">
+                                        <span class="finalize-idle">
+                                            <i class="fas fa-lock me-1"></i>
+                                            Finalize
+                                        </span>
+                                        <span class="finalize-loading d-none">
+                                            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                                            Finalizing &amp; posting benefits...
+                                        </span>
                                     </button>
                                 </form>
                             @endif
@@ -891,3 +897,27 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.getElementById('payrollFinalizeForm');
+            const button = document.getElementById('payrollFinalizeButton');
+
+            if (!form || !button) {
+                return;
+            }
+
+            form.addEventListener('submit', function (event) {
+                if (!window.confirm('Finalize this payroll and post the official Benefits Records?')) {
+                    event.preventDefault();
+                    return;
+                }
+
+                button.disabled = true;
+                button.querySelector('.finalize-idle')?.classList.add('d-none');
+                button.querySelector('.finalize-loading')?.classList.remove('d-none');
+            });
+        });
+    </script>
+@endpush

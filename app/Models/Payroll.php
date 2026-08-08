@@ -51,6 +51,11 @@ class Payroll extends Model
         return $this->hasMany(PayrollReportLog::class);
     }
 
+    public function benefitContributionRecords(): HasMany
+    {
+        return $this->hasMany(BenefitContributionRecord::class);
+    }
+
     public function generator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'generated_by');

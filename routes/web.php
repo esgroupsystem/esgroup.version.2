@@ -31,6 +31,7 @@ use App\Http\Controllers\Maintenance\ReceivingController;
 use App\Http\Controllers\Maintenance\RequestController;
 use App\Http\Controllers\Maintenance\StockTransferController;
 use App\Http\Controllers\Payroll\AttendanceSummaryController;
+use App\Http\Controllers\Payroll\BenefitsRecordController;
 use App\Http\Controllers\Payroll\EmployeePlottingScheduleController;
 use App\Http\Controllers\Payroll\HolidayController;
 use App\Http\Controllers\Payroll\ManualBiometricsEncodingController;
@@ -771,6 +772,27 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 );
 
         });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Benefits Records
+    |--------------------------------------------------------------------------
+    */
+
+    Route::middleware([
+        'auth',
+        'payroll.group',
+        'permission:benefits-records.view',
+    ])->controller(BenefitsRecordController::class)->group(function (): void {
+        Route::get('/benefits-records', 'index')
+            ->name('benefits-records.index');
+
+        Route::get('/benefits-records/overall', 'overall')
+            ->name('benefits-records.overall');
+
+        Route::get('/benefits-records/print', 'print')
+            ->name('benefits-records.print');
+    });
 
     /*
     |--------------------------------------------------------------------------

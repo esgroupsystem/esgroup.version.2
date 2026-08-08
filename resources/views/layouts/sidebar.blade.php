@@ -28,6 +28,7 @@
         'payroll-attendance-adjustments.*',
         'attendance-summary.*',
         'payroll.*',
+        'benefits-records.*',
     ]);
 @endphp
 
@@ -476,7 +477,7 @@
                 {{-- =============== PAYROLL PROCESS =============== --}}
                 {{-- =============================================== --}}
 
-                @canany(['payroll-attendance-adjustments.view', 'attendance-summary.view', 'payroll.view'])
+                @canany(['payroll-attendance-adjustments.view', 'attendance-summary.view', 'payroll.view', 'benefits-records.view'])
                     <li class="nav-item">
                         <div class="row navbar-vertical-label-wrapper mt-3 mb-2">
                             <div class="col-auto navbar-vertical-label">
@@ -525,6 +526,32 @@
                                         <span class="fas fa-money-check-alt"></span>
                                     </span>
                                     <span class="nav-link-text ps-1">Payroll</span>
+                                </div>
+                            </a>
+                        </li>
+                    @endcan
+
+                    @can('benefits-records.view')
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('benefits-records.index') ? 'active' : '' }}"
+                                href="{{ $safeRoute('benefits-records.index') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-shield-alt"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">Benefits Records</span>
+                                </div>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs(['benefits-records.overall', 'benefits-records.print']) ? 'active' : '' }}"
+                                href="{{ $safeRoute('benefits-records.overall') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="nav-link-icon">
+                                        <span class="fas fa-file-invoice-dollar"></span>
+                                    </span>
+                                    <span class="nav-link-text ps-1">Benefits Overall</span>
                                 </div>
                             </a>
                         </li>

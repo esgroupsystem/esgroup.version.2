@@ -114,6 +114,9 @@ class PermissionSeeder extends Seeder
             'payroll.export',
             'payroll.delete',
 
+            // Benefits Records
+            'benefits-records.view',
+
             // Claims
             'claims.view',
             'claims.create',

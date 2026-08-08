@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class PayrollItem extends Model
 {
@@ -153,12 +154,22 @@ class PayrollItem extends Model
         );
     }
 
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }
+
     public function salaryProfile(): BelongsTo
     {
         return $this->belongsTo(
             PayrollEmployeeSalary::class,
             'payroll_employee_salary_id'
         );
+    }
+
+    public function benefitContributionRecord(): HasOne
+    {
+        return $this->hasOne(BenefitContributionRecord::class, 'payroll_item_id');
     }
 
     public function paymentLogs(): HasMany
