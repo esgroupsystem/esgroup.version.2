@@ -58,6 +58,12 @@ return [
                 'secret' => env('CROSSCHEX_GONZALES_SECRET'),
             ],
         ],
+
+        'sync' => [
+            'per_page' => (int) env('CROSSCHEX_SYNC_PER_PAGE', 200),
+            'session_minutes' => (int) env('CROSSCHEX_SYNC_SESSION_MINUTES', 120),
+            'rate_limit_retry_seconds' => (int) env('CROSSCHEX_SYNC_RATE_LIMIT_RETRY_SECONDS', 31),
+        ],
     ],
 
     'turnstile' => [

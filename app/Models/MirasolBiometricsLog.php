@@ -10,6 +10,7 @@ class MirasolBiometricsLog extends Model
         'crosschex_account',
         'crosschex_account_name',
         'crosschex_id',
+        'source_employee_id',
         'employee_id',
         'employee_no',
         'employee_name',

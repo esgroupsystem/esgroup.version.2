@@ -2,140 +2,160 @@
 
 namespace App\Console\Commands;
 
-use App\Models\MirasolBiometricsLog;
-use App\Services\CrossChexService;
+use App\Services\Biometrics\CrossChexAttendanceSyncService;
+use App\Services\CrossChexServiceFactory;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 class CrossChexSyncAttendance extends Command
 {
-    // ✅ Add --from and --to for manual sync
-    protected $signature = 'crosschex:sync {--from=} {--to=} {--debug=0}';
+    protected $signature = 'crosschex:sync
+                            {--from= : Start date/time}
+                            {--to= : End date/time}
+                            {--account=* : CrossChex account key; omit to sync all configured accounts}
+                            {--debug=0 : Show per-page synchronization details}';
 
-    protected $description = 'Sync attendance logs from CrossChex Cloud to mirasol_biometrics_logs';
+    protected $description = 'Synchronize CrossChex attendance logs using the same fast duplicate-safe engine as Biometrics Sync';
 
-    public function handle(CrossChexService $api): int
-    {
-        $fromOpt = (string) $this->option('from');
-        $toOpt   = (string) $this->option('to');
-        $isManualRange = $fromOpt !== '' && $toOpt !== '';
+    public function handle(
+        CrossChexServiceFactory $factory,
+        CrossChexAttendanceSyncService $syncService,
+    ): int {
+        $configured = $factory->configuredAccounts();
+        $requested = array_values(array_filter((array) $this->option('account')));
+        $accounts = $requested !== [] ? $requested : array_keys($configured);
 
-        // ✅ If manual range provided, use it; otherwise use last_sync → now
-        if ($isManualRange) {
-            $from = Carbon::parse($fromOpt)->toDateTimeString();
-            $to   = Carbon::parse($toOpt)->toDateTimeString();
-        } else {
-            $from = (string) DB::table('settings')->where('key', 'crosschex_last_sync')->value('value');
-            if (! $from) {
-                $from = now()->subDay()->toDateTimeString();
-            }
-            $to = now()->toDateTimeString();
+        if ($accounts === []) {
+            $this->error('No CrossChex accounts are fully configured.');
+
+            return self::FAILURE;
         }
 
-        $page = 1;
-        $perPage = 1000;
-        $saved = 0;
+        foreach ($accounts as $account) {
+            if (! isset($configured[$account])) {
+                $this->error("CrossChex account [{$account}] is not configured.");
 
-        while (true) {
-            $json = $api->getAttendanceRecords($from, $to, $page, $perPage);
+                return self::FAILURE;
+            }
+        }
 
-            if (data_get($json, 'header.name') === 'Exception') {
-                $type = (string) data_get($json, 'payload.type');
-                $msg  = (string) data_get($json, 'payload.message');
+        $fromOption = trim((string) $this->option('from'));
+        $toOption = trim((string) $this->option('to'));
+        $manualRange = $fromOption !== '' || $toOption !== '';
 
-                if ($type === 'FREQUENT_REQUEST') {
-                    $this->warn("CrossChex rate limit: {$msg}. Sleeping 31 seconds then retry page {$page}...");
-                    sleep(31);
+        if ($manualRange && ($fromOption === '' || $toOption === '')) {
+            $this->error('When using a manual range, both --from and --to are required.');
+
+            return self::FAILURE;
+        }
+
+        $grandInserted = 0;
+        $grandSkipped = 0;
+        $grandInvalid = 0;
+
+        foreach ($accounts as $account) {
+            $api = $factory->make($account);
+            $to = $manualRange
+                ? Carbon::parse($toOption)->endOfDay()
+                : now();
+
+            $from = $manualRange
+                ? Carbon::parse($fromOption)->startOfDay()
+                : $this->automaticFrom($account);
+
+            $this->newLine();
+            $this->info("Syncing {$api->accountName()} from {$from->toDateTimeString()} to {$to->toDateTimeString()}");
+
+            $page = 1;
+            $perPage = (int) config('services.crosschex.sync.per_page', 200);
+            $inserted = 0;
+            $skipped = 0;
+            $invalid = 0;
+
+            while (true) {
+                $result = $syncService->syncPage(
+                    api: $api,
+                    from: $from->toDateTimeString(),
+                    to: $to->toDateTimeString(),
+                    page: $page,
+                    perPage: $perPage,
+                );
+
+                if ($result['rate_limited']) {
+                    $wait = max(1, (int) $result['retry_after']);
+                    $this->warn("Rate limit reached. Retrying page {$page} in {$wait} seconds...");
+                    sleep($wait);
                     continue;
                 }
 
-                $this->error("CrossChex Error: {$type} - {$msg}");
+                $inserted += (int) $result['inserted'];
+                $skipped += (int) $result['skipped'];
+                $invalid += (int) $result['invalid'];
+
                 if ((int) $this->option('debug') === 1) {
-                    $this->line(json_encode($json, JSON_PRETTY_PRINT));
+                    $this->line(sprintf(
+                        'Page %d/%d | fetched=%d new=%d ignored=%d invalid=%d',
+                        $result['page'],
+                        $result['page_count'],
+                        $result['fetched'],
+                        $result['inserted'],
+                        $result['skipped'],
+                        $result['invalid'],
+                    ));
                 }
 
-                return 1;
+                if ((int) $result['page'] >= (int) $result['page_count'] || (int) $result['fetched'] === 0) {
+                    break;
+                }
+
+                $page = (int) $result['page'] + 1;
             }
 
-            if ((int) $this->option('debug') === 1) {
-                $this->line("PAGE: {$page}");
-                $this->line(json_encode($json, JSON_PRETTY_PRINT));
+            if (! $manualRange) {
+                $this->saveAutomaticLastSync($account, $to);
             }
 
-            $list = data_get($json, 'payload.list')
-                ?? data_get($json, 'payload.data.list')
-                ?? data_get($json, 'payload.records')
-                ?? [];
+            $grandInserted += $inserted;
+            $grandSkipped += $skipped;
+            $grandInvalid += $invalid;
 
-            if (! is_array($list) || empty($list)) {
-                break;
-            }
-
-            foreach ($list as $r) {
-                $crossId = data_get($r, 'uuid') ?? data_get($r, 'id');
-                if (! $crossId) continue;
-
-                $employeeNo = data_get($r, 'employee.workno')
-                    ?? data_get($r, 'workno')
-                    ?? data_get($r, 'employee_no');
-
-                $employeeName = data_get($r, 'employee_name')
-                    ?? trim((data_get($r, 'employee.first_name') ?? '') . ' ' . (data_get($r, 'employee.last_name') ?? ''));
-
-                $checkTimeRaw = data_get($r, 'checktime')
-                    ?? data_get($r, 'check_time')
-                    ?? data_get($r, 'time');
-
-                $deviceSn = data_get($r, 'device.serial_number')
-                    ?? data_get($r, 'device_sn')
-                    ?? data_get($r, 'sn');
-
-                $deviceName = data_get($r, 'device.name') ?? null;
-                $state      = data_get($r, 'state') ?? data_get($r, 'type') ?? null;
-
-                if (! $employeeNo || ! $checkTimeRaw) continue;
-
-                // ✅ Treat API time as UTC then convert to Manila
-                $checkTime = Carbon::parse($checkTimeRaw, 'UTC')
-                    ->setTimezone('Asia/Manila')
-                    ->format('Y-m-d H:i:s');
-
-                MirasolBiometricsLog::updateOrCreate(
-                    ['crosschex_id' => (string) $crossId],
-                    [
-                        'employee_id'   => null,
-                        'employee_no'   => (string) $employeeNo,
-                        'employee_name' => $employeeName ?: null,
-                        'device_sn'     => $deviceSn ? (string) $deviceSn : null,
-                        'device_name'   => $deviceName,
-                        'state'         => $state,
-                        'check_time'    => $checkTime,
-                        'raw'           => $r,
-                    ]
-                );
-
-                $saved++;
-            }
-
-            $pageCount   = (int) data_get($json, 'payload.pageCount', 1);
-            $currentPage = (int) data_get($json, 'payload.page', $page);
-
-            if ($currentPage >= $pageCount) break;
-            $page++;
-        }
-
-        // ✅ Only advance last_sync for automatic runs (not manual range)
-        if (! $isManualRange) {
-            DB::table('settings')->updateOrInsert(
-                ['key' => 'crosschex_last_sync'],
-                ['value' => $to, 'updated_at' => now(), 'created_at' => now()]
+            $this->info(
+                "{$api->accountName()} complete. New: {$inserted}, already saved: {$skipped}, invalid: {$invalid}."
             );
         }
 
-        $mode = $isManualRange ? 'MANUAL' : 'AUTO';
-        $this->info("[{$mode}] Done! Synced from {$from} to {$to}. Saved/Updated: {$saved}");
+        $this->newLine();
+        $this->info(
+            "All selected sources complete. New: {$grandInserted}, already saved: {$grandSkipped}, invalid: {$grandInvalid}."
+        );
 
-        return 0;
+        return self::SUCCESS;
+    }
+
+    private function automaticFrom(string $account): Carbon
+    {
+        $key = "crosschex_last_sync:{$account}";
+        $value = DB::table('settings')->where('key', $key)->value('value');
+
+        if (! filled($value)) {
+            return now()->subDay();
+        }
+
+        return Carbon::parse((string) $value);
+    }
+
+    private function saveAutomaticLastSync(string $account, Carbon $to): void
+    {
+        $key = "crosschex_last_sync:{$account}";
+
+        DB::table('settings')->updateOrInsert(
+            ['key' => $key],
+            [
+                'value' => $to->toDateTimeString(),
+                'updated_at' => now(),
+                'created_at' => now(),
+            ]
+        );
     }
 }

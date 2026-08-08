@@ -379,7 +379,7 @@
                                     <span class="nav-link-icon">
                                         <span class="fas fa-fingerprint"></span>
                                     </span>
-                                    <span class="nav-link-text ps-1">Mirasol Biometrics</span>
+                                    <span class="nav-link-text ps-1">Biometrics Sync</span>
                                 </div>
                             </a>
                         </li>

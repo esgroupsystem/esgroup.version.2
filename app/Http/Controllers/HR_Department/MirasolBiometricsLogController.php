@@ -3,20 +3,27 @@
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
-use App\Jobs\CrossChexSyncLogsJob;
+use App\Http\Requests\Biometrics\StartBiometricsSyncRequest;
+use App\Http\Requests\Biometrics\StepBiometricsSyncRequest;
 use App\Models\EmployeePlottingSchedule;
 use App\Models\MirasolBiometricsLog;
+use App\Services\Biometrics\CrossChexSyncCoordinator;
+use App\Services\CrossChexServiceFactory;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Schema;
 
 class MirasolBiometricsLogController extends Controller
 {
+    public function __construct(
+        private readonly CrossChexSyncCoordinator $syncCoordinator,
+        private readonly CrossChexServiceFactory $crossChexFactory,
+    ) {
+    }
+
     public function index(Request $request)
     {
         [$defaultCutoffMonth, $defaultCutoffYear, $defaultCutoffType] = $this->getDefaultCutoff();
@@ -25,6 +32,7 @@ class MirasolBiometricsLogController extends Controller
         $cutoffYear = (int) ($request->cutoff_year ?: $defaultCutoffYear);
         $cutoffType = $request->cutoff_type ?: $defaultCutoffType;
         $search = trim((string) $request->q);
+        $syncAccounts = $this->crossChexFactory->configuredAccounts();
 
         [$startDate, $endDate, $cutoffLabel] = $this->resolveCutoffRange(
             $cutoffYear,
@@ -49,6 +57,7 @@ class MirasolBiometricsLogController extends Controller
                 'cutoffLabel' => $cutoffLabel,
                 'search' => $search,
                 'isSearch' => false,
+                'syncAccounts' => $syncAccounts,
             ]);
         }
 
@@ -68,6 +77,7 @@ class MirasolBiometricsLogController extends Controller
                 'cutoffLabel' => $cutoffLabel,
                 'search' => $search,
                 'isSearch' => true,
+                'syncAccounts' => $syncAccounts,
             ]);
         }
 
@@ -171,64 +181,32 @@ class MirasolBiometricsLogController extends Controller
             'cutoffLabel' => $cutoffLabel,
             'search' => $search,
             'isSearch' => true,
+            'syncAccounts' => $syncAccounts,
         ]);
     }
 
-    public function startSync(Request $request)
+    public function startSync(StartBiometricsSyncRequest $request)
     {
         try {
-            $validated = $request->validate([
-                'from' => ['required', 'date'],
-                'to' => ['required', 'date', 'after_or_equal:from'],
-            ]);
+            $validated = $request->validated();
 
-            $from = Carbon::parse($validated['from'])->startOfDay();
-            $to = Carbon::parse($validated['to'])->endOfDay();
-
-            $accounts = array_keys(config('services.crosschex.accounts', []));
-
-            if (empty($accounts)) {
-                return response()->json([
-                    'ok' => false,
-                    'message' => 'No CrossChex accounts configured.',
-                ], 422);
-            }
-
-            $jobId = (string) Str::uuid();
-            $key = "crosschex_sync_status:{$jobId}";
-
-            Cache::put($key, [
-                'state' => 'queued',
-                'message' => 'Queued for all CrossChex accounts...',
-                'from' => $from->toDateTimeString(),
-                'to' => $to->toDateTimeString(),
-                'accounts' => $accounts,
-                'page' => 0,
-                'pageCount' => null,
-                'saved' => 0,
-                'updated' => 0,
-                'percent' => 0,
-                'done' => false,
-                'error' => null,
-            ], now()->addMinutes(60));
-
-            Cache::put('crosschex_active_job_id', $jobId, now()->addMinutes(60));
-
-            CrossChexSyncLogsJob::dispatch(
-                $jobId,
-                $from->toDateTimeString(),
-                $to->toDateTimeString(),
-                $accounts
+            $state = $this->syncCoordinator->start(
+                from: Carbon::parse($validated['from']),
+                to: Carbon::parse($validated['to']),
+                requestedAccounts: $validated['accounts'],
             );
 
             return response()->json([
                 'ok' => true,
-                'jobId' => $jobId,
-                'accounts' => $accounts,
-                'message' => 'Sync started successfully.',
+                ...$state,
             ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'ok' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         } catch (\Throwable $e) {
-            Log::error('startSync failed', [
+            Log::error('Biometrics sync start failed.', [
                 'error' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
@@ -236,48 +214,37 @@ class MirasolBiometricsLogController extends Controller
 
             return response()->json([
                 'ok' => false,
-                'message' => $e->getMessage(),
-                'file' => config('app.debug') ? $e->getFile() : null,
-                'line' => config('app.debug') ? $e->getLine() : null,
+                'message' => 'Unable to start biometric synchronization. Check laravel.log.',
             ], 500);
         }
     }
 
-    public function syncStatus(Request $request)
+    public function syncStep(StepBiometricsSyncRequest $request)
     {
-        try {
-            $validated = $request->validate([
-                'job' => ['required', 'string'],
-            ]);
+        $state = $this->syncCoordinator->step((string) $request->validated('job'));
 
-            $key = "crosschex_sync_status:{$validated['job']}";
-            $status = Cache::get($key);
+        return response()->json([
+            'ok' => ($state['state'] ?? null) !== 'error',
+            ...$state,
+        ]);
+    }
 
-            if (! $status) {
-                return response()->json([
-                    'ok' => false,
-                    'state' => 'unknown',
-                    'message' => 'No status found. It may have expired.',
-                ], 404);
-            }
+    public function syncStatus(StepBiometricsSyncRequest $request)
+    {
+        $state = $this->syncCoordinator->status((string) $request->validated('job'));
 
-            return response()->json(['ok' => true] + $status);
-        } catch (ValidationException $e) {
+        if ($state === null) {
             return response()->json([
                 'ok' => false,
-                'message' => 'Validation failed.',
-                'errors' => $e->errors(),
-            ], 422);
-        } catch (\Throwable $e) {
-            Log::error('syncStatus failed', [
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'ok' => false,
-                'message' => 'Failed to read status. Check laravel.log.',
-            ], 500);
+                'state' => 'unknown',
+                'message' => 'Sync session was not found or has expired.',
+            ], 404);
         }
+
+        return response()->json([
+            'ok' => ($state['state'] ?? null) !== 'error',
+            ...$state,
+        ]);
     }
 
     private function getLogsByEmployeeDate($employeeNos, $biometricEmployeeIds, Carbon $startDate, Carbon $endDate)
@@ -294,6 +261,13 @@ class MirasolBiometricsLogController extends Controller
                 }
 
                 if ($biometricEmployeeIds->isNotEmpty()) {
+                    if (Schema::hasColumn('mirasol_biometrics_logs', 'source_employee_id')) {
+                        $query->orWhereIn(
+                            DB::raw('TRIM(source_employee_id)'),
+                            $biometricEmployeeIds->all()
+                        );
+                    }
+
                     $query->orWhereIn(DB::raw('TRIM(employee_id)'), $biometricEmployeeIds->all());
                 }
             })
@@ -313,8 +287,11 @@ class MirasolBiometricsLogController extends Controller
                 $lastCheckTime = $last?->check_time ? Carbon::parse($last->check_time) : null;
 
                 return [
-                    'employee_key' => $this->buildEmployeeKey($first->employee_no, $first->employee_id),
-                    'biometric_employee_id' => $first->employee_id,
+                    'employee_key' => $this->buildEmployeeKey(
+                        $first->employee_no,
+                        $first->source_employee_id ?? $first->employee_id
+                    ),
+                    'biometric_employee_id' => $first->source_employee_id ?? $first->employee_id,
                     'employee_no' => $first->employee_no,
                     'employee_name' => $first->employee_name,
                     'log_date' => $firstCheckTime?->toDateString(),
@@ -528,9 +505,11 @@ class MirasolBiometricsLogController extends Controller
 
     private function buildPeopleSuggestions()
     {
+        $logIdentityExpression = $this->logIdentitySelectExpression();
+
         $logPeople = MirasolBiometricsLog::query()
             ->selectRaw("
-                MIN(employee_id) AS biometric_employee_id,
+                {$logIdentityExpression} AS biometric_employee_id,
                 TRIM(employee_no) AS employee_no,
                 MIN(NULLIF(TRIM(employee_name), '')) AS employee_name
             ")
@@ -576,17 +555,24 @@ class MirasolBiometricsLogController extends Controller
 
     private function resolvePeopleFromSearch(string $search)
     {
+        $logIdentityExpression = $this->logIdentitySelectExpression();
+        $hasSourceEmployeeId = Schema::hasColumn('mirasol_biometrics_logs', 'source_employee_id');
+
         $logPeople = MirasolBiometricsLog::query()
             ->selectRaw("
-                MIN(employee_id) AS biometric_employee_id,
+                {$logIdentityExpression} AS biometric_employee_id,
                 TRIM(employee_no) AS employee_no,
                 MIN(NULLIF(TRIM(employee_name), '')) AS employee_name
             ")
-            ->where(function ($query) use ($search) {
+            ->where(function ($query) use ($search, $hasSourceEmployeeId) {
                 $query->where('employee_name', 'like', "%{$search}%")
                     ->orWhere('employee_no', 'like', "%{$search}%")
                     ->orWhere('employee_id', 'like', "%{$search}%")
                     ->orWhere('crosschex_id', 'like', "%{$search}%");
+
+                if ($hasSourceEmployeeId) {
+                    $query->orWhere('source_employee_id', 'like', "%{$search}%");
+                }
             })
             ->groupBy(DB::raw('TRIM(employee_no)'))
             ->get()
@@ -628,6 +614,15 @@ class MirasolBiometricsLogController extends Controller
             })
             ->sortBy('employee_name')
             ->values();
+    }
+
+    private function logIdentitySelectExpression(): string
+    {
+        if (Schema::hasColumn('mirasol_biometrics_logs', 'source_employee_id')) {
+            return "COALESCE(MIN(NULLIF(TRIM(source_employee_id), '')), CAST(MIN(employee_id) AS CHAR))";
+        }
+
+        return 'CAST(MIN(employee_id) AS CHAR)';
     }
 
     private function buildEmployeeKey($employeeNo, $biometricEmployeeId): string

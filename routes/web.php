@@ -907,6 +907,10 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->middleware('permission:mirasol-logs.sync')
                 ->name('sync-start');
 
+            Route::post('/sync-step', 'syncStep')
+                ->middleware('permission:mirasol-logs.sync')
+                ->name('sync-step');
+
             Route::get('/sync-status', 'syncStatus')
                 ->middleware('permission:mirasol-logs.view')
                 ->name('sync-status');

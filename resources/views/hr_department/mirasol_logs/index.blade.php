@@ -1,5 +1,38 @@
 @extends('layouts.app')
-@section('title', 'Mirasol Biometrics Logs - HR')
+@section('title', 'Biometrics Sync - HR')
+
+@push('styles')
+    <style>
+        .biometric-source-card {
+            display: block;
+            padding: .75rem .85rem;
+            border: 1px solid var(--falcon-border-color, #d8e2ef);
+            border-radius: .5rem;
+            background: var(--falcon-card-bg, #fff);
+            cursor: pointer;
+            transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+        }
+
+        .biometric-source-card:hover {
+            border-color: var(--falcon-primary, #2c7be5);
+            box-shadow: 0 .125rem .5rem rgba(0, 0, 0, .06);
+            transform: translateY(-1px);
+        }
+
+        .biometric-source-card:has(.form-check-input:checked) {
+            border-color: var(--falcon-primary, #2c7be5);
+            background: rgba(44, 123, 229, .04);
+        }
+
+        .sync-stat-box {
+            height: 100%;
+            padding: .7rem .8rem;
+            border: 1px solid var(--falcon-border-color, #d8e2ef);
+            border-radius: .5rem;
+            background: var(--falcon-body-bg, #fff);
+        }
+    </style>
+@endpush
 
 @section('content')
     <div class="container" data-layout="container">
@@ -23,43 +56,112 @@
         </script>
 
         <div class="content">
-            <div class="card monitor-card shadow-sm mb-3">
-                <div class="card-header bg-body-tertiary border-bottom border-200">
-                    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+            <div class="card monitor-card shadow-sm mb-3 border-0">
+                <div class="card-header bg-body-tertiary border-bottom border-200 py-3">
+                    <div class="d-flex flex-column flex-xl-row align-items-xl-center justify-content-between gap-3">
                         <div>
-                            <h6 class="mb-0">Sync Logs</h6>
-                            <small class="text-muted">Select start and end date to sync logs from device/source</small>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span class="fas fa-fingerprint text-primary"></span>
+                                <h5 class="mb-0">Biometrics Sync</h5>
+                            </div>
+                            <small class="text-muted">
+                                Sync one, several, or all configured CrossChex biometric sources directly from this page.
+                            </small>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                <span class="fas fa-bolt me-1"></span>No queue worker required
+                            </span>
+                            <span class="badge bg-info-subtle text-info border border-info-subtle">
+                                <span class="fas fa-copy me-1"></span>Existing records ignored
+                            </span>
                         </div>
                     </div>
                 </div>
 
                 <div class="card-body">
-                    <form id="syncForm" class="row g-2 align-items-end">
-                        @csrf
-
-                        <div class="col-12 col-lg-3">
-                            <label class="form-label mb-1">Start Date</label>
-                            <input type="date" name="from" class="form-control form-control-sm date-field" required
-                                value="{{ old('from', now()->toDateString()) }}">
+                    @cannot('mirasol-logs.sync')
+                        <div class="alert alert-secondary mb-0">
+                            You can review attendance monitoring records, but your role does not have permission to run a
+                            biometric synchronization.
                         </div>
-
-                        <div class="col-12 col-lg-3">
-                            <label class="form-label mb-1">End Date</label>
-                            <input type="date" name="to" class="form-control form-control-sm date-field" required
-                                value="{{ old('to', now()->toDateString()) }}">
+                    @elseif (empty($syncAccounts))
+                        <div class="alert alert-warning mb-0">
+                            <div class="fw-semibold">No CrossChex sources are fully configured.</div>
+                            <div class="small mt-1">
+                                Add each source URL, API key, and API secret in your <code>.env</code>, then run
+                                <code>php artisan optimize:clear</code>.
+                            </div>
                         </div>
+                    @else
+                        <form id="syncForm">
+                            @csrf
 
-                        <div class="col-12 col-lg-6 d-flex gap-2">
-                            <button id="syncBtn" class="btn btn-primary btn-sm flex-grow-1" type="submit">
-                                <span class="fas fa-sync me-1"></span>
-                                Sync Now
-                            </button>
+                            <div class="row g-3 align-items-end mb-3">
+                                <div class="col-12 col-md-4 col-xl-3">
+                                    <label class="form-label mb-1 fw-semibold">Start Date</label>
+                                    <input type="date" name="from" class="form-control form-control-sm" required
+                                        value="{{ old('from', now()->toDateString()) }}">
+                                </div>
 
-                            <a class="btn btn-outline-secondary btn-sm" href="{{ route('mirasol-logs.index') }}">
-                                Reset
-                            </a>
-                        </div>
-                    </form>
+                                <div class="col-12 col-md-4 col-xl-3">
+                                    <label class="form-label mb-1 fw-semibold">End Date</label>
+                                    <input type="date" name="to" class="form-control form-control-sm" required
+                                        value="{{ old('to', now()->toDateString()) }}">
+                                </div>
+
+                                <div class="col-12 col-md-4 col-xl-6">
+                                    <div class="d-flex flex-wrap justify-content-md-end gap-2">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="selectAllSourcesBtn">
+                                            <span class="fas fa-check-double me-1"></span>Select All
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="clearSourcesBtn">
+                                            Clear
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold mb-2">Biometric Sources</label>
+                                <div class="row g-2" id="biometricSourceGrid">
+                                    @foreach ($syncAccounts as $accountKey => $account)
+                                        <div class="col-12 col-md-6 col-xl-4">
+                                            <label class="biometric-source-card w-100 h-100">
+                                                <div class="d-flex align-items-start gap-2">
+                                                    <input class="form-check-input mt-1 biometric-source-checkbox" type="checkbox"
+                                                        name="accounts[]" value="{{ $accountKey }}" checked>
+                                                    <div class="min-w-0">
+                                                        <div class="fw-semibold text-body">{{ $account['name'] }}</div>
+                                                        <div class="small text-muted text-truncate">
+                                                            CrossChex source: {{ $accountKey }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2">
+                                <div class="small text-muted">
+                                    Fast mode inserts new attendance transactions only. Duplicate CrossChex IDs already in the
+                                    database are ignored by the database unique index without updating the existing row.
+                                </div>
+
+                                <div class="d-flex gap-2 flex-shrink-0">
+                                    <button id="syncSelectedBtn" class="btn btn-primary btn-sm" type="submit">
+                                        <span class="fas fa-sync me-1"></span>Sync Selected
+                                    </button>
+                                    <button id="syncAllBtn" class="btn btn-success btn-sm" type="button">
+                                        <span class="fas fa-cloud-download-alt me-1"></span>Sync All
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    @endif
                 </div>
             </div>
 
@@ -342,39 +444,74 @@
         </div>
     </div>
 
-    <div class="modal fade" id="syncModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-md modal-dialog-centered">
-            <div class="modal-content" style="border-radius:14px;">
-                <div class="modal-header">
-                    <h5 class="modal-title mb-0">Syncing Logs...</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal fade" id="syncModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static"
+        data-bs-keyboard="false">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow" style="border-radius: 14px;">
+                <div class="modal-header bg-body-tertiary border-bottom border-200">
+                    <div>
+                        <h5 class="modal-title mb-1">
+                            <span class="fas fa-fingerprint text-primary me-2"></span>Biometrics Sync
+                        </h5>
+                        <div class="small text-muted">Browser-driven synchronization — no queue worker or cron job.</div>
+                    </div>
                 </div>
 
                 <div class="modal-body">
-                    <div class="small text-muted mb-2" id="syncStatusText">
-                        Preparing...
+                    <div class="d-flex flex-column flex-md-row justify-content-between gap-2 mb-2">
+                        <div class="small fw-semibold" id="syncStatusText">Preparing...</div>
+                        <div class="small text-muted" id="syncCurrentSource">Source: -</div>
                     </div>
 
-                    <div class="progress" style="height: 12px;">
-                        <div id="syncProgressBar" class="progress-bar" role="progressbar" style="width:0%"></div>
+                    <div class="progress mb-3" style="height: 14px;">
+                        <div id="syncProgressBar" class="progress-bar progress-bar-striped progress-bar-animated"
+                            role="progressbar" style="width: 0%">0%</div>
                     </div>
 
-                    <div class="d-flex justify-content-between mt-2">
-                        <div class="small text-muted" id="syncMetaLeft">
-                            Page: -
+                    <div class="row g-2 mb-3">
+                        <div class="col-6 col-md-3">
+                            <div class="sync-stat-box">
+                                <div class="text-muted small">Page</div>
+                                <div class="fw-bold" id="syncPageStat">-</div>
+                            </div>
                         </div>
-
-                        <div class="small text-muted" id="syncMetaRight">
-                            Saved: 0
+                        <div class="col-6 col-md-3">
+                            <div class="sync-stat-box">
+                                <div class="text-muted small">New Records</div>
+                                <div class="fw-bold text-success" id="syncSavedStat">0</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="sync-stat-box">
+                                <div class="text-muted small">Already Saved</div>
+                                <div class="fw-bold text-info" id="syncSkippedStat">0</div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="sync-stat-box">
+                                <div class="text-muted small">Invalid Skipped</div>
+                                <div class="fw-bold text-warning" id="syncInvalidStat">0</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="alert alert-danger mt-3 d-none" id="syncErrorBox"></div>
+                    <div class="border rounded-3 overflow-hidden mb-3">
+                        <div class="bg-body-tertiary border-bottom px-3 py-2 small fw-semibold">Source Progress</div>
+                        <div id="syncAccountStats" class="list-group list-group-flush"></div>
+                    </div>
+
+                    <div class="alert alert-info py-2 mb-0 small" id="syncInfoBox">
+                        Keep this page open while synchronization is running. If the page is refreshed, the browser will
+                        attempt to resume the current sync session. Re-running the same range is safe because existing records
+                        are ignored.
+                    </div>
                     <div class="alert alert-warning mt-3 d-none" id="syncWarnBox"></div>
+                    <div class="alert alert-danger mt-3 d-none" id="syncErrorBox"></div>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">
+                <div class="modal-footer bg-body-tertiary border-top border-200">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="syncCloseBtn"
+                        data-bs-dismiss="modal" disabled>
                         Close
                     </button>
                 </div>
@@ -386,293 +523,327 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const need = [
-                'syncForm',
-                'syncModal',
-                'syncStatusText',
-                'syncProgressBar',
-                'syncMetaLeft',
-                'syncMetaRight'
-            ];
-
-            const missing = need.filter(id => !document.getElementById(id));
-
-            if (missing.length) {
-                console.error('Sync UI missing elements:', missing.map(x => '#' + x).join(', '));
-                return;
-            }
-
             const form = document.getElementById('syncForm');
-            const modalEl = document.getElementById('syncModal');
-            const statusEl = document.getElementById('syncStatusText');
-            const barEl = document.getElementById('syncProgressBar');
-            const metaL = document.getElementById('syncMetaLeft');
-            const metaR = document.getElementById('syncMetaRight');
-            const syncBtn = document.getElementById('syncBtn');
 
-            const modalBody = modalEl.querySelector('.modal-body');
-
-            let errBox = document.getElementById('syncErrorBox');
-
-            if (!errBox && modalBody) {
-                errBox = document.createElement('div');
-                errBox.id = 'syncErrorBox';
-                errBox.className = 'alert alert-danger mt-3 d-none';
-                modalBody.appendChild(errBox);
-            }
-
-            let warnBox = document.getElementById('syncWarnBox');
-
-            if (!warnBox && modalBody) {
-                warnBox = document.createElement('div');
-                warnBox.id = 'syncWarnBox';
-                warnBox.className = 'alert alert-warning mt-3 d-none';
-                modalBody.appendChild(warnBox);
-            }
-
-            if (!window.bootstrap || !bootstrap.Modal) {
-                console.error('Bootstrap Modal missing. Load bootstrap.bundle.js');
+            if (!form) {
                 return;
             }
 
+            const modalEl = document.getElementById('syncModal');
             const modal = new bootstrap.Modal(modalEl);
+            const statusEl = document.getElementById('syncStatusText');
+            const progressEl = document.getElementById('syncProgressBar');
+            const currentSourceEl = document.getElementById('syncCurrentSource');
+            const pageEl = document.getElementById('syncPageStat');
+            const savedEl = document.getElementById('syncSavedStat');
+            const skippedEl = document.getElementById('syncSkippedStat');
+            const invalidEl = document.getElementById('syncInvalidStat');
+            const accountStatsEl = document.getElementById('syncAccountStats');
+            const warningEl = document.getElementById('syncWarnBox');
+            const errorEl = document.getElementById('syncErrorBox');
+            const closeBtn = document.getElementById('syncCloseBtn');
+            const syncSelectedBtn = document.getElementById('syncSelectedBtn');
+            const syncAllBtn = document.getElementById('syncAllBtn');
+            const selectAllBtn = document.getElementById('selectAllSourcesBtn');
+            const clearBtn = document.getElementById('clearSourcesBtn');
+            const resumeStorageKey = 'crosschex_browser_sync_job_id';
+            const csrfToken = form.querySelector('input[name="_token"]')?.value || '';
 
-            const show = (el, msg) => {
-                if (!el) {
+            let running = false;
+
+            const checkboxes = () => Array.from(document.querySelectorAll('.biometric-source-checkbox'));
+            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+            const setMessage = (element, message) => {
+                if (!element) {
                     return;
                 }
 
-                el.textContent = msg || '';
-                el.classList.toggle('d-none', !msg);
+                element.textContent = message || '';
+                element.classList.toggle('d-none', !message);
             };
 
-            const setBar = (pct) => {
-                const p = Math.max(0, Math.min(100, Number(pct) || 0));
-
-                barEl.style.width = p + '%';
-                barEl.textContent = p ? (p + '%') : '';
-            };
-
-            let pollTimer = null;
-            let queuedTimer = null;
-
-            const stop = () => {
-                if (pollTimer) {
-                    clearInterval(pollTimer);
-                }
-
-                pollTimer = null;
-
-                if (queuedTimer) {
-                    clearTimeout(queuedTimer);
-                }
-
-                queuedTimer = null;
-            };
-
-            const parseJson = async (res) => {
-                const text = await res.text();
+            const parseJson = async response => {
+                const raw = await response.text();
 
                 try {
-                    return {
-                        ok: true,
-                        json: JSON.parse(text),
-                        raw: text
-                    };
-                } catch {
-                    return {
-                        ok: false,
-                        json: null,
-                        raw: text
-                    };
+                    return { json: JSON.parse(raw), raw };
+                } catch (error) {
+                    return { json: null, raw };
                 }
             };
 
-            const poll = async (jobId) => {
+            const updateProgress = percent => {
+                const value = Math.max(0, Math.min(100, Number(percent) || 0));
+                progressEl.style.width = `${value}%`;
+                progressEl.textContent = `${value}%`;
+                progressEl.setAttribute('aria-valuenow', String(value));
+            };
+
+            const escapeHtml = value => String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+
+            const renderAccountStats = stats => {
+                const entries = Object.entries(stats || {});
+
+                if (!entries.length) {
+                    accountStatsEl.innerHTML = '<div class="px-3 py-2 small text-muted">Preparing sources...</div>';
+                    return;
+                }
+
+                accountStatsEl.innerHTML = entries.map(([key, item]) => {
+                    const stateClass = item.done ? 'text-success' : 'text-muted';
+                    const stateIcon = item.done ? 'fa-check-circle text-success' : 'fa-circle-notch text-muted';
+                    const pages = item.page_count
+                        ? `${Number(item.pages_done || 0)} / ${Number(item.page_count)}`
+                        : `${Number(item.pages_done || 0)} / -`;
+
+                    return `
+                        <div class="list-group-item px-3 py-2">
+                            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-1">
+                                <div class="small fw-semibold">
+                                    <span class="fas ${stateIcon} me-2"></span>${escapeHtml(item.name || key)}
+                                </div>
+                                <div class="small ${stateClass}">
+                                    Pages ${pages} &nbsp;|&nbsp; New ${Number(item.inserted || 0).toLocaleString()}
+                                    &nbsp;|&nbsp; Ignored ${Number(item.skipped || 0).toLocaleString()}
+                                </div>
+                            </div>
+                        </div>`;
+                }).join('');
+            };
+
+            const applyState = data => {
+                statusEl.textContent = data.message || data.state || 'Synchronizing...';
+                currentSourceEl.textContent = `Source: ${data.accountName || '-'}`;
+                pageEl.textContent = data.page
+                    ? `${data.page}${data.pageCount ? ' / ' + data.pageCount : ''}`
+                    : '-';
+                savedEl.textContent = Number(data.saved || 0).toLocaleString();
+                skippedEl.textContent = Number(data.skipped || 0).toLocaleString();
+                invalidEl.textContent = Number(data.invalid || 0).toLocaleString();
+                updateProgress(data.percent || 0);
+                renderAccountStats(data.accountStats || {});
+                setMessage(warningEl, data.retryAfter > 0
+                    ? `CrossChex requested a short pause. Retrying automatically in ${data.retryAfter} second(s)...`
+                    : '');
+                setMessage(errorEl, data.error || '');
+            };
+
+            const finishUi = (success = true) => {
+                running = false;
+                closeBtn.disabled = false;
+                syncSelectedBtn.disabled = false;
+                syncAllBtn.disabled = false;
+
+                if (success) {
+                    progressEl.classList.remove('progress-bar-animated');
+                }
+            };
+
+            const postJobStep = async jobId => {
+                const body = new FormData();
+                body.append('_token', csrfToken);
+                body.append('job', jobId);
+
+                const response = await fetch(`{{ route('mirasol-logs.sync-step') }}`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    body
+                });
+
+                const parsed = await parseJson(response);
+
+                if (!parsed.json) {
+                    throw new Error('The server returned a non-JSON response. Check storage/logs/laravel.log.');
+                }
+
+                if (response.status === 419) {
+                    throw new Error('Session expired. Refresh the page and run the sync again.');
+                }
+
+                return parsed.json;
+            };
+
+            const runSteps = async jobId => {
+                if (running) {
+                    return;
+                }
+
+                running = true;
+                closeBtn.disabled = true;
+                syncSelectedBtn.disabled = true;
+                syncAllBtn.disabled = true;
+                progressEl.classList.add('progress-bar-animated');
+
                 try {
-                    const res = await fetch(
-                        `{{ route('mirasol-logs.sync-status') }}?job=${encodeURIComponent(jobId)}`, {
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        });
+                    while (running) {
+                        const data = await postJobStep(jobId);
+                        applyState(data);
 
-                    const parsed = await parseJson(res);
-
-                    if (!parsed.ok) {
-                        console.error('Non-JSON status:', parsed.raw);
-                        show(errBox, 'Server returned non-JSON. Check laravel.log.');
-                        return;
-                    }
-
-                    const data = parsed.json || {};
-
-                    if (!res.ok) {
-                        show(errBox, data.message || `Request failed (${res.status}).`);
-
-                        if (res.status === 404) {
-                            stop();
+                        if (data.state === 'error' || data.error) {
+                            localStorage.removeItem(resumeStorageKey);
+                            finishUi(false);
+                            return;
                         }
 
-                        return;
+                        if (data.done) {
+                            localStorage.removeItem(resumeStorageKey);
+                            finishUi(true);
+
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 900);
+
+                            return;
+                        }
+
+                        const waitMs = data.retryAfter > 0
+                            ? Number(data.retryAfter) * 1000
+                            : 150;
+
+                        await sleep(waitMs);
                     }
-
-                    if (!data.ok) {
-                        return;
-                    }
-
-                    statusEl.textContent = data.message || data.state || '...';
-                    metaL.textContent =
-                        `Page: ${data.page ?? '-'}${data.pageCount ? ' / ' + data.pageCount : ''}`;
-                    metaR.textContent = `Saved: ${data.saved ?? 0}`;
-
-                    show(errBox, data.error || '');
-
-                    if (data.percent !== null && data.percent !== undefined) {
-                        setBar(data.percent);
-                    }
-
-                    if ((data.state === 'queued' || data.page === 0) && !queuedTimer) {
-                        queuedTimer = setTimeout(() => {
-                            show(warnBox, 'Still queued. If stuck, run: php artisan queue:work');
-                        }, 12000);
-                    }
-
-                    if (data.state === 'running') {
-                        show(warnBox, '');
-                    }
-
-                    if (data.done) {
-                        stop();
-
-                        setTimeout(() => {
-                            const url = new URL(window.location.href);
-                            window.location.href = url.toString();
-                        }, 700);
-                    }
-                } catch (e) {
-                    console.error(e);
-                    show(errBox, 'Polling failed. Check console/network.');
+                } catch (error) {
+                    console.error(error);
+                    setMessage(errorEl, error.message || 'Biometric synchronization failed.');
+                    statusEl.textContent = 'Sync interrupted.';
+                    finishUi(false);
                 }
             };
 
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-
-                stop();
-                setBar(0);
-                show(errBox, '');
-                show(warnBox, '');
-
+            const startSync = async () => {
+                const selected = checkboxes().filter(checkbox => checkbox.checked);
                 const from = form.querySelector('input[name="from"]')?.value;
                 const to = form.querySelector('input[name="to"]')?.value;
 
                 if (!from || !to) {
-                    show(errBox, 'Please select Start Date and End Date.');
+                    alert('Please select Start Date and End Date.');
                     return;
                 }
 
                 if (to < from) {
-                    show(errBox, 'End Date must be after or equal to Start Date.');
+                    alert('End Date must be after or equal to Start Date.');
                     return;
                 }
 
-                statusEl.textContent = 'Starting...';
-                metaL.textContent = 'Page: -';
-                metaR.textContent = 'Saved: 0';
-
-                modal.show();
-
-                if (syncBtn) {
-                    syncBtn.disabled = true;
+                if (!selected.length) {
+                    alert('Select at least one biometric source.');
+                    return;
                 }
 
+                setMessage(errorEl, '');
+                setMessage(warningEl, '');
+                updateProgress(0);
+                savedEl.textContent = '0';
+                skippedEl.textContent = '0';
+                invalidEl.textContent = '0';
+                pageEl.textContent = '-';
+                currentSourceEl.textContent = 'Source: -';
+                accountStatsEl.innerHTML = '<div class="px-3 py-2 small text-muted">Preparing sources...</div>';
+                statusEl.textContent = 'Starting synchronization...';
+                closeBtn.disabled = true;
+                modal.show();
+
                 try {
-                    const res = await fetch(`{{ route('mirasol-logs.sync-start') }}`, {
+                    const response = await fetch(`{{ route('mirasol-logs.sync-start') }}`, {
                         method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' },
                         body: new FormData(form)
                     });
 
-                    if (res.status === 419) {
-                        show(errBox, 'Session expired. Refresh the page then try again.');
-                        statusEl.textContent = 'Failed.';
+                    const parsed = await parseJson(response);
+                    const data = parsed.json;
 
-                        if (syncBtn) {
-                            syncBtn.disabled = false;
-                        }
-
-                        return;
+                    if (!data) {
+                        throw new Error('The server returned a non-JSON response. Check storage/logs/laravel.log.');
                     }
 
-                    const parsed = await parseJson(res);
-
-                    if (!parsed.ok) {
-                        console.error('Non-JSON start:', parsed.raw);
-                        show(errBox, 'Server returned non-JSON. Check laravel.log.');
-                        statusEl.textContent = 'Failed.';
-
-                        if (syncBtn) {
-                            syncBtn.disabled = false;
-                        }
-
-                        return;
+                    if (!response.ok || !data.ok) {
+                        const validation = Object.values(data.errors || {}).flat().join('\n');
+                        throw new Error(validation || data.message || `Unable to start sync (${response.status}).`);
                     }
 
-                    const data = parsed.json || {};
-
-                    if (res.status === 422) {
-                        const errs = data.errors || {};
-                        const msg = Object.values(errs).flat().join('\n') || data.message ||
-                            'Validation failed.';
-
-                        show(errBox, msg);
-                        statusEl.textContent = 'Failed.';
-
-                        if (syncBtn) {
-                            syncBtn.disabled = false;
-                        }
-
-                        return;
-                    }
-
-                    if (!res.ok || !data.ok) {
-                        show(errBox, data.message || `Failed to start sync (${res.status}).`);
-                        statusEl.textContent = 'Failed.';
-
-                        if (syncBtn) {
-                            syncBtn.disabled = false;
-                        }
-
-                        return;
-                    }
-
-                    pollTimer = setInterval(() => poll(data.jobId), 1000);
-                    poll(data.jobId);
-                } catch (e) {
-                    console.error(e);
-                    show(errBox, 'Failed to start sync. Check console/network.');
-                    statusEl.textContent = 'Failed.';
-
-                    if (syncBtn) {
-                        syncBtn.disabled = false;
-                    }
+                    applyState(data);
+                    localStorage.setItem(resumeStorageKey, data.jobId);
+                    await runSteps(data.jobId);
+                } catch (error) {
+                    console.error(error);
+                    setMessage(errorEl, error.message || 'Unable to start biometric synchronization.');
+                    statusEl.textContent = 'Unable to start sync.';
+                    finishUi(false);
                 }
+            };
+
+            const resumeIfNeeded = async () => {
+                const jobId = localStorage.getItem(resumeStorageKey);
+
+                if (!jobId) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(
+                        `{{ route('mirasol-logs.sync-status') }}?job=${encodeURIComponent(jobId)}`,
+                        { headers: { 'X-Requested-With': 'XMLHttpRequest' } }
+                    );
+
+                    const parsed = await parseJson(response);
+                    const data = parsed.json;
+
+                    if (!response.ok || !data) {
+                        localStorage.removeItem(resumeStorageKey);
+                        return;
+                    }
+
+                    applyState(data);
+
+                    if (data.done || data.state === 'error') {
+                        localStorage.removeItem(resumeStorageKey);
+                        return;
+                    }
+
+                    modal.show();
+                    await runSteps(jobId);
+                } catch (error) {
+                    console.error('Unable to resume biometric sync:', error);
+                }
+            };
+
+            form.addEventListener('submit', event => {
+                event.preventDefault();
+                startSync();
+            });
+
+            syncAllBtn.addEventListener('click', () => {
+                checkboxes().forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+                startSync();
+            });
+
+            selectAllBtn.addEventListener('click', () => {
+                checkboxes().forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+            });
+
+            clearBtn.addEventListener('click', () => {
+                checkboxes().forEach(checkbox => {
+                    checkbox.checked = false;
+                });
             });
 
             modalEl.addEventListener('hidden.bs.modal', () => {
-                stop();
-
-                if (syncBtn) {
-                    syncBtn.disabled = false;
-                }
-
-                show(errBox, '');
-                show(warnBox, '');
-                setBar(0);
+                setMessage(errorEl, '');
+                setMessage(warningEl, '');
             });
+
+            resumeIfNeeded();
         });
     </script>
 @endpush

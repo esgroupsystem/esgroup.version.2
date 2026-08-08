@@ -152,6 +152,7 @@ class EmployeeBiometricSyncService
             ->select(
                 $this->existingColumns($table, [
                     'id',
+                    'source_employee_id',
                     'employee_id',
                     'employee_no',
                     'employee_name',
@@ -249,6 +250,8 @@ class EmployeeBiometricSyncService
         );
 
         $employeeId = $this->identityService->clean(
+            $log->source_employee_id ?? null
+        ) ?? $this->identityService->clean(
             $log->employee_id ?? null
         );
 
@@ -262,7 +265,7 @@ class EmployeeBiometricSyncService
 
         /*
          * crosschex_id from the logs is the attendance transaction UUID.
-         * The employee UUID retrieved by the API is stored in employee_id.
+         * The employee UUID retrieved by the API is stored in source_employee_id (with legacy employee_id fallback).
          */
         $sourceEmployeeIdentifier = $employeeId;
 

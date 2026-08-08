@@ -94,7 +94,7 @@
                                     <div class="min-w-0">
                                         <h3 class="mb-2 text-white">Employee Biometrics</h3>
                                         <p class="bio-header-description mb-3">
-                                            Clean biometric employee registry generated from Mirasol CrossChex logs.
+                                            Clean biometric employee registry generated from all configured CrossChex biometric sources.
                                             Sync keeps one employee record using employee ID, employee number, or name.
                                         </p>
 
@@ -137,7 +137,7 @@
                                     <div class="d-flex align-items-center justify-content-between mb-3">
                                         <div>
                                             <h6 class="mb-1">Sync Control</h6>
-                                            <p class="text-muted fs-10 mb-0">Refresh employee records from Mirasol logs.</p>
+                                            <p class="text-muted fs-10 mb-0">Refresh employee records from all synchronized CrossChex sources.</p>
                                         </div>
 
                                         <div class="bio-icon-circle bio-icon-primary">
@@ -153,7 +153,7 @@
 
                                                 <button type="submit" class="btn btn-primary w-100 bio-sync-button">
                                                     <span class="fas fa-cloud-download-alt me-1"></span>
-                                                    Sync from Mirasol
+                                                    Sync Employees from Logs
                                                 </button>
                                             </form>
                                         @endcan
@@ -750,7 +750,7 @@
 
                                                 <h5 class="mb-1">No biometric employees found</h5>
                                                 <p class="text-muted mb-3">
-                                                    Sync from Mirasol Biometrics to generate unique employee records.
+                                                    Sync from Biometrics Sync logs to generate unique employee records.
                                                 </p>
 
                                                 @can('biometrics.sync')
@@ -760,7 +760,7 @@
 
                                                         <button type="submit" class="btn btn-primary bio-sync-button">
                                                             <span class="fas fa-cloud-download-alt me-1"></span>
-                                                            Sync from Mirasol
+                                                            Sync Employees from Logs
                                                         </button>
                                                     </form>
                                                 @endcan
@@ -804,7 +804,7 @@
                         <div>
                             <h6 class="mb-1">Source</h6>
                             <p class="text-muted fs-10 mb-0">
-                                Records are generated from Mirasol CrossChex biometric logs only.
+                                Records are generated from synchronized CrossChex biometric logs.
                             </p>
                         </div>
                     </div>
