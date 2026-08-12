@@ -70,7 +70,7 @@
                                 </div>
 
                                 <div>
-                                    <h4 class="mb-1 text-dark">{{ $item->employee_name }}</h4>
+                                    <h4 class="mb-1 text-dark">{{ $item->payroll_display_name }}</h4>
                                     <div class="text-muted small d-flex flex-wrap gap-3">
                                         <span>
                                             <i class="fas fa-calendar-alt me-1 text-primary"></i>

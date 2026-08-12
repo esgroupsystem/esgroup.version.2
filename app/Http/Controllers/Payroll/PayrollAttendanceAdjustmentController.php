@@ -835,8 +835,7 @@ class PayrollAttendanceAdjustmentController extends Controller
     {
         return EmployeeBiometric::query()
             ->payrollActive()
-            ->orderBy('group_name')
-            ->orderByRaw("COALESCE(NULLIF(display_name, ''), NULLIF(source_employee_name, ''), NULLIF(source_crosschex_account_name, '')) ASC")
+            ->payrollDirectoryOrder()
             ->get()
             ->map(function (EmployeeBiometric $employee) {
                 $snapshot = $this->identityService->snapshot($employee);

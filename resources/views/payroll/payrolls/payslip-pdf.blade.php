@@ -455,7 +455,7 @@
                                         </div>
 
                                         <div class="employee-name">
-                                            {{ $slip['employee_name'] ?: 'NO NAME' }}
+                                            {{ \App\Support\PayrollEmployeeNameFormatter::display($slip['employee_name'] ?? null) }}
                                         </div>
 
                                         <table class="employee-meta">

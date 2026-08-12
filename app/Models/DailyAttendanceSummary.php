@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PayrollEmployeeNameFormatter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -275,4 +276,10 @@ class DailyAttendanceSummary extends Model
             'paid_holiday',
         ], true);
     }
+
+    public function getPayrollDisplayNameAttribute(): string
+    {
+        return PayrollEmployeeNameFormatter::display($this->employee_name ?? null);
+    }
+
 }

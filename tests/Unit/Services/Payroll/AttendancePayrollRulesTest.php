@@ -304,6 +304,116 @@ class AttendancePayrollRulesTest extends TestCase
         $this->assertSame(60, $undertimeMinutes);
     }
 
+    public function test_monthly_employee_with_fewer_than_three_valid_log_days_loses_unworked_rest_day_pay(): void
+    {
+        config()->set('payroll.attendance.rest_day_minimum_valid_log_days', 3);
+        config()->set('payroll.attendance.rest_day_adjustment_or_leave_exception', true);
+
+        $rows = collect([
+            $this->attendanceRow('2026-08-11', 'present', true, '07:00', '16:00'),
+            $this->attendanceRow('2026-08-12', 'present', true, '07:00', '16:00'),
+            $this->attendanceRow('2026-08-13', 'rest_day', false),
+        ]);
+
+        $result = $this->invokeProtected(
+            $this->payrollComputationService,
+            'computeRestDayQualification',
+            [$rows, ['daily_rate' => 800.00], true]
+        );
+
+        $this->assertFalse($result['qualified']);
+        $this->assertSame(2, $result['valid_log_days']);
+        $this->assertSame(1, $result['unpaid_rest_day_count']);
+        $this->assertSame(800.00, $result['deduction']);
+    }
+
+    public function test_approved_adjustment_or_leave_preserves_rest_day_pay_even_with_few_logs(): void
+    {
+        config()->set('payroll.attendance.rest_day_minimum_valid_log_days', 3);
+        config()->set('payroll.attendance.rest_day_adjustment_or_leave_exception', true);
+
+        $adjusted = $this->attendanceRow('2026-08-12', 'present', false);
+        $adjusted->has_adjustment = true;
+        $adjusted->attendance_adjustment_id = 99;
+
+        $rows = collect([
+            $this->attendanceRow('2026-08-11', 'present', true, '07:00', '16:00'),
+            $adjusted,
+            $this->attendanceRow('2026-08-13', 'rest_day', false),
+        ]);
+
+        $result = $this->invokeProtected(
+            $this->payrollComputationService,
+            'computeRestDayQualification',
+            [$rows, ['daily_rate' => 800.00], true]
+        );
+
+        $this->assertTrue($result['qualified']);
+        $this->assertTrue($result['qualified_by_exception']);
+        $this->assertSame(0, $result['unpaid_rest_day_count']);
+        $this->assertSame(0.00, $result['deduction']);
+    }
+
+    public function test_worked_rest_day_is_never_removed_by_the_minimum_log_rule(): void
+    {
+        config()->set('payroll.attendance.rest_day_minimum_valid_log_days', 3);
+
+        $rows = collect([
+            $this->attendanceRow('2026-08-13', 'rest_day_worked', true, '07:00', '16:00'),
+        ]);
+
+        $result = $this->invokeProtected(
+            $this->payrollComputationService,
+            'computeRestDayQualification',
+            [$rows, ['daily_rate' => 800.00], true]
+        );
+
+        $this->assertFalse($result['qualified']);
+        $this->assertSame(0, $result['scheduled_unworked_rest_days']);
+        $this->assertSame(0, $result['unpaid_rest_day_count']);
+        $this->assertSame(0.00, $result['deduction']);
+    }
+
+    public function test_biometric_seconds_are_ignored_before_late_undertime_and_flexible_hours_are_computed(): void
+    {
+        $logs = collect([
+            (object) ['check_time' => '2026-08-12 09:01:52'],
+            (object) ['check_time' => '2026-08-12 19:01:43'],
+        ]);
+        $remarks = [];
+
+        $reflection = new ReflectionMethod($this->dailySummaryService, 'resolveBiometricActualInOut');
+        $reflection->setAccessible(true);
+        [$actualIn, $actualOut] = $reflection->invokeArgs(
+            $this->dailySummaryService,
+            [$logs, 'check_time', &$remarks]
+        );
+
+        $this->assertSame('09:01:00', $actualIn->format('H:i:s'));
+        $this->assertSame('19:01:00', $actualOut->format('H:i:s'));
+        $this->assertSame(600.0, $actualIn->diffInMinutes($actualOut));
+    }
+
+    private function attendanceRow(
+        string $date,
+        string $status,
+        bool $hasBiometrics,
+        ?string $timeIn = null,
+        ?string $timeOut = null
+    ): object {
+        return (object) [
+            'work_date' => $date,
+            'attendance_status' => $status,
+            'has_biometrics' => $hasBiometrics,
+            'actual_time_in' => $timeIn ? "{$date} {$timeIn}:00" : null,
+            'actual_time_out' => $timeOut ? "{$date} {$timeOut}:00" : null,
+            'has_adjustment' => false,
+            'attendance_adjustment_id' => null,
+            'is_leave' => false,
+            'worked_minutes' => $status === 'rest_day_worked' ? 480 : 0,
+        ];
+    }
+
     private function invokeProtected(object $object, string $method, array $arguments = []): mixed
     {
         $reflection = new ReflectionMethod($object, $method);

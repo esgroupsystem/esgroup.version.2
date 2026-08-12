@@ -8,6 +8,7 @@ use App\Models\BiometricCompany;
 use App\Models\EmployeeBiometric;
 use App\Services\Biometrics\EmployeeBiometricService;
 use App\Services\Biometrics\EmployeeBiometricSyncService;
+use App\Services\Payroll\PayrollAuditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -18,6 +19,7 @@ class EmployeeBiometricController extends Controller
     public function __construct(
         protected EmployeeBiometricService $employeeBiometricService,
         protected EmployeeBiometricSyncService $employeeBiometricSyncService,
+        protected PayrollAuditService $payrollAuditService,
     ) {}
 
     public function index(Request $request): View
@@ -67,6 +69,18 @@ class EmployeeBiometricController extends Controller
                 $this->employeeBiometricSyncService
                     ->syncAllAccounts();
 
+            $this->payrollAuditService->record(
+                module: 'biometrics',
+                action: 'employee_sync_completed',
+                description: 'CrossChex employee master synchronization completed.',
+                context: [
+                    'created' => (int) ($result['created'] ?? 0),
+                    'updated' => (int) ($result['updated'] ?? 0),
+                    'skipped' => (int) ($result['skipped'] ?? 0),
+                    'merged_log_duplicates' => (int) ($result['merged'] ?? 0),
+                ],
+            );
+
             return to_route('biometrics.employees.index')
                 ->with(
                     'success',
@@ -79,6 +93,15 @@ class EmployeeBiometricController extends Controller
                     )
                 );
         } catch (Throwable $exception) {
+            $this->payrollAuditService->record(
+                module: 'biometrics',
+                action: 'employee_sync_failed',
+                description: 'CrossChex employee master synchronization failed.',
+                context: [
+                    'error' => $exception->getMessage(),
+                ],
+            );
+
             report($exception);
 
             return to_route('biometrics.employees.index')

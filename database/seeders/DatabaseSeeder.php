@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         // Create permissions first
         $this->call([
             PhilippineHolidaySeeder::class,
+            BiometricCompanySeeder::class,
             PermissionSeeder::class,
         ]);
 

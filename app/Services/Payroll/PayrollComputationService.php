@@ -49,6 +49,8 @@ class PayrollComputationService
          * until the business 1st cutoff (26-10 / legacy key `second`) is locked.
          * This prevents SSS from being calculated from only one half of the month.
          */
+        $openingPayroll = null;
+
         if ((string) $data['cutoff_type'] === 'first') {
             $openingPayroll = Payroll::query()
                 ->where('contribution_month', (int) $contribution['month'])
@@ -84,10 +86,10 @@ class PayrollComputationService
          * legitimately generate payroll for the same cutoff period.
          */
         $existing = Payroll::query()
-            ->where('cutoff_month', (int) $data['cutoff_month'])
-            ->where('cutoff_year', (int) $data['cutoff_year'])
             ->where('cutoff_type', (string) $data['cutoff_type'])
             ->where('garage_group', (string) $garageGroup)
+            ->whereDate('period_start', $startDate->toDateString())
+            ->whereDate('period_end', $endDate->toDateString())
             ->first();
 
         if ($existing) {
@@ -104,7 +106,7 @@ class PayrollComputationService
          */
         $roster = $this->employeeRosterService->forGroup($garageGroup);
 
-        if ($roster->isEmpty()) {
+        if ($roster->isEmpty() && ! $openingPayroll) {
             throw ValidationException::withMessages([
                 'garage_group' => 'No Active employees with Payroll Inclusion ON were found in the selected payroll group.',
             ]);
@@ -147,6 +149,7 @@ class PayrollComputationService
             $summaries,
             $summaryEmployeeIds,
             $missingSummaryEmployeeIds,
+            $openingPayroll,
             $userId
         ): Payroll {
             $payroll = Payroll::create([
@@ -227,8 +230,179 @@ class PayrollComputationService
                 ));
             }
 
+            $carryForwardCount = $openingPayroll
+                ? $this->createClosingSettlementCarryForwardItems(
+                    $payroll,
+                    $openingPayroll,
+                    $userId
+                )
+                : 0;
+
+            if ($carryForwardCount > 0) {
+                $meta = is_array($payroll->meta) ? $payroll->meta : [];
+                $meta['roster_audit']['closing_settlement_carry_forward_count'] = $carryForwardCount;
+                $meta['roster_audit']['closing_settlement_rule'] = 'Carry forward employees present in the finalized business 1st cutoff but no longer payroll-active in the business 2nd cutoff, for monthly government contribution settlement only.';
+                $payroll->meta = $meta;
+                $payroll->save();
+            }
+
             return $payroll->load(['items', 'paymentLogs']);
         });
+    }
+
+    /**
+     * Keep separated/inactive employees in the closing monthly payroll solely
+     * for government-benefit true-up/refund handling.
+     *
+     * Example: employee worked the 26-10 cutoff, then resigned before 11-25.
+     * They are no longer part of the active roster, but a zero-gross closing
+     * item is still required so HR can use Auto Cap / Employer Advance and an
+     * approved reimbursement without deleting the statutory monthly liability.
+     */
+    protected function createClosingSettlementCarryForwardItems(
+        Payroll $closingPayroll,
+        Payroll $openingPayroll,
+        ?int $userId
+    ): int {
+        if ((string) $closingPayroll->cutoff_type !== 'first') {
+            return 0;
+        }
+
+        $openingPayroll->loadMissing('items');
+
+        $existingItems = PayrollItem::query()
+            ->where('payroll_id', $closingPayroll->id)
+            ->get();
+
+        $existingKeys = $existingItems
+            ->map(fn (PayrollItem $item): ?string => $this->payrollItemIdentityKey($item))
+            ->filter()
+            ->flip();
+
+        $count = 0;
+
+        foreach ($openingPayroll->items as $openingItem) {
+            $key = $this->payrollItemIdentityKey($openingItem);
+
+            if ($key === null || $existingKeys->has($key)) {
+                continue;
+            }
+
+            $hasMonthlySettlementValue = abs((float) $openingItem->gross_pay) > 0.009
+                || abs((float) $openingItem->sss_employee) > 0.009
+                || abs((float) $openingItem->philhealth_employee) > 0.009
+                || abs((float) $openingItem->pagibig_employee) > 0.009
+                || abs((float) $openingItem->sss_employer) > 0.009
+                || abs((float) $openingItem->philhealth_employer) > 0.009
+                || abs((float) $openingItem->pagibig_employer) > 0.009;
+
+            if (! $hasMonthlySettlementValue) {
+                continue;
+            }
+
+            $item = PayrollItem::create([
+                'payroll_id' => $closingPayroll->id,
+                'employee_biometric_id' => $openingItem->employee_biometric_id,
+                'employee_id' => $openingItem->employee_id,
+                'payroll_employee_salary_id' => $openingItem->payroll_employee_salary_id,
+                'biometric_employee_id' => $openingItem->biometric_employee_id,
+                'employee_no' => $openingItem->employee_no,
+                'employee_name' => $openingItem->employee_name,
+                'company_name_snapshot' => $openingItem->company_name_snapshot,
+                'crosschex_id' => $openingItem->crosschex_id,
+                'rate_type' => $openingItem->rate_type,
+                'monthly_rate' => round((float) $openingItem->monthly_rate, 2),
+                'daily_rate' => round((float) $openingItem->daily_rate, 2),
+                'hourly_rate' => round((float) $openingItem->hourly_rate, 4),
+                'minute_rate' => round((float) $openingItem->minute_rate, 4),
+                'total_scheduled_days' => 0,
+                'total_worked_days' => 0,
+                'total_payable_days' => 0,
+                'total_payable_hours' => 0,
+                'total_worked_minutes' => 0,
+                'total_late_minutes' => 0,
+                'total_undertime_minutes' => 0,
+                'total_overtime_minutes' => 0,
+                'total_night_differential_minutes' => 0,
+                'total_absent_days' => 0,
+                'total_rest_day_worked' => 0,
+                'total_holiday_worked' => 0,
+                'total_leave_days' => 0,
+                'regular_pay' => 0,
+                'gross_pay' => 0,
+                'late_deduction' => 0,
+                'undertime_deduction' => 0,
+                'absence_deduction' => 0,
+                'overtime_pay' => 0,
+                'night_differential_pay' => 0,
+                'holiday_pay' => 0,
+                'rest_day_pay' => 0,
+                'leave_pay' => 0,
+                'taxable_compensation' => 0,
+                'sss_employee' => 0,
+                'sss_employer' => 0,
+                'sss_ec' => 0,
+                'philhealth_employee' => 0,
+                'philhealth_employer' => 0,
+                'pagibig_employee' => 0,
+                'pagibig_employer' => 0,
+                'withholding_tax' => 0,
+                'total_employee_government_deductions' => 0,
+                'total_employer_government_contributions' => 0,
+                'other_additions' => 0,
+                'other_deductions' => 0,
+                'net_pay' => 0,
+                'meta' => [
+                    'closing_benefit_settlement_only' => true,
+                    'closing_benefit_settlement_reason' => 'Employee was present in the finalized business 1st cutoff but is no longer in the active payroll roster for the business 2nd cutoff.',
+                    'opening_payroll_id' => $openingPayroll->id,
+                    'opening_payroll_number' => $openingPayroll->payroll_number,
+                    'opening_payroll_item_id' => $openingItem->id,
+                    'attendance_summary_coverage' => [
+                        'expected_days' => 0,
+                        'covered_days' => 0,
+                        'missing_days' => 0,
+                        'complete' => true,
+                        'settlement_only' => true,
+                    ],
+                    'audit_issues' => [],
+                    'safe_zero_pay' => false,
+                    'salary_profile_found' => ! empty($openingItem->payroll_employee_salary_id),
+                ],
+            ]);
+
+            $this->createFutureReportPlaceholders($closingPayroll, $item, $userId);
+
+            $existingKeys->put($key, true);
+            $count++;
+        }
+
+        return $count;
+    }
+
+    protected function payrollItemIdentityKey(PayrollItem $item): ?string
+    {
+        if ($item->employee_biometric_id) {
+            return 'biometric:'.(int) $item->employee_biometric_id;
+        }
+
+        if ($item->employee_id) {
+            return 'employee:'.(int) $item->employee_id;
+        }
+
+        if (trim((string) $item->employee_no) !== '') {
+            return 'employee_no:'.mb_strtolower(trim((string) $item->employee_no));
+        }
+
+        if (trim((string) $item->biometric_employee_id) !== '') {
+            return 'bio_source:'.mb_strtolower(trim((string) $item->biometric_employee_id));
+        }
+
+        if (trim((string) $item->employee_name) !== '') {
+            return 'name:'.mb_strtolower(trim((string) $item->employee_name));
+        }
+
+        return null;
     }
 
     protected function createMissingSummaryPayrollItem(
@@ -401,6 +575,16 @@ class PayrollComputationService
             2
         );
 
+        $restDayQualification = $this->computeRestDayQualification(
+            $rows,
+            $rates,
+            $isMonthlyEmployee
+        );
+        $restDayQualificationDeduction = round(
+            (float) ($restDayQualification['deduction'] ?? 0),
+            2
+        );
+
         $baseCutoffPay = $isMonthlyEmployee
             ? round((float) $rates['monthly_rate'] / 2, 2)
             : round($regularPayableHours * (float) $rates['hourly_rate'], 2);
@@ -433,7 +617,9 @@ class PayrollComputationService
         $otherAdditions = round($allowancePerCutoff + (float) $manualAdjustments['additions'], 2);
         $otherDeductions = round($salaryDeductionAmount + (float) $manualAdjustments['deductions'], 2);
 
-        $attendanceDeductionForNet = $isMonthlyEmployee ? $attendanceLoss : 0.00;
+        $attendanceDeductionForNet = $isMonthlyEmployee
+            ? round($attendanceLoss + $restDayQualificationDeduction, 2)
+            : 0.00;
 
         $grossPay = round(
             $regularPay
@@ -564,7 +750,10 @@ class PayrollComputationService
             'gross_pay' => $grossPay,
             'late_deduction' => $attendanceDeductions['late_deduction'],
             'undertime_deduction' => $attendanceDeductions['undertime_deduction'],
-            'absence_deduction' => $attendanceDeductions['absence_deduction'],
+            'absence_deduction' => round(
+                (float) $attendanceDeductions['absence_deduction'] + $restDayQualificationDeduction,
+                2
+            ),
             'overtime_pay' => $overtimePay,
             'night_differential_pay' => $nightDifferentialPay,
             'holiday_pay' => $holiday['holiday_pay'],
@@ -623,7 +812,11 @@ class PayrollComputationService
                     'monthly_allowance' => round((float) ($rates['allowance'] ?? 0), 2),
                     'allowance_per_cutoff' => $allowancePerCutoff,
                 ],
-                'attendance_deductions' => $attendanceDeductions,
+                'attendance_deductions' => array_merge($attendanceDeductions, [
+                    'rest_day_qualification_deduction' => $restDayQualificationDeduction,
+                    'total_attendance_loss_for_monthly_employee' => $attendanceDeductionForNet,
+                ]),
+                'rest_day_qualification' => $restDayQualification,
                 'holiday_breakdown' => $holiday,
                 'rest_day_breakdown' => $restDay,
                 'overtime_breakdown' => $overtime,
@@ -1327,11 +1520,10 @@ class PayrollComputationService
 
         if ($payroll->cutoff_type === 'first') {
             /*
-             * Resolve the opening cutoff by CONTRIBUTION MONTH, not by legacy
-             * cutoff-month arithmetic. Example: June 26-July 10 is stored under
-             * cutoff_month=June but contribution_month=July. Querying the
-             * contribution period directly is less error-prone and exactly
-             * matches the Benefits Records monthly cycle.
+             * Resolve the opening cutoff by CONTRIBUTION MONTH. This remains
+             * backward compatible with historical payrolls that used the old
+             * cutoff-month convention while new payrolls store both cutoffs
+             * under the selected cycle/contribution month.
              */
             $previousPayroll = Payroll::query()
                 ->where('contribution_month', (int) $payroll->contribution_month)
@@ -2270,6 +2462,114 @@ class PayrollComputationService
         }
 
         return 'NAME:'.mb_strtoupper(trim((string) ($row->employee_name ?: 'UNKNOWN')));
+    }
+
+    /**
+     * Company cutoff rule for otherwise-unworked scheduled rest days.
+     *
+     * Qualification is met when the employee has at least the configured number
+     * of days with a valid biometric Time In + Time Out during the cutoff, OR
+     * when the cutoff contains an approved payroll attendance adjustment/leave.
+     * A rest day actually worked is never removed by this rule.
+     *
+     * Daily-paid employees already receive pay from payable worked hours only,
+     * so the monetary deduction applies only to monthly-paid employees whose
+     * cutoff base starts at monthly salary / 2.
+     */
+    protected function computeRestDayQualification(
+        Collection $rows,
+        array $rates,
+        bool $isMonthlyEmployee
+    ): array {
+        $minimumValidLogDays = max(0, (int) config(
+            'payroll.attendance.rest_day_minimum_valid_log_days',
+            3
+        ));
+
+        $validLogRows = $rows->filter(function ($row): bool {
+            if (! (bool) data_get($row, 'has_biometrics', false)) {
+                return false;
+            }
+
+            $timeIn = data_get($row, 'actual_time_in');
+            $timeOut = data_get($row, 'actual_time_out');
+
+            return ! empty($timeIn) && ! empty($timeOut);
+        });
+
+        $validLogDays = $validLogRows
+            ->map(fn ($row): string => $this->dateString($row->work_date))
+            ->filter()
+            ->unique()
+            ->count();
+
+        $hasApprovedAdjustment = $rows->contains(function ($row): bool {
+            return (bool) data_get($row, 'has_adjustment', false)
+                || ! empty(data_get($row, 'attendance_adjustment_id'));
+        });
+
+        $hasLeave = $rows->contains(function ($row): bool {
+            $status = strtolower(str_replace([' ', '-'], '_', (string) data_get($row, 'attendance_status', '')));
+
+            return (bool) data_get($row, 'is_leave', false)
+                || in_array($status, ['leave', 'leave_unpaid', 'paid_leave', 'on_leave'], true);
+        });
+
+        $exceptionEnabled = (bool) config(
+            'payroll.attendance.rest_day_adjustment_or_leave_exception',
+            true
+        );
+
+        $qualifiedByLogs = $minimumValidLogDays === 0 || $validLogDays >= $minimumValidLogDays;
+        $qualifiedByException = $exceptionEnabled && ($hasApprovedAdjustment || $hasLeave);
+        $qualified = $qualifiedByLogs || $qualifiedByException;
+
+        $otherwiseUnworkedRestRows = $rows->filter(function ($row): bool {
+            return $this->isRestDayRow($row) && ! $this->isRestDayWorked($row);
+        });
+
+        $unpaidRestDayCount = $qualified ? 0 : $otherwiseUnworkedRestRows->count();
+        $dailyRate = round((float) ($rates['daily_rate'] ?? 0), 6);
+        $deduction = $isMonthlyEmployee
+            ? round($unpaidRestDayCount * $dailyRate, 2)
+            : 0.00;
+
+        return [
+            'rule' => 'minimum_valid_biometric_log_days_or_adjustment_leave_exception',
+            'minimum_valid_log_days' => $minimumValidLogDays,
+            'valid_log_days' => $validLogDays,
+            'valid_log_dates' => $validLogRows
+                ->map(fn ($row): string => $this->dateString($row->work_date))
+                ->filter()
+                ->unique()
+                ->values()
+                ->all(),
+            'has_approved_adjustment' => $hasApprovedAdjustment,
+            'has_leave' => $hasLeave,
+            'exception_enabled' => $exceptionEnabled,
+            'qualified_by_logs' => $qualifiedByLogs,
+            'qualified_by_exception' => $qualifiedByException,
+            'qualified' => $qualified,
+            'scheduled_unworked_rest_days' => $otherwiseUnworkedRestRows->count(),
+            'unpaid_rest_day_count' => $unpaidRestDayCount,
+            'unpaid_rest_day_dates' => $qualified
+                ? []
+                : $otherwiseUnworkedRestRows
+                    ->map(fn ($row): string => $this->dateString($row->work_date))
+                    ->filter()
+                    ->values()
+                    ->all(),
+            'monthly_employee' => $isMonthlyEmployee,
+            'daily_rate' => round($dailyRate, 2),
+            'deduction' => $deduction,
+            'note' => $qualified
+                ? ($qualifiedByLogs
+                    ? 'Rest-day pay retained: minimum valid biometric log days met.'
+                    : 'Rest-day pay retained: cutoff contains an approved adjustment or leave.')
+                : ($isMonthlyEmployee
+                    ? 'Otherwise-unworked scheduled rest days removed from monthly cutoff pay because the cutoff has fewer than the minimum valid biometric log days and no adjustment/leave exception.'
+                    : 'Qualification not met. Daily-paid employees receive no separate unworked rest-day base pay in this payroll computation.'),
+        ];
     }
 
     protected function scheduledWorkingDays(Collection $rows): float

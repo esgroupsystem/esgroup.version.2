@@ -584,14 +584,14 @@ class DailyAttendanceSummaryService
                     $actualTimeIn = Carbon::parse(
                         $workDate->toDateString().' '.$adjustment->adjusted_time_in,
                         'Asia/Manila'
-                    );
+                    )->startOfMinute();
                 }
 
                 if (! empty($adjustment->adjusted_time_out)) {
                     $actualTimeOut = Carbon::parse(
                         $workDate->toDateString().' '.$adjustment->adjusted_time_out,
                         'Asia/Manila'
-                    );
+                    )->startOfMinute();
                 }
 
                 if ($actualTimeIn && $actualTimeOut && $actualTimeOut->lessThanOrEqualTo($actualTimeIn)) {
@@ -711,13 +711,13 @@ class DailyAttendanceSummaryService
 
             if ($hasValidInOut) {
                 $attendanceStatus = 'rest_day_worked';
-                $remarks[] = 'Rest day worked. Base rest day pay retained.';
+                $remarks[] = 'Rest day worked. Final rest-day pay/premium is evaluated during payroll computation.';
             } elseif ($isAutomaticHalfDay) {
                 $attendanceStatus = 'rest_day';
-                $remarks[] = 'Rest day has no valid time out. Base rest day pay retained.';
+                $remarks[] = 'Scheduled rest day has no valid time out. Final paid-rest-day qualification is evaluated per payroll cutoff.';
             } else {
                 $attendanceStatus = 'rest_day';
-                $remarks[] = 'Paid rest day/day off.';
+                $remarks[] = 'Scheduled rest day/day off. Final paid-rest-day qualification is evaluated per payroll cutoff.';
             }
         } elseif (! $schedule
             && $adjustment?->adjustment_type !== PayrollAttendanceAdjustment::TYPE_CHANGE_SCHEDULE
@@ -996,7 +996,7 @@ class DailyAttendanceSummaryService
             return [null, null];
         }
 
-        $actualTimeIn = Carbon::parse($firstLog->{$timeColumn}, 'Asia/Manila');
+        $actualTimeIn = Carbon::parse($firstLog->{$timeColumn}, 'Asia/Manila')->startOfMinute();
 
         if ($logs->count() < 2) {
             return [$actualTimeIn, null];
@@ -1008,7 +1008,7 @@ class DailyAttendanceSummaryService
             return [$actualTimeIn, null];
         }
 
-        $candidateTimeOut = Carbon::parse($lastLog->{$timeColumn}, 'Asia/Manila');
+        $candidateTimeOut = Carbon::parse($lastLog->{$timeColumn}, 'Asia/Manila')->startOfMinute();
 
         if ($candidateTimeOut->lessThanOrEqualTo($actualTimeIn)) {
             $remarks[] = 'Duplicate or invalid biometric timeout ignored.';
@@ -1123,7 +1123,7 @@ class DailyAttendanceSummaryService
         );
 
         if ($actualTimeOut->lt($scheduledOut)) {
-            $rawUndertimeMinutes = (int) ceil($actualTimeOut->floatDiffInMinutes($scheduledOut));
+            $rawUndertimeMinutes = (int) $actualTimeOut->diffInMinutes($scheduledOut);
 
             $undertimeMinutes = $this->roundedUndertimeDeductionMinutes($rawUndertimeMinutes);
         }
@@ -1237,7 +1237,7 @@ class DailyAttendanceSummaryService
 
         return min(
             $configuredBreakMinutes,
-            max(0, (int) ceil($overlapStart->floatDiffInMinutes($overlapEnd)))
+            max(0, (int) $overlapStart->diffInMinutes($overlapEnd))
         );
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PayrollEmployeeNameFormatter;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -172,6 +173,11 @@ class PayrollItem extends Model
         return $this->hasOne(BenefitContributionRecord::class, 'payroll_item_id');
     }
 
+    public function benefitSettlement(): HasOne
+    {
+        return $this->hasOne(PayrollBenefitSettlement::class, 'payroll_item_id');
+    }
+
     public function paymentLogs(): HasMany
     {
         return $this->hasMany(
@@ -179,4 +185,10 @@ class PayrollItem extends Model
             'payroll_item_id'
         );
     }
+
+    public function getPayrollDisplayNameAttribute(): string
+    {
+        return PayrollEmployeeNameFormatter::display($this->employee_name ?? null);
+    }
+
 }

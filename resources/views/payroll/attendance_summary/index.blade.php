@@ -466,7 +466,7 @@
                         <div class="row g-3 align-items-end">
                             <div class="col-md-3 col-xl-2">
                                 <label class="form-label fw-semibold">Month</label>
-                                <select name="cutoff_month" class="form-select">
+                                <select name="cutoff_month" class="form-select" data-payroll-cycle-month>
                                     @for ($m = 1; $m <= 12; $m++)
                                         <option value="{{ $m }}"
                                             {{ (int) $cutoffMonth === $m ? 'selected' : '' }}>
@@ -478,7 +478,7 @@
 
                             <div class="col-md-3 col-xl-2">
                                 <label class="form-label fw-semibold">Year</label>
-                                <select name="cutoff_year" class="form-select">
+                                <select name="cutoff_year" class="form-select" data-payroll-cycle-year>
                                     @for ($y = now('Asia/Manila')->year + 1; $y >= now('Asia/Manila')->year - 3; $y--)
                                         <option value="{{ $y }}"
                                             {{ (int) $cutoffYear === $y ? 'selected' : '' }}>
@@ -490,11 +490,11 @@
 
                             <div class="col-md-3 col-xl-2">
                                 <label class="form-label fw-semibold">Cutoff</label>
-                                <select name="cutoff_type" class="form-select">
-                                    <option value="second" {{ $cutoffType === 'second' ? 'selected' : '' }}>
+                                <select name="cutoff_type" class="form-select" data-payroll-cycle-type>
+                                    <option value="second" data-business-cutoff="first" {{ $cutoffType === 'second' ? 'selected' : '' }}>
                                         {{ config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)') }}
                                     </option>
-                                    <option value="first" {{ $cutoffType === 'first' ? 'selected' : '' }}>
+                                    <option value="first" data-business-cutoff="second" {{ $cutoffType === 'first' ? 'selected' : '' }}>
                                         {{ config('payroll.cutoff_display.first.full', '2nd Cutoff (11-25)') }}
                                     </option>
                                 </select>

@@ -105,7 +105,7 @@
                                     data-employee-name="{{ $resolvedPerson['employee_name'] }}"
                                     data-crosschex-id="{{ $resolvedPerson['crosschex_id'] }}"
                                     @selected((string) $selectedEmployeeBiometricId === (string) $resolvedPerson['canonical_id'])>
-                                    {{ $resolvedPerson['employee_name'] }}
+                                    {{ \App\Support\PayrollEmployeeNameFormatter::display($resolvedPerson['employee_name']) }}
                                     @if ($resolvedPerson['employee_no'])
                                         | {{ $resolvedPerson['employee_no'] }}
                                     @endif

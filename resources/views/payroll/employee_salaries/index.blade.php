@@ -438,7 +438,7 @@
                 <div class="card-body">
                     <form method="GET" action="{{ route('payroll-employee-salaries.index') }}"
                         class="row g-3 align-items-end">
-                        <div class="col-12 col-lg-8 col-xl-7">
+                        <div class="col-12 col-lg-6 col-xl-6">
                             <label for="salary-search" class="salary-filter-label">
                                 Employee Search
                             </label>
@@ -453,6 +453,18 @@
                                     placeholder="Employee name, employee no., biometric ID, or CrossChex ID"
                                     value="{{ $search }}">
                             </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6 col-lg-3 col-xl-2">
+                            <label for="employment-status" class="salary-filter-label">
+                                Employee Status
+                            </label>
+                            <select id="employment-status" name="employment_status"
+                                class="form-select salary-filter-control">
+                                <option value="">All — Active first</option>
+                                <option value="active" @selected(($employmentStatus ?? '') === 'active')>Active</option>
+                                <option value="inactive" @selected(($employmentStatus ?? '') === 'inactive')>Inactive</option>
+                            </select>
                         </div>
 
                         <div class="col-12 col-sm-6 col-lg-auto">
@@ -474,22 +486,25 @@
                             </div>
                         </div>
 
-                        @if ($search)
+                        @if ($search || ($employmentStatus ?? '') !== '')
                             <div class="col-12">
                                 <div
                                     class="d-flex flex-wrap justify-content-between align-items-center gap-2 pt-3 border-top">
                                     <div class="fs-10 text-600">
                                         <span class="fas fa-info-circle text-primary me-1"></span>
-                                        Showing salary records matching
-                                        <span class="fw-semibold text-800">
-                                            “{{ $search }}”
-                                        </span>
+                                        Showing filtered salary records.
+                                        @if ($search)
+                                            Search: <span class="fw-semibold text-800">“{{ $search }}”</span>
+                                        @endif
+                                        @if (($employmentStatus ?? '') !== '')
+                                            Status: <span class="fw-semibold text-800">{{ ucfirst($employmentStatus) }}</span>
+                                        @endif
                                     </div>
 
                                     <a href="{{ route('payroll-employee-salaries.index') }}"
                                         class="btn btn-link btn-sm text-danger text-decoration-none p-0">
                                         <span class="fas fa-times me-1"></span>
-                                        Clear search
+                                        Clear filters
                                     </a>
                                 </div>
                             </div>
@@ -650,8 +665,8 @@
 
                                                 <div>
                                                     <div class="salary-employee-name"
-                                                        title="{{ $salary->employee_name }}">
-                                                        {{ $salary->employee_name ?: 'Unnamed Employee' }}
+                                                        title="{{ $salary->payroll_display_name }}">
+                                                        {{ $salary->payroll_display_name }}
                                                     </div>
 
                                                     <div class="salary-employee-meta">

@@ -168,6 +168,31 @@ class BenefitContributionPostingService
             + $pagibigEmployee
         );
 
+        $sssEmployeeCollected = $this->collectedEmployeeShare(
+            $sssEmployeeTotal,
+            (float) ($openingItem?->sss_employee ?? 0) + (float) ($closingItem?->sss_employee ?? 0)
+        );
+        $philHealthEmployeeCollected = $this->collectedEmployeeShare(
+            $philHealthEmployee,
+            (float) ($openingItem?->philhealth_employee ?? 0) + (float) ($closingItem?->philhealth_employee ?? 0)
+        );
+        $pagibigEmployeeCollected = $this->collectedEmployeeShare(
+            $pagibigEmployee,
+            (float) ($openingItem?->pagibig_employee ?? 0) + (float) ($closingItem?->pagibig_employee ?? 0)
+        );
+
+        $employeeShareUnrecovered = $this->money(
+            ($sssEmployeeTotal - $sssEmployeeCollected)
+            + ($philHealthEmployee - $philHealthEmployeeCollected)
+            + ($pagibigEmployee - $pagibigEmployeeCollected)
+        );
+
+        $closingSettlementMeta = (array) data_get($closingItem?->meta, 'government_settlement', []);
+        $settlementMode = (string) ($closingSettlementMeta['mode'] ?? 'auto_cap');
+        $settlementStatus = $employeeShareUnrecovered > 0.009
+            ? ($settlementMode === 'employer_advance' ? 'employer_advanced' : 'partial_collection')
+            : 'complete';
+
         $employerTotal = $this->money(
             $sssEmployerTotal
             + $philHealthEmployer
@@ -211,6 +236,7 @@ class BenefitContributionPostingService
             'sss_employee_regular_ss' => $this->money($calculation['sss_employee_regular_ss'] ?? 0),
             'sss_employee_mpf' => $this->money($calculation['sss_employee_mpf'] ?? 0),
             'sss_employee_total' => $sssEmployeeTotal,
+            'sss_employee_collected' => $sssEmployeeCollected,
             'sss_employer_regular_ss' => $this->money($calculation['sss_employer_regular_ss'] ?? 0),
             'sss_employer_mpf' => $this->money($calculation['sss_employer_mpf'] ?? 0),
             'sss_employer_ec' => $this->money($calculation['sss_ec'] ?? 0),
@@ -222,6 +248,7 @@ class BenefitContributionPostingService
             'philhealth_salary_base' => $this->money($calculation['philhealth_salary_base'] ?? 0),
             'philhealth_premium_rate' => (float) ($calculation['philhealth_premium_rate'] ?? 0.05),
             'philhealth_employee' => $philHealthEmployee,
+            'philhealth_employee_collected' => $philHealthEmployeeCollected,
             'philhealth_employer' => $philHealthEmployer,
             'philhealth_total' => $philHealthTotal,
 
@@ -231,12 +258,40 @@ class BenefitContributionPostingService
             'pagibig_employee_rate' => (float) ($calculation['pagibig_employee_rate'] ?? 0),
             'pagibig_employer_rate' => (float) ($calculation['pagibig_employer_rate'] ?? 0.02),
             'pagibig_employee' => $pagibigEmployee,
+            'pagibig_employee_collected' => $pagibigEmployeeCollected,
             'pagibig_employer' => $pagibigEmployer,
             'pagibig_total' => $pagibigTotal,
 
             'employee_total' => $employeeTotal,
             'employer_total' => $employerTotal,
             'grand_total' => $this->money($employeeTotal + $employerTotal),
+            'employee_share_unrecovered' => $employeeShareUnrecovered,
+            'settlement_status' => $settlementStatus,
+            'settlement_meta' => [
+                'mode' => $settlementMode,
+                'reason' => $closingSettlementMeta['reason'] ?? null,
+                'opening_employee_share_cash' => [
+                    'sss' => round((float) ($openingItem?->sss_employee ?? 0), 2),
+                    'philhealth' => round((float) ($openingItem?->philhealth_employee ?? 0), 2),
+                    'pagibig' => round((float) ($openingItem?->pagibig_employee ?? 0), 2),
+                ],
+                'closing_employee_share_cash' => [
+                    'sss' => round((float) ($closingItem?->sss_employee ?? 0), 2),
+                    'philhealth' => round((float) ($closingItem?->philhealth_employee ?? 0), 2),
+                    'pagibig' => round((float) ($closingItem?->pagibig_employee ?? 0), 2),
+                ],
+                'monthly_employee_share_collected' => [
+                    'sss' => $sssEmployeeCollected,
+                    'philhealth' => $philHealthEmployeeCollected,
+                    'pagibig' => $pagibigEmployeeCollected,
+                ],
+                'employee_reimbursements' => $closingSettlementMeta['employee_reimbursements'] ?? [],
+                'employee_share_unrecovered_by_program' => $closingSettlementMeta['employee_share_unrecovered_by_program'] ?? [
+                    'sss' => $this->money($sssEmployeeTotal - $sssEmployeeCollected),
+                    'philhealth' => $this->money($philHealthEmployee - $philHealthEmployeeCollected),
+                    'pagibig' => $this->money($pagibigEmployee - $pagibigEmployeeCollected),
+                ],
+            ],
             'posted_at' => $postedAt,
             'meta' => [
                 'source' => 'monthly_payroll_finalize',
@@ -378,6 +433,13 @@ class BenefitContributionPostingService
             (int) $payroll->contribution_month,
             sha1($employeeKey.'|'.(string) $item->employee_no)
         );
+    }
+
+    private function collectedEmployeeShare(float $liability, float $signedPayrollCash): float
+    {
+        $liability = $this->money($liability);
+
+        return round(max(0, min($liability, $signedPayrollCash)), 2);
     }
 
     private function money(mixed $value): float

@@ -23,6 +23,7 @@
                 $allowanceBreakdown = data_get($item->meta, 'allowance', []);
                 $holidayBreakdown = data_get($item->meta, 'holiday_breakdown', []);
                 $restDayBreakdown = data_get($item->meta, 'rest_day_breakdown', []);
+                $restDayQualification = data_get($item->meta, 'rest_day_qualification', []);
                 $manualAdjustments = data_get($item->meta, 'manual_adjustments', []);
                 $overtimeBreakdown = data_get($item->meta, 'overtime_breakdown', []);
                 $nightDifferentialBreakdown = data_get($item->meta, 'night_differential', []);
@@ -107,7 +108,7 @@
                     <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
                         <div>
                             <h4 class="mb-1 text-dark">
-                                {{ $item->employee_name }}
+                                {{ $item->payroll_display_name }}
                             </h4>
 
                             <div class="text-muted small d-flex flex-wrap gap-3">
@@ -463,6 +464,30 @@
                                     </div>
                                 </div>
                             @endif
+
+                            @if (!empty($restDayQualification))
+                                @php
+                                    $restDayQualified = (bool) data_get($restDayQualification, 'qualified', true);
+                                    $restDayException = (bool) data_get($restDayQualification, 'qualified_by_exception', false);
+                                    $restDayUnpaidCount = (int) data_get($restDayQualification, 'unpaid_rest_day_count', 0);
+                                    $restDayQualificationDeduction = (float) data_get($restDayQualification, 'deduction', 0);
+                                @endphp
+                                <div class="alert {{ $restDayQualified ? 'alert-success' : 'alert-warning' }} mt-3 mb-0 py-2 px-3 small">
+                                    <div class="fw-semibold mb-1">
+                                        Rest-day qualification: {{ $restDayQualified ? 'Qualified' : 'Not qualified' }}
+                                    </div>
+                                    Valid complete time-log days:
+                                    <strong>{{ (int) data_get($restDayQualification, 'valid_log_days', 0) }}</strong>
+                                    / minimum
+                                    <strong>{{ (int) data_get($restDayQualification, 'minimum_valid_log_days', 3) }}</strong>.
+                                    @if ($restDayException)
+                                        Approved adjustment/leave exception applied, so the unworked scheduled rest day remains paid.
+                                    @elseif (!$restDayQualified)
+                                        {{ $restDayUnpaidCount }} unworked rest day(s) became unpaid for this cutoff
+                                        ({{ $money($restDayQualificationDeduction) }} attendance deduction).
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -558,6 +583,22 @@
                                 <span class="text-muted">Rest Day Worked</span>
                                 <strong>{{ $totalRestDayWorked }}</strong>
                             </div>
+
+                            @if (!empty($restDayQualification))
+                                <div class="d-flex justify-content-between border-top pt-2 mt-1">
+                                    <span class="text-muted">Valid Log Days</span>
+                                    <strong>
+                                        {{ (int) data_get($restDayQualification, 'valid_log_days', 0) }} /
+                                        {{ (int) data_get($restDayQualification, 'minimum_valid_log_days', 3) }}
+                                    </strong>
+                                </div>
+                                <div class="d-flex justify-content-between py-2">
+                                    <span class="text-muted">Unpaid Rest Days</span>
+                                    <strong class="{{ (int) data_get($restDayQualification, 'unpaid_rest_day_count', 0) > 0 ? 'text-warning' : 'text-success' }}">
+                                        {{ (int) data_get($restDayQualification, 'unpaid_rest_day_count', 0) }}
+                                    </strong>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -621,6 +662,11 @@
                 </div>
 
             </div>
+
+            @include('payroll.items.partials.benefit-settlement', [
+                'payroll' => $payroll,
+                'item' => $item,
+            ])
 
             @include('payroll.items.partials.attendance-audit-table', [
                 'summaries' => $summaries,

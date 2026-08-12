@@ -3,6 +3,7 @@
 namespace App\Services\Biometrics;
 
 use App\Services\CrossChexServiceFactory;
+use App\Services\Payroll\PayrollAuditService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -13,6 +14,7 @@ class CrossChexSyncCoordinator
     public function __construct(
         private readonly CrossChexServiceFactory $factory,
         private readonly CrossChexAttendanceSyncService $attendanceSyncService,
+        private readonly PayrollAuditService $payrollAuditService,
     ) {
     }
 
@@ -71,6 +73,18 @@ class CrossChexSyncCoordinator
         ];
 
         $this->putState($jobId, $state);
+
+        $this->payrollAuditService->record(
+            module: 'biometrics',
+            action: 'attendance_sync_started',
+            description: 'CrossChex attendance synchronization started.',
+            context: [
+                'job_id' => $jobId,
+                'from' => $state['from'],
+                'to' => $state['to'],
+                'accounts' => $accounts,
+            ],
+        );
 
         return $this->publicState($state);
     }
@@ -217,6 +231,20 @@ class CrossChexSyncCoordinator
                 'line' => $e->getLine(),
             ]);
 
+            $this->payrollAuditService->record(
+                module: 'biometrics',
+                action: 'attendance_sync_failed',
+                description: 'CrossChex attendance synchronization failed.',
+                context: [
+                    'job_id' => $jobId,
+                    'from' => $state['from'] ?? null,
+                    'to' => $state['to'] ?? null,
+                    'account' => $state['account'] ?? null,
+                    'page' => $state['page'] ?? null,
+                    'error' => $e->getMessage(),
+                ],
+            );
+
             return $this->publicState($state);
         } finally {
             $lock->release();
@@ -258,6 +286,23 @@ class CrossChexSyncCoordinator
             'skipped' => (int) ($state['skipped'] ?? 0),
             'invalid' => (int) ($state['invalid'] ?? 0),
         ]);
+
+        $this->payrollAuditService->record(
+            module: 'biometrics',
+            action: 'attendance_sync_completed',
+            description: 'CrossChex attendance synchronization completed.',
+            context: [
+                'job_id' => $jobId,
+                'from' => $state['from'] ?? null,
+                'to' => $state['to'] ?? null,
+                'accounts' => $state['accounts'] ?? [],
+                'fetched' => (int) ($state['fetched'] ?? 0),
+                'saved' => (int) ($state['inserted'] ?? 0),
+                'skipped' => (int) ($state['skipped'] ?? 0),
+                'invalid' => (int) ($state['invalid'] ?? 0),
+                'account_stats' => $state['account_stats'] ?? [],
+            ],
+        );
 
         return $this->publicState($state);
     }

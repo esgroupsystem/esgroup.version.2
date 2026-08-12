@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PayrollEmployeeNameFormatter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -142,4 +143,10 @@ class PayrollEmployeeSalary extends Model
             $query->payrollActive();
         });
     }
+
+    public function getPayrollDisplayNameAttribute(): string
+    {
+        return PayrollEmployeeNameFormatter::display($this->employee_name ?? null);
+    }
+
 }

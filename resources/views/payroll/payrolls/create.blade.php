@@ -552,6 +552,7 @@
                                             <select
                                                 id="cutoff_month"
                                                 name="cutoff_month"
+                                                data-payroll-cycle-month
                                                 class="form-select payroll-form-control
                                                     @error('cutoff_month') is-invalid @enderror"
                                                 required
@@ -591,6 +592,7 @@
                                                 id="cutoff_year"
                                                 type="number"
                                                 name="cutoff_year"
+                                                data-payroll-cycle-year
                                                 class="form-control payroll-form-control
                                                     @error('cutoff_year') is-invalid @enderror"
                                                 value="{{ old('cutoff_year', $defaultCutoffYear) }}"
@@ -618,6 +620,7 @@
                                             <select
                                                 id="cutoff_type"
                                                 name="cutoff_type"
+                                                data-payroll-cycle-type
                                                 class="form-select payroll-form-control
                                                     @error('cutoff_type') is-invalid @enderror"
                                                 required
@@ -629,6 +632,7 @@
                                                 --}}
                                                 <option
                                                     value="second"
+                                                    data-business-cutoff="first"
                                                     @selected(
                                                         old(
                                                             'cutoff_type',
@@ -636,11 +640,12 @@
                                                         ) === 'second'
                                                     )
                                                 >
-                                                    {{ config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)') }} - crosses to next month
+                                                    {{ config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)') }}
                                                 </option>
 
                                                 <option
                                                     value="first"
+                                                    data-business-cutoff="second"
                                                     @selected(
                                                         old(
                                                             'cutoff_type',

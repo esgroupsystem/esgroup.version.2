@@ -114,8 +114,12 @@ class PermissionSeeder extends Seeder
             'payroll.export',
             'payroll.delete',
 
-            // Benefits Records
+            // Benefits Records / statutory settlement
             'benefits-records.view',
+            'payroll-benefit-settlements.manage',
+
+            // Payroll audit trail
+            'payroll-audit-logs.view',
 
             // Claims
             'claims.view',

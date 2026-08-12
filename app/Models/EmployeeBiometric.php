@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PayrollEmployeeNameFormatter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -151,6 +152,57 @@ class EmployeeBiometric extends Model
             $this->source_crosschex_account_name,
             $this->source_crosschex_account,
         ]) ?? 'Unknown Employee';
+    }
+
+    /**
+     * Payroll/Biometrics display name only. Source names stay unchanged so
+     * employee identity matching remains backward compatible.
+     */
+    public function getPayrollDisplayNameAttribute(): string
+    {
+        return PayrollEmployeeNameFormatter::display($this->effective_name);
+    }
+
+    /**
+     * Directory order requested by Payroll/HR:
+     * Active employees first, then Inactive, A-Z by surname inside each group.
+     */
+    public function scopePayrollDirectoryOrder(Builder $query): Builder
+    {
+        $query->orderByRaw(
+            "CASE
+                WHEN employment_status = 'inactive' OR is_payroll_active = 0 THEN 1
+                ELSE 0
+            END ASC"
+        );
+
+        $nameExpression = "COALESCE(
+            NULLIF(TRIM(display_name), ''),
+            NULLIF(TRIM(source_employee_name), ''),
+            NULLIF(TRIM(source_crosschex_account_name), ''),
+            NULLIF(TRIM(source_crosschex_account), ''),
+            'Unknown Employee'
+        )";
+
+        // Production is MySQL/MariaDB. Keep SQLite-compatible fallback for tests.
+        if ($query->getConnection()->getDriverName() === 'sqlite') {
+            return $query
+                ->orderByRaw("LOWER({$nameExpression}) ASC")
+                ->orderBy('id');
+        }
+
+        return $query
+            ->orderByRaw(
+                "LOWER(
+                    CASE
+                        WHEN {$nameExpression} LIKE '%,%'
+                            THEN TRIM(SUBSTRING_INDEX({$nameExpression}, ',', 1))
+                        ELSE SUBSTRING_INDEX(TRIM({$nameExpression}), ' ', -1)
+                    END
+                ) ASC"
+            )
+            ->orderByRaw("LOWER({$nameExpression}) ASC")
+            ->orderBy('id');
     }
 
     public function getLegacyBiometricEmployeeIdAttribute(): ?string

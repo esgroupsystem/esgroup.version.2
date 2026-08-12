@@ -144,7 +144,7 @@
                             </td>
 
                             <td>
-                                <div class="fw-semibold text-dark">{{ $row->employee_name ?: 'NO NAME' }}</div>
+                                <div class="fw-semibold text-dark">{{ $row->payroll_display_name }}</div>
                                 <div class="text-muted fs-11">
                                     <strong>Emp No:</strong> {{ $row->employee_no ?: '—' }}
                                 </div>

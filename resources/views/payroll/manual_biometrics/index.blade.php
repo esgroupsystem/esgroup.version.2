@@ -45,7 +45,7 @@
                         <div class="row g-3 align-items-end">
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Month</label>
-                                <select name="cutoff_month" class="form-select">
+                                <select name="cutoff_month" class="form-select" data-payroll-cycle-month>
                                     @for ($m = 1; $m <= 12; $m++)
                                         <option value="{{ $m }}"
                                             {{ (int) $cutoffMonth === $m ? 'selected' : '' }}>
@@ -57,7 +57,7 @@
 
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Year</label>
-                                <select name="cutoff_year" class="form-select">
+                                <select name="cutoff_year" class="form-select" data-payroll-cycle-year>
                                     @for ($y = now('Asia/Manila')->year + 1; $y >= 2024; $y--)
                                         <option value="{{ $y }}"
                                             {{ (int) $cutoffYear === $y ? 'selected' : '' }}>
@@ -69,10 +69,10 @@
 
                             <div class="col-md-2">
                                 <label class="form-label fw-semibold">Cutoff Type</label>
-                                <select name="cutoff_type" class="form-select">
-                                    <option value="second" {{ $cutoffType === 'second' ? 'selected' : '' }}>{{ config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)') }}
+                                <select name="cutoff_type" class="form-select" data-payroll-cycle-type>
+                                    <option value="second" data-business-cutoff="first" {{ $cutoffType === 'second' ? 'selected' : '' }}>{{ config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)') }}
                                     </option>
-                                    <option value="first" {{ $cutoffType === 'first' ? 'selected' : '' }}>{{ config('payroll.cutoff_display.first.full', '2nd Cutoff (11-25)') }}
+                                    <option value="first" data-business-cutoff="second" {{ $cutoffType === 'first' ? 'selected' : '' }}>{{ config('payroll.cutoff_display.first.full', '2nd Cutoff (11-25)') }}
                                     </option>
                                 </select>
                             </div>
@@ -82,7 +82,7 @@
                                 <div class="position-relative">
                                     <input type="text" class="form-control" id="employeeSearch"
                                         placeholder="Type employee name / employee no / crosschex id"
-                                        value="{{ $selectedEmployee['employee_name'] ?? '' }}">
+                                        value="{{ \App\Support\PayrollEmployeeNameFormatter::display($selectedEmployee['employee_name'] ?? null) }}">
                                     <div id="employeeResults" class="list-group position-absolute w-100 shadow-sm d-none"
                                         style="z-index: 1050; max-height: 260px; overflow-y: auto;"></div>
                                 </div>
@@ -107,7 +107,7 @@
                             <div class="col-lg-4">
                                 <div class="border rounded-3 p-3 h-100 bg-light">
                                     <small class="text-muted d-block">Employee Name</small>
-                                    <div class="fw-semibold fs-9">{{ $selectedEmployee['employee_name'] }}</div>
+                                    <div class="fw-semibold fs-9">{{ \App\Support\PayrollEmployeeNameFormatter::display($selectedEmployee['employee_name']) }}</div>
                                 </div>
                             </div>
                             <div class="col-lg-4">
@@ -252,7 +252,7 @@
                             <div>
                                 <h5 class="mb-0">Saved Manual Logs</h5>
                                 <small class="text-muted">{{ $cutoffLabel }} |
-                                    {{ $selectedEmployee['employee_name'] }}</small>
+                                    {{ \App\Support\PayrollEmployeeNameFormatter::display($selectedEmployee['employee_name']) }}</small>
                             </div>
                             <span class="badge bg-info-subtle text-info">{{ $recentLogs->count() }} log(s)</span>
                         </div>
@@ -353,11 +353,12 @@
                             }
 
                             data.forEach(emp => {
+                                const employeeDisplayName = emp.employee_display_name ?? emp.employee_name ?? '';
                                 const item = document.createElement('button');
                                 item.type = 'button';
                                 item.className = 'list-group-item list-group-item-action';
                                 item.innerHTML = `
-                                <div class="fw-semibold">${emp.employee_name ?? ''}</div>
+                                <div class="fw-semibold">${employeeDisplayName}</div>
                                 <small class="text-muted">
                                     Employee No: ${emp.employee_no ?? '-'} |
                                     CrossChex ID: ${emp.crosschex_id ?? '-'}
@@ -365,7 +366,7 @@
                             `;
 
                                 item.addEventListener('click', function() {
-                                    employeeSearch.value = emp.employee_name ?? '';
+                                    employeeSearch.value = employeeDisplayName;
                                     crosschexIdInput.value = emp.crosschex_id ?? '';
                                     employeeResults.innerHTML = '';
                                     employeeResults.classList.add('d-none');

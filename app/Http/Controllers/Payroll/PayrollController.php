@@ -54,8 +54,10 @@ class PayrollController extends Controller
             })
             ->when($status, fn ($query) => $query->where('status', $status))
             ->when($cutoffType, fn ($query) => $query->where('cutoff_type', $cutoffType))
-            ->orderByDesc('cutoff_year')
-            ->orderByDesc('cutoff_month')
+            // Actual period dates keep both historical records and the new
+            // cycle-month cutoff convention in the correct chronological order.
+            ->orderByDesc('period_end')
+            ->orderByDesc('period_start')
             ->orderByRaw("CASE WHEN cutoff_type = 'first' THEN 2 WHEN cutoff_type = 'second' THEN 1 ELSE 0 END DESC")
             ->orderByDesc('id')
             ->paginate(15)
@@ -120,6 +122,20 @@ class PayrollController extends Controller
                 auth()->id()
             );
 
+            // The business 2nd cutoff is immediately reconciled in Draft so HR
+            // sees the exact monthly statutory true-up and the default Auto Cap
+            // protection before reviewing/finalizing. This prevents a resigned
+            // or no-pay employee from appearing with a negative net pay merely
+            // because the monthly employee share falls on the closing cutoff.
+            if ((string) $payroll->cutoff_type === 'first') {
+                $this->monthlyGovernmentReconciliationService->reconcileClosingCutoff(
+                    $payroll,
+                    false,
+                    'payroll_generation_preview'
+                );
+                $payroll->refresh();
+            }
+
             return redirect()
                 ->route('payroll.show', $payroll)
                 ->with('success', 'Payroll generated successfully. Please review before finalizing.');
@@ -137,6 +153,19 @@ class PayrollController extends Controller
     {
         $payroll->load(['items.employeeBiometric.company', 'items.paymentLogs', 'generator', 'finalizer']);
 
+        $payroll->setRelation(
+            'items',
+            $payroll->items
+                ->sortBy(function (PayrollItem $item): string {
+                    $employee = $item->employeeBiometric;
+                    $inactive = $employee
+                        && ($employee->employment_status === 'inactive' || $employee->is_payroll_active === false);
+
+                    return ($inactive ? '1' : '0').'|'.strtolower($item->payroll_display_name);
+                })
+                ->values()
+        );
+
         $totals = $this->totals($payroll);
 
         return view('payroll.payrolls.show', compact('payroll', 'totals'));
@@ -146,7 +175,7 @@ class PayrollController extends Controller
     {
         abort_if((int) $item->payroll_id !== (int) $payroll->id, 404);
 
-        $item->load(['employeeBiometric.company', 'paymentLogs']);
+        $item->load(['employeeBiometric.company', 'paymentLogs', 'benefitSettlement']);
 
         $summaries = DailyAttendanceSummary::query()
             ->with(['employeeBiometric', 'plottingSchedule'])
@@ -375,8 +404,9 @@ class PayrollController extends Controller
 
         $payroll->delete();
 
-        return redirect()
-            ->route('payroll.index')
+        // Use the canonical payroll URL directly after deletion. This avoids
+        // stale/legacy named-route caches sending the browser to /payroll/v2.
+        return redirect('/payroll')
             ->with('success', 'Draft payroll deleted successfully.');
     }
 

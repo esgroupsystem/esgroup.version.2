@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PayrollEmployeeNameFormatter;
 use App\Enums\WorkdayType;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -167,4 +168,10 @@ class EmployeePlottingSchedule extends Model
             ->values()
             ->all();
     }
+
+    public function getPayrollDisplayNameAttribute(): string
+    {
+        return PayrollEmployeeNameFormatter::display($this->employee_name ?? null);
+    }
+
 }

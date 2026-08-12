@@ -10,17 +10,19 @@ use Illuminate\Validation\ValidationException;
 class MonthlyGovernmentReconciliationService
 {
     public function __construct(
-        private readonly MonthlyGovernmentContributionService $monthlyContributionService
+        private readonly MonthlyGovernmentContributionService $monthlyContributionService,
+        private readonly GovernmentDeductionSettlementService $settlementService,
+        private readonly PaymentLogService $paymentLogService,
     ) {}
 
     /**
-     * Reconcile the BUSINESS 2ND CUTOFF (11-25, legacy key `first`) so the
-     * employee's total deductions across both cutoffs equal the exact monthly
-     * SSS / PhilHealth / Pag-IBIG liability.
+     * Reconcile the BUSINESS 2ND CUTOFF (11-25, legacy key `first`) against the
+     * finalized BUSINESS 1ST CUTOFF (26-10, legacy key `second`).
      *
-     * The opening BUSINESS 1ST CUTOFF (26-10, legacy key `second`) must already
-     * be finalized. This removes the possibility that SSS is finalized from only
-     * half of the contribution month.
+     * The exact statutory monthly liability is calculated first. Employee cash
+     * collection for the closing cutoff is then settled independently so a
+     * resigned/no-pay employee cannot be pushed to a negative net pay while the
+     * Benefits Records ledger still retains the complete monthly liability.
      */
     public function reconcileClosingCutoff(
         Payroll $closingPayroll,
@@ -52,7 +54,7 @@ class MonthlyGovernmentReconciliationService
         if (! $openingPayroll) {
             throw ValidationException::withMessages([
                 'payroll' => sprintf(
-                    'Cannot finalize the 2nd cutoff. The 1st cutoff (26-10) for %s has not been generated. SSS must use the complete monthly compensation from both cutoffs.',
+                    'Cannot reconcile the 2nd cutoff. The 1st cutoff (26-10) for %s has not been generated.',
                     $closingPayroll->contribution_label
                 ),
             ]);
@@ -61,7 +63,7 @@ class MonthlyGovernmentReconciliationService
         if ($openingPayroll->status !== 'finalized') {
             throw ValidationException::withMessages([
                 'payroll' => sprintf(
-                    'Cannot finalize the 2nd cutoff. Finalize payroll %s (%s) first. The 1st and 2nd cutoffs must be locked before the exact monthly SSS/MPF contribution is posted.',
+                    'Cannot reconcile the 2nd cutoff. Finalize payroll %s (%s) first so the complete monthly government contribution can be computed.',
                     $openingPayroll->payroll_number,
                     $openingPayroll->cutoff_label
                 ),
@@ -84,29 +86,12 @@ class MonthlyGovernmentReconciliationService
                 (float) ($closingItem->monthly_rate ?: ($openingItem?->monthly_rate ?? 0))
             );
 
-            $old = [
-                'sss_employee' => round((float) $closingItem->sss_employee, 2),
-                'sss_employer' => round((float) $closingItem->sss_employer, 2),
-                'sss_ec' => round((float) $closingItem->sss_ec, 2),
-                'philhealth_employee' => round((float) $closingItem->philhealth_employee, 2),
-                'philhealth_employer' => round((float) $closingItem->philhealth_employer, 2),
-                'pagibig_employee' => round((float) $closingItem->pagibig_employee, 2),
-                'pagibig_employer' => round((float) $closingItem->pagibig_employer, 2),
-                'total_employee_government_deductions' => round((float) $closingItem->total_employee_government_deductions, 2),
-                'total_employer_government_contributions' => round((float) $closingItem->total_employer_government_contributions, 2),
-                'net_pay' => round((float) $closingItem->net_pay, 2),
-            ];
+            $old = $this->cashSnapshot($closingItem);
 
-            /*
-             * Monthly true-up rule:
-             * exact monthly liability - amount already deducted/contributed in
-             * the business 1st cutoff = amount to place in business 2nd cutoff.
-             *
-             * A signed delta is intentional. If an earlier cutoff over-withheld
-             * a benefit, a negative closing-cutoff amount becomes a transparent
-             * payroll credit instead of silently leaving the monthly ledger wrong.
-             */
-            $new = [
+            // Exact monthly liability less whatever was already posted/withheld
+            // in the opening cutoff. Signed negative values are valid true-up
+            // credits when the opening cutoff over-withheld a program.
+            $statutoryCurrent = [
                 'sss_employee' => $this->delta(
                     (float) $calculation['sss_employee'],
                     (float) ($openingItem?->sss_employee ?? 0)
@@ -135,33 +120,63 @@ class MonthlyGovernmentReconciliationService
                     (float) $calculation['pagibig_employer'],
                     (float) ($openingItem?->pagibig_employer ?? 0)
                 ),
+                'withholding_tax' => round((float) ($closingItem->withholding_tax ?? 0), 2),
             ];
 
-            $new['total_employee_government_deductions'] = round(
-                $new['sss_employee']
-                + $new['philhealth_employee']
-                + $new['pagibig_employee'],
+            $statutoryCurrent['total_employee_government_deductions'] = round(
+                $statutoryCurrent['sss_employee']
+                + $statutoryCurrent['philhealth_employee']
+                + $statutoryCurrent['pagibig_employee']
+                + $statutoryCurrent['withholding_tax'],
                 2
             );
 
-            $new['total_employer_government_contributions'] = round(
-                $new['sss_employer']
-                + $new['sss_ec']
-                + $new['philhealth_employer']
-                + $new['pagibig_employer'],
+            $statutoryCurrent['total_employer_government_contributions'] = round(
+                $statutoryCurrent['sss_employer']
+                + $statutoryCurrent['sss_ec']
+                + $statutoryCurrent['philhealth_employer']
+                + $statutoryCurrent['pagibig_employer'],
                 2
             );
 
-            $new['net_pay'] = round(
-                (float) $closingItem->gross_pay
-                - (float) $closingItem->other_deductions
-                - $new['total_employee_government_deductions'],
-                2
+            $settlement = $closingItem->benefitSettlement()->first();
+
+            $governmentForSettlement = array_merge($calculation, $statutoryCurrent);
+            $settled = $this->settlementService->apply(
+                $governmentForSettlement,
+                (float) $closingItem->gross_pay,
+                (float) $closingItem->other_deductions,
+                $settlement
+            );
+
+            $new = [
+                'sss_employee' => round((float) ($settled['sss_employee'] ?? 0), 2),
+                'sss_employer' => round((float) $statutoryCurrent['sss_employer'], 2),
+                'sss_ec' => round((float) $statutoryCurrent['sss_ec'], 2),
+                'philhealth_employee' => round((float) ($settled['philhealth_employee'] ?? 0), 2),
+                'philhealth_employer' => round((float) $statutoryCurrent['philhealth_employer'], 2),
+                'pagibig_employee' => round((float) ($settled['pagibig_employee'] ?? 0), 2),
+                'pagibig_employer' => round((float) $statutoryCurrent['pagibig_employer'], 2),
+                'total_employee_government_deductions' => round((float) ($settled['total_employee_government_deductions'] ?? 0), 2),
+                'total_employer_government_contributions' => round((float) $statutoryCurrent['total_employer_government_contributions'], 2),
+                'net_pay' => round((float) data_get(
+                    $settled,
+                    'settlement_meta.net_pay_after_settlement',
+                    (float) $closingItem->gross_pay
+                        - (float) $closingItem->other_deductions
+                        - (float) ($settled['total_employee_government_deductions'] ?? 0)
+                ), 2),
+            ];
+
+            $collection = $this->monthlyCollectionSummary(
+                $calculation,
+                $openingItem,
+                $new
             );
 
             $meta = is_array($closingItem->meta) ? $closingItem->meta : [];
 
-            $governmentAfterTrueUp = $calculation;
+            $governmentAfterSettlement = $calculation;
             foreach ([
                 'sss_employee',
                 'sss_employer',
@@ -173,11 +188,40 @@ class MonthlyGovernmentReconciliationService
                 'total_employee_government_deductions',
                 'total_employer_government_contributions',
             ] as $field) {
-                $governmentAfterTrueUp[$field] = $new[$field];
+                $governmentAfterSettlement[$field] = $new[$field];
             }
 
+            $settlementMeta = (array) ($settled['settlement_meta'] ?? []);
+            $settlementMeta = array_merge($settlementMeta, [
+                'reconciled_reason' => $reason,
+                'sss_employee_statutory_due' => round((float) ($calculation['sss_employee'] ?? 0), 2),
+                'philhealth_employee_statutory_due' => round((float) ($calculation['philhealth_employee'] ?? 0), 2),
+                'pagibig_employee_statutory_due' => round((float) ($calculation['pagibig_employee'] ?? 0), 2),
+                'opening_employee_share_collected' => $collection['opening'],
+                'closing_employee_cash_effect' => $collection['closing'],
+                'monthly_employee_share_collected' => $collection['collected'],
+                'employee_share_unrecovered_by_program' => $collection['unrecovered'],
+                'employee_share_unrecovered' => $collection['unrecovered_total'],
+                'settlement_status' => $collection['status'],
+                'manual_reimbursement_caps' => [
+                    'sss' => $this->reimbursementCap(
+                        (float) ($openingItem?->sss_employee ?? 0),
+                        (float) ($calculation['sss_employee'] ?? 0)
+                    ),
+                    'philhealth' => $this->reimbursementCap(
+                        (float) ($openingItem?->philhealth_employee ?? 0),
+                        (float) ($calculation['philhealth_employee'] ?? 0)
+                    ),
+                    'pagibig' => $this->reimbursementCap(
+                        (float) ($openingItem?->pagibig_employee ?? 0),
+                        (float) ($calculation['pagibig_employee'] ?? 0)
+                    ),
+                ],
+            ]);
+
             $meta['government_raw_before_schedule'] = $calculation;
-            $meta['government_after_profile_schedule'] = $governmentAfterTrueUp;
+            $meta['government_after_profile_schedule'] = $governmentAfterSettlement;
+            $meta['government_settlement'] = $settlementMeta;
             $meta['government_monthly_cycle_basis'] = [
                 'amount' => round((float) $calculation['monthly_cycle_gross'], 2),
                 'current_cutoff_basis' => round((float) $calculation['business_second_cutoff_gross'], 2),
@@ -201,12 +245,24 @@ class MonthlyGovernmentReconciliationService
                 'sss_regular_ss_msc' => round((float) $calculation['sss_regular_ss_msc'], 2),
                 'sss_mpf_msc' => round((float) $calculation['sss_mpf_msc'], 2),
                 'old_values' => $old,
+                'statutory_current_cutoff_before_settlement' => $statutoryCurrent,
                 'new_values' => $new,
             ];
 
             $closingItem->fill($new);
             $closingItem->meta = $meta;
             $closingItem->save();
+
+            // Keep the detailed payment/deduction ledger synchronized with the
+            // reconciled item. This is especially important when Auto Cap,
+            // Employer Advance, or a reimbursement changes the employee cash
+            // effect after the original draft payroll item was generated.
+            $this->paymentLogService->logPayrollItem(
+                $closingPayroll,
+                $closingItem,
+                (array) data_get($meta, 'salary_deductions', []),
+                auth()->id() ?: ($closingPayroll->generated_by ? (int) $closingPayroll->generated_by : null)
+            );
 
             $updated++;
             $changes[] = [
@@ -219,7 +275,10 @@ class MonthlyGovernmentReconciliationService
                 'monthly_gross' => round((float) $calculation['monthly_cycle_gross'], 2),
                 'sss_msc' => round((float) $calculation['sss_msc'], 2),
                 'sss_mpf_msc' => round((float) $calculation['sss_mpf_msc'], 2),
+                'settlement_mode' => $settlementMeta['mode'] ?? 'auto_cap',
+                'employee_share_unrecovered' => $collection['unrecovered_total'],
                 'old' => $old,
+                'statutory' => $statutoryCurrent,
                 'new' => $new,
             ];
         }
@@ -230,6 +289,71 @@ class MonthlyGovernmentReconciliationService
             'opening_payroll_id' => $openingPayroll->id,
             'opening_payroll_number' => $openingPayroll->payroll_number,
         ];
+    }
+
+    private function cashSnapshot(PayrollItem $item): array
+    {
+        return [
+            'sss_employee' => round((float) $item->sss_employee, 2),
+            'sss_employer' => round((float) $item->sss_employer, 2),
+            'sss_ec' => round((float) $item->sss_ec, 2),
+            'philhealth_employee' => round((float) $item->philhealth_employee, 2),
+            'philhealth_employer' => round((float) $item->philhealth_employer, 2),
+            'pagibig_employee' => round((float) $item->pagibig_employee, 2),
+            'pagibig_employer' => round((float) $item->pagibig_employer, 2),
+            'total_employee_government_deductions' => round((float) $item->total_employee_government_deductions, 2),
+            'total_employer_government_contributions' => round((float) $item->total_employer_government_contributions, 2),
+            'net_pay' => round((float) $item->net_pay, 2),
+        ];
+    }
+
+    private function monthlyCollectionSummary(
+        array $calculation,
+        ?PayrollItem $openingItem,
+        array $closingCash
+    ): array {
+        $map = [
+            'sss' => 'sss_employee',
+            'philhealth' => 'philhealth_employee',
+            'pagibig' => 'pagibig_employee',
+        ];
+
+        $opening = [];
+        $closing = [];
+        $collected = [];
+        $unrecovered = [];
+
+        foreach ($map as $program => $field) {
+            $liability = round(max(0, (float) ($calculation[$field] ?? 0)), 2);
+            $openingValue = round((float) ($openingItem?->{$field} ?? 0), 2);
+            $closingValue = round((float) ($closingCash[$field] ?? 0), 2);
+            $fundedByEmployee = round($openingValue + $closingValue, 2);
+            $collectedValue = round(max(0, min($liability, $fundedByEmployee)), 2);
+
+            $opening[$program] = $openingValue;
+            $closing[$program] = $closingValue;
+            $collected[$program] = $collectedValue;
+            $unrecovered[$program] = round(max(0, $liability - $collectedValue), 2);
+        }
+
+        $unrecoveredTotal = round(array_sum($unrecovered), 2);
+
+        return [
+            'opening' => $opening,
+            'closing' => $closing,
+            'collected' => $collected,
+            'unrecovered' => $unrecovered,
+            'unrecovered_total' => $unrecoveredTotal,
+            'status' => $unrecoveredTotal > 0.009 ? 'employer_advanced_or_unrecovered' : 'complete',
+        ];
+    }
+
+    private function reimbursementCap(float $openingCollected, float $monthlyLiability): float
+    {
+        return round(min(
+            max(0, $openingCollected),
+            max(0, $monthlyLiability)
+        ), 2);
     }
 
     private function matchingItem(Collection $openingItems, PayrollItem $closingItem): ?PayrollItem

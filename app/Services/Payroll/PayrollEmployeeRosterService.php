@@ -27,11 +27,7 @@ class PayrollEmployeeRosterService
             ->with('company')
             ->payrollActive()
             ->where('group_name', (string) $groupName)
-            ->orderByRaw("CASE WHEN NULLIF(TRIM(display_name), '') IS NULL THEN 1 ELSE 0 END")
-            ->orderBy('display_name')
-            ->orderBy('source_employee_name')
-            ->orderBy('display_employee_no')
-            ->orderBy('id');
+            ->payrollDirectoryOrder();
     }
 
     public function forGroup(int|string $groupName): Collection

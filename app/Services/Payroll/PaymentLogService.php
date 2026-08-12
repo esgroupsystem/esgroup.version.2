@@ -55,9 +55,7 @@ class PaymentLogService
         foreach ($governmentRows as $sourceType => $row) {
             $employeeShare = round((float) $row['employee'], 2);
             $employerShare = round((float) $row['employer'], 2);
-            $total = round($employeeShare + $employerShare, 2);
-
-            if ($total <= 0) {
+            if (abs($employeeShare) < 0.009 && abs($employerShare) < 0.009) {
                 continue;
             }
 

@@ -9,6 +9,7 @@ use App\Models\EmployeePlottingSchedule;
 use App\Models\MirasolBiometricsLog;
 use App\Services\Biometrics\CrossChexSyncCoordinator;
 use App\Services\CrossChexServiceFactory;
+use App\Support\PayrollEmployeeNameFormatter;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -162,10 +163,9 @@ class MirasolBiometricsLogController extends Controller
         }
 
         $rows = $rows
-            ->sortBy([
-                ['employee_name', 'asc'],
-                ['log_date', 'asc'],
-            ])
+            ->sortBy(fn (array $row): string => strtolower(
+                PayrollEmployeeNameFormatter::display($row['employee_name'] ?? null)
+            ).'|'.($row['log_date'] ?? ''))
             ->values();
 
         $rows = $this->paginateCollection($rows, 20, $request);
@@ -283,8 +283,8 @@ class MirasolBiometricsLogController extends Controller
                 $first = $sorted->first();
                 $last = $sorted->last();
 
-                $firstCheckTime = $first?->check_time ? Carbon::parse($first->check_time) : null;
-                $lastCheckTime = $last?->check_time ? Carbon::parse($last->check_time) : null;
+                $firstCheckTime = $first?->check_time ? Carbon::parse($first->check_time)->startOfMinute() : null;
+                $lastCheckTime = $last?->check_time ? Carbon::parse($last->check_time)->startOfMinute() : null;
 
                 return [
                     'employee_key' => $this->buildEmployeeKey(
@@ -390,11 +390,11 @@ class MirasolBiometricsLogController extends Controller
         }
 
         $actualIn = ! empty($row['actual_time_in'])
-            ? Carbon::parse($row['actual_time_in'])
+            ? Carbon::parse($row['actual_time_in'])->startOfMinute()
             : null;
 
         $actualOut = ! empty($row['actual_time_out'])
-            ? Carbon::parse($row['actual_time_out'])
+            ? Carbon::parse($row['actual_time_out'])->startOfMinute()
             : null;
 
         $graceMinutes = (int) ($row['grace_minutes'] ?? 15);
@@ -549,7 +549,9 @@ class MirasolBiometricsLogController extends Controller
             ->unique(function ($row) {
                 return $this->buildEmployeeKey($row['employee_no'] ?? null, $row['biometric_employee_id'] ?? null);
             })
-            ->sortBy('employee_name')
+            ->sortBy(fn (array $row): string => strtolower(
+                PayrollEmployeeNameFormatter::display($row['employee_name'] ?? null)
+            ))
             ->values();
     }
 
@@ -612,7 +614,9 @@ class MirasolBiometricsLogController extends Controller
             ->unique(function ($row) {
                 return $this->buildEmployeeKey($row['employee_no'] ?? null, $row['biometric_employee_id'] ?? null);
             })
-            ->sortBy('employee_name')
+            ->sortBy(fn (array $row): string => strtolower(
+                PayrollEmployeeNameFormatter::display($row['employee_name'] ?? null)
+            ))
             ->values();
     }
 
@@ -720,8 +724,9 @@ class MirasolBiometricsLogController extends Controller
             $endDate = Carbon::create($year, $month, 25)->startOfDay();
             $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' | '.config('payroll.cutoff_display_by_range.11_25', '2nd Cutoff (11-25)');
         } else {
-            $startDate = Carbon::create($year, $month, 26)->startOfDay();
-            $endDate = Carbon::create($year, $month, 26)->addMonth()->day(10)->startOfDay();
+            $cycleMonth = Carbon::create($year, $month, 1);
+            $startDate = $cycleMonth->copy()->subMonthNoOverflow()->day(26)->startOfDay();
+            $endDate = $cycleMonth->copy()->day(10)->endOfDay();
             $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' | '.config('payroll.cutoff_display_by_range.26_10', '1st Cutoff (26-10)');
         }
 
@@ -737,11 +742,11 @@ class MirasolBiometricsLogController extends Controller
         }
 
         if ($today->day >= 26) {
-            return [(int) $today->month, (int) $today->year, '26_10'];
+            $nextCycleMonth = $today->copy()->addMonthNoOverflow();
+
+            return [(int) $nextCycleMonth->month, (int) $nextCycleMonth->year, '26_10'];
         }
 
-        $previousMonth = $today->copy()->subMonth();
-
-        return [(int) $previousMonth->month, (int) $previousMonth->year, '26_10'];
+        return [(int) $today->month, (int) $today->year, '26_10'];
     }
 }

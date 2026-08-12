@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
 use App\Models\MirasolBiometricsLog;
+use App\Support\PayrollEmployeeNameFormatter;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
@@ -117,17 +118,22 @@ class ManualBiometricsEncodingController extends Controller
             })
             ->groupBy('crosschex_id')
             ->orderBy(DB::raw('MAX(employee_name)'))
-            ->limit(20)
+            ->limit(100)
             ->get()
             ->map(function ($item) {
+                $displayName = PayrollEmployeeNameFormatter::display($item->employee_name);
+
                 return [
                     'crosschex_id' => $item->crosschex_id,
                     'employee_id' => $item->employee_id,
                     'employee_no' => $item->employee_no,
                     'employee_name' => $item->employee_name,
-                    'label' => trim(($item->employee_name ?? 'Unknown').' | '.($item->employee_no ?? '-').' | '.($item->crosschex_id ?? '-')),
+                    'employee_display_name' => $displayName,
+                    'label' => trim($displayName.' | '.($item->employee_no ?? '-').' | '.($item->crosschex_id ?? '-')),
                 ];
             })
+            ->sortBy(fn (array $item): string => strtolower((string) $item['employee_display_name']))
+            ->take(20)
             ->values();
 
         return response()->json($employees);
@@ -344,16 +350,12 @@ class ManualBiometricsEncodingController extends Controller
         }
 
         if ($day >= 26) {
-            return [$month, $year, 'second'];
+            $nextCycleMonth = $today->copy()->addMonthNoOverflow();
+
+            return [(int) $nextCycleMonth->month, (int) $nextCycleMonth->year, 'second'];
         }
 
-        $previousMonth = $today->copy()->subMonth();
-
-        return [
-            (int) $previousMonth->month,
-            (int) $previousMonth->year,
-            'second',
-        ];
+        return [$month, $year, 'second'];
     }
 
     private function resolveCutoffRange(int $year, int $month, string $type): array
@@ -365,8 +367,8 @@ class ManualBiometricsEncodingController extends Controller
             $endDate = $baseMonth->copy()->day(25)->endOfDay();
             $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' | '.config('payroll.cutoff_display.first.full', '2nd Cutoff (11-25)');
         } else {
-            $startDate = $baseMonth->copy()->day(26)->startOfDay();
-            $endDate = $baseMonth->copy()->addMonth()->day(10)->endOfDay();
+            $startDate = $baseMonth->copy()->subMonthNoOverflow()->day(26)->startOfDay();
+            $endDate = $baseMonth->copy()->day(10)->endOfDay();
             $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' | '.config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)');
         }
 

@@ -202,7 +202,7 @@ class AttendanceSummaryController extends Controller
 
             return [
                 'employee_biometric_id' => $employee->id,
-                'employee_name' => $employee->effective_name,
+                'employee_name' => $employee->payroll_display_name,
                 'employee_no' => $employee->effective_employee_no,
                 'biometric_employee_id' => $employee->legacy_biometric_employee_id,
                 'group_name' => $employee->group_name,
@@ -362,9 +362,7 @@ class AttendanceSummaryController extends Controller
                         ->orWhere('source_crosschex_id', 'like', "%{$search}%");
                 });
             })
-            ->orderBy('display_name')
-            ->orderBy('source_employee_name')
-            ->orderBy('id');
+            ->payrollDirectoryOrder();
     }
 
     protected function buildRosterCoverageStats(
@@ -398,13 +396,12 @@ class AttendanceSummaryController extends Controller
 
         $missingEmployees = EmployeeBiometric::query()
             ->whereIn('id', $missingIds)
-            ->orderBy('display_name')
-            ->orderBy('source_employee_name')
+            ->payrollDirectoryOrder()
             ->get()
             ->map(fn (EmployeeBiometric $employee): array => [
                 'id' => (int) $employee->id,
                 'employee_no' => $employee->effective_employee_no,
-                'employee_name' => $employee->effective_name,
+                'employee_name' => $employee->payroll_display_name,
                 'group_name' => $employee->group_name,
             ])
             ->values()
@@ -613,18 +610,18 @@ class AttendanceSummaryController extends Controller
         }
 
         if ($today->day >= 26) {
+            $nextCycleMonth = $today->copy()->addMonthNoOverflow();
+
             return [
-                (int) $today->month,
-                (int) $today->year,
+                (int) $nextCycleMonth->month,
+                (int) $nextCycleMonth->year,
                 'second',
             ];
         }
 
-        $previousMonth = $today->copy()->subMonth();
-
         return [
-            (int) $previousMonth->month,
-            (int) $previousMonth->year,
+            (int) $today->month,
+            (int) $today->year,
             'second',
         ];
     }
@@ -643,11 +640,9 @@ class AttendanceSummaryController extends Controller
             return [$startDate, $endDate, $label];
         }
 
-        $startDate = Carbon::create($year, $month, 26, 0, 0, 0, 'Asia/Manila')->startOfDay();
-        $endDate = Carbon::create($year, $month, 26, 23, 59, 59, 'Asia/Manila')
-            ->addMonth()
-            ->day(10)
-            ->endOfDay();
+        $cycleMonth = Carbon::create($year, $month, 1, 0, 0, 0, 'Asia/Manila');
+        $startDate = $cycleMonth->copy()->subMonthNoOverflow()->day(26)->startOfDay();
+        $endDate = $cycleMonth->copy()->day(10)->endOfDay();
 
         $label = $startDate->format('F d, Y').' - '.$endDate->format('F d, Y').' | '.config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)');
 

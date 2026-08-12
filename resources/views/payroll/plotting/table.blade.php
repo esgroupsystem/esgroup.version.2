@@ -17,7 +17,7 @@
                 @forelse($employees as $rowIndex => $employee)
                     <tr>
                         <td class="sticky-col bg-white employee-col">
-                            <div class="fw-semibold text-dark">{{ $employee->employee_name }}</div>
+                            <div class="fw-semibold text-dark">{{ $employee->payroll_display_name }}</div>
                             <div class="fs-11 text-muted">{{ $employee->employee_no ?: 'No Employee No.' }}</div>
                             <div class="fs-11 text-muted">Bio ID: {{ $employee->biometric_employee_id ?: '-' }}</div>
 

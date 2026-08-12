@@ -20,10 +20,22 @@ class PayrollPayslipService
     {
         $payroll->load([
             'items.employeeBiometric.company',
-            'items' => fn ($query) => $query->orderBy('employee_name'),
             'generator',
             'finalizer',
         ]);
+
+        $payroll->setRelation(
+            'items',
+            $payroll->items
+                ->sortBy(function (PayrollItem $item): string {
+                    $employee = $item->employeeBiometric;
+                    $inactive = $employee
+                        && ($employee->employment_status === 'inactive' || $employee->is_payroll_active === false);
+
+                    return ($inactive ? '1' : '0').'|'.strtolower($item->payroll_display_name);
+                })
+                ->values()
+        );
 
         $startDate = Carbon::parse($payroll->period_start, 'Asia/Manila')->startOfDay();
         $endDate = Carbon::parse($payroll->period_end, 'Asia/Manila')->endOfDay();

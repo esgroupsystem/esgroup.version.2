@@ -49,16 +49,7 @@ class EmployeePlottingScheduleController extends Controller
                         ->orWhere('group_name', 'like', "%{$search}%");
                 });
             })
-            ->orderBy('group_name')
-            ->orderByRaw("
-            COALESCE(
-                NULLIF(display_name, ''),
-                NULLIF(source_employee_name, ''),
-                NULLIF(source_crosschex_account_name, ''),
-                NULLIF(source_crosschex_account, ''),
-                'Unknown Employee'
-            ) ASC
-        ")
+            ->payrollDirectoryOrder()
             ->paginate(25)
             ->withQueryString();
 
@@ -68,7 +59,7 @@ class EmployeePlottingScheduleController extends Controller
                     $snapshot = $this->identityService->snapshot($employee);
 
                     $employee->setAttribute('plotting_employee_biometric_id', $employee->id);
-                    $employee->setAttribute('plotting_employee_name', $snapshot['employee_name'] ?? 'Unknown Employee');
+                    $employee->setAttribute('plotting_employee_name', $employee->payroll_display_name);
                     $employee->setAttribute('plotting_employee_no', $snapshot['employee_no'] ?? null);
                     $employee->setAttribute('plotting_biometric_employee_id', $snapshot['biometric_employee_id'] ?? null);
                     $employee->setAttribute('plotting_crosschex_id', $snapshot['crosschex_id'] ?? null);

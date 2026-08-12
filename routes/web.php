@@ -36,6 +36,8 @@ use App\Http\Controllers\Payroll\EmployeePlottingScheduleController;
 use App\Http\Controllers\Payroll\HolidayController;
 use App\Http\Controllers\Payroll\ManualBiometricsEncodingController;
 use App\Http\Controllers\Payroll\PayrollAttendanceAdjustmentController;
+use App\Http\Controllers\Payroll\PayrollAuditLogController;
+use App\Http\Controllers\Payroll\PayrollBenefitSettlementController;
 use App\Http\Controllers\Payroll\PayrollController;
 use App\Http\Controllers\Payroll\PayrollEmployeeSalaryController;
 use App\Http\Controllers\RoleController;
@@ -796,66 +798,101 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | Payroll Audit Logs
+    |--------------------------------------------------------------------------
+    */
+
+    Route::get('/payroll-audit-logs', [PayrollAuditLogController::class, 'index'])
+        ->middleware([
+            'auth',
+            'payroll.group',
+            'permission:payroll-audit-logs.view',
+        ])
+        ->name('payroll-audit-logs.index');
+
+    /*
+    |--------------------------------------------------------------------------
     | Payroll
     |--------------------------------------------------------------------------
     */
 
     Route::prefix('payroll')
-        ->middleware([ 'auth', 'payroll.group',])
+        ->middleware(['auth', 'payroll.group'])
         ->name('payroll.')
         ->controller(PayrollController::class)
         ->group(function () {
 
-            // 📊 Index
             Route::get('/', 'index')
                 ->middleware('permission:payroll.view')
                 ->name('index');
 
-            // ➕ Create
             Route::get('/create', 'create')
                 ->middleware('permission:payroll.create')
                 ->name('create');
+
+            // Backward-compatible URL used by older payroll builds/bookmarks.
+            // Keep it before /{payroll}; /{payroll} only accepts numeric IDs.
+            Route::get('/v2', function () {
+                return redirect('/payroll');
+            })
+                ->middleware('permission:payroll.view')
+                ->name('legacy-v2');
 
             Route::post('/', 'store')
                 ->middleware('permission:payroll.create')
                 ->name('store');
 
-            // 👁 Show payroll
             Route::get('/{payroll}', 'show')
                 ->middleware('permission:payroll.view')
                 ->whereNumber('payroll')
                 ->name('show');
 
-            // 🔥 FINALIZE payroll
             Route::post('/{payroll}/finalize', 'finalize')
                 ->middleware('permission:payroll.finalize')
                 ->whereNumber('payroll')
                 ->name('finalize');
 
-            // 🗑 Delete payroll
             Route::delete('/{payroll}', 'destroy')
                 ->middleware('permission:payroll.delete')
                 ->whereNumber('payroll')
                 ->name('destroy');
 
-            // 📄 Export Excel
             Route::get('/{payroll}/export/excel', 'exportExcel')
                 ->middleware('permission:payroll.export')
                 ->whereNumber('payroll')
                 ->name('export.excel');
 
-            // 📄 Export PDF
             Route::get('/{payroll}/export/pdf', 'exportPdf')
                 ->middleware('permission:payroll.export')
                 ->whereNumber('payroll')
                 ->name('export.pdf');
 
-            // 📦 Items
+            /*
+            |--------------------------------------------------------------------------
+            | Payroll Item
+            |--------------------------------------------------------------------------
+            */
+
             Route::get('/{payroll}/items/{item}', 'showItem')
                 ->middleware('permission:payroll.view')
                 ->whereNumber('payroll')
                 ->whereNumber('item')
                 ->name('items.show');
+
+            /*
+            |--------------------------------------------------------------------------
+            | Government Benefit Settlement
+            |--------------------------------------------------------------------------
+            */
+
+            Route::post(
+                '/{payroll}/items/{item}/benefit-settlement',
+                [PayrollBenefitSettlementController::class, 'store']
+            )
+                ->middleware('permission:payroll-benefit-settlements.manage')
+                ->whereNumber('payroll')
+                ->whereNumber('item')
+                ->name('items.benefit-settlement.store');
         });
 
     /*
@@ -890,6 +927,12 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     /*
     |--------------------------------------------------------------------------
     | Mirasol Biometrics Management
+    |--------------------------------------------------------------------------
+    */
+
+    /*
+    |--------------------------------------------------------------------------
+    | Biometrics Sync Management
     |--------------------------------------------------------------------------
     */
 

@@ -49,6 +49,19 @@ return [
     */
 
     'attendance' => [
+        /*
+         | Company paid-rest-day qualification:
+         | - A cutoff needs at least 3 days with valid biometric Time In + Time Out.
+         | - Any approved payroll attendance adjustment or leave inside the cutoff
+         |   preserves the employee's otherwise-unworked rest-day pay.
+         | - A rest day actually worked is never removed by this qualification rule.
+         |
+         | This is a company payroll rule, separate from statutory rest-day premium
+         | rules for employees who actually work on their scheduled rest day.
+         */
+        'rest_day_minimum_valid_log_days' => 3,
+        'rest_day_adjustment_or_leave_exception' => true,
+
         'scheduled_hours_per_day' => 9,
         'scheduled_minutes_per_day' => 540,
         // Fallback only. Permanent schedule may use 8 or 9 paid hours.

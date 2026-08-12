@@ -45,11 +45,19 @@ class PayrollItemsExport implements FromArray, ShouldAutoSize, WithHeadings, Wit
 
     public function array(): array
     {
-        return $this->payroll->items->map(function ($item): array {
+        return $this->payroll->items
+            ->sortBy(function ($item): string {
+                $employee = $item->employeeBiometric;
+                $inactive = $employee
+                    && ($employee->employment_status === 'inactive' || $employee->is_payroll_active === false);
+
+                return ($inactive ? '1' : '0').'|'.strtolower($item->payroll_display_name);
+            })
+            ->map(function ($item): array {
             return [
                 $this->payroll->payroll_number,
                 $item->employee_no,
-                $item->employee_name,
+                $item->payroll_display_name,
                 $item->biometric_employee_id,
                 (float) $item->total_payable_days,
                 (float) $item->total_payable_hours,
@@ -66,6 +74,8 @@ class PayrollItemsExport implements FromArray, ShouldAutoSize, WithHeadings, Wit
                 (float) $item->other_deductions,
                 (float) $item->net_pay,
             ];
-        })->toArray();
+            })
+            ->values()
+            ->toArray();
     }
 }

@@ -28,6 +28,7 @@ class PayrollEmployeeSalaryController extends Controller
     {
         $search = trim((string) $request->search);
         $groupName = trim((string) $request->group_name);
+        $employmentStatus = trim((string) $request->employment_status);
         $allowedGroups = session('payroll_allowed_groups');
 
         $salaries = PayrollEmployeeSalary::query()
@@ -79,7 +80,29 @@ class PayrollEmployeeSalaryController extends Controller
             ->when($groupName !== '', function ($query) use ($groupName): void {
                 $query->whereHas('employeeBiometric', fn ($employeeQuery) => $employeeQuery->where('group_name', $groupName));
             })
-            ->orderBy('employee_name')
+            ->when($employmentStatus !== '', function ($query) use ($employmentStatus): void {
+                $query->whereHas('employeeBiometric', function ($employeeQuery) use ($employmentStatus): void {
+                    if ($employmentStatus === EmployeeBiometric::STATUS_ACTIVE) {
+                        $employeeQuery->payrollActive();
+
+                        return;
+                    }
+
+                    if ($employmentStatus === EmployeeBiometric::STATUS_INACTIVE) {
+                        $employeeQuery->inactive();
+                    }
+                });
+            })
+            ->orderByRaw("CASE WHEN EXISTS (
+                SELECT 1 FROM employee_biometrics eb
+                WHERE eb.id = payroll_employee_salaries.employee_biometric_id
+                  AND (eb.employment_status = 'inactive' OR eb.is_payroll_active = 0)
+            ) THEN 1 ELSE 0 END ASC")
+            ->when(
+                DB::connection()->getDriverName() !== 'sqlite',
+                fn ($query) => $query->orderByRaw("LOWER(CASE WHEN employee_name LIKE '%,%' THEN TRIM(SUBSTRING_INDEX(employee_name, ',', 1)) ELSE SUBSTRING_INDEX(TRIM(employee_name), ' ', -1) END) ASC"),
+                fn ($query) => $query->orderByRaw('LOWER(employee_name) ASC')
+            )
             ->orderBy('employee_no')
             ->paginate(15)
             ->withQueryString();
@@ -97,7 +120,7 @@ class PayrollEmployeeSalaryController extends Controller
             ->orderBy('group_name')
             ->pluck('group_name');
 
-        return view('payroll.employee_salaries.index', compact('salaries', 'search', 'groupName', 'groups'));
+        return view('payroll.employee_salaries.index', compact('salaries', 'search', 'groupName', 'employmentStatus', 'groups'));
     }
 
     public function create(): View
@@ -327,8 +350,7 @@ class PayrollEmployeeSalaryController extends Controller
                     );
                 }
             )
-            ->orderBy('group_name')
-            ->orderByRaw("COALESCE(NULLIF(display_name, ''), NULLIF(source_employee_name, ''), NULLIF(source_crosschex_account_name, '')) ASC")
+            ->payrollDirectoryOrder()
             ->get()
             ->map(function (EmployeeBiometric $employee) {
                 $snapshot = $this->identityService->snapshot($employee);

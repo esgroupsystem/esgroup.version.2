@@ -12,6 +12,7 @@
         $totalEmployees = (int) data_get($totals, 'employees', $items->count());
         $eligibleRosterCount = (int) data_get($payroll->meta, 'roster_audit.eligible_employee_count', $totalEmployees);
         $missingSummaryEmployees = (int) data_get($payroll->meta, 'roster_audit.employees_without_summary_rows', 0);
+        $settlementCarryForwardCount = (int) data_get($payroll->meta, 'roster_audit.closing_settlement_carry_forward_count', 0);
 
         $totalRegularPay = (float) data_get($totals, 'regular_pay', $items->sum('regular_pay'));
         $totalGrossPay = (float) data_get($totals, 'gross_pay', $items->sum('gross_pay'));
@@ -68,6 +69,11 @@
                 $payableDays = (float) ($item->total_payable_days ?? 0);
                 $payableHours = (float) ($item->total_payable_hours ?? 0);
                 $missingSummaryDays = (int) data_get($item->meta, 'attendance_summary_coverage.missing_days', 0);
+                $benefitSettlementOnly = (bool) data_get($item->meta, 'closing_benefit_settlement_only', false);
+
+                if ($benefitSettlementOnly) {
+                    return $netPay < -0.009;
+                }
 
                 $deductions =
                     (float) ($item->total_employee_government_deductions ?? 0) + (float) ($item->other_deductions ?? 0);
@@ -305,6 +311,21 @@
                 </div>
             @endif
 
+            @if ($settlementCarryForwardCount > 0)
+                <div class="alert alert-info border-0 shadow-sm">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="fas fa-hand-holding-usd mt-1"></i>
+                        <div>
+                            <div class="fw-bold">Benefit settlement carry-forward included.</div>
+                            <div class="fs-10">
+                                {{ number_format($settlementCarryForwardCount) }} employee(s) from the finalized 26-10 cutoff are no longer payroll-active for this 11-25 cutoff.
+                                They remain here as zero-gross settlement records so HR can reconcile SSS, PhilHealth, Pag-IBIG, and any approved final-pay reimbursement.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <div class="card border-0 shadow-sm mb-3 payroll-header-card">
                 <div class="card-header bg-body-tertiary border-bottom py-3">
                     <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3">
@@ -407,6 +428,9 @@
                                     Roster: {{ number_format($eligibleRosterCount) }} eligible
                                     @if ($missingSummaryEmployees > 0)
                                         | {{ number_format($missingSummaryEmployees) }} missing summary
+                                    @endif
+                                    @if ($settlementCarryForwardCount > 0)
+                                        | {{ number_format($settlementCarryForwardCount) }} settlement only
                                     @endif
                                 </div>
                             </div>
@@ -675,12 +699,15 @@
                                             0,
                                         );
                                         $safeZeroPay = (bool) data_get($item->meta, 'safe_zero_pay', false);
+                                        $benefitSettlementOnly = (bool) data_get($item->meta, 'closing_benefit_settlement_only', false);
                                         $adjustmentTags = collect(data_get($item->meta, 'adjustment_tags', []));
                                         $paidAdjustmentTags = $adjustmentTags->filter(
                                             fn($tag) => (bool) data_get($tag, 'paid_this_cutoff', false),
                                         );
 
-                                        if ($safeZeroPay) {
+                                        if ($benefitSettlementOnly) {
+                                            $auditBadges[] = ['label' => 'Benefit Settlement Only', 'tone' => 'info'];
+                                        } elseif ($safeZeroPay) {
                                             $auditBadges[] = ['label' => 'No Summary', 'tone' => 'danger'];
                                         } elseif ($missingSummaryDays > 0) {
                                             $auditBadges[] = [
@@ -689,20 +716,24 @@
                                             ];
                                         }
 
-                                        if ($itemRegularPay <= 0) {
-                                            $auditBadges[] = ['label' => 'No Regular', 'tone' => 'danger'];
-                                        }
+                                        if (! $benefitSettlementOnly) {
+                                            if ($itemRegularPay <= 0) {
+                                                $auditBadges[] = ['label' => 'No Regular', 'tone' => 'danger'];
+                                            }
 
-                                        if ($itemGrossPay <= 0) {
-                                            $auditBadges[] = ['label' => 'No Gross', 'tone' => 'danger'];
-                                        }
+                                            if ($itemGrossPay <= 0) {
+                                                $auditBadges[] = ['label' => 'No Gross', 'tone' => 'danger'];
+                                            }
 
-                                        if ($itemNetPay <= 0) {
-                                            $auditBadges[] = ['label' => 'No Net', 'tone' => 'danger'];
-                                        }
+                                            if ($itemNetPay <= 0) {
+                                                $auditBadges[] = ['label' => 'No Net', 'tone' => 'danger'];
+                                            }
 
-                                        if ($itemPayableDays <= 0 && $itemPayableHours <= 0) {
-                                            $auditBadges[] = ['label' => 'No Payable', 'tone' => 'warning'];
+                                            if ($itemPayableDays <= 0 && $itemPayableHours <= 0) {
+                                                $auditBadges[] = ['label' => 'No Payable', 'tone' => 'warning'];
+                                            }
+                                        } elseif ($itemNetPay < -0.009) {
+                                            $auditBadges[] = ['label' => 'Negative Settlement', 'tone' => 'danger'];
                                         }
 
                                         if ($itemGrossPay > 0 && $itemTotalDeductions > $itemGrossPay * 0.6) {
@@ -747,12 +778,16 @@
                                         <td>
                                             <div class="payroll-employee-name">
                                                 <span class="name">
-                                                    {{ $item->employee_name ?: 'Unknown Employee' }}
+                                                    {{ $item->payroll_display_name }}
                                                 </span>
 
                                                 <span class="meta">
                                                     — {{ $item->employee_no ?: 'No Employee No' }}
                                                 </span>
+
+                                                @if ($benefitSettlementOnly)
+                                                    <span class="badge badge-subtle-info text-info ms-1">Separated / Settlement</span>
+                                                @endif
 
                                                 @if ($adjustmentTags->isNotEmpty())
                                                     <span class="meta d-block mt-1">

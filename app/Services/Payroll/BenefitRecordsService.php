@@ -18,7 +18,6 @@ class BenefitRecordsService
         $garageGroup = isset($filters['garage_group']) ? (int) $filters['garage_group'] : null;
 
         $employeeQuery = EmployeeBiometric::query()
-            ->payrollActive()
             ->with([
                 'company',
                 'activeSalaryProfile.employee.asset',
@@ -27,11 +26,25 @@ class BenefitRecordsService
         $this->applyGroupAccess($employeeQuery, $allowedGroups, $garageGroup);
         $this->applySearch($employeeQuery, $search);
 
-        $employeeQuery
-            ->orderByRaw("COALESCE(NULLIF(display_name, ''), NULLIF(source_employee_name, ''), source_crosschex_account_name, source_crosschex_account, source_key)")
-            ->orderBy('id');
+        // Keep resigned/inactive employees visible for any month in which a
+        // finalized Benefits Record exists. Otherwise separation cases can
+        // disappear from the ledger immediately after Payroll Inclusion is
+        // switched off even though the contribution/settlement still exists.
+        $activeEmployeeCount = (clone $employeeQuery)
+            ->payrollActive()
+            ->count();
 
-        $activeEmployeeCount = (clone $employeeQuery)->count();
+        $employeeQuery->where(function (Builder $query) use ($month, $year): void {
+            $query
+                ->where(fn (Builder $active) => $active->payrollActive())
+                ->orWhereHas('benefitContributionRecords', function (Builder $records) use ($month, $year): void {
+                    $records
+                        ->where('contribution_month', $month)
+                        ->where('contribution_year', $year);
+                });
+        });
+
+        $employeeQuery->payrollDirectoryOrder();
 
         /** @var LengthAwarePaginator $employees */
         $employees = (clone $employeeQuery)
@@ -82,20 +95,36 @@ class BenefitRecordsService
 
         $totals = (clone $recordTotalsQuery)
             ->selectRaw('COALESCE(SUM(sss_employee_total), 0) as sss_employee')
+            ->selectRaw('COALESCE(SUM(sss_employee_collected), 0) as sss_employee_collected')
             ->selectRaw('COALESCE(SUM(sss_employer_total), 0) as sss_employer')
             ->selectRaw('COALESCE(SUM(sss_total_contribution), 0) as sss_total')
             ->selectRaw('COALESCE(SUM(philhealth_employee), 0) as philhealth_employee')
+            ->selectRaw('COALESCE(SUM(philhealth_employee_collected), 0) as philhealth_employee_collected')
             ->selectRaw('COALESCE(SUM(philhealth_employer), 0) as philhealth_employer')
             ->selectRaw('COALESCE(SUM(philhealth_total), 0) as philhealth_total')
             ->selectRaw('COALESCE(SUM(pagibig_employee), 0) as pagibig_employee')
+            ->selectRaw('COALESCE(SUM(pagibig_employee_collected), 0) as pagibig_employee_collected')
             ->selectRaw('COALESCE(SUM(pagibig_employer), 0) as pagibig_employer')
             ->selectRaw('COALESCE(SUM(pagibig_total), 0) as pagibig_total')
             ->selectRaw('COALESCE(SUM(employee_total), 0) as employee_total')
             ->selectRaw('COALESCE(SUM(employer_total), 0) as employer_total')
             ->selectRaw('COALESCE(SUM(grand_total), 0) as grand_total')
+            ->selectRaw('COALESCE(SUM(employee_share_unrecovered), 0) as employee_share_unrecovered')
             ->first();
 
         $postedEmployeeCount = (clone $recordTotalsQuery)
+            ->distinct('employee_biometric_id')
+            ->count('employee_biometric_id');
+
+        $activeEmployeeIds = (clone $employeeQuery)
+            ->reorder()
+            ->payrollActive()
+            ->select('employee_biometrics.id');
+
+        $postedActiveEmployeeCount = BenefitContributionRecord::query()
+            ->where('contribution_month', $month)
+            ->where('contribution_year', $year)
+            ->whereIn('employee_biometric_id', $activeEmployeeIds)
             ->distinct('employee_biometric_id')
             ->count('employee_biometric_id');
 
@@ -104,7 +133,7 @@ class BenefitRecordsService
             'totals' => $totals,
             'activeEmployeeCount' => $activeEmployeeCount,
             'postedEmployeeCount' => $postedEmployeeCount,
-            'notPostedEmployeeCount' => max(0, $activeEmployeeCount - $postedEmployeeCount),
+            'notPostedEmployeeCount' => max(0, $activeEmployeeCount - $postedActiveEmployeeCount),
             'groupOptions' => $this->groupOptions($allowedGroups),
         ];
     }
@@ -117,7 +146,6 @@ class BenefitRecordsService
         $garageGroup = isset($filters['garage_group']) ? (int) $filters['garage_group'] : null;
 
         $employeeQuery = EmployeeBiometric::query()
-            ->payrollActive()
             ->with([
                 'company',
                 'activeSalaryProfile.employee.asset',
@@ -126,12 +154,23 @@ class BenefitRecordsService
         $this->applyGroupAccess($employeeQuery, $allowedGroups, $garageGroup);
         $this->applySearch($employeeQuery, $search);
 
-        $employeeQuery
-            ->orderByRaw("COALESCE(NULLIF(display_name, ''), NULLIF(source_employee_name, ''), source_crosschex_account_name, source_crosschex_account, source_key)")
-            ->orderBy('id');
+        $activeEmployeeCount = (clone $employeeQuery)
+            ->payrollActive()
+            ->count();
+
+        $employeeQuery->where(function (Builder $query) use ($month, $year): void {
+            $query
+                ->where(fn (Builder $active) => $active->payrollActive())
+                ->orWhereHas('benefitContributionRecords', function (Builder $records) use ($month, $year): void {
+                    $records
+                        ->where('contribution_month', $month)
+                        ->where('contribution_year', $year);
+                });
+        });
+
+        $employeeQuery->payrollDirectoryOrder();
 
         $employees = (clone $employeeQuery)->get();
-        $activeEmployeeCount = $employees->count();
         $employeeIds = $employees->pluck('id')->map(fn ($id): int => (int) $id)->values();
 
         $records = BenefitContributionRecord::query()
@@ -176,6 +215,21 @@ class BenefitRecordsService
             ->unique()
             ->count();
 
+        $activeDisplayedEmployeeIds = $employees
+            ->filter(fn (EmployeeBiometric $employee): bool =>
+                ($employee->is_payroll_active === null || (bool) $employee->is_payroll_active)
+                && ($employee->employment_status === null || $employee->employment_status === EmployeeBiometric::STATUS_ACTIVE)
+            )
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id);
+
+        $postedActiveEmployeeCount = $records
+            ->whereIn('employee_biometric_id', $activeDisplayedEmployeeIds)
+            ->pluck('employee_biometric_id')
+            ->filter()
+            ->unique()
+            ->count();
+
         $companyTotals = $records
             ->groupBy(fn (BenefitContributionRecord $record): string => trim((string) $record->company_name) !== ''
                 ? (string) $record->company_name
@@ -201,7 +255,7 @@ class BenefitRecordsService
             'companyTotals' => $companyTotals,
             'activeEmployeeCount' => $activeEmployeeCount,
             'postedEmployeeCount' => $postedEmployeeCount,
-            'notPostedEmployeeCount' => max(0, $activeEmployeeCount - $postedEmployeeCount),
+            'notPostedEmployeeCount' => max(0, $activeEmployeeCount - $postedActiveEmployeeCount),
             'groupOptions' => $this->groupOptions($allowedGroups),
             'payrollNumbers' => $records->pluck('payroll_number')->filter()->unique()->sort()->values(),
         ];
@@ -212,18 +266,41 @@ class BenefitRecordsService
         $sum = static fn (string $field): float => round((float) $records->sum($field), 2);
 
         return [
+            'sss_employee_regular_ss' => $sum('sss_employee_regular_ss'),
+            'sss_employer_regular_ss' => $sum('sss_employer_regular_ss'),
+            'sss_employer_ec' => $sum('sss_employer_ec'),
+            'sss_regular_total' => round(
+                $sum('sss_employee_regular_ss')
+                + $sum('sss_employer_regular_ss')
+                + $sum('sss_employer_ec'),
+                2
+            ),
+            'sss_employee_mpf' => $sum('sss_employee_mpf'),
+            'sss_employer_mpf' => $sum('sss_employer_mpf'),
+            'sss_mpf_total' => round(
+                $sum('sss_employee_mpf') + $sum('sss_employer_mpf'),
+                2
+            ),
             'sss_employee' => $sum('sss_employee_total'),
+            'sss_employee_collected' => $sum('sss_employee_collected'),
             'sss_employer' => $sum('sss_employer_total'),
             'sss_total' => $sum('sss_total_contribution'),
             'philhealth_employee' => $sum('philhealth_employee'),
+            'philhealth_employee_collected' => $sum('philhealth_employee_collected'),
             'philhealth_employer' => $sum('philhealth_employer'),
             'philhealth_total' => $sum('philhealth_total'),
             'pagibig_employee' => $sum('pagibig_employee'),
+            'pagibig_employee_collected' => $sum('pagibig_employee_collected'),
             'pagibig_employer' => $sum('pagibig_employer'),
             'pagibig_total' => $sum('pagibig_total'),
             'employee_total' => $sum('employee_total'),
+            'employee_collected_total' => round(
+                $sum('sss_employee_collected') + $sum('philhealth_employee_collected') + $sum('pagibig_employee_collected'),
+                2
+            ),
             'employer_total' => $sum('employer_total'),
             'grand_total' => $sum('grand_total'),
+            'employee_share_unrecovered' => $sum('employee_share_unrecovered'),
         ];
     }
 
@@ -252,6 +329,7 @@ class BenefitRecordsService
             'sss_employee_regular_ss' => $sum('sss_employee_regular_ss'),
             'sss_employee_mpf' => $sum('sss_employee_mpf'),
             'sss_employee_total' => $sum('sss_employee_total'),
+            'sss_employee_collected' => $sum('sss_employee_collected'),
             'sss_employer_regular_ss' => $sum('sss_employer_regular_ss'),
             'sss_employer_mpf' => $sum('sss_employer_mpf'),
             'sss_employer_ec' => $sum('sss_employer_ec'),
@@ -260,6 +338,7 @@ class BenefitRecordsService
             'philhealth_basis' => $max('philhealth_basis'),
             'philhealth_salary_base' => $max('philhealth_salary_base'),
             'philhealth_employee' => $sum('philhealth_employee'),
+            'philhealth_employee_collected' => $sum('philhealth_employee_collected'),
             'philhealth_employer' => $sum('philhealth_employer'),
             'philhealth_total' => $sum('philhealth_total'),
             'pagibig_basis' => $max('pagibig_basis'),
@@ -267,11 +346,19 @@ class BenefitRecordsService
             'pagibig_employee_rate' => (float) ($records->max('pagibig_employee_rate') ?? 0),
             'pagibig_employer_rate' => (float) ($records->max('pagibig_employer_rate') ?? 0),
             'pagibig_employee' => $sum('pagibig_employee'),
+            'pagibig_employee_collected' => $sum('pagibig_employee_collected'),
             'pagibig_employer' => $sum('pagibig_employer'),
             'pagibig_total' => $sum('pagibig_total'),
             'employee_total' => $sum('employee_total'),
+            'employee_collected_total' => round(
+                $sum('sss_employee_collected') + $sum('philhealth_employee_collected') + $sum('pagibig_employee_collected'),
+                2
+            ),
             'employer_total' => $sum('employer_total'),
             'grand_total' => $grandTotal,
+            'employee_share_unrecovered' => $sum('employee_share_unrecovered'),
+            'settlement_status' => (string) ($records->pluck('settlement_status')->filter()->last() ?? 'not_posted'),
+            'settlement_meta' => (array) ($records->pluck('settlement_meta')->filter()->last() ?? []),
         ];
     }
 

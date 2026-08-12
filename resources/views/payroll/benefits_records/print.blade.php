@@ -127,7 +127,7 @@
 
         .summary-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             gap: 8px;
             margin-top: 12px;
         }
@@ -327,15 +327,23 @@
             <div class="header-meta">
                 <div><strong>Contribution Month:</strong> {{ $periodLabel }}</div>
                 <div><strong>Active Employees:</strong> {{ number_format($activeEmployeeCount) }}</div>
-                <div><strong>Posted Employees:</strong> {{ number_format($postedEmployeeCount) }}</div>
+                <div><strong>Posted Records:</strong> {{ number_format($postedEmployeeCount) }}</div>
                 <div><strong>Generated:</strong> {{ now('Asia/Manila')->format('F d, Y h:i A') }}</div>
             </div>
         </header>
 
         <div class="summary-grid">
             <div class="summary-box">
-                <div class="summary-label">Employee Contribution</div>
+                <div class="summary-label">Employee Share Due</div>
                 <div class="summary-value">{{ $money($totals['employee_total']) }}</div>
+            </div>
+            <div class="summary-box">
+                <div class="summary-label">Collected in Payroll</div>
+                <div class="summary-value">{{ $money($totals['employee_collected_total']) }}</div>
+            </div>
+            <div class="summary-box">
+                <div class="summary-label">Unrecovered / Advanced</div>
+                <div class="summary-value">{{ $money($totals['employee_share_unrecovered']) }}</div>
             </div>
             <div class="summary-box">
                 <div class="summary-label">Company Contribution</div>
@@ -345,10 +353,6 @@
                 <div class="summary-label">Combined Contribution</div>
                 <div class="summary-value">{{ $money($totals['grand_total']) }}</div>
             </div>
-            <div class="summary-box">
-                <div class="summary-label">Not Yet Posted</div>
-                <div class="summary-value">{{ number_format($notPostedEmployeeCount) }}</div>
-            </div>
         </div>
 
         <section class="section">
@@ -357,7 +361,8 @@
                 <thead>
                     <tr>
                         <th>Program</th>
-                        <th>Employee Share</th>
+                        <th>Employee Share Due</th>
+                        <th>Collected in Payroll</th>
                         <th>Company Share</th>
                         <th>Combined Contribution</th>
                     </tr>
@@ -366,18 +371,21 @@
                     <tr>
                         <td><strong>SSS</strong></td>
                         <td class="text-end money">{{ $money($totals['sss_employee']) }}</td>
+                        <td class="text-end money">{{ $money($totals['sss_employee_collected']) }}</td>
                         <td class="text-end money">{{ $money($totals['sss_employer']) }}</td>
                         <td class="text-end money"><strong>{{ $money($totals['sss_total']) }}</strong></td>
                     </tr>
                     <tr>
                         <td><strong>PhilHealth</strong></td>
                         <td class="text-end money">{{ $money($totals['philhealth_employee']) }}</td>
+                        <td class="text-end money">{{ $money($totals['philhealth_employee_collected']) }}</td>
                         <td class="text-end money">{{ $money($totals['philhealth_employer']) }}</td>
                         <td class="text-end money"><strong>{{ $money($totals['philhealth_total']) }}</strong></td>
                     </tr>
                     <tr>
                         <td><strong>Pag-IBIG / HDMF</strong></td>
                         <td class="text-end money">{{ $money($totals['pagibig_employee']) }}</td>
+                        <td class="text-end money">{{ $money($totals['pagibig_employee_collected']) }}</td>
                         <td class="text-end money">{{ $money($totals['pagibig_employer']) }}</td>
                         <td class="text-end money"><strong>{{ $money($totals['pagibig_total']) }}</strong></td>
                     </tr>
@@ -386,6 +394,7 @@
                     <tr>
                         <td>OVERALL</td>
                         <td class="text-end money">{{ $money($totals['employee_total']) }}</td>
+                        <td class="text-end money">{{ $money($totals['employee_collected_total']) }}</td>
                         <td class="text-end money">{{ $money($totals['employer_total']) }}</td>
                         <td class="text-end money">{{ $money($totals['grand_total']) }}</td>
                     </tr>
@@ -409,7 +418,7 @@
                         <th>MPF MSC</th>
                         <th>EE Regular SS</th>
                         <th>EE MPF</th>
-                        <th>EE Total</th>
+                        <th>EE Total Due</th>
                         <th>ER Regular SS</th>
                         <th>ER MPF</th>
                         <th>ER EC</th>
@@ -427,7 +436,7 @@
                         @endphp
                         <tr>
                             <td>
-                                <div class="employee-name">{{ $employee->effective_name }}</div>
+                                <div class="employee-name">{{ $employee->payroll_display_name }}</div>
                                 <div class="muted">{{ $employee->effective_employee_no ?: '-' }}</div>
                             </td>
                             <td>{{ $row['company_name'] }}</td>
@@ -451,7 +460,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="18" class="text-center">No active employees found.</td></tr>
+                        <tr><td colspan="18" class="text-center">No payroll-active or posted separation records found.</td></tr>
                     @endforelse
                 </tbody>
                 <tfoot>
@@ -478,7 +487,7 @@
                         <th>Monthly Basic Salary</th>
                         <th>Contribution Basis</th>
                         <th>Premium Salary Base</th>
-                        <th>Employee Share</th>
+                        <th>Employee Share Due</th>
                         <th>Company Share</th>
                         <th>Combined</th>
                         <th>Status</th>
@@ -493,7 +502,7 @@
                         @endphp
                         <tr>
                             <td>
-                                <div class="employee-name">{{ $employee->effective_name }}</div>
+                                <div class="employee-name">{{ $employee->payroll_display_name }}</div>
                                 <div class="muted">{{ $employee->effective_employee_no ?: '-' }}</div>
                             </td>
                             <td>{{ $row['company_name'] }}</td>
@@ -509,7 +518,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="10" class="text-center">No active employees found.</td></tr>
+                        <tr><td colspan="10" class="text-center">No payroll-active or posted separation records found.</td></tr>
                     @endforelse
                 </tbody>
                 <tfoot>
@@ -535,7 +544,7 @@
                         <th>Monthly Basis</th>
                         <th>Fund Salary</th>
                         <th>EE Rate</th>
-                        <th>Employee Share</th>
+                        <th>Employee Share Due</th>
                         <th>ER Rate</th>
                         <th>Company Share</th>
                         <th>Combined</th>
@@ -551,7 +560,7 @@
                         @endphp
                         <tr>
                             <td>
-                                <div class="employee-name">{{ $employee->effective_name }}</div>
+                                <div class="employee-name">{{ $employee->payroll_display_name }}</div>
                                 <div class="muted">{{ $employee->effective_employee_no ?: '-' }}</div>
                             </td>
                             <td>{{ $row['company_name'] }}</td>
@@ -568,7 +577,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="11" class="text-center">No active employees found.</td></tr>
+                        <tr><td colspan="11" class="text-center">No payroll-active or posted separation records found.</td></tr>
                     @endforelse
                 </tbody>
                 <tfoot>
@@ -597,7 +606,9 @@
                         <th>PHIC ER</th>
                         <th>HDMF EE</th>
                         <th>HDMF ER</th>
-                        <th>Employee Total</th>
+                        <th>Employee Due</th>
+                        <th>Collected</th>
+                        <th>Unrecovered</th>
                         <th>Company Total</th>
                         <th>Grand Total</th>
                         <th>Payroll Source</th>
@@ -612,7 +623,7 @@
                         @endphp
                         <tr>
                             <td>
-                                <div class="employee-name">{{ $employee->effective_name }}</div>
+                                <div class="employee-name">{{ $employee->payroll_display_name }}</div>
                                 <div class="muted">{{ $employee->effective_employee_no ?: '-' }}</div>
                             </td>
                             <td>{{ $row['company_name'] }}</td>
@@ -623,6 +634,8 @@
                             <td class="text-end money">{{ $money($summary['pagibig_employee']) }}</td>
                             <td class="text-end money">{{ $money($summary['pagibig_employer']) }}</td>
                             <td class="text-end money">{{ $money($summary['employee_total']) }}</td>
+                            <td class="text-end money">{{ $money($summary['employee_collected_total']) }}</td>
+                            <td class="text-end money">{{ $money($summary['employee_share_unrecovered']) }}</td>
                             <td class="text-end money">{{ $money($summary['employer_total']) }}</td>
                             <td class="text-end money"><strong>{{ $money($summary['grand_total']) }}</strong></td>
                             <td>{{ $summary['payroll_numbers'] !== [] ? implode(', ', $summary['payroll_numbers']) : '-' }}</td>
@@ -631,7 +644,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr><td colspan="13" class="text-center">No active employees found.</td></tr>
+                        <tr><td colspan="15" class="text-center">No payroll-active or posted separation records found.</td></tr>
                     @endforelse
                 </tbody>
                 <tfoot>
@@ -644,6 +657,8 @@
                         <td class="text-end money">{{ $money($totals['pagibig_employee']) }}</td>
                         <td class="text-end money">{{ $money($totals['pagibig_employer']) }}</td>
                         <td class="text-end money">{{ $money($totals['employee_total']) }}</td>
+                        <td class="text-end money">{{ $money($totals['employee_collected_total']) }}</td>
+                        <td class="text-end money">{{ $money($totals['employee_share_unrecovered']) }}</td>
                         <td class="text-end money">{{ $money($totals['employer_total']) }}</td>
                         <td class="text-end money">{{ $money($totals['grand_total']) }}</td>
                         <td colspan="2"></td>
@@ -659,7 +674,7 @@
                     <tr>
                         <th>Company</th>
                         <th>Posted Employees</th>
-                        <th>Employee Share</th>
+                        <th>Employee Share Due</th>
                         <th>Company Share</th>
                         <th>Combined Contribution</th>
                     </tr>

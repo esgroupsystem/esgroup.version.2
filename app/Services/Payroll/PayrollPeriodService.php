@@ -32,18 +32,29 @@ class PayrollPeriodService
      */
     public function resolveCutoffRange(int $month, int $year, string $cutoffType): array
     {
-        $baseDate = Carbon::create($year, $month, 1, 0, 0, 0, 'Asia/Manila');
+        /*
+         * The selected month is now the PAYROLL CYCLE MONTH for both cutoffs.
+         *
+         * Example when July 2026 is selected:
+         * - business 1st cutoff (`second`) = June 26 - July 10
+         * - business 2nd cutoff (`first`)  = July 11 - July 25
+         *
+         * Legacy internal keys stay unchanged to protect existing database/API
+         * compatibility; only the meaning of cutoff_month/cutoff_year selection
+         * is standardized to the cycle/contribution month.
+         */
+        $cycleMonth = Carbon::create($year, $month, 1, 0, 0, 0, 'Asia/Manila');
 
         if ($cutoffType === 'first') {
             return [
-                $baseDate->copy()->day(11)->startOfDay(),
-                $baseDate->copy()->day(25)->endOfDay(),
+                $cycleMonth->copy()->day(11)->startOfDay(),
+                $cycleMonth->copy()->day(25)->endOfDay(),
             ];
         }
 
         return [
-            $baseDate->copy()->day(26)->startOfDay(),
-            $baseDate->copy()->addMonthNoOverflow()->day(10)->endOfDay(),
+            $cycleMonth->copy()->subMonthNoOverflow()->day(26)->startOfDay(),
+            $cycleMonth->copy()->day(10)->endOfDay(),
         ];
     }
 
@@ -76,23 +87,27 @@ class PayrollPeriodService
         }
 
         if ($day >= 26) {
-            [$start, $end] = $this->resolveCutoffRange((int) $date->month, (int) $date->year, 'second');
+            $nextCycleMonth = $date->copy()->addMonthNoOverflow();
+            [$start, $end] = $this->resolveCutoffRange(
+                (int) $nextCycleMonth->month,
+                (int) $nextCycleMonth->year,
+                'second'
+            );
 
             return [
-                'month' => (int) $date->month,
-                'year' => (int) $date->year,
+                'month' => (int) $nextCycleMonth->month,
+                'year' => (int) $nextCycleMonth->year,
                 'type' => 'second',
                 'start' => $start,
                 'end' => $end,
             ];
         }
 
-        $previousMonth = $date->copy()->subMonthNoOverflow();
-        [$start, $end] = $this->resolveCutoffRange((int) $previousMonth->month, (int) $previousMonth->year, 'second');
+        [$start, $end] = $this->resolveCutoffRange((int) $date->month, (int) $date->year, 'second');
 
         return [
-            'month' => (int) $previousMonth->month,
-            'year' => (int) $previousMonth->year,
+            'month' => (int) $date->month,
+            'year' => (int) $date->year,
             'type' => 'second',
             'start' => $start,
             'end' => $end,
@@ -122,24 +137,23 @@ class PayrollPeriodService
      */
     public function contributionMonth(int $month, int $year, string $cutoffType): array
     {
-        [$startDate, $endDate] = $this->resolveCutoffRange($month, $year, $cutoffType);
+        $cycleMonth = Carbon::create($year, $month, 1, 0, 0, 0, 'Asia/Manila');
 
         return [
-            'month' => (int) $endDate->month,
-            'year' => (int) $endDate->year,
-            'label' => $endDate->format('F Y'),
+            'month' => (int) $cycleMonth->month,
+            'year' => (int) $cycleMonth->year,
+            'label' => $cycleMonth->format('F Y'),
 
-            // Example for February contribution:
-            // cycle_start = January 26
-            // cycle_end = February 25
-            'cycle_start' => $endDate
+            // Example for July contribution:
+            // cycle_start = June 26
+            // cycle_end = July 25
+            'cycle_start' => $cycleMonth
                 ->copy()
-                ->day(1)
                 ->subMonthNoOverflow()
                 ->day(26)
                 ->startOfDay(),
 
-            'cycle_end' => $endDate
+            'cycle_end' => $cycleMonth
                 ->copy()
                 ->day(25)
                 ->endOfDay(),
@@ -153,12 +167,10 @@ class PayrollPeriodService
      */
     public function previousSecondCutoffForFirst(int $month, int $year): array
     {
-        $previousMonth = Carbon::create($year, $month, 1, 0, 0, 0, 'Asia/Manila')
-            ->subMonthNoOverflow();
-
+        // Both business cutoffs now share the same selected cycle month/year.
         return [
-            'month' => (int) $previousMonth->month,
-            'year' => (int) $previousMonth->year,
+            'month' => $month,
+            'year' => $year,
             'type' => 'second',
         ];
     }
@@ -182,18 +194,18 @@ class PayrollPeriodService
         }
 
         if ((int) $today->day >= 26) {
+            $nextCycleMonth = $today->copy()->addMonthNoOverflow();
+
             return [
-                (int) $today->month,
-                (int) $today->year,
+                (int) $nextCycleMonth->month,
+                (int) $nextCycleMonth->year,
                 'second',
             ];
         }
 
-        $previousMonth = $today->copy()->subMonthNoOverflow();
-
         return [
-            (int) $previousMonth->month,
-            (int) $previousMonth->year,
+            (int) $today->month,
+            (int) $today->year,
             'second',
         ];
     }

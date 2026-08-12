@@ -186,13 +186,13 @@
                                     @foreach ($people as $p)
                                         @if (!empty($p['employee_name']))
                                             <option value="{{ $p['employee_name'] }}">
-                                                {{ $p['employee_name'] }}{{ !empty($p['employee_no']) ? ' - ' . $p['employee_no'] : '' }}
+                                                {{ \App\Support\PayrollEmployeeNameFormatter::display($p['employee_name']) }}{{ !empty($p['employee_no']) ? ' - ' . $p['employee_no'] : '' }}
                                             </option>
                                         @endif
 
                                         @if (!empty($p['employee_no']))
                                             <option value="{{ $p['employee_no'] }}">
-                                                {{ $p['employee_name'] }}
+                                                {{ \App\Support\PayrollEmployeeNameFormatter::display($p['employee_name']) }}
                                             </option>
                                         @endif
                                     @endforeach
@@ -200,7 +200,7 @@
                             </div>
 
                             <div class="col-auto">
-                                <select name="cutoff_month" class="form-select form-select-sm">
+                                <select name="cutoff_month" class="form-select form-select-sm" data-payroll-cycle-month>
                                     @for ($m = 1; $m <= 12; $m++)
                                         <option value="{{ $m }}"
                                             {{ (int) $cutoffMonth === $m ? 'selected' : '' }}>
@@ -211,7 +211,7 @@
                             </div>
 
                             <div class="col-auto">
-                                <select name="cutoff_year" class="form-select form-select-sm">
+                                <select name="cutoff_year" class="form-select form-select-sm" data-payroll-cycle-year>
                                     @for ($y = now()->year - 2; $y <= now()->year + 3; $y++)
                                         <option value="{{ $y }}"
                                             {{ (int) $cutoffYear === $y ? 'selected' : '' }}>
@@ -222,12 +222,12 @@
                             </div>
 
                             <div class="col-auto">
-                                <select name="cutoff_type" class="form-select form-select-sm">
-                                    <option value="26_10" {{ $cutoffType === '26_10' ? 'selected' : '' }}>
+                                <select name="cutoff_type" class="form-select form-select-sm" data-payroll-cycle-type>
+                                    <option value="26_10" data-business-cutoff="first" {{ $cutoffType === '26_10' ? 'selected' : '' }}>
                                         {{ config('payroll.cutoff_display_by_range.26_10', '1st Cutoff (26-10)') }}
                                     </option>
 
-                                    <option value="11_25" {{ $cutoffType === '11_25' ? 'selected' : '' }}>
+                                    <option value="11_25" data-business-cutoff="second" {{ $cutoffType === '11_25' ? 'selected' : '' }}>
                                         {{ config('payroll.cutoff_display_by_range.11_25', '2nd Cutoff (11-25)') }}
                                     </option>
                                 </select>
@@ -271,7 +271,7 @@
                                     </td>
 
                                     <td class="fw-semi-bold">
-                                        {{ $r['employee_name'] ?? '—' }}
+                                        {{ \App\Support\PayrollEmployeeNameFormatter::display($r['employee_name'] ?? null) }}
 
                                         @if (!empty($r['remarks']))
                                             <div class="text-muted fs-11">

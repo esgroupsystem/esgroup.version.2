@@ -112,7 +112,21 @@ class EmployeeBiometricService
             )
             ->when(
                 $status !== '',
-                fn ($query) => $query->where('employment_status', $status)
+                function ($query) use ($status): void {
+                    if ($status === EmployeeBiometric::STATUS_ACTIVE) {
+                        $query->payrollActive();
+
+                        return;
+                    }
+
+                    if ($status === EmployeeBiometric::STATUS_INACTIVE) {
+                        $query->inactive();
+
+                        return;
+                    }
+
+                    $query->where('employment_status', $status);
+                }
             )
             ->when(
                 $companyId !== '',
@@ -132,22 +146,7 @@ class EmployeeBiometricService
                     (bool) (int) $payrollActive
                 )
             )
-            ->orderByRaw(
-                "CASE
-                    WHEN employment_status = 'active'
-                        AND is_payroll_active = 1
-                    THEN 0
-                    ELSE 1
-                END"
-            )
-            ->orderBy('group_name')
-            ->orderByRaw(
-                "COALESCE(
-                    NULLIF(display_name, ''),
-                    NULLIF(source_employee_name, ''),
-                    NULLIF(source_crosschex_account_name, '')
-                ) ASC"
-            )
+            ->payrollDirectoryOrder()
             ->paginate($perPage)
             ->withQueryString();
     }

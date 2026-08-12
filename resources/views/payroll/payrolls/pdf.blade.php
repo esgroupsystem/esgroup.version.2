@@ -38,7 +38,7 @@
         <tbody>
             @foreach ($payroll->items as $item)
                 <tr>
-                    <td>{{ $item->employee_name }}<br>{{ $item->employee_no }}</td>
+                    <td>{{ $item->payroll_display_name }}<br>{{ $item->employee_no }}</td>
                     <td class="text-end">{{ number_format($item->total_payable_days, 2) }}</td>
                     <td class="text-end">{{ number_format($item->total_payable_hours, 2) }}</td>
                     <td class="text-end">{{ number_format($item->regular_pay, 2) }}</td>

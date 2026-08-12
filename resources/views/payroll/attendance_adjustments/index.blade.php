@@ -681,9 +681,9 @@
                                                     <div>
                                                         <div
                                                             class="employee-name"
-                                                            title="{{ $item->employee_name }}"
+                                                            title="{{ $item->payroll_display_name }}"
                                                         >
-                                                            {{ $item->employee_name ?: 'Unnamed Employee' }}
+                                                            {{ $item->payroll_display_name }}
                                                         </div>
 
                                                         <div class="employee-meta">

@@ -414,6 +414,80 @@
         </script>
     @endif
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const monthNames = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+
+            function rangeDateLabel(year, monthIndex, day, includeYear = false) {
+                const safeMonthIndex = ((monthIndex % 12) + 12) % 12;
+                const adjustedYear = year + Math.floor(monthIndex / 12);
+                const label = `${monthNames[safeMonthIndex]} ${day}`;
+
+                return includeYear ? `${label}, ${adjustedYear}` : label;
+            }
+
+            function updatePayrollCycleCutoffLabels(typeSelect) {
+                const form = typeSelect.closest('form') || document;
+                const monthControl = form.querySelector('[data-payroll-cycle-month]');
+                const yearControl = form.querySelector('[data-payroll-cycle-year]');
+
+                if (!monthControl || !yearControl) {
+                    return;
+                }
+
+                const cycleMonth = Number.parseInt(monthControl.value, 10);
+                const cycleYear = Number.parseInt(yearControl.value, 10);
+
+                if (!Number.isInteger(cycleMonth) || cycleMonth < 1 || cycleMonth > 12 || !Number.isInteger(cycleYear)) {
+                    return;
+                }
+
+                const monthIndex = cycleMonth - 1;
+                const previousMonthIndex = monthIndex - 1;
+                const previousYear = previousMonthIndex < 0 ? cycleYear - 1 : cycleYear;
+                const crossesYear = previousYear !== cycleYear;
+
+                const firstStart = rangeDateLabel(cycleYear, previousMonthIndex, 26, crossesYear);
+                const firstEnd = rangeDateLabel(cycleYear, monthIndex, 10, crossesYear);
+                const secondStart = rangeDateLabel(cycleYear, monthIndex, 11, false);
+                const secondEnd = rangeDateLabel(cycleYear, monthIndex, 25, false);
+
+                Array.from(typeSelect.options).forEach(function (option) {
+                    const businessCutoff = option.dataset.businessCutoff;
+
+                    if (businessCutoff === 'first') {
+                        option.textContent = `1st Cutoff — ${firstStart} - ${firstEnd}`;
+                    } else if (businessCutoff === 'second') {
+                        option.textContent = `2nd Cutoff — ${secondStart} - ${secondEnd}`;
+                    }
+                });
+
+                typeSelect.dispatchEvent(new CustomEvent('payroll-cutoff-labels-updated', {
+                    bubbles: true
+                }));
+            }
+
+            document.querySelectorAll('[data-payroll-cycle-type]').forEach(function (typeSelect) {
+                const form = typeSelect.closest('form') || document;
+                const monthControl = form.querySelector('[data-payroll-cycle-month]');
+                const yearControl = form.querySelector('[data-payroll-cycle-year]');
+
+                const refresh = function () {
+                    updatePayrollCycleCutoffLabels(typeSelect);
+                };
+
+                monthControl?.addEventListener('change', refresh);
+                yearControl?.addEventListener('change', refresh);
+                yearControl?.addEventListener('input', refresh);
+
+                refresh();
+            });
+        });
+    </script>
+
     @stack('scripts')
 </body>
 

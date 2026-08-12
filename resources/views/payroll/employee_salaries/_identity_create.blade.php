@@ -39,7 +39,7 @@
                                 data-paid-work-hours="{{ $person->paid_work_hours ?? 8 }}"
                                 data-workday-label="{{ $person->workday_label ?? '8 hrs + 1 hr lunch' }}"
                                 data-search="{{ strtolower(trim(($resolvedPerson['canonical_id'] ?? '') . ' ' . ($resolvedPerson['employee_name'] ?? '') . ' ' . ($resolvedPerson['employee_no'] ?? '') . ' ' . ($resolvedPerson['legacy_id'] ?? '') . ' ' . ($resolvedPerson['crosschex_id'] ?? ''))) }}">
-                                <div class="fw-semibold text-dark">{{ $resolvedPerson['employee_name'] }}</div>
+                                <div class="fw-semibold text-dark">{{ \App\Support\PayrollEmployeeNameFormatter::display($resolvedPerson['employee_name']) }}</div>
                                 <div class="small text-muted">
                                     Bio ID: {{ $resolvedPerson['canonical_id'] }} |
                                     {{ $resolvedPerson['employee_no'] ?: 'No Employee No' }}

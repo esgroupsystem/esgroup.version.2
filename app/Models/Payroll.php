@@ -78,11 +78,17 @@ class Payroll extends Model
                 $type === 'first' ? '2nd Cutoff (11-25)' : '1st Cutoff (26-10)'
             );
 
-            $monthLabel = now()
-                ->setDate((int) $this->cutoff_year, (int) $this->cutoff_month, 1)
-                ->format('F Y');
+            $cycleMonth = $this->contribution_month && $this->contribution_year
+                ? now()->setDate((int) $this->contribution_year, (int) $this->contribution_month, 1)
+                : now()->setDate((int) $this->cutoff_year, (int) $this->cutoff_month, 1);
 
-            return $display.' - '.$monthLabel;
+            $range = $this->period_start && $this->period_end
+                ? $this->period_start->format('M d').' - '.$this->period_end->format('M d, Y')
+                : null;
+
+            return $display
+                .($range ? ' | '.$range : '')
+                .' - '.$cycleMonth->format('F Y');
         });
     }
 

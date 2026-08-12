@@ -584,7 +584,7 @@
                                         $statusIcon = $isActive ? 'fa-check' : 'fa-ban';
                                         $statusLabel = $isActive ? 'Active' : 'Inactive';
 
-                                        $displayName = $employeeBiometric->display_name ?: 'No Display Name';
+                                        $displayName = $employeeBiometric->payroll_display_name;
                                         $displayNo = $employeeBiometric->display_employee_no ?: 'N/A';
                                         $sourceNo = $employeeBiometric->source_employee_no ?: 'N/A';
                                         $sourceName = $employeeBiometric->source_employee_name ?: 'N/A';
