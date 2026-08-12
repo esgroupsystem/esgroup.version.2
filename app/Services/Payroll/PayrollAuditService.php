@@ -37,6 +37,31 @@ class PayrollAuditService
         $module = $this->moduleFor($model);
         $requestId = $this->requestId();
 
+        // The `deleted` Eloquent event runs after the row itself has already
+        // been removed. Never write a foreign key that points back to that
+        // just-deleted row, otherwise MySQL correctly rejects the audit insert.
+        //
+        // We still retain the immutable identity in auditable_type /
+        // auditable_id and in old_values, so the deleted record remains fully
+        // traceable without violating referential integrity.
+        $payrollId = $this->payrollId($model);
+        $payrollItemId = $this->payrollItemId($model);
+        $employeeBiometricId = $this->employeeBiometricId($model);
+
+        if ($action === 'deleted') {
+            if ($model instanceof Payroll) {
+                $payrollId = null;
+            }
+
+            if ($model instanceof PayrollItem) {
+                $payrollItemId = null;
+            }
+
+            if ($model instanceof EmployeeBiometric) {
+                $employeeBiometricId = null;
+            }
+        }
+
         return PayrollAuditLog::query()->create([
             'request_id' => $requestId,
             'user_id' => auth()->id(),
@@ -45,9 +70,9 @@ class PayrollAuditService
             'action' => $action,
             'auditable_type' => $model::class,
             'auditable_id' => $model->getKey(),
-            'payroll_id' => $this->payrollId($model),
-            'payroll_item_id' => $this->payrollItemId($model),
-            'employee_biometric_id' => $this->employeeBiometricId($model),
+            'payroll_id' => $payrollId,
+            'payroll_item_id' => $payrollItemId,
+            'employee_biometric_id' => $employeeBiometricId,
             'employee_id' => $this->employeeId($model),
             'description' => $description ?: $this->description($module, $action, $model),
             'old_values' => $this->sanitize($oldValues),
