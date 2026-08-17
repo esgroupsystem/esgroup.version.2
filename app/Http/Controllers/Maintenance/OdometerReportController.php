@@ -308,6 +308,88 @@ class OdometerReportController extends Controller
         return back()->with('success', $result['message']);
     }
 
+    public function updateOdometer(
+        Request $request,
+        OdometerSubmission $odometerSubmission
+    ) {
+        $validated = $request->validate([
+            'date_bus_deployed' => ['nullable', 'date'],
+            'date' => ['required', 'date'],
+            'time' => ['required'],
+            'driver_name' => ['nullable', 'string', 'max:255'],
+            'new_odometer' => ['required', 'integer', 'min:0'],
+            'diesel_consumption' => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        DB::transaction(function () use (
+            $validated,
+            $odometerSubmission
+        ) {
+
+            $previous = $this->findPreviousSubmission(
+                $odometerSubmission->bus_detail_id,
+                $validated['date'],
+                $validated['time'],
+                true
+            );
+
+            $next = $this->findNextSubmission(
+                $odometerSubmission->bus_detail_id,
+                $validated['date'],
+                $validated['time'],
+                true
+            );
+
+            if (
+                $previous &&
+                $validated['new_odometer'] < $previous->new_odometer
+            ) {
+                throw ValidationException::withMessages([
+                    'new_odometer' => 'Odometer cannot be lower than previous reading.',
+                ]);
+            }
+
+            if (
+                $next &&
+                $validated['new_odometer'] > $next->new_odometer
+            ) {
+                throw ValidationException::withMessages([
+                    'new_odometer' => 'Odometer cannot exceed next reading.',
+                ]);
+            }
+
+            $odometerSubmission->update([
+                'date_bus_deployed' => $validated['date_bus_deployed'] ?? null,
+
+                'date' => $validated['date'],
+
+                'time' => $validated['time'],
+
+                'driver_name' => $validated['driver_name'] ?? null,
+
+                'new_odometer' => $validated['new_odometer'],
+
+                'diesel_consumption' => $validated['diesel_consumption'] ?? 0,
+            ]);
+
+            DieselStock::where(
+                'reference_no',
+                'ODO-'.$odometerSubmission->id
+            )
+                ->where('type', 'out')
+                ->update([
+                    'liters' => $validated['diesel_consumption'] ?? 0,
+                    'date' => $validated['date'],
+                ]);
+
+        });
+
+        return back()->with(
+            'success',
+            'Odometer record updated successfully.'
+        );
+    }
+
     public function destroyOdometer(OdometerSubmission $odometerSubmission)
     {
         DB::transaction(function () use ($odometerSubmission) {

@@ -731,18 +731,34 @@
                                         </td>
 
                                         <td class="text-center pe-3">
-                                            <form method="POST"
-                                                action="{{ route('odometer.destroy', ['odometerSubmission' => $row['id']]) }}"
-                                                onsubmit="return confirm('Are you sure you want to delete this odometer record? This action cannot be undone.');"
-                                                class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
+                                            <div class="d-flex justify-content-center gap-1">
 
-                                                <button type="submit" class="btn odometer-delete-btn"
-                                                    title="Delete Odometer">
-                                                    <span class="fas fa-trash-alt"></span>
+                                                <button type="button" class="btn odometer-edit-btn"
+                                                    data-bs-toggle="modal" data-bs-target="#editOdometerModal"
+                                                    data-id="{{ $row['id'] }}" data-date="{{ $row['date'] }}"
+                                                    data-time="{{ $row['time'] }}"
+                                                    data-driver="{{ $row['driver_name'] }}"
+                                                    data-odometer="{{ $row['new_odometer'] }}"
+                                                    data-diesel="{{ $row['diesel_consumption'] }}">
+
+                                                    <span class="fas fa-edit"></span>
+
                                                 </button>
-                                            </form>
+
+                                                <form method="POST"
+                                                    action="{{ route('odometer.destroy', ['odometerSubmission' => $row['id']]) }}"
+                                                    onsubmit="return confirm('Are you sure you want to delete this odometer record?');">
+
+                                                    @csrf
+                                                    @method('DELETE')
+
+                                                    <button type="submit" class="btn odometer-delete-btn">
+                                                        <span class="fas fa-trash-alt"></span>
+                                                    </button>
+
+                                                </form>
+
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -1088,6 +1104,99 @@
             </form>
         </div>
     </div>
+
+    {{-- EDIT ODOMETER MODAL --}}
+    <div class="modal fade" id="editOdometerModal" tabindex="-1" aria-labelledby="editOdometerModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <form method="POST" id="editOdometerForm" class="modal-content border-0 shadow-lg">
+                @csrf
+                @method('PATCH')
+                <div class="modal-header bg-white border-bottom">
+                    <div>
+                        <h5 class="modal-title fw-bold text-900" id="editOdometerModalLabel">
+                            <span class="fas fa-edit me-2 text-primary"></span>
+                            Edit Odometer Record
+                        </h5>
+                        <small class="text-muted">
+                            Update odometer reading, driver information,
+                            and diesel consumption details.
+                        </small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    </button>
+                </div>
+                <div class="modal-body bg-light">
+                    <div class="alert alert-warning border-0 shadow-sm">
+                        <div class="d-flex">
+                            <span class="fas fa-exclamation-triangle me-2 mt-1"></span>
+                            <div>
+                                <strong>Reminder:</strong>
+                                New odometer value must not be lower than the
+                                previous recorded odometer reading.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        Odometer Date
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" name="date" id="editDate" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        Time
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="time" name="time" id="editTime" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">
+                                        Driver Name
+                                    </label>
+                                    <input type="text" name="driver_name" id="editDriver" class="form-control"
+                                        placeholder="Enter driver name">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold">
+                                        New Odometer
+                                        <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="number" name="new_odometer" id="editOdometer" class="form-control"
+                                        min="0" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold">
+                                        Diesel Used
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" name="diesel_consumption" id="editDiesel"
+                                            class="form-control" min="0">
+                                        <span class="input-group-text">
+                                            L
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-top">
+                    <button type="button" class="btn btn-falcon-default" data-bs-dismiss="modal">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="fas fa-save me-1"></span>
+                        Update Odometer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
 
 @push('styles')
@@ -1428,6 +1537,26 @@
             border-color: #ffb8c7;
         }
 
+        .odometer-edit-btn {
+            width: 30px;
+            height: 30px;
+            padding: 0;
+            border-radius: 8px;
+            border: 1px solid #d8e2ef;
+            background: #fff;
+            color: #2c7be5;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .odometer-edit-btn:hover {
+            background: #edf5ff;
+            color: #1d5fbf;
+            border-color: #b8d4ff;
+        }
+
         .min-w-0 {
             min-width: 0;
         }
@@ -1563,6 +1692,41 @@
                     new bootstrap.Modal(manualOdometerModal).show();
                 }
             @endif
+
+            const editModal = document.getElementById('editOdometerModal');
+
+            if (editModal) {
+
+                editModal.addEventListener('show.bs.modal', function(event) {
+
+                    const button = event.relatedTarget;
+
+
+                    document.getElementById('editDate').value =
+                        button.dataset.date;
+
+
+                    document.getElementById('editTime').value =
+                        button.dataset.time;
+
+
+                    document.getElementById('editDriver').value =
+                        button.dataset.driver;
+
+
+                    document.getElementById('editOdometer').value =
+                        button.dataset.odometer;
+
+
+                    document.getElementById('editDiesel').value =
+                        button.dataset.diesel;
+
+                    document.getElementById('editOdometerForm').action =
+                        '/odometer/maintenance/' + button.dataset.id;
+
+                });
+
+            }
         });
     </script>
 @endpush

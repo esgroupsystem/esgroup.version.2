@@ -53,7 +53,7 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get('/', function () {
     return Auth::check()
-        ? redirect()->route('lockscreen.show')
+        ? redirect()->to('/lockscreen')
         : redirect()->route('login');
 })->name('landing');
 
@@ -1305,6 +1305,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         ->name('odometer.')
         ->controller(OdometerReportController::class)
         ->group(function () {
+
             Route::get('/index', 'index')
                 ->middleware('permission:odometer.view')
                 ->name('index');
@@ -1320,6 +1321,10 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('/maintenance/odometer/manual', 'storeManualOdometer')
                 ->middleware('permission:odometer.create')
                 ->name('manual.store');
+
+            Route::patch('/maintenance/{odometerSubmission}', 'updateOdometer')
+                ->middleware('permission:odometer.edit')
+                ->name('update');
 
             Route::delete('/maintenance/odometer/{odometerSubmission}', 'destroyOdometer')
                 ->middleware('permission:odometer.delete')
