@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Payroll;
 
 use App\Models\DailyAttendanceSummary;
@@ -216,7 +218,7 @@ class DailyAttendanceSummaryService
 
         PayrollAttendanceAdjustment::query()
             ->approved()
-            ->where('adjustment_type', '!=', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)
+            ->whereNotIn('adjustment_type', PayrollAttendanceAdjustment::TYPHOON_DISASTER_TYPES)
             ->where(function ($query) use ($workDate): void {
                 $date = $workDate->toDateString();
                 $query->whereDate('work_date', $date)
@@ -358,10 +360,6 @@ class DailyAttendanceSummaryService
 
         $globalDisasterAdjustment = $this->globalDisasterAdjustmentForDate($workDate);
 
-        if ($globalDisasterAdjustment && $logs->isNotEmpty()) {
-            $adjustment = $globalDisasterAdjustment;
-        }
-
         $holiday = $this->resolveHoliday($workDate);
 
         return $this->storeSummary(
@@ -371,7 +369,8 @@ class DailyAttendanceSummaryService
             $logs,
             $adjustment,
             $offsetAdjustment,
-            $holiday
+            $holiday,
+            $globalDisasterAdjustment
         );
     }
 
@@ -380,14 +379,14 @@ class DailyAttendanceSummaryService
         return PayrollAttendanceAdjustment::query()
             ->approved()
             ->whereDate('work_date', $workDate->toDateString())
-            ->where('adjustment_type', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)
+            ->whereIn('adjustment_type', PayrollAttendanceAdjustment::TYPHOON_DISASTER_TYPES)
             ->latest('id')
             ->first();
     }
 
     protected function isTyphoonDisasterAdjustment(?PayrollAttendanceAdjustment $adjustment): bool
     {
-        return $adjustment?->adjustment_type === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
+        return PayrollAttendanceAdjustment::isTyphoonDisasterType($adjustment?->adjustment_type);
     }
 
     protected function applicableAdjustmentsForPersonDate(array $person, Carbon $workDate): Collection
@@ -396,7 +395,7 @@ class DailyAttendanceSummaryService
 
         return PayrollAttendanceAdjustment::query()
             ->approved()
-            ->where('adjustment_type', '!=', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)
+            ->whereNotIn('adjustment_type', PayrollAttendanceAdjustment::TYPHOON_DISASTER_TYPES)
             ->where(function ($query) use ($date): void {
                 $query->whereDate('work_date', $date)
                     ->orWhere(function ($rangeQuery) use ($date): void {
@@ -482,7 +481,8 @@ class DailyAttendanceSummaryService
         Collection $logs,
         ?PayrollAttendanceAdjustment $adjustment,
         ?PayrollAttendanceAdjustment $offsetAdjustment,
-        $holiday
+        $holiday,
+        ?PayrollAttendanceAdjustment $globalDisasterAdjustment = null
     ): DailyAttendanceSummary {
         $remarks = [];
 
@@ -513,6 +513,33 @@ class DailyAttendanceSummaryService
         $halfDayPaidMinutes = (int) round($paidMinutesPerDay / 2);
         $halfDayPayableHours = round($halfDayPaidMinutes / 60, 2);
 
+        $rawHasValidInOut = $actualTimeIn && $actualTimeOut && $actualTimeOut->gt($actualTimeIn);
+        $rawDisasterWorkedMinutes = 0;
+
+        if ($rawHasValidInOut) {
+            $rawClockWorkedMinutes = (int) $actualTimeIn->diffInMinutes($actualTimeOut);
+            $rawDisasterWorkedMinutes = max(
+                0,
+                $rawClockWorkedMinutes - $this->unpaidBreakOverlapMinutes(
+                    $workDate,
+                    $actualTimeIn,
+                    $actualTimeOut,
+                    $lunchBreakMinutes
+                )
+            );
+        }
+
+        if ($this->qualifiesForTyphoonDisaster(
+            $globalDisasterAdjustment,
+            (bool) $rawHasValidInOut,
+            $rawDisasterWorkedMinutes
+        )) {
+            // A qualifying global disaster rule takes precedence for pay. If
+            // the employee does not meet the threshold, keep the employee's
+            // own adjustment (leave/OB/change schedule/etc.) untouched.
+            $adjustment = $globalDisasterAdjustment;
+        }
+
         $scheduledTimeIn = $this->normalizeTime($schedule?->time_in);
         $scheduledTimeOut = $this->normalizeTime($schedule?->time_out);
 
@@ -528,8 +555,10 @@ class DailyAttendanceSummaryService
         $adjustmentIsPaid = $this->adjustmentQualifiesForPay($effectiveAdjustment);
 
         $isTyphoonDisasterAdjustment = $this->isTyphoonDisasterAdjustment($adjustment);
-        $ignoreLate = (bool) ($adjustment?->ignore_late ?? false) || $isTyphoonDisasterAdjustment;
-        $ignoreUndertime = (bool) ($adjustment?->ignore_undertime ?? false) || $isTyphoonDisasterAdjustment;
+        $ignoreLate = ! $isTyphoonDisasterAdjustment && (bool) ($adjustment?->ignore_late ?? false);
+        $ignoreUndertime = ! $isTyphoonDisasterAdjustment && (bool) ($adjustment?->ignore_undertime ?? false);
+        $disasterRequiredMinutes = PayrollAttendanceAdjustment::typhoonDisasterRequiredMinutes($adjustment?->adjustment_type);
+        $disasterQualified = false;
 
         $lateMinutes = 0;
         $undertimeMinutes = 0;
@@ -649,18 +678,43 @@ class DailyAttendanceSummaryService
             }
         }
 
+        if ($isTyphoonDisasterAdjustment) {
+            $disasterQualified = $this->qualifiesForTyphoonDisaster(
+                $adjustment,
+                $hasValidInOut,
+                $workedMinutes
+            );
+
+            // The switches are effective only after the required biometric
+            // work threshold is completed. Below threshold, normal attendance
+            // late/undertime rules continue to apply.
+            $adjustmentIsPaid = $disasterQualified;
+            $ignoreLate = $disasterQualified;
+            $ignoreUndertime = $disasterQualified;
+        }
+
         $isAutomaticHalfDay = $this->isAutomaticHalfDay($actualTimeIn, $actualTimeOut);
 
-        if ($isTyphoonDisasterAdjustment && $hasRawBiometrics) {
+        if ($isTyphoonDisasterAdjustment && ! $disasterQualified) {
+            $remarks[] = sprintf(
+                'Typhoon / Disaster threshold not met. Required %d completed paid biometric hour(s); actual qualifying paid work was %.2f hour(s). Normal attendance computation applies.',
+                (int) (($disasterRequiredMinutes ?? 180) / 60),
+                $workedMinutes / 60
+            );
+        }
+
+        if ($disasterQualified) {
             $attendanceStatus = 'adjusted_present';
-            $clockWorkedMinutes = max($clockWorkedMinutes, $scheduledClockMinutes);
-            $workedMinutes = max($workedMinutes, $paidMinutesPerDay);
             $lateMinutes = 0;
             $undertimeMinutes = 0;
             $payableDays = self::FULL_DAY_PAYABLE_DAYS;
             $payableHours = $fullDayPayableHours;
 
-            $remarks[] = 'Typhoon / Disaster adjustment applied. Employee has time-in on this date, so the whole day is paid and late/undertime are ignored.';
+            $remarks[] = sprintf(
+                'Typhoon / Disaster adjustment applied. Employee completed %.2f paid biometric hour(s), meeting the required %d hour(s); the whole day is paid and late/undertime are ignored.',
+                $workedMinutes / 60,
+                (int) (($disasterRequiredMinutes ?? 180) / 60)
+            );
         } elseif ($isHoliday) {
             [$holidayWorkedPayDays, $holidayRateLabel] = $this->holidayWorkedPayDays($holidayType);
             $holidayQualified = $this->isHolidayPayQualified($person, $workDate, $adjustment);
@@ -762,7 +816,8 @@ class DailyAttendanceSummaryService
                 $scheduledTimeOut,
                 $actualTimeIn,
                 $actualTimeOut,
-                $graceMinutes
+                $graceMinutes,
+                $lunchBreakMinutes
             );
 
             if ($ignoreLate) {
@@ -976,6 +1031,15 @@ class DailyAttendanceSummaryService
                     'offset_available_minutes' => max(0, (int) ($offsetAdjustment?->approved_minutes ?? 0)),
                     'offset_applied_minutes' => max(0, (int) $offsetAppliedMinutes),
                     'offset_mode' => $offsetAdjustment ? 'compensatory_time' : null,
+                    'typhoon_disaster_required_minutes' => $isTyphoonDisasterAdjustment
+                        ? max(1, (int) ($disasterRequiredMinutes ?? 180))
+                        : null,
+                    'typhoon_disaster_actual_paid_minutes' => $isTyphoonDisasterAdjustment
+                        ? max(0, (int) $workedMinutes)
+                        : null,
+                    'typhoon_disaster_qualified' => $isTyphoonDisasterAdjustment
+                        ? $disasterQualified
+                        : null,
                 ],
             ]
         );
@@ -1084,7 +1148,8 @@ class DailyAttendanceSummaryService
         ?string $scheduledTimeOut,
         ?Carbon $actualTimeIn,
         ?Carbon $actualTimeOut,
-        int $graceMinutes
+        int $graceMinutes,
+        int $lunchBreakMinutes = 60
     ): array {
         $lateMinutes = 0;
         $undertimeMinutes = 0;
@@ -1115,7 +1180,23 @@ class DailyAttendanceSummaryService
             $actualTimeOut->addDay();
         }
 
-        $rawLateMinutes = (int) $scheduledIn->diffInMinutes($actualTimeIn, false);
+        $rawLateMinutes = 0;
+
+        if ($actualTimeIn->gt($scheduledIn)) {
+            $lateEnd = $actualTimeIn->lt($scheduledOut)
+                ? $actualTimeIn->copy()
+                : $scheduledOut->copy();
+
+            if ($lateEnd->gt($scheduledIn)) {
+                $rawLateMinutes = (int) $scheduledIn->diffInMinutes($lateEnd);
+                $rawLateMinutes -= $this->unpaidBreakOverlapMinutes(
+                    $workDate,
+                    $scheduledIn,
+                    $lateEnd,
+                    $lunchBreakMinutes
+                );
+            }
+        }
 
         $lateMinutes = $this->roundedLateDeductionMinutes(
             $rawLateMinutes,
@@ -1123,7 +1204,16 @@ class DailyAttendanceSummaryService
         );
 
         if ($actualTimeOut->lt($scheduledOut)) {
-            $rawUndertimeMinutes = (int) $actualTimeOut->diffInMinutes($scheduledOut);
+            $undertimeStart = $actualTimeOut->gt($scheduledIn)
+                ? $actualTimeOut->copy()
+                : $scheduledIn->copy();
+            $rawUndertimeMinutes = (int) $undertimeStart->diffInMinutes($scheduledOut);
+            $rawUndertimeMinutes -= $this->unpaidBreakOverlapMinutes(
+                $workDate,
+                $undertimeStart,
+                $scheduledOut,
+                $lunchBreakMinutes
+            );
 
             $undertimeMinutes = $this->roundedUndertimeDeductionMinutes($rawUndertimeMinutes);
         }
@@ -1363,11 +1453,14 @@ class DailyAttendanceSummaryService
             return false;
         }
 
+        if (PayrollAttendanceAdjustment::isTyphoonDisasterType($adjustment->adjustment_type)) {
+            return (bool) $adjustment->is_paid;
+        }
+
         return match ($adjustment->adjustment_type) {
             PayrollAttendanceAdjustment::TYPE_SICK_LEAVE,
             PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE,
-            PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS,
-            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER => (bool) $adjustment->is_paid,
+            PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS => (bool) $adjustment->is_paid,
 
             // These types authorize schedule/premium handling but do not make
             // the attendance day itself a generic paid adjustment.
@@ -1380,16 +1473,40 @@ class DailyAttendanceSummaryService
         };
     }
 
+    protected function qualifiesForTyphoonDisaster(
+        ?PayrollAttendanceAdjustment $adjustment,
+        bool $hasValidInOut,
+        int $workedMinutes
+    ): bool {
+        if (! $adjustment || ! PayrollAttendanceAdjustment::isTyphoonDisasterType($adjustment->adjustment_type)) {
+            return false;
+        }
+
+        if (! $hasValidInOut || ! $this->adjustmentQualifiesForPay($adjustment)) {
+            return false;
+        }
+
+        $requiredMinutes = PayrollAttendanceAdjustment::typhoonDisasterRequiredMinutes($adjustment->adjustment_type);
+
+        return $requiredMinutes !== null && max(0, $workedMinutes) >= $requiredMinutes;
+    }
+
     protected function adjustmentProvidesAttendanceProof(?PayrollAttendanceAdjustment $adjustment): bool
     {
         if (! $adjustment || $adjustment->status === PayrollAttendanceAdjustment::STATUS_REJECTED) {
             return false;
         }
 
+        if (PayrollAttendanceAdjustment::isTyphoonDisasterType($adjustment->adjustment_type)) {
+            // Disaster pay always requires a valid biometric in/out pair and
+            // enough completed paid minutes. The adjustment itself is not
+            // attendance proof.
+            return false;
+        }
+
         return match ($adjustment->adjustment_type) {
             PayrollAttendanceAdjustment::TYPE_SICK_LEAVE,
-            PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE,
-            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER => $this->adjustmentQualifiesForPay($adjustment),
+            PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE => $this->adjustmentQualifiesForPay($adjustment),
 
             PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS,
             PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK => ! empty($adjustment->adjusted_time_in)

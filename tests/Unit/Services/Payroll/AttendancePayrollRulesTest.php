@@ -1,9 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit\Services\Payroll;
 
-use App\Services\Payroll\DailyAttendanceSummaryService;
+use App\Models\Payroll;
+use App\Models\PayrollAttendanceAdjustment;
 use App\Models\PayrollItem;
+use App\Services\Payroll\DailyAttendanceSummaryService;
 use App\Services\Payroll\PayrollComputationService;
 use App\Services\Payroll\PayrollPayslipService;
 use Carbon\Carbon;
@@ -392,6 +396,132 @@ class AttendancePayrollRulesTest extends TestCase
         $this->assertSame('09:01:00', $actualIn->format('H:i:s'));
         $this->assertSame('19:01:00', $actualOut->format('H:i:s'));
         $this->assertSame(600.0, $actualIn->diffInMinutes($actualOut));
+    }
+
+    public function test_regular_early_out_does_not_deduct_the_unpaid_lunch_break(): void
+    {
+        [$lateMinutes, $undertimeMinutes] = $this->invokeProtected(
+            $this->dailySummaryService,
+            'computeRegularShiftDeductions',
+            [
+                Carbon::parse('2026-08-17', 'Asia/Manila'),
+                '09:00',
+                '18:00',
+                Carbon::parse('2026-08-17 08:59:00', 'Asia/Manila'),
+                Carbon::parse('2026-08-17 11:00:00', 'Asia/Manila'),
+                15,
+                60,
+            ]
+        );
+
+        [$payableDays, $payableHours] = $this->invokeProtected(
+            $this->dailySummaryService,
+            'payUnitsAfterDeductions',
+            [$lateMinutes + $undertimeMinutes, 480]
+        );
+
+        $this->assertSame(0, $lateMinutes);
+        $this->assertSame(360, $undertimeMinutes);
+        $this->assertSame(0.25, $payableDays);
+        $this->assertSame(2.0, $payableHours);
+    }
+
+    public function test_three_hour_disaster_rule_pays_full_day_only_after_three_paid_biometric_hours(): void
+    {
+        $adjustment = new PayrollAttendanceAdjustment([
+            'adjustment_type' => PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER_3H,
+            'is_paid' => true,
+            'status' => PayrollAttendanceAdjustment::STATUS_APPROVED,
+        ]);
+
+        $qualifiesAtThreeHours = $this->invokeProtected(
+            $this->dailySummaryService,
+            'qualifiesForTyphoonDisaster',
+            [$adjustment, true, 180]
+        );
+
+        $doesNotQualifyBelowThreeHours = $this->invokeProtected(
+            $this->dailySummaryService,
+            'qualifiesForTyphoonDisaster',
+            [$adjustment, true, 179]
+        );
+
+        $doesNotQualifyWithoutValidInOut = $this->invokeProtected(
+            $this->dailySummaryService,
+            'qualifiesForTyphoonDisaster',
+            [$adjustment, false, 240]
+        );
+
+        $this->assertTrue($qualifiesAtThreeHours);
+        $this->assertFalse($doesNotQualifyBelowThreeHours);
+        $this->assertFalse($doesNotQualifyWithoutValidInOut);
+    }
+
+    public function test_three_hour_disaster_sample_excludes_lunch_and_still_qualifies_at_one_pm(): void
+    {
+        $workDate = Carbon::parse('2026-08-17', 'Asia/Manila');
+        $actualIn = Carbon::parse('2026-08-17 08:59:00', 'Asia/Manila');
+        $actualOut = Carbon::parse('2026-08-17 13:00:00', 'Asia/Manila');
+
+        $breakMinutes = $this->invokeProtected(
+            $this->dailySummaryService,
+            'unpaidBreakOverlapMinutes',
+            [$workDate, $actualIn, $actualOut, 60]
+        );
+        $workedMinutes = (int) $actualIn->diffInMinutes($actualOut) - $breakMinutes;
+
+        $adjustment = new PayrollAttendanceAdjustment([
+            'adjustment_type' => PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER_3H,
+            'is_paid' => true,
+            'status' => PayrollAttendanceAdjustment::STATUS_APPROVED,
+        ]);
+
+        $qualifies = $this->invokeProtected(
+            $this->dailySummaryService,
+            'qualifiesForTyphoonDisaster',
+            [$adjustment, true, $workedMinutes]
+        );
+
+        $this->assertSame(60, $breakMinutes);
+        $this->assertSame(181, $workedMinutes);
+        $this->assertTrue($qualifies);
+    }
+
+    public function test_monthly_salary_basic_pay_does_not_increase_in_a_thirty_one_day_month(): void
+    {
+        $payroll = new Payroll([
+            'cutoff_month' => 8,
+            'cutoff_year' => 2026,
+            'cutoff_type' => 'first',
+        ]);
+
+        $rates = $this->invokeProtected(
+            $this->payrollComputationService,
+            'applyMonthlyDivisorRates',
+            [
+                ['monthly_rate' => 30000.00],
+                $payroll,
+                8.0,
+                540,
+            ]
+        );
+
+        $firstCutoff = $this->invokeProtected(
+            $this->payrollComputationService,
+            'baseCutoffPay',
+            [$rates, true, 999.0]
+        );
+        $secondCutoff = $this->invokeProtected(
+            $this->payrollComputationService,
+            'baseCutoffPay',
+            [$rates, true, 999.0]
+        );
+
+        $this->assertSame(15000.00, $firstCutoff);
+        $this->assertSame(15000.00, $secondCutoff);
+        $this->assertSame(30000.00, $firstCutoff + $secondCutoff);
+        $this->assertSame('monthly_salary / 2', $rates['monthly_divisor_meta']['cutoff_base_formula']);
+        $this->assertEqualsWithDelta(986.30137, $rates['daily_rate'], 0.00001);
     }
 
     private function attendanceRow(

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Payroll;
 
 use App\Exports\PayrollItemsExport;
@@ -16,6 +18,8 @@ use App\Services\Payroll\PayrollComputationService;
 use App\Services\Payroll\PayrollPayslipService;
 use App\Services\Payroll\PayrollPeriodService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use DateTimeInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -139,7 +143,7 @@ class PayrollController extends Controller
             return redirect()
                 ->route('payroll.show', $payroll)
                 ->with('success', 'Payroll generated successfully. Please review before finalizing.');
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             Log::error('Payroll generation failed', [
                 'message' => $exception->getMessage(),
                 'trace' => $exception->getTraceAsString(),
@@ -180,8 +184,8 @@ class PayrollController extends Controller
         $summaries = DailyAttendanceSummary::query()
             ->with(['employeeBiometric', 'plottingSchedule'])
             ->whereBetween('work_date', [
-                $payroll->period_start->toDateString(),
-                $payroll->period_end->toDateString(),
+                $this->dateString($payroll->period_start),
+                $this->dateString($payroll->period_end),
             ])
             ->when(
                 ! empty($item->employee_biometric_id),
@@ -268,8 +272,8 @@ class PayrollController extends Controller
                 PayrollAttendanceAdjustment::TYPE_OFFSET,
             ])
             ->whereBetween('work_date', [
-                $payroll->period_start->toDateString(),
-                $payroll->period_end->toDateString(),
+                $this->dateString($payroll->period_start),
+                $this->dateString($payroll->period_end),
             ])
             ->whereIn('employee_biometric_id', $payrollEmployeeIds)
             ->count();
@@ -299,8 +303,8 @@ class PayrollController extends Controller
                         ->orWhere('paid_payroll_id', '!=', $payroll->id);
                 })
                 ->where(function ($query) use ($payroll): void {
-                    $start = $payroll->period_start->toDateString();
-                    $end = $payroll->period_end->toDateString();
+                    $start = $this->dateString($payroll->period_start);
+                    $end = $this->dateString($payroll->period_end);
 
                     $query
                         ->whereBetween('work_date', [$start, $end])
@@ -315,7 +319,7 @@ class PayrollController extends Controller
                 ->where(function ($query) use ($payrollEmployeeIds): void {
                     $query
                         ->whereIn('employee_biometric_id', $payrollEmployeeIds)
-                        ->orWhere('adjustment_type', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER);
+                        ->orWhereIn('adjustment_type', PayrollAttendanceAdjustment::TYPHOON_DISASTER_TYPES);
                 })
                 ->count();
 
@@ -426,6 +430,15 @@ class PayrollController extends Controller
             ->setPaper('a4', 'portrait');
 
         return $pdf->stream($payroll->payroll_number.'-payslips.pdf');
+    }
+
+    private function dateString(mixed $value): string
+    {
+        if ($value instanceof DateTimeInterface) {
+            return Carbon::instance($value)->toDateString();
+        }
+
+        return Carbon::parse((string) $value, 'Asia/Manila')->toDateString();
     }
 
     protected function totals(Payroll $payroll): array

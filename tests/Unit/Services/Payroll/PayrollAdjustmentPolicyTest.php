@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit\Services\Payroll;
 
 use App\Models\Holiday;
@@ -85,5 +87,40 @@ class PayrollAdjustmentPolicyTest extends TestCase
             $this->assertArrayHasKey('default_ignore_undertime', $rules, $type);
             $this->assertArrayHasKey('approval_required', $rules, $type);
         }
+    }
+
+    public function test_typhoon_disaster_types_expose_three_to_six_hour_thresholds(): void
+    {
+        $this->assertSame(180, PayrollAttendanceAdjustment::typhoonDisasterRequiredMinutes(
+            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER_3H
+        ));
+        $this->assertSame(240, PayrollAttendanceAdjustment::typhoonDisasterRequiredMinutes(
+            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER_4H
+        ));
+        $this->assertSame(300, PayrollAttendanceAdjustment::typhoonDisasterRequiredMinutes(
+            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER_5H
+        ));
+        $this->assertSame(360, PayrollAttendanceAdjustment::typhoonDisasterRequiredMinutes(
+            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER_6H
+        ));
+
+        $this->assertArrayHasKey(PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER_3H, PayrollAttendanceAdjustment::TYPES);
+        $this->assertArrayHasKey(PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER_4H, PayrollAttendanceAdjustment::TYPES);
+        $this->assertArrayHasKey(PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER_5H, PayrollAttendanceAdjustment::TYPES);
+        $this->assertArrayHasKey(PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER_6H, PayrollAttendanceAdjustment::TYPES);
+    }
+
+    public function test_legacy_typhoon_disaster_type_is_treated_as_three_hours(): void
+    {
+        $this->assertTrue(PayrollAttendanceAdjustment::isTyphoonDisasterType(
+            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER
+        ));
+        $this->assertSame(180, PayrollAttendanceAdjustment::typhoonDisasterRequiredMinutes(
+            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER
+        ));
+        $this->assertSame(
+            'Typhoon / Disaster - All Employees - 3hrs',
+            PayrollAttendanceAdjustment::typeLabel(PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)
+        );
     }
 }

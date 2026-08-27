@@ -2,7 +2,7 @@
     $adjustment = $payrollAttendanceAdjustment ?? null;
 
     $selectedType = old('adjustment_type', $adjustment->adjustment_type ?? '');
-    $isGlobalDisaster = $selectedType === \App\Models\PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
+    $isGlobalDisaster = \App\Models\PayrollAttendanceAdjustment::isTyphoonDisasterType($selectedType);
 
     $selectedEmployeeBiometricId = old('employee_biometric_id', $adjustment?->employee_biometric_id ?? '');
     $selectedLegacyBiometricId = old('biometric_employee_id', $adjustment?->biometric_employee_id ?? '');
@@ -243,9 +243,11 @@
 
             <div class="card-body">
                 <div class="alert alert-danger-subtle border-0 mb-0">
-                    This adjustment does not require employee selection. The system will pay a whole day only for
-                    employees who have at least one biometric time-in on the selected work date. Employees with no
-                    time-in on that date will not be paid by this adjustment.
+                    This adjustment does not require employee selection. The selected 3/4/5/6-hour rule is checked
+                    against each payroll-active employee's valid biometric Time In / Time Out. The completed work
+                    threshold uses paid work minutes and excludes the configured unpaid lunch break. Employees who
+                    meet the selected threshold receive 100% full-day pay with late and undertime ignored. Employees
+                    below the threshold stay on normal attendance computation only.
                 </div>
             </div>
         </div>
@@ -470,6 +472,16 @@
 
         function el(id) {
             return document.getElementById(id);
+        }
+
+        function isTyphoonDisasterType(type) {
+            return String(type || '').startsWith('typhoon_disaster');
+        }
+
+        function typhoonDisasterRequiredHours(type) {
+            const match = String(type || '').match(/_(3|4|5|6)h$/);
+
+            return match ? Number(match[1]) : 3;
         }
 
         function escapeHtml(value) {
@@ -975,7 +987,7 @@
                 return;
             }
 
-            if (typeSelect && typeSelect.value === 'typhoon_disaster') {
+            if (typeSelect && isTyphoonDisasterType(typeSelect.value)) {
                 canonicalIdInput.value = '';
                 biometricIdInput.value = '';
                 employeeNoInput.value = '';
@@ -1107,6 +1119,12 @@
             const guide = el('adjustment_rule_guide');
             if (!guide) return;
 
+            if (isTyphoonDisasterType(type)) {
+                const requiredHours = typhoonDisasterRequiredHours(type);
+                guide.innerHTML = `<strong>Typhoon / Disaster - ${requiredHours}hrs:</strong> applies to all payroll-active employees. A valid biometric time-in/time-out pair must complete at least ${requiredHours} paid work hour(s), excluding the configured unpaid lunch break. Employees who meet the threshold are paid a full day and late/undertime are ignored. Employees below the threshold remain on normal attendance computation.`;
+                return;
+            }
+
             const guides = {
                 sick_leave: '<strong>Sick Leave:</strong> date range only. Paid by default; no manual time. Late and undertime are ignored.',
                 medical_leave: '<strong>Medical Leave:</strong> date range only. Paid by default; no manual time. Late and undertime are ignored.',
@@ -1114,8 +1132,7 @@
                 offset: '<strong>Offset / Company Compensatory Leave:</strong> use verified excess work from an earlier source date as a company attendance credit on the target date. No cash addition is created. OT approval/pay remains separate; only minutes already allocated to another Offset request are unavailable.',
                 official_business: '<strong>Official Business:</strong> approved manual actual time is payable and late/undertime are ignored.',
                 holiday_work: '<strong>Holiday Work:</strong> manual approved actual Time In/Out correction/proof for a plotted holiday. Normal holiday premium is automatic from Holiday Calendar + valid attendance.',
-                overtime: '<strong>Overtime:</strong> payroll ignores automatic/raw excess time. Only an APPROVED OT adjustment is paid. Ordinary day = daily rate / 8 × 125%.',
-                typhoon_disaster: '<strong>Typhoon / Disaster:</strong> applies to all active payroll employees with a biometric time-in on the selected date; paid whole day and late/UT ignored.'
+                overtime: '<strong>Overtime:</strong> payroll ignores automatic/raw excess time. Only an APPROVED OT adjustment is paid. Ordinary day = daily rate / 8 × 125%.'
             };
 
             guide.innerHTML = guides[type] || '<strong>Select an adjustment type</strong> to view its payroll rule.';
@@ -1141,9 +1158,9 @@
             setManualTimeLabels(type);
 
             setEmployeePickerMode(
-                type !== 'typhoon_disaster',
-                type === 'typhoon_disaster'
-                    ? 'Employee selection is skipped. This applies to all employees with time-in on the selected date.'
+                !isTyphoonDisasterType(type),
+                isTyphoonDisasterType(type)
+                    ? 'Employee selection is skipped. This applies to all payroll-active employees; full-day pay is granted only after the selected biometric work-hour threshold is completed.'
                     : 'Required for individual adjustments.'
             );
 
@@ -1157,10 +1174,11 @@
                 setSwitchState('is_paid', true, true, 'Official Business is payable attendance.');
                 setSwitchState('ignore_late', true, true, 'Official Business ignores late by rule.');
                 setSwitchState('ignore_undertime', true, true, 'Official Business ignores undertime by rule.');
-            } else if (type === 'typhoon_disaster') {
-                setSwitchState('is_paid', true, true, 'Typhoon / Disaster is paid for qualifying employees with time-in.');
-                setSwitchState('ignore_late', true, true, 'Late is ignored by rule.');
-                setSwitchState('ignore_undertime', true, true, 'Undertime is ignored by rule.');
+            } else if (isTyphoonDisasterType(type)) {
+                const requiredHours = typhoonDisasterRequiredHours(type);
+                setSwitchState('is_paid', true, true, `Typhoon / Disaster is paid only when a valid biometric in/out pair completes at least ${requiredHours} paid work hour(s).`);
+                setSwitchState('ignore_late', true, true, 'Late is ignored only after the selected disaster threshold is met.');
+                setSwitchState('ignore_undertime', true, true, 'Undertime is ignored only after the selected disaster threshold is met.');
             } else {
                 setSwitchState('is_paid', false, true,
                     type === 'offset' ? 'Offset is a company attendance credit. It restores eligible shortage, creates no separate cash payment, and does not cancel separately approved OT.' :
@@ -1197,10 +1215,12 @@
                 if (offsetHoursInput) offsetHoursInput.required = true;
             }
 
-            if (type === 'typhoon_disaster') {
+            if (isTyphoonDisasterType(type)) {
                 showSection('single-date');
                 showSection('disaster');
-                if (workDateLabel) workDateLabel.textContent = 'Typhoon / Disaster Date';
+                if (workDateLabel) {
+                    workDateLabel.textContent = `Typhoon / Disaster Date (${typhoonDisasterRequiredHours(type)}hrs threshold)`;
+                }
                 if (workDateInput) workDateInput.required = true;
             }
 
@@ -1422,7 +1442,7 @@
                 return;
             }
 
-            if (typeSelect && typeSelect.value === 'typhoon_disaster') {
+            if (typeSelect && isTyphoonDisasterType(typeSelect.value)) {
                 canonicalInput.value = '';
 
                 if (legacyInput) {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Payroll;
 
 use App\Models\DailyAttendanceSummary;
@@ -405,8 +407,7 @@ class PayrollPayslipService
                 PayrollAttendanceAdjustment::TYPE_SICK_LEAVE,
                 PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE,
                 PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS,
-                PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER,
-            ], true);
+            ], true) || PayrollAttendanceAdjustment::isTyphoonDisasterType($type);
         });
     }
 

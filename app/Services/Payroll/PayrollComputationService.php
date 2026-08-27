@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Payroll;
 
 use App\Models\DailyAttendanceSummary;
@@ -585,9 +587,11 @@ class PayrollComputationService
             2
         );
 
-        $baseCutoffPay = $isMonthlyEmployee
-            ? round((float) $rates['monthly_rate'] / 2, 2)
-            : round($regularPayableHours * (float) $rates['hourly_rate'], 2);
+        $baseCutoffPay = $this->baseCutoffPay(
+            $rates,
+            $isMonthlyEmployee,
+            $regularPayableHours
+        );
 
         $regularPay = $baseCutoffPay;
 
@@ -1050,6 +1054,19 @@ class PayrollComputationService
         ];
 
         return $rates;
+    }
+
+    protected function baseCutoffPay(array $rates, bool $isMonthlyEmployee, float $regularPayableHours): float
+    {
+        if ($isMonthlyEmployee) {
+            // Fixed monthly salary is not multiplied by calendar days. A
+            // 31-day month therefore does not increase ordinary basic salary.
+            // Each business cutoff carries exactly one-half of the monthly
+            // basic, before attendance deductions and statutory premiums.
+            return round((float) ($rates['monthly_rate'] ?? 0) / 2, 2);
+        }
+
+        return round($regularPayableHours * (float) ($rates['hourly_rate'] ?? 0), 2);
     }
 
     protected function monthlyCalendarCycleRange(Payroll $payroll, Carbon $startDate, Carbon $endDate): array
@@ -1712,8 +1729,7 @@ class PayrollComputationService
                 PayrollAttendanceAdjustment::TYPE_SICK_LEAVE,
                 PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE,
                 PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS,
-                PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER,
-            ], true)) {
+            ], true) || PayrollAttendanceAdjustment::isTyphoonDisasterType($type)) {
                 $paidThisCutoff = (bool) $row->is_paid && $inCurrentWorkPeriod;
                 $effect = $paidThisCutoff ? 'Paid attendance adjustment' : 'Attendance adjustment';
             } elseif ($type === PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK) {
@@ -2122,24 +2138,27 @@ class PayrollComputationService
         // applied, so payroll does not claim a global adjustment paid an
         // employee who had no qualifying time-in.
         foreach ($summaryRows as $row) {
-            if ((string) ($row->adjustment_type ?? '') !== PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER) {
+            $disasterType = (string) ($row->adjustment_type ?? '');
+
+            if (! PayrollAttendanceAdjustment::isTyphoonDisasterType($disasterType)) {
                 continue;
             }
 
             $paid = (bool) ($row->adjustment_is_paid ?? false)
                 && (float) ($row->payable_days ?? 0) > 0;
+            $requiredHours = PayrollAttendanceAdjustment::typhoonDisasterRequiredHours($disasterType) ?? 3;
 
             $tags[] = [
                 'source' => 'typhoon_disaster',
                 'adjustment_id' => $row->attendance_adjustment_id ?? null,
-                'type' => PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER,
-                'label' => 'Typhoon / Disaster',
+                'type' => $disasterType,
+                'label' => PayrollAttendanceAdjustment::typeLabel($disasterType),
                 'date' => $this->dateString($row->work_date),
                 'amount' => 0.00,
                 'paid_this_cutoff' => $paid,
                 'effect' => $paid
-                    ? 'Whole-day paid attendance adjustment applied'
-                    : 'Disaster adjustment recorded; no qualifying paid attendance',
+                    ? "Whole-day paid after completing the {$requiredHours}-hour disaster threshold"
+                    : "Disaster adjustment recorded; {$requiredHours}-hour threshold not met",
             ];
         }
 

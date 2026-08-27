@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Requests\Payroll;
 
 use App\Models\Holiday;
@@ -26,7 +28,7 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
             ]);
         }
 
-        if ($type === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER) {
+        if (PayrollAttendanceAdjustment::isTyphoonDisasterType($type)) {
             $this->merge([
                 'employee_biometric_id' => null,
                 'biometric_employee_id' => PayrollAttendanceAdjustment::GLOBAL_DISASTER_BIOMETRIC_ID,
@@ -194,7 +196,7 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
 
     private function isGlobalDisasterType(): bool
     {
-        return $this->adjustment_type === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
+        return PayrollAttendanceAdjustment::isTyphoonDisasterType((string) $this->adjustment_type);
     }
 
     private function requiresManualTime(): bool

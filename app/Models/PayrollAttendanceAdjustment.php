@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Support\PayrollEmployeeNameFormatter;
@@ -16,7 +18,25 @@ class PayrollAttendanceAdjustment extends Model
     public const TYPE_OFFICIAL_BUSINESS = 'official_business';
     public const TYPE_HOLIDAY_WORK = 'holiday_work';
     public const TYPE_OVERTIME = 'overtime';
+
+    /**
+     * Legacy generic type. New records must use one of the threshold-specific
+     * variants below. It is still recognized as a 3-hour rule so old data can
+     * be rebuilt safely before/after the data migration.
+     */
     public const TYPE_TYPHOON_DISASTER = 'typhoon_disaster';
+    public const TYPE_TYPHOON_DISASTER_3H = 'typhoon_disaster_3h';
+    public const TYPE_TYPHOON_DISASTER_4H = 'typhoon_disaster_4h';
+    public const TYPE_TYPHOON_DISASTER_5H = 'typhoon_disaster_5h';
+    public const TYPE_TYPHOON_DISASTER_6H = 'typhoon_disaster_6h';
+
+    public const TYPHOON_DISASTER_TYPES = [
+        self::TYPE_TYPHOON_DISASTER,
+        self::TYPE_TYPHOON_DISASTER_3H,
+        self::TYPE_TYPHOON_DISASTER_4H,
+        self::TYPE_TYPHOON_DISASTER_5H,
+        self::TYPE_TYPHOON_DISASTER_6H,
+    ];
 
     public const STATUS_PENDING = 'pending';
     public const STATUS_APPROVED = 'approved';
@@ -33,7 +53,10 @@ class PayrollAttendanceAdjustment extends Model
         self::TYPE_OFFICIAL_BUSINESS => 'Official Business',
         self::TYPE_HOLIDAY_WORK => 'Holiday Work',
         self::TYPE_OVERTIME => 'Overtime - Manager Approval Required',
-        self::TYPE_TYPHOON_DISASTER => 'Typhoon / Disaster - All Employees',
+        self::TYPE_TYPHOON_DISASTER_3H => 'Typhoon / Disaster - All Employees - 3hrs',
+        self::TYPE_TYPHOON_DISASTER_4H => 'Typhoon / Disaster - All Employees - 4hrs',
+        self::TYPE_TYPHOON_DISASTER_5H => 'Typhoon / Disaster - All Employees - 5hrs',
+        self::TYPE_TYPHOON_DISASTER_6H => 'Typhoon / Disaster - All Employees - 6hrs',
     ];
 
     /**
@@ -102,6 +125,38 @@ class PayrollAttendanceAdjustment extends Model
             'approval_required' => true,
         ],
         self::TYPE_TYPHOON_DISASTER => [
+            'date_mode' => 'single',
+            'manual_time_mode' => 'none',
+            'default_paid' => true,
+            'default_ignore_late' => true,
+            'default_ignore_undertime' => true,
+            'approval_required' => false,
+        ],
+        self::TYPE_TYPHOON_DISASTER_3H => [
+            'date_mode' => 'single',
+            'manual_time_mode' => 'none',
+            'default_paid' => true,
+            'default_ignore_late' => true,
+            'default_ignore_undertime' => true,
+            'approval_required' => false,
+        ],
+        self::TYPE_TYPHOON_DISASTER_4H => [
+            'date_mode' => 'single',
+            'manual_time_mode' => 'none',
+            'default_paid' => true,
+            'default_ignore_late' => true,
+            'default_ignore_undertime' => true,
+            'approval_required' => false,
+        ],
+        self::TYPE_TYPHOON_DISASTER_5H => [
+            'date_mode' => 'single',
+            'manual_time_mode' => 'none',
+            'default_paid' => true,
+            'default_ignore_late' => true,
+            'default_ignore_undertime' => true,
+            'approval_required' => false,
+        ],
+        self::TYPE_TYPHOON_DISASTER_6H => [
             'date_mode' => 'single',
             'manual_time_mode' => 'none',
             'default_paid' => true,
@@ -217,7 +272,7 @@ class PayrollAttendanceAdjustment extends Model
     public function scopeForPayrollActiveEmployees(Builder $query): Builder
     {
         return $query->where(function (Builder $query): void {
-            $query->where('adjustment_type', self::TYPE_TYPHOON_DISASTER)
+            $query->whereIn('adjustment_type', self::TYPHOON_DISASTER_TYPES)
                 ->orWhereHas('employeeBiometric', function (Builder $query): void {
                     $query->payrollActive();
                 });
@@ -236,9 +291,42 @@ class PayrollAttendanceAdjustment extends Model
         ];
     }
 
+    public static function isTyphoonDisasterType(?string $type): bool
+    {
+        return in_array((string) $type, self::TYPHOON_DISASTER_TYPES, true);
+    }
+
+    public static function typhoonDisasterRequiredMinutes(?string $type): ?int
+    {
+        return match ((string) $type) {
+            self::TYPE_TYPHOON_DISASTER,
+            self::TYPE_TYPHOON_DISASTER_3H => 180,
+            self::TYPE_TYPHOON_DISASTER_4H => 240,
+            self::TYPE_TYPHOON_DISASTER_5H => 300,
+            self::TYPE_TYPHOON_DISASTER_6H => 360,
+            default => null,
+        };
+    }
+
+    public static function typhoonDisasterRequiredHours(?string $type): ?int
+    {
+        $minutes = self::typhoonDisasterRequiredMinutes($type);
+
+        return $minutes === null ? null : (int) ($minutes / 60);
+    }
+
+    public static function typeLabel(?string $type): string
+    {
+        if ((string) $type === self::TYPE_TYPHOON_DISASTER) {
+            return 'Typhoon / Disaster - All Employees - 3hrs';
+        }
+
+        return self::TYPES[(string) $type] ?? ucwords(str_replace('_', ' ', (string) $type));
+    }
+
     public function getTypeLabelAttribute(): string
     {
-        return self::TYPES[$this->adjustment_type] ?? ucwords(str_replace('_', ' ', $this->adjustment_type));
+        return self::typeLabel($this->adjustment_type);
     }
 
     public function getStatusLabelAttribute(): string
@@ -265,8 +353,10 @@ class PayrollAttendanceAdjustment extends Model
 
     public function getAdjustedTimeLabelAttribute(): string
     {
-        if ($this->adjustment_type === self::TYPE_TYPHOON_DISASTER) {
-            return 'Whole day paid for employees with time-in';
+        if (self::isTyphoonDisasterType($this->adjustment_type)) {
+            $hours = self::typhoonDisasterRequiredHours($this->adjustment_type) ?? 3;
+
+            return "Whole day paid after {$hours} completed biometric work hour(s)";
         }
 
         if ($this->adjustment_type === self::TYPE_OFFSET) {
@@ -301,7 +391,7 @@ class PayrollAttendanceAdjustment extends Model
 
     public function isGlobalDisasterAdjustment(): bool
     {
-        return $this->adjustment_type === self::TYPE_TYPHOON_DISASTER;
+        return self::isTyphoonDisasterType($this->adjustment_type);
     }
 
     /**

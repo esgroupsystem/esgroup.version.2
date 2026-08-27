@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
@@ -14,6 +16,7 @@ use App\Services\Payroll\DailyAttendanceSummaryService;
 use App\Services\Payroll\PayrollPremiumService;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use DateTimeInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -77,7 +80,7 @@ class PayrollAttendanceAdjustmentController extends Controller
                 PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK,
                 PayrollAttendanceAdjustment::TYPE_OVERTIME,
             ])->count(),
-            'disasters' => (clone $query)->where('adjustment_type', PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER)->count(),
+            'disasters' => (clone $query)->whereIn('adjustment_type', PayrollAttendanceAdjustment::TYPHOON_DISASTER_TYPES)->count(),
             'pending' => (clone $query)->where('status', PayrollAttendanceAdjustment::STATUS_PENDING)->count(),
         ];
 
@@ -417,7 +420,7 @@ class PayrollAttendanceAdjustmentController extends Controller
         $type = $validated['adjustment_type'];
         $rules = PayrollAttendanceAdjustment::rulesFor($type);
         $isLeave = ($rules['date_mode'] ?? 'single') === 'range';
-        $isGlobalDisaster = $type === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
+        $isGlobalDisaster = PayrollAttendanceAdjustment::isTyphoonDisasterType($type);
         $manualMode = (string) ($rules['manual_time_mode'] ?? 'none');
         $requiresManualTime = in_array($manualMode, ['schedule', 'actual', 'overtime'], true);
 
@@ -451,12 +454,12 @@ class PayrollAttendanceAdjustmentController extends Controller
 
             $criticalChanged = (string) $existing->adjustment_type !== (string) $type
                 || (int) ($existing->employee_biometric_id ?? 0) !== (int) ($snapshot['employee_biometric_id'] ?? 0)
-                || (string) $existing->work_date?->toDateString() !== (string) $workDate
+                || (string) $this->dateString($existing->work_date) !== (string) $workDate
                 || (string) $existing->adjusted_time_in !== (string) ($validated['adjusted_time_in'] ?? '')
                 || (string) $existing->adjusted_time_out !== (string) ($validated['adjusted_time_out'] ?? '')
                 || ($type === PayrollAttendanceAdjustment::TYPE_OFFSET
                     && (
-                        (string) $existing->offset_source_date?->toDateString() !== (string) ($validated['offset_source_date'] ?? '')
+                        (string) $this->dateString($existing->offset_source_date) !== (string) ($validated['offset_source_date'] ?? '')
                         || (int) ($existing->approved_minutes ?? 0) !== (int) $requestedOffsetMinutes
                     ));
 
@@ -665,8 +668,8 @@ class PayrollAttendanceAdjustmentController extends Controller
         PayrollAttendanceAdjustment $offsetAdjustment
     ): ?string {
         $employeeBiometricId = (int) ($offsetAdjustment->employee_biometric_id ?? 0);
-        $sourceDate = $offsetAdjustment->offset_source_date?->toDateString();
-        $targetDate = $offsetAdjustment->work_date?->toDateString();
+        $sourceDate = $this->dateString($offsetAdjustment->offset_source_date);
+        $targetDate = $this->dateString($offsetAdjustment->work_date);
         $requestedMinutes = max(0, (int) ($offsetAdjustment->approved_minutes ?? 0));
 
         if ($employeeBiometricId <= 0 || ! $sourceDate || ! $targetDate) {
@@ -818,6 +821,10 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     private function dayTypeFor(string $type): string
     {
+        if (PayrollAttendanceAdjustment::isTyphoonDisasterType($type)) {
+            return 'typhoon_disaster';
+        }
+
         return match ($type) {
             PayrollAttendanceAdjustment::TYPE_SICK_LEAVE => 'sick_leave',
             PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE => 'medical_leave',
@@ -826,7 +833,6 @@ class PayrollAttendanceAdjustmentController extends Controller
             PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS => 'official_business',
             PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK => 'holiday_work',
             PayrollAttendanceAdjustment::TYPE_OVERTIME => 'overtime_approved_interval',
-            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER => 'typhoon_disaster',
             default => 'adjustment',
         };
     }
@@ -856,8 +862,13 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     private function hasDuplicateAdjustment(array $validated, ?int $ignoreId = null): bool
     {
-        $query = PayrollAttendanceAdjustment::query()
-            ->where('adjustment_type', $validated['adjustment_type']);
+        $query = PayrollAttendanceAdjustment::query();
+
+        if ($this->isGlobalDisasterType($validated)) {
+            $query->whereIn('adjustment_type', PayrollAttendanceAdjustment::TYPHOON_DISASTER_TYPES);
+        } else {
+            $query->where('adjustment_type', $validated['adjustment_type']);
+        }
 
         if ($ignoreId) {
             $query->whereKeyNot($ignoreId);
@@ -897,9 +908,9 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     private function adjustmentDateRange(PayrollAttendanceAdjustment $adjustment): array
     {
-        $from = $adjustment->date_from?->toDateString()
-            ?? $adjustment->work_date?->toDateString();
-        $to = $adjustment->date_to?->toDateString() ?? $from;
+        $from = $this->dateString($adjustment->date_from)
+            ?? $this->dateString($adjustment->work_date);
+        $to = $this->dateString($adjustment->date_to) ?? $from;
 
         return array_values(array_filter([$from, $to]));
     }
@@ -918,10 +929,37 @@ class PayrollAttendanceAdjustmentController extends Controller
         }
     }
 
+    private function dateString(mixed $value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        if ($value instanceof DateTimeInterface) {
+            return Carbon::instance($value)->toDateString();
+        }
+
+        $date = trim((string) $value);
+
+        return $date === ''
+            ? null
+            : Carbon::parse($date, 'Asia/Manila')->toDateString();
+    }
+
     private function successMessage(PayrollAttendanceAdjustment $adjustment, string $action): string
     {
+        if ($adjustment->isGlobalDisasterAdjustment()) {
+            $requiredHours = PayrollAttendanceAdjustment::typhoonDisasterRequiredHours($adjustment->adjustment_type) ?? 3;
+
+            return sprintf(
+                'Typhoon / Disaster %dhrs adjustment %s. Employees with a valid biometric time-in/time-out pair and at least %d completed paid work hour(s) are paid a full day; employees below the threshold remain on normal attendance computation.',
+                $requiredHours,
+                $action,
+                $requiredHours
+            );
+        }
+
         return match ($adjustment->adjustment_type) {
-            PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER => 'Typhoon / Disaster adjustment '.$action.'. Active biometric employees with time-in on the selected date will be paid a whole day after summary rebuild.',
             PayrollAttendanceAdjustment::TYPE_OFFSET => $adjustment->status === PayrollAttendanceAdjustment::STATUS_PENDING
                 ? 'Offset '.$action.' and is PENDING approval. The source excess time will not affect payroll until approved.'
                 : 'Offset '.$action.'. Approved compensatory minutes will cover attendance shortage on the target date. No separate cash Offset payment is created.',
@@ -934,7 +972,7 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     private function isGlobalDisasterType(array $validated): bool
     {
-        return ($validated['adjustment_type'] ?? null) === PayrollAttendanceAdjustment::TYPE_TYPHOON_DISASTER;
+        return PayrollAttendanceAdjustment::isTyphoonDisasterType($validated['adjustment_type'] ?? null);
     }
 
     private function groups()

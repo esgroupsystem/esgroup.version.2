@@ -595,7 +595,15 @@
                             <tbody>
                                 @forelse ($adjustments as $item)
                                     @php
-                                        $typeConfig = match ($item->adjustment_type) {
+                                        $isDisasterAdjustment = $item->isGlobalDisasterAdjustment();
+                                        $disasterRequiredHours = \App\Models\PayrollAttendanceAdjustment::typhoonDisasterRequiredHours($item->adjustment_type);
+
+                                        $typeConfig = $isDisasterAdjustment
+                                            ? [
+                                                'color' => 'danger',
+                                                'icon' => 'fa-cloud-showers-heavy',
+                                            ]
+                                            : match ($item->adjustment_type) {
                                             'sick_leave' => [
                                                 'color' => 'success',
                                                 'icon' => 'fa-briefcase-medical',
@@ -624,10 +632,6 @@
                                                 'color' => 'dark',
                                                 'icon' => 'fa-business-time',
                                             ],
-                                            'typhoon_disaster' => [
-                                                'color' => 'danger',
-                                                'icon' => 'fa-cloud-showers-heavy',
-                                            ],
                                             default => [
                                                 'color' => 'secondary',
                                                 'icon' => 'fa-clock',
@@ -655,7 +659,7 @@
                                         {{-- Employee --}}
                                         <td class="employee-cell ps-4">
                                             <div class="d-flex align-items-center">
-                                                @if ($item->adjustment_type === 'typhoon_disaster')
+                                                @if ($isDisasterAdjustment)
                                                     <div class="employee-avatar employee-avatar-danger me-3">
                                                         <span class="fas fa-users"></span>
                                                     </div>
@@ -666,7 +670,7 @@
                                                         </div>
 
                                                         <div class="employee-meta">
-                                                            Employees with valid time-in records
+                                                            {{ $disasterRequiredHours ?? 3 }} paid biometric hour threshold
                                                         </div>
 
                                                         <div class="employee-meta">
