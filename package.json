@@ -19,7 +19,7 @@
         "bootstrap": "^5.3.8",
         "chart.js": "^4.5.1",
         "choices.js": "^11.2.2",
-        "dayjs": "^1.11.20",
+        "dayjs": "^1.11.23",
         "dropzone": "^6.0.0-beta.2",
         "flatpickr": "^4.6.13",
         "laravel-echo": "^2.2.6",
