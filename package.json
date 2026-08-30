@@ -25,7 +25,7 @@
         "laravel-echo": "^2.2.6",
         "leaflet": "^1.9.4",
         "lodash": "^4.18.1",
-        "pusher-js": "^8.4.0",
+        "pusher-js": "^8.6.0",
         "simplebar": "^6.3.3",
         "swiper": "^12.1.3"
     }
