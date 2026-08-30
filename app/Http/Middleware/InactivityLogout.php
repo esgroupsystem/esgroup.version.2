@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -12,7 +14,7 @@ class InactivityLogout
     {
         if (Auth::check()) {
             $last = session('last_activity_time');
-            $now  = now()->timestamp;
+            $now = now()->timestamp;
 
             if ($last && ($now - $last) > ($minutes * 60)) {
 
@@ -20,7 +22,7 @@ class InactivityLogout
                 $user = Auth::user();
                 $user->update([
                     'last_out' => now(),
-                    'status'   => 'offline',
+                    'status' => 'offline',
                 ]);
 
                 // Clear lockscreen status

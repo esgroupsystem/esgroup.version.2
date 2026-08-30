@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -12,7 +14,11 @@ class SecurityHeaders
         $response = $next($request);
 
         $response->headers->set('X-Frame-Options', 'DENY');
+        $response->headers->set('X-DNS-Prefetch-Control', 'off');
+        $response->headers->set('X-Permitted-Cross-Domain-Policies', 'none');
         $response->headers->set('X-Content-Type-Options', 'nosniff');
+        $response->headers->set('Cross-Origin-Opener-Policy', 'same-origin');
+        $response->headers->set('Cross-Origin-Resource-Policy', 'same-origin');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
         $response->headers->set(
@@ -40,9 +46,20 @@ class SecurityHeaders
             "object-src 'none';",
             "base-uri 'self';",
             "form-action 'self';",
+            "frame-ancestors 'none';",
         ]);
 
+        if (app()->environment('production')) {
+            $csp .= ' upgrade-insecure-requests;';
+        }
+
         $response->headers->set('Content-Security-Policy', $csp);
+
+        if ($request->user()) {
+            $response->headers->set('Cache-Control', 'private, no-store, no-cache, must-revalidate, max-age=0');
+            $response->headers->set('Pragma', 'no-cache');
+            $response->headers->set('Expires', '0');
+        }
 
         return $response;
     }

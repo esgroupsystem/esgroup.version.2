@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
@@ -18,7 +20,7 @@ class OdometerReportController extends Controller
     {
         $busId = $request->filled('bus_detail_id') ? (int) $request->bus_detail_id : null;
 
-        $filterType = $request->get('filter_type', 'month');
+        $filterType = $request->input('filter_type', 'month');
         $month = $request->month ?: now()->format('Y-m');
         $selectedDate = $request->date ?: now()->toDateString();
         $dateFrom = $request->date_from ?: now()->startOfMonth()->toDateString();
@@ -327,14 +329,14 @@ class OdometerReportController extends Controller
         ) {
 
             $previous = $this->findPreviousSubmission(
-                $odometerSubmission->bus_detail_id,
+                (int) ($odometerSubmission->bus_detail_id ?? 0),
                 $validated['date'],
                 $validated['time'],
                 true
             );
 
             $next = $this->findNextSubmission(
-                $odometerSubmission->bus_detail_id,
+                (int) ($odometerSubmission->bus_detail_id ?? 0),
                 $validated['date'],
                 $validated['time'],
                 true
@@ -344,7 +346,7 @@ class OdometerReportController extends Controller
                 $previous &&
                 $validated['new_odometer'] < $previous->new_odometer
             ) {
-                throw ValidationException::withMessages([
+                throw \Illuminate\Validation\ValidationException::withMessages([
                     'new_odometer' => 'Odometer cannot be lower than previous reading.',
                 ]);
             }
@@ -353,7 +355,7 @@ class OdometerReportController extends Controller
                 $next &&
                 $validated['new_odometer'] > $next->new_odometer
             ) {
-                throw ValidationException::withMessages([
+                throw \Illuminate\Validation\ValidationException::withMessages([
                     'new_odometer' => 'Odometer cannot exceed next reading.',
                 ]);
             }
@@ -520,11 +522,11 @@ class OdometerReportController extends Controller
         return $query->first();
     }
 
-    public function export(Request $request): StreamedResponse|Response
+    public function export(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse|\Illuminate\Http\Response
     {
         $busId = $request->filled('bus_detail_id') ? (int) $request->bus_detail_id : null;
 
-        $filterType = $request->get('filter_type', 'month');
+        $filterType = $request->input('filter_type', 'month');
         $month = $request->month ?: now()->format('Y-m');
         $selectedDate = $request->date ?: now()->toDateString();
         $dateFrom = $request->date_from ?: now()->startOfMonth()->toDateString();
@@ -664,7 +666,7 @@ class OdometerReportController extends Controller
         Collection $dieselStockMovements,
         array $summary,
         string $fileName
-    ): StreamedResponse {
+    ): \Symfony\Component\HttpFoundation\StreamedResponse {
         return response()->streamDownload(function () use ($records, $dieselStockMovements, $summary) {
             $handle = fopen('php://output', 'w');
 
@@ -730,7 +732,7 @@ class OdometerReportController extends Controller
         Collection $dieselStockMovements,
         array $summary,
         string $fileName
-    ): Response {
+    ): \Illuminate\Http\Response {
         $html = '<table border="1">';
         $html .= '<tr><th colspan="2">Diesel Stock and Odometer Monitoring Report</th></tr>';
         $html .= '<tr><th>Field</th><th>Value</th></tr>';
@@ -845,10 +847,10 @@ class OdometerReportController extends Controller
             $stock->reference_no ?? '',
             $busLabel,
             number_format((float) $stock->liters, 2, '.', ''),
-            $stock->unit_cost !== null ? number_format((float) $stock->unit_cost, 2, '.', '') : '',
-            $stock->total_cost !== null ? number_format((float) $stock->total_cost, 2, '.', '') : '',
+            number_format((float) $stock->unit_cost, 2, '.', ''),
+            number_format((float) $stock->total_cost, 2, '.', ''),
             $stock->remarks ?? '',
-            $stock->encoder?->full_name ?? 'System',
+            $stock->encoder->full_name ?: 'System',
         ];
     }
 

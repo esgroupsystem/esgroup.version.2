@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ClaimRequest;
@@ -36,7 +38,7 @@ class ClaimController extends Controller
         }
 
         // Date-range filter
-        $dateField = $request->get('date_field', 'date_filed');
+        $dateField = $request->input('date_field', 'date_filed');
         $allowedDateFields = [
             'date_of_notification',
             'date_filed',
@@ -44,7 +46,7 @@ class ClaimController extends Controller
             'fund_request_date',
             'fund_released_date',
         ];
-        if (!in_array($dateField, $allowedDateFields, true)) {
+        if (! in_array($dateField, $allowedDateFields, true)) {
             $dateField = 'date_filed';
         }
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Helpers;
 
 use App\Models\User;
@@ -34,9 +36,7 @@ class Notifier
             return 0;
         }
 
-        Mail::to($emails)->queue(
-            $mailable->onQueue('emails')
-        );
+        Mail::to($emails)->queue($mailable);
 
         Log::info('Role email notification queued.', [
             'roles' => $roles,

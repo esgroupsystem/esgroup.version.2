@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Maintenance;
 
 use App\Enums\JobOrderRepairType;
@@ -264,6 +266,8 @@ class JobOrderMaintenanceController extends Controller
         ];
     }
 
+    /** @param Builder<JobOrderMaintenance> $query */
+    /** @param Builder<JobOrderMaintenance> $query */
     private function applyIndexFilters(Builder $query, array $filters, bool $includeStatus = true): Builder
     {
         return $query
@@ -310,8 +314,10 @@ class JobOrderMaintenanceController extends Controller
 
             fputcsv($handle, $this->exportHeadings());
 
-            $query->chunk(500, function ($jobOrders) use ($handle) {
+            $query->chunk(500, function ($jobOrders) use ($handle): void {
+                /** @var \Illuminate\Database\Eloquent\Collection<int, JobOrderMaintenance> $jobOrders */
                 foreach ($jobOrders as $jobOrder) {
+                    /** @var JobOrderMaintenance $jobOrder */
                     fputcsv($handle, $this->exportRow($jobOrder));
                 }
             });
@@ -333,8 +339,10 @@ class JobOrderMaintenanceController extends Controller
 
         $html .= '</tr></thead><tbody>';
 
-        $query->chunk(500, function ($jobOrders) use (&$html) {
+        $query->chunk(500, function ($jobOrders) use (&$html): void {
+            /** @var \Illuminate\Database\Eloquent\Collection<int, JobOrderMaintenance> $jobOrders */
             foreach ($jobOrders as $jobOrder) {
+                /** @var JobOrderMaintenance $jobOrder */
                 $html .= '<tr>';
 
                 foreach ($this->exportRow($jobOrder) as $value) {
@@ -386,10 +394,10 @@ class JobOrderMaintenanceController extends Controller
     {
         return [
             $jobOrder->job_order_no,
-            $jobOrder->bus?->bus_no ?? $jobOrder->bus_no_snapshot ?? 'N/A',
-            $jobOrder->bus?->plate_no ?? $jobOrder->plate_no_snapshot ?? 'N/A',
-            $jobOrder->bus?->company ?? $jobOrder->company_snapshot ?? 'N/A',
-            $jobOrder->bus?->garage ?? $jobOrder->garage_snapshot ?? 'N/A',
+            $jobOrder->bus->bus_no ?? $jobOrder->bus_no_snapshot ?? 'N/A',
+            $jobOrder->bus->plate_no ?? $jobOrder->plate_no_snapshot ?? 'N/A',
+            $jobOrder->bus->company ?? $jobOrder->company_snapshot ?? 'N/A',
+            $jobOrder->bus->garage ?? $jobOrder->garage_snapshot ?? 'N/A',
             $jobOrder->full_name ?: 'Not specified',
             $jobOrder->mechanic_names_label,
             $jobOrder->repair_types_label,
@@ -404,7 +412,7 @@ class JobOrderMaintenanceController extends Controller
             $jobOrder->total_downtime_label,
             $jobOrder->is_downtime_running ? 'Running' : 'Stopped',
             $jobOrder->status_label,
-            $jobOrder->creator?->name ?? 'System',
+            $jobOrder->creator->name ?? 'System',
             $jobOrder->created_at?->format('Y-m-d'),
             $jobOrder->created_at?->format('h:i A'),
         ];
@@ -483,7 +491,7 @@ class JobOrderMaintenanceController extends Controller
                     $history->old_value,
                     $history->new_value,
                     $history->remarks,
-                    $history->user?->name ?? 'System',
+                    $history->user->name ?? 'System',
                 ]);
             }
 
@@ -528,7 +536,7 @@ class JobOrderMaintenanceController extends Controller
             $html .= '<td>'.e((string) $history->old_value).'</td>';
             $html .= '<td>'.e((string) $history->new_value).'</td>';
             $html .= '<td>'.e((string) $history->remarks).'</td>';
-            $html .= '<td>'.e((string) ($history->user?->name ?? 'System')).'</td>';
+            $html .= '<td>'.e((string) ($history->user->name ?? 'System')).'</td>';
             $html .= '</tr>';
         }
 
@@ -545,10 +553,10 @@ class JobOrderMaintenanceController extends Controller
     {
         return [
             ['Job Order No.', $jobOrder->job_order_no],
-            ['Bus No.', $jobOrder->bus?->bus_no ?? $jobOrder->bus_no_snapshot ?? 'N/A'],
-            ['Plate No.', $jobOrder->bus?->plate_no ?? $jobOrder->plate_no_snapshot ?? 'N/A'],
-            ['Company', $jobOrder->bus?->company ?? $jobOrder->company_snapshot ?? 'N/A'],
-            ['Garage', $jobOrder->bus?->garage ?? $jobOrder->garage_snapshot ?? 'N/A'],
+            ['Bus No.', $jobOrder->bus->bus_no ?? $jobOrder->bus_no_snapshot ?? 'N/A'],
+            ['Plate No.', $jobOrder->bus->plate_no ?? $jobOrder->plate_no_snapshot ?? 'N/A'],
+            ['Company', $jobOrder->bus->company ?? $jobOrder->company_snapshot ?? 'N/A'],
+            ['Garage', $jobOrder->bus->garage ?? $jobOrder->garage_snapshot ?? 'N/A'],
             ['Requester', $jobOrder->full_name ?: 'Not specified'],
             ['Mechanic(s)', $jobOrder->mechanic_names_label],
             ['Repair Type(s)', $jobOrder->repair_types_label],
@@ -562,10 +570,9 @@ class JobOrderMaintenanceController extends Controller
             ['Total Downtime', $jobOrder->total_downtime_label],
             ['Downtime Counter', $jobOrder->is_downtime_running ? 'Running' : 'Stopped'],
             ['Status', $jobOrder->status_label],
-            ['Created By', $jobOrder->creator?->name ?? 'System'],
+            ['Created By', $jobOrder->creator->name ?? 'System'],
             ['Created At', $jobOrder->created_at?->format('Y-m-d h:i A')],
             ['Last Updated', $jobOrder->updated_at?->format('Y-m-d h:i A')],
         ];
     }
-
 }

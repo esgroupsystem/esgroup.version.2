@@ -1,17 +1,21 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\PurchaseReceive;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
 class PurchaseReceiveController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): View|Response
     {
         $search = $request->search;
 
@@ -23,7 +27,7 @@ class PurchaseReceiveController extends Controller
             ->paginate(10);
 
         if ($request->ajax()) {
-            return view('maintenance.receive.table', compact('pos'))->render();
+            return response(view('maintenance.receive.table', compact('pos'))->render());
         }
 
         return view('maintenance.receive.index', compact('pos', 'search'));
@@ -74,6 +78,6 @@ class PurchaseReceiveController extends Controller
     {
         $po = PurchaseOrder::with(['requester', 'items.product'])->findOrFail($id);
 
-        return view('maintenance.receive.modal_content', compact('po'));
+        return view()->make('maintenance.receive.modal_content', compact('po'));
     }
 }

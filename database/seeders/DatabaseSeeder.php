@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\User;
@@ -9,45 +11,56 @@ use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
-class DatabaseSeeder extends Seeder
+final class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
     public function run(): void
     {
-        // Create permissions first
         $this->call([
             PhilippineHolidaySeeder::class,
             BiometricCompanySeeder::class,
             PermissionSeeder::class,
         ]);
 
-        // Create Developer role
         $developerRole = Role::firstOrCreate([
             'name' => 'Developer',
             'guard_name' => 'web',
         ]);
 
-        // Give ALL permissions to Developer
-        $developerRole->syncPermissions(
-            Permission::all()
-        );
+        $developerRole->syncPermissions(Permission::all());
 
-        // Create Developer user
+        // Never create a privileged account automatically in production.
+        if (! filter_var(env('SEED_DEVELOPER_USER', false), FILTER_VALIDATE_BOOL)) {
+            return;
+        }
+
+        $password = (string) env('SEED_DEVELOPER_PASSWORD', '');
+        if (strlen($password) < 16) {
+            throw new \RuntimeException('SEED_DEVELOPER_PASSWORD must contain at least 16 characters when SEED_DEVELOPER_USER=true.');
+        }
+
+        $email = strtolower(trim((string) env('SEED_DEVELOPER_EMAIL', '')));
+        $username = trim((string) env('SEED_DEVELOPER_USERNAME', ''));
+
+        if ($email === '' || $username === '') {
+            throw new \RuntimeException('SEED_DEVELOPER_EMAIL and SEED_DEVELOPER_USERNAME are required when SEED_DEVELOPER_USER=true.');
+        }
+
         $user = User::updateOrCreate(
-            ['email' => 'developer@esgroup.com.ph'],
+            ['email' => $email],
             [
-                'username' => 'developer',
-                'full_name' => 'System',
-                'password' => Hash::make('123123'),
+                'username' => $username,
+                'full_name' => 'System Developer',
+                'password' => Hash::make($password),
                 'role' => 'Developer',
-                'status' => 'online',
+                'status' => 'offline',
                 'account_status' => 'active',
+                'must_change_password' => true,
                 'email_verified_at' => now(),
             ]
         );
 
-        // Assign role to user
         $user->assignRole('Developer');
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\JobOrderRepairType;
@@ -11,6 +13,41 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
+/**
+ * @property \App\Enums\JobOrderStatus $status
+ * @property array<int, string>|null $mechanic_names
+ * @property array<int, string>|null $repair_types
+ * @property-read string $status_label
+ * @property-read string $status_badge_class
+ * @property-read string $status_icon
+ * @property-read string $status_description
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, JobOrderMaintenanceStatusPeriod> $statusPeriods
+
+ * @property string|null $job_order_no
+ * @property string|null $bus_id
+ * @property string|null $bus_no_snapshot
+ * @property string|null $plate_no_snapshot
+ * @property string|null $company_snapshot
+ * @property string|null $garage_snapshot
+ * @property string|null $full_name
+ * @property array<string, mixed>|null $mechanic_names
+ * @property array<string, mixed>|null $repair_types
+ * @property string|null $description_of_work
+ * @property int|null $odometer_reading
+ * @property int|null $last_odometer_reading
+ * @property int|null $created_by
+ * @property-read mixed $odometer_difference
+ * @property-read mixed $is_odometer_lower_than_last
+ * @property-read mixed $odometer_comparison_label
+ * @property-read mixed $mechanic_names_list
+ * @property-read mixed $mechanic_names_label
+ * @property-read mixed $repair_type_enums
+ * @property-read mixed $repair_types_label
+ * @property-read mixed $total_downtime_minutes
+ * @property-read mixed $total_downtime_label
+ * @property-read mixed $downtime_breakdown
+ * @property-read mixed $is_downtime_running
+ */
 class JobOrderMaintenance extends Model
 {
     use SoftDeletes;
@@ -46,22 +83,26 @@ class JobOrderMaintenance extends Model
         ];
     }
 
+    /** @return BelongsTo<Bus, $this> */
     public function bus(): BelongsTo
     {
         return $this->belongsTo(Bus::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return HasMany<JobOrderMaintenanceHistory, $this> */
     public function histories(): HasMany
     {
         return $this->hasMany(JobOrderMaintenanceHistory::class, 'job_order_maintenance_id')
             ->latest();
     }
 
+    /** @return HasMany<JobOrderMaintenanceStatusPeriod, $this> */
     public function statusPeriods(): HasMany
     {
         return $this->hasMany(JobOrderMaintenanceStatusPeriod::class, 'job_order_maintenance_id')
@@ -96,22 +137,22 @@ class JobOrderMaintenance extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return $this->status?->label() ?? 'Unknown';
+        return JobOrderStatus::tryFrom((string) $this->getAttribute('status'))?->label() ?? 'Unknown';
     }
 
     public function getStatusBadgeClassAttribute(): string
     {
-        return $this->status?->badgeClass() ?? 'badge-subtle-secondary text-secondary';
+        return JobOrderStatus::tryFrom((string) $this->getAttribute('status'))?->badgeClass() ?? 'badge-subtle-secondary text-secondary';
     }
 
     public function getStatusIconAttribute(): string
     {
-        return $this->status?->icon() ?? 'fas fa-circle-question';
+        return JobOrderStatus::tryFrom((string) $this->getAttribute('status'))?->icon() ?? 'fas fa-circle-question';
     }
 
     public function getStatusDescriptionAttribute(): string
     {
-        return $this->status?->description() ?? 'No status information available.';
+        return JobOrderStatus::tryFrom((string) $this->getAttribute('status'))?->description() ?? 'No status information available.';
     }
 
     public function getOdometerDifferenceAttribute(): ?int
@@ -187,7 +228,7 @@ class JobOrderMaintenance extends Model
 
         return $periods
             ->filter(function (JobOrderMaintenanceStatusPeriod $period) use ($status): bool {
-                if (! $period->status?->countsAsDowntime()) {
+                if (! $period->status->countsAsDowntime()) {
                     return false;
                 }
 
@@ -225,7 +266,7 @@ class JobOrderMaintenance extends Model
 
     public function getIsDowntimeRunningAttribute(): bool
     {
-        return $this->status?->countsAsDowntime() ?? false;
+        return $this->status->countsAsDowntime();
     }
 
     public static function formatDurationMinutes(int $minutes): string

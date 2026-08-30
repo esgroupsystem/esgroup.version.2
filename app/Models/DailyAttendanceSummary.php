@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Support\PayrollEmployeeNameFormatter;
@@ -7,6 +9,60 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int|null $employee_biometric_id
+ * @property int|null $employee_id
+ * @property string|null $biometric_employee_id
+ * @property string|null $employee_no
+ * @property string|null $employee_name
+ * @property \Carbon\CarbonInterface|null $work_date
+ * @property int|null $plotting_schedule_id
+ * @property int|null $attendance_adjustment_id
+ * @property int|null $holiday_id
+ * @property string|null $crosschex_id
+ * @property string|null $shift_name
+ * @property string|null $scheduled_time_in
+ * @property string|null $scheduled_time_out
+ * @property int|null $grace_minutes
+ * @property string|null $schedule_status
+ * @property string|null $schedule_remarks
+ * @property \Carbon\CarbonInterface|null $actual_time_in
+ * @property \Carbon\CarbonInterface|null $actual_time_out
+ * @property int|null $raw_log_count
+ * @property bool|null $has_biometrics
+ * @property string|null $first_log_state
+ * @property string|null $last_log_state
+ * @property bool|null $is_rest_day
+ * @property bool|null $is_leave
+ * @property bool|null $is_holiday
+ * @property string|null $holiday_name
+ * @property string|null $holiday_type
+ * @property string|float|int $holiday_worked_multiplier
+ * @property string|float|int $holiday_not_worked_multiplier
+ * @property bool|null $has_adjustment
+ * @property string|null $adjustment_type
+ * @property string|null $adjusted_time_in
+ * @property string|null $adjusted_time_out
+ * @property string|null $adjusted_day_type
+ * @property bool|null $adjustment_is_paid
+ * @property bool|null $ignore_late
+ * @property bool|null $ignore_undertime
+ * @property string|null $adjustment_reason
+ * @property string|null $adjustment_remarks
+ * @property string|null $attendance_status
+ * @property int|null $late_minutes
+ * @property int|null $undertime_minutes
+ * @property int|null $worked_minutes
+ * @property int|null $overtime_minutes
+ * @property string|float|int $payable_days
+ * @property string|float|int $payable_hours
+ * @property bool|null $is_absent
+ * @property bool|null $is_incomplete_log
+ * @property string|null $remarks
+ * @property \Carbon\CarbonInterface|null $computed_at
+ * @property array<string, mixed>|null $meta
+ * @property-read mixed $payroll_display_name
+ */
 class DailyAttendanceSummary extends Model
 {
     protected $fillable = [
@@ -108,34 +164,41 @@ class DailyAttendanceSummary extends Model
         'meta' => 'array',
     ];
 
+    /** @return BelongsTo<EmployeeBiometric, $this> */
     public function employeeBiometric(): BelongsTo
     {
         return $this->belongsTo(EmployeeBiometric::class, 'employee_biometric_id');
     }
 
+    /** @return BelongsTo<EmployeePlottingSchedule, $this> */
     public function plottingSchedule(): BelongsTo
     {
         return $this->belongsTo(EmployeePlottingSchedule::class, 'plotting_schedule_id');
     }
 
+    /** @return BelongsTo<PayrollAttendanceAdjustment, $this> */
     public function attendanceAdjustment(): BelongsTo
     {
         return $this->belongsTo(PayrollAttendanceAdjustment::class, 'attendance_adjustment_id');
     }
 
+    /** @return BelongsTo<Holiday, $this> */
     public function holiday(): BelongsTo
     {
         return $this->belongsTo(Holiday::class, 'holiday_id');
     }
 
+    /** @return Builder<DailyAttendanceSummary> */
     public function scopeForEmployeeBiometric(Builder $query, int $employeeBiometricId): Builder
     {
         return $query->where('employee_biometric_id', $employeeBiometricId);
     }
 
+    /** @return Builder<DailyAttendanceSummary> */
     public function scopeForPayrollActiveEmployees(Builder $query): Builder
     {
         return $query->whereHas('employeeBiometric', function (Builder $query): void {
+            /** @var Builder<EmployeeBiometric> $query */
             $query->payrollActive();
         });
     }
@@ -281,5 +344,4 @@ class DailyAttendanceSummary extends Model
     {
         return PayrollEmployeeNameFormatter::display($this->employee_name ?? null);
     }
-
 }

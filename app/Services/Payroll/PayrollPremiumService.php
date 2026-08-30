@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Payroll;
 
 use Carbon\Carbon;
@@ -140,7 +142,6 @@ class PayrollPremiumService
 
         return $this->nightDifferentialMinutes($overlapStart, $overlapEnd);
     }
-
 
     /**
      * Company Offset / compensatory-leave credit evidence.

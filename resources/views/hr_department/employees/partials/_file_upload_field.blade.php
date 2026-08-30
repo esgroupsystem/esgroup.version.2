@@ -5,7 +5,7 @@
 
         {{-- View existing file --}}
         @if (!empty($value))
-            <a href="{{ asset('storage/' . $value) }}"
+            <a href="{{ route('employees.staff.asset-file', [$employee, $file_type]) }}"
                target="_blank"
                class="btn btn-sm btn-outline-secondary">
                 <i class="fas fa-eye me-1"></i> View

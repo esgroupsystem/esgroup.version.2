@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Fleet;
 
 use App\Enums\JobOrderStatus;
@@ -32,6 +34,7 @@ class BusService
             ->paginate(10, ['*'], 'bus_page')
             ->withQueryString();
 
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Bus> $currentPageBuses */
         $currentPageBuses = $paginatedBuses->getCollection();
 
         $groupedBuses = $this->groupPaginatedBuses($paginatedBuses);
@@ -188,6 +191,7 @@ class BusService
             $this->qualifiedColumn($busAlias, $column)
         );
 
+        /** @var Collection<int, object{group_name:string, total_units:int|string, not_for_sale:int|string, mechanical_breakdown:int|string, accident_related:int|string, on_hold:int|string, for_sale:int|string}> $rows */
         $rows = Bus::query()
             ->from('buses as b')
             ->selectRaw("{$groupExpression} as group_name")
@@ -240,6 +244,7 @@ class BusService
 
     private function forSaleSummary(): array
     {
+        /** @var Collection<int, object{company_name:string, status:string, total:int|string}> $rows */
         $rows = BusForSaleRecord::query()
             ->selectRaw("COALESCE(NULLIF(company, ''), 'UNKNOWN') as company_name")
             ->selectRaw('status')
@@ -426,56 +431,6 @@ class BusService
         });
     }
 
-    private function countActiveNotForSaleSql(string $busReference, ?string $forSaleAlias = null): string
-    {
-        $forSaleTable = $this->forSaleTable();
-        $forSaleReference = $forSaleAlias ?: $forSaleTable;
-
-        $activeStatuses = collect($this->activeOperationalStatusValues())
-            ->map(fn (string $status): string => $this->quote($status))
-            ->implode(', ');
-
-        return '
-            SUM(
-                CASE
-                    WHEN '.$this->qualifiedColumn($busReference, 'operational_status').' IN ('.$activeStatuses.')
-                    AND NOT EXISTS (
-                        SELECT 1
-                        FROM '.$this->tableReference($forSaleTable, $forSaleAlias).'
-                        WHERE '.$this->forSaleMatchRaw($busReference, $forSaleReference).'
-                    )
-                    THEN 1
-                    ELSE 0
-                END
-            )
-        ';
-    }
-
-    private function countActiveForSaleSql(string $busReference, ?string $forSaleAlias = null): string
-    {
-        $forSaleTable = $this->forSaleTable();
-        $forSaleReference = $forSaleAlias ?: $forSaleTable;
-
-        $activeStatuses = collect($this->activeOperationalStatusValues())
-            ->map(fn (string $status): string => $this->quote($status))
-            ->implode(', ');
-
-        return '
-            SUM(
-                CASE
-                    WHEN '.$this->qualifiedColumn($busReference, 'operational_status').' IN ('.$activeStatuses.')
-                    AND EXISTS (
-                        SELECT 1
-                        FROM '.$this->tableReference($forSaleTable, $forSaleAlias).'
-                        WHERE '.$this->forSaleMatchRaw($busReference, $forSaleReference).'
-                    )
-                    THEN 1
-                    ELSE 0
-                END
-            )
-        ';
-    }
-
     private function countForSaleSql(string $busReference, ?string $forSaleAlias = null): string
     {
         $forSaleTable = $this->forSaleTable();
@@ -489,19 +444,6 @@ class BusService
                         FROM '.$this->tableReference($forSaleTable, $forSaleAlias).'
                         WHERE '.$this->forSaleMatchRaw($busReference, $forSaleReference).'
                     )
-                    THEN 1
-                    ELSE 0
-                END
-            )
-        ';
-    }
-
-    private function countStatusSql(string $status, string $busReference): string
-    {
-        return '
-            SUM(
-                CASE
-                    WHEN '.$this->qualifiedColumn($busReference, 'operational_status').' = '.$this->quote($status).'
                     THEN 1
                     ELSE 0
                 END

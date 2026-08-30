@@ -1,9 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Listeners;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
 class LogLogout
@@ -22,10 +22,10 @@ class LogLogout
     public function handle(object $event): void
     {
         Log::info('✅ User Logged Out', [
-            'user_id'  => $event->user->id,
+            'user_id' => $event->user->id,
             'username' => $event->user->username,
-            'ip'       => request()->ip(),
-            'time'     => now()->toDateTimeString(),
+            'ip' => request()->ip(),
+            'time' => now()->toDateTimeString(),
         ]);
     }
 }

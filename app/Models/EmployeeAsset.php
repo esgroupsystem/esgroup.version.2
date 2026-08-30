@@ -1,9 +1,23 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string|null $employee_id
+ * @property string|null $profile_picture
+ * @property string|null $sss_number
+ * @property string|null $tin_number
+ * @property string|null $philhealth_number
+ * @property string|null $pagibig_number
+ * @property string|null $birth_certificate
+ * @property string|null $resume
+ * @property string|null $contract
+ */
 class EmployeeAsset extends Model
 {
     protected $fillable = [
@@ -30,7 +44,8 @@ class EmployeeAsset extends Model
         'contract_updated_at' => 'datetime',
     ];
 
-    public function employee()
+    /** @return BelongsTo<Employee, $this> */
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
     }

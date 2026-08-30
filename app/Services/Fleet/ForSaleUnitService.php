@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Fleet;
 
 use App\Models\Bus;
@@ -106,12 +108,15 @@ class ForSaleUnitService
         DB::transaction(function () use ($record): void {
             $bus = $record->bus;
 
-            $record->delete();
+            if ($bus === null) {
+                $record->delete();
 
-            if (! $bus) {
                 return;
             }
 
+            $record->delete();
+
+            /** @var Bus $bus */
             $stillForSale = BusForSaleRecord::query()
                 ->where('bus_id', $bus->id)
                 ->exists();

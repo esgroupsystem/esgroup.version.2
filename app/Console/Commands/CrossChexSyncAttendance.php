@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Services\Biometrics\CrossChexAttendanceSyncService;
@@ -86,6 +88,7 @@ class CrossChexSyncAttendance extends Command
                     $wait = max(1, (int) $result['retry_after']);
                     $this->warn("Rate limit reached. Retrying page {$page} in {$wait} seconds...");
                     sleep($wait);
+
                     continue;
                 }
 

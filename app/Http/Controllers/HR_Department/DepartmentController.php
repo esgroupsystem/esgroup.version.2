@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
@@ -25,6 +27,7 @@ class DepartmentController extends Controller
         } catch (\Exception $e) {
             Log::error('Department Index Error: '.$e->getMessage());
             flash('Something went wrong while loading departments.')->error();
+
             return redirect()->back();
         }
     }

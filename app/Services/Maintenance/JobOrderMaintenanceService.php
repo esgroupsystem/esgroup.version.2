@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Maintenance;
 
 use App\Enums\JobOrderStatus;
@@ -132,7 +134,7 @@ class JobOrderMaintenanceService
 
                 $jobOrder->histories()->create([
                     'action' => 'Maintenance status updated',
-                    'old_value' => $oldStatus?->label(),
+                    'old_value' => $oldStatus->label(),
                     'new_value' => $status->label(),
                     'remarks' => $this->buildStatusHistoryRemarks(
                         remarks: $remarks,

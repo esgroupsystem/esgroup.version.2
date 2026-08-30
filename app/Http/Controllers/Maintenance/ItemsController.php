@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
@@ -20,8 +22,8 @@ class ItemsController extends Controller
         try {
             $categories = Category::orderBy('name')->get();
 
-            $search = trim((string) $request->get('search', ''));
-            $target = trim((string) $request->get('target', ''));
+            $search = trim((string) $request->input('search', ''));
+            $target = trim((string) $request->input('target', ''));
 
             $itemsQuery = Product::with('category')
                 ->when($search !== '', function ($query) use ($search) {
@@ -86,7 +88,7 @@ class ItemsController extends Controller
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'request' => $request->all(),
+                'request_fields' => array_keys($request->all()),
             ]);
 
             if ($request->ajax()) {
@@ -105,8 +107,8 @@ class ItemsController extends Controller
     public function dashboard(Request $request)
     {
         try {
-            $search = trim((string) $request->get('search', ''));
-            $locationFilter = $request->get('location');
+            $search = trim((string) $request->input('search', ''));
+            $locationFilter = $request->input('location');
 
             $allowedFilters = ['main', 'balintawak', 'needs_transfer', null, ''];
             if (! in_array($locationFilter, $allowedFilters, true)) {
@@ -134,7 +136,7 @@ class ItemsController extends Controller
                 })
                 ->orderBy('product_name');
 
-            $products = $productsQuery->get()->map(function ($product) use ($locations, $mainLocation, $balintawakLocation) {
+            $products = $productsQuery->get()->map(function (Product $product) use ($locations, $mainLocation, $balintawakLocation): Product {
                 $locationStocks = [];
 
                 foreach ($locations as $location) {
@@ -146,29 +148,29 @@ class ItemsController extends Controller
                 $balintawakQty = $balintawakLocation ? ($locationStocks[$balintawakLocation->id] ?? 0) : 0;
                 $totalQty = collect($locationStocks)->sum();
 
-                $product->location_stocks = $locationStocks;
-                $product->main_qty = $mainQty;
-                $product->balintawak_qty = $balintawakQty;
-                $product->total_stock = $totalQty;
+                $product->setAttribute('location_stocks', $locationStocks);
+                $product->setAttribute('main_qty', $mainQty);
+                $product->setAttribute('balintawak_qty', $balintawakQty);
+                $product->setAttribute('total_stock', $totalQty);
 
                 if ($totalQty <= 0) {
-                    $product->stock_status = 'out';
+                    $product->setAttribute('stock_status', 'out');
                 } elseif ($totalQty <= 5) {
-                    $product->stock_status = 'low';
+                    $product->setAttribute('stock_status', 'low');
                 } else {
-                    $product->stock_status = 'available';
+                    $product->setAttribute('stock_status', 'available');
                 }
 
-                $product->transfer_suggestion = null;
+                $product->setAttribute('transfer_suggestion', null);
 
                 if ($mainQty > 0 && $balintawakQty <= 0) {
-                    $product->transfer_suggestion = 'Available in Main but zero in Balintawak';
+                    $product->setAttribute('transfer_suggestion', 'Available in Main but zero in Balintawak');
                 } elseif ($balintawakQty > 0 && $mainQty <= 0) {
-                    $product->transfer_suggestion = 'Available in Balintawak but zero in Main';
+                    $product->setAttribute('transfer_suggestion', 'Available in Balintawak but zero in Main');
                 } elseif ($mainQty >= 10 && $balintawakQty <= 2) {
-                    $product->transfer_suggestion = 'Needs transfer to Balintawak';
+                    $product->setAttribute('transfer_suggestion', 'Needs transfer to Balintawak');
                 } elseif ($balintawakQty >= 10 && $mainQty <= 2) {
-                    $product->transfer_suggestion = 'Needs transfer to Main';
+                    $product->setAttribute('transfer_suggestion', 'Needs transfer to Main');
                 }
 
                 return $product;
@@ -204,9 +206,9 @@ class ItemsController extends Controller
             $mainTotalStock = $products->sum('main_qty');
             $balintawakTotalStock = $products->sum('balintawak_qty');
 
-            $mainPage = max((int) $request->get('main_page', 1), 1);
-            $balintawakPage = max((int) $request->get('balintawak_page', 1), 1);
-            $transferPage = max((int) $request->get('transfer_page', 1), 1);
+            $mainPage = max((int) $request->input('main_page', 1), 1);
+            $balintawakPage = max((int) $request->input('balintawak_page', 1), 1);
+            $transferPage = max((int) $request->input('transfer_page', 1), 1);
             $perPage = 10;
 
             $mainStocksPaginated = new LengthAwarePaginator(
@@ -265,7 +267,7 @@ class ItemsController extends Controller
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'request' => $request->all(),
+                'request_fields' => array_keys($request->all()),
             ]);
 
             flash('Failed to load stock dashboard. Please check locations, stocks, or system logs.')->error();
@@ -304,7 +306,7 @@ class ItemsController extends Controller
                 'message' => $e->getMessage(),
                 'sql' => $e->getSql(),
                 'bindings' => $e->getBindings(),
-                'request' => $request->all(),
+                'request_fields' => array_keys($request->all()),
             ]);
 
             flash('Database error while saving item. Possible cause: duplicate value, missing column, or invalid table structure.')->error();
@@ -315,7 +317,7 @@ class ItemsController extends Controller
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'request' => $request->all(),
+                'request_fields' => array_keys($request->all()),
             ]);
 
             flash('Unexpected error while adding item: '.$e->getMessage())->error();
@@ -354,7 +356,7 @@ class ItemsController extends Controller
         } catch (ModelNotFoundException $e) {
             Log::warning('ItemsController@update item not found', [
                 'product_id' => $id,
-                'request' => $request->all(),
+                'request_fields' => array_keys($request->all()),
             ]);
 
             flash('Item not found. It may have already been deleted.')->error();
@@ -366,7 +368,7 @@ class ItemsController extends Controller
                 'message' => $e->getMessage(),
                 'sql' => $e->getSql(),
                 'bindings' => $e->getBindings(),
-                'request' => $request->all(),
+                'request_fields' => array_keys($request->all()),
             ]);
 
             flash('Database error while updating item. Please check the entered values and database structure.')->error();
@@ -378,7 +380,7 @@ class ItemsController extends Controller
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'request' => $request->all(),
+                'request_fields' => array_keys($request->all()),
             ]);
 
             flash('Unexpected error while updating item: '.$e->getMessage())->error();

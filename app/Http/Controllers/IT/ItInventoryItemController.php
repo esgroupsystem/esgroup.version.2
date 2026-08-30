@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\IT;
 
 use App\Http\Controllers\Controller;
@@ -88,7 +90,7 @@ class ItInventoryItemController extends Controller
             'stock_qty' => 'required|integer|min:0',
         ]);
 
-        $item->update($request->all());
+        $item->update($validated);
 
         return redirect()
             ->route('it-inventory.index')

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Services\Permissions\RoutePermissionSyncService;
@@ -59,6 +61,8 @@ class RoleController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->assertDeveloper();
+
         try {
             $validated = $request->validate([
                 'name' => [
@@ -97,6 +101,8 @@ class RoleController extends Controller
 
     public function update(Request $request, Role $role): RedirectResponse
     {
+        $this->assertDeveloper();
+
         try {
             if ($role->name === 'Developer' && ! auth()->user()->hasRole('Developer')) {
                 return back()->with('error', 'You are not allowed to update the Developer role.');
@@ -141,6 +147,8 @@ class RoleController extends Controller
 
     public function destroy(Role $role): RedirectResponse
     {
+        $this->assertDeveloper();
+
         try {
             if ($role->name === 'Developer') {
                 return back()->with('error', 'Developer role cannot be deleted.');
@@ -165,6 +173,8 @@ class RoleController extends Controller
 
     public function syncPermissions(RoutePermissionSyncService $service): RedirectResponse
     {
+        $this->assertDeveloper();
+
         try {
             $result = $service->sync();
 
@@ -182,6 +192,11 @@ class RoleController extends Controller
 
             return back()->with('error', 'Failed to sync route permissions.');
         }
+    }
+
+    private function assertDeveloper(): void
+    {
+        abort_unless(auth()->user()?->isDeveloper() === true, 403);
     }
 
     private function buildPermissionGroups(Collection $permissions): Collection

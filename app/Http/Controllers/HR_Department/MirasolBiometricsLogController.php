@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
@@ -22,8 +24,7 @@ class MirasolBiometricsLogController extends Controller
     public function __construct(
         private readonly CrossChexSyncCoordinator $syncCoordinator,
         private readonly CrossChexServiceFactory $crossChexFactory,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {
@@ -410,17 +411,24 @@ class MirasolBiometricsLogController extends Controller
 
             if ($workedMinutes <= 0) {
                 $workedMinutes = null;
+            } else {
+                $workedMinutes = (int) $workedMinutes;
             }
         }
 
-        if (! $row['has_schedule'] && $row['has_logs']) {
-            $attendanceNote = 'No plotted schedule found.';
-            $attendanceClass = 'warning';
-        } elseif (! $row['has_schedule'] && ! $row['has_logs']) {
-            $attendanceNote = 'No schedule and no biometric log.';
-            $attendanceClass = 'secondary';
+        $hasSchedule = filter_var($row['has_schedule'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $hasLogs = filter_var($row['has_logs'] ?? false, FILTER_VALIDATE_BOOLEAN);
+
+        if (! $hasSchedule) {
+            if ($hasLogs) {
+                $attendanceNote = 'No plotted schedule found.';
+                $attendanceClass = 'warning';
+            } else {
+                $attendanceNote = 'No schedule and no biometric log.';
+                $attendanceClass = 'secondary';
+            }
         } elseif (in_array($status, ['rest_day', 'leave', 'holiday'], true)) {
-            if ($row['has_logs']) {
+            if ($hasLogs) {
                 $attendanceNote = 'Biometric log detected on '.ucwords(str_replace('_', ' ', $status)).'.';
                 $attendanceClass = 'info';
             } else {
@@ -428,10 +436,10 @@ class MirasolBiometricsLogController extends Controller
                 $attendanceClass = 'secondary';
             }
         } elseif ($status === 'scheduled') {
-            if (! $row['has_logs']) {
+            if (! $hasLogs) {
                 $attendanceNote = 'Absent';
                 $attendanceClass = 'danger';
-            } elseif ((int) $row['log_count'] < 2) {
+            } elseif ((int) ($row['log_count'] ?? 0) < 2) {
                 $attendanceNote = 'Incomplete biometric logs.';
                 $attendanceClass = 'warning';
             } elseif ($isFlexible) {
@@ -494,9 +502,9 @@ class MirasolBiometricsLogController extends Controller
         $row['late_minutes'] = $lateMinutes;
         $row['undertime_minutes'] = $undertimeMinutes;
         $row['worked_minutes'] = $workedMinutes;
-        $row['worked_hours_label'] = $this->formatMinutesToHours($workedMinutes);
-        $row['late_label'] = $lateMinutes > 0 ? $this->formatMinutesToHours($lateMinutes) : '—';
-        $row['undertime_label'] = $undertimeMinutes > 0 ? $this->formatMinutesToHours($undertimeMinutes) : '—';
+        $row['worked_hours_label'] = $this->formatMinutesToHours($workedMinutes === null ? null : (int) $workedMinutes);
+        $row['late_label'] = $lateMinutes > 0 ? $this->formatMinutesToHours((int) $lateMinutes) : '—';
+        $row['undertime_label'] = $undertimeMinutes > 0 ? $this->formatMinutesToHours((int) $undertimeMinutes) : '—';
         $row['attendance_note'] = $attendanceNote;
         $row['attendance_class'] = $attendanceClass;
 
@@ -517,7 +525,7 @@ class MirasolBiometricsLogController extends Controller
             ->whereRaw("TRIM(employee_name) <> ''")
             ->groupBy(DB::raw('TRIM(employee_no)'))
             ->get()
-            ->map(function ($row) {
+            ->map(function (MirasolBiometricsLog $row): array {
                 return [
                     'employee_no' => $row->employee_no,
                     'employee_name' => $row->employee_name,
@@ -535,7 +543,7 @@ class MirasolBiometricsLogController extends Controller
             ->whereRaw("TRIM(employee_name) <> ''")
             ->groupBy(DB::raw('TRIM(employee_no)'))
             ->get()
-            ->map(function ($row) {
+            ->map(function (EmployeePlottingSchedule $row): array {
                 return [
                     'employee_no' => $row->employee_no,
                     'employee_name' => $row->employee_name,
@@ -578,7 +586,7 @@ class MirasolBiometricsLogController extends Controller
             })
             ->groupBy(DB::raw('TRIM(employee_no)'))
             ->get()
-            ->map(function ($row) {
+            ->map(function (MirasolBiometricsLog $row): array {
                 return [
                     'employee_no' => $row->employee_no,
                     'employee_name' => $row->employee_name,
@@ -600,7 +608,7 @@ class MirasolBiometricsLogController extends Controller
             })
             ->groupBy(DB::raw('TRIM(employee_no)'))
             ->get()
-            ->map(function ($row) {
+            ->map(function (EmployeePlottingSchedule $row): array {
                 return [
                     'employee_no' => $row->employee_no,
                     'employee_name' => $row->employee_name,

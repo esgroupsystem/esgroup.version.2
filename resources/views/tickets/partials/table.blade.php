@@ -15,7 +15,7 @@
             @forelse ($list as $job)
                 @php
                     $isApproval = $job->job_status === 'Approval';
-                    $isApprover = in_array(auth()->user()->role, ['IT Head', 'Developer']);
+                    $isApprover = auth()->user()->hasAnyRole(['IT Head', 'Developer']);
                     $overlayText = $isApprover ? 'FOR APPROVAL' : 'WAITING FOR IT HEAD APPROVAL';
                 @endphp
 
@@ -83,7 +83,7 @@
                             @endif
 
                             @php
-                                $canDelete = in_array(auth()->user()->role, ['Developer', 'IT Head']);
+                                $canDelete = auth()->user()->hasAnyRole(['Developer', 'IT Head']);
                             @endphp
 
                             @if ($canDelete)

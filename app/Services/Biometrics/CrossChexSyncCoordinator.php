@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Biometrics;
 
 use App\Services\CrossChexServiceFactory;
@@ -15,8 +17,7 @@ class CrossChexSyncCoordinator
         private readonly CrossChexServiceFactory $factory,
         private readonly CrossChexAttendanceSyncService $attendanceSyncService,
         private readonly PayrollAuditService $payrollAuditService,
-    ) {
-    }
+    ) {}
 
     public function start(Carbon $from, Carbon $to, array $requestedAccounts): array
     {

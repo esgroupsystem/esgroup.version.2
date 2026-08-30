@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
@@ -117,7 +119,7 @@ class ReceivingController extends Controller
         try {
             DB::transaction(function () use ($request, $validated, &$proofPath): void {
                 if ($request->hasFile('proof_image')) {
-                    $proofPath = $request->file('proof_image')->store('receiving_proofs', 'public');
+                    $proofPath = $request->file('proof_image')->store('receiving_proofs', 'local');
                 }
 
                 $receiving = Receiving::query()->create([
@@ -164,8 +166,8 @@ class ReceivingController extends Controller
                 ->route('receivings.index')
                 ->with('success', 'Receiving saved successfully. Stock quantities were updated.');
         } catch (\Throwable $e) {
-            if ($proofPath && Storage::disk('public')->exists($proofPath)) {
-                Storage::disk('public')->delete($proofPath);
+            if ($proofPath && Storage::disk('local')->exists($proofPath)) {
+                Storage::disk('local')->delete($proofPath);
             }
 
             return back()
@@ -187,6 +189,25 @@ class ReceivingController extends Controller
         }
 
         return view('maintenance.receive.show', compact('receiving'));
+    }
+
+    public function downloadProof(Receiving $receiving): mixed
+    {
+        $locationId = $this->userLocationId();
+
+        if ($locationId && (int) $receiving->location_id !== (int) $locationId) {
+            abort(403, 'You are not allowed to view this receiving proof.');
+        }
+
+        $proofPath = (string) $receiving->proof_image;
+        abort_unless($proofPath !== '', 404);
+        abort_unless(Storage::disk('local')->exists($proofPath), 404);
+
+        return Storage::disk('local')->response(
+            $proofPath,
+            basename($receiving->proof_image),
+            ['Content-Disposition' => 'inline']
+        );
     }
 
     public function searchProducts(Request $request): JsonResponse

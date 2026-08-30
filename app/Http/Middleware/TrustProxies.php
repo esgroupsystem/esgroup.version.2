@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Middleware\TrustProxies as Middleware;
@@ -10,9 +12,14 @@ class TrustProxies extends Middleware
     /**
      * Trust Cloudflare / hosting proxy headers.
      *
-     * @var array|string|null
+     * @var array<int, string>|string|null
      */
-    protected $proxies = '*';
+    protected $proxies = null;
+
+    public function __construct()
+    {
+        $this->proxies = config('security.trusted_proxies');
+    }
 
     /**
      * Headers used to detect original request data behind proxy.

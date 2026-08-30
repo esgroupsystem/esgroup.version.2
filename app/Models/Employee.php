@@ -1,10 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * @property int $id
+ * @property string $full_name
+ * @property-read EmployeeAsset|null $asset
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EmployeeHistory> $histories
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EmployeeAttachment> $attachments
+ * @property-read EmployeeHistory|null $latestHistory
+
+ * @property string|null $employee_id_permanent
+ * @property string|null $employee_id
+ * @property string|null $department_id
+ * @property string|null $position_id
+ * @property string|null $email
+ * @property string|null $phone_number
+ * @property string|null $company
+ * @property string|null $status
+ * @property \Carbon\CarbonInterface|null $date_hired
+ * @property string|null $garage
+ * @property \Carbon\CarbonInterface|null $date_of_birth
+ * @property string|null $address_1
+ * @property string|null $address_2
+ * @property string|null $emergency_name
+ * @property string|null $emergency_contact
+ * @property \Carbon\CarbonInterface|null $date_resigned
+ * @property string|null $type_of_status
+ * @property \Carbon\CarbonInterface|null $last_duty
+ * @property \Carbon\CarbonInterface|null $clearance_date
+ * @property string|null $last_pay_status
+ * @property \Carbon\CarbonInterface|null $last_pay_date
+ */
 class Employee extends Model
 {
     use HasFactory;
@@ -43,52 +78,60 @@ class Employee extends Model
         'last_pay_date' => 'date',
     ];
 
-    public function department()
+    /** @return BelongsTo<Department, $this> */
+    public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
     }
 
-    public function position()
+    /** @return BelongsTo<Position, $this> */
+    public function position(): BelongsTo
     {
         return $this->belongsTo(Position::class);
     }
 
-    public function asset()
+    /** @return HasOne<EmployeeAsset, $this> */
+    public function asset(): HasOne
     {
         return $this->hasOne(EmployeeAsset::class);
     }
 
-    public function histories()
+    /** @return HasMany<EmployeeHistory, $this> */
+    public function histories(): HasMany
     {
         return $this->hasMany(EmployeeHistory::class);
     }
 
-    public function attachments()
+    /** @return HasMany<EmployeeAttachment, $this> */
+    public function attachments(): HasMany
     {
         return $this->hasMany(EmployeeAttachment::class);
     }
 
-    public function driverLeaves()
+    /** @return HasMany<DriverLeave, $this> */
+    public function driverLeaves(): HasMany
     {
         return $this->hasMany(DriverLeave::class, 'employee_id');
     }
 
-    public function logs()
+    public function logs(): HasMany
     {
         return $this->hasMany(\App\Models\EmployeeLog::class)->latest();
     }
 
-    public function claims()
+    public function claims(): HasMany
     {
         return $this->hasMany(\App\Models\Claim::class);
     }
 
-    public function employeeLeaves()
+    /** @return HasMany<EmployeeLeave, $this> */
+    public function employeeLeaves(): HasMany
     {
         return $this->hasMany(EmployeeLeave::class);
     }
 
-    public function latestHistory()
+    /** @return HasOne<EmployeeHistory, $this> */
+    public function latestHistory(): HasOne
     {
         return $this->hasOne(EmployeeHistory::class)->latestOfMany();
     }

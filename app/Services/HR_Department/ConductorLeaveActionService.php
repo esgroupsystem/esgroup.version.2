@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\HR_Department;
 
 use App\Models\ConductorLeave;
@@ -56,7 +58,7 @@ class ConductorLeaveActionService
                 ]);
             });
         } catch (Throwable $exception) {
-            Storage::disk('public')->delete($proofPath);
+            Storage::disk('local')->delete($proofPath);
 
             throw $exception;
         }
@@ -102,7 +104,7 @@ class ConductorLeaveActionService
                 ]);
             });
         } catch (Throwable $exception) {
-            Storage::disk('public')->delete($proofPath);
+            Storage::disk('local')->delete($proofPath);
 
             throw $exception;
         }
@@ -148,7 +150,7 @@ class ConductorLeaveActionService
                 ]);
             });
         } catch (Throwable $exception) {
-            Storage::disk('public')->delete($proofPath);
+            Storage::disk('local')->delete($proofPath);
 
             throw $exception;
         }
@@ -220,7 +222,7 @@ class ConductorLeaveActionService
     ): string {
         return $proofImage->store(
             "conductor-leave/notices/{$leaveId}/{$noticeType}",
-            'public'
+            'local'
         );
     }
 }

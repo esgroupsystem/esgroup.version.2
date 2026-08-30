@@ -1,14 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Maintenance;
 
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\StockTransfer;
+use App\Models\StockTransferItem;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
-class StockTransferRollbackService
+final class StockTransferRollbackService
 {
     public function rollback(StockTransfer $stockTransfer, int $userId, ?string $reason = null): StockTransfer
     {
@@ -24,7 +27,7 @@ class StockTransferRollbackService
                 'items.product',
             ]);
 
-            if ($transfer->status === 'rolled_back' || $transfer->rolled_back_at) {
+            if ((string) $transfer->getRawOriginal('status') === 'rolled_back' || $transfer->rolled_back_at) {
                 throw new Exception('This stock transfer has already been rolled back.');
             }
 
@@ -32,6 +35,7 @@ class StockTransferRollbackService
                 throw new Exception('Cannot rollback because this transfer has no items.');
             }
 
+            /** @var StockTransferItem $item */
             foreach ($transfer->items as $item) {
                 $qty = (int) $item->qty;
 
@@ -52,7 +56,7 @@ class StockTransferRollbackService
 
                 if (! $toStock || (int) $toStock->qty < $qty) {
                     $productName = $product->product_name ?? 'Selected product';
-                    $toLocation = $transfer->toLocation->name ?? 'destination location';
+                    $toLocation = $transfer->toLocation?->name ?: 'destination location';
                     $available = $toStock ? (int) $toStock->qty : 0;
 
                     throw new Exception(

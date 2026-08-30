@@ -276,6 +276,7 @@ class PayrollComputationService
             ->where('payroll_id', $closingPayroll->id)
             ->get();
 
+        /** @var \Illuminate\Support\Collection<string, bool> $existingKeys */
         $existingKeys = $existingItems
             ->map(fn (PayrollItem $item): ?string => $this->payrollItemIdentityKey($item))
             ->filter()
@@ -1009,8 +1010,7 @@ class PayrollComputationService
         Payroll $payroll,
         ?float $paidHoursPerDay = null,
         ?int $scheduledClockMinutesPerDay = null
-    ): array
-    {
+    ): array {
         $monthlyRate = round((float) ($rates['monthly_rate'] ?? 0), 2);
         $paidHoursPerDay = max(1, (float) ($paidHoursPerDay ?? $this->hoursPerDay()));
         $scheduledClockMinutesPerDay = max(
@@ -1257,15 +1257,9 @@ class PayrollComputationService
             ];
         }
 
-        if ($salary && method_exists($salary, 'loans')) {
-            $salary->loadMissing('loans');
-            foreach ($salary->loans as $loan) {
-                $this->appendBalanceAwareDeduction($deductions, $loan, $payroll, $summary, 'loan');
-            }
-        }
-
-        if ($salary && method_exists($salary, 'otherDeductions')) {
+        if ($salary) {
             $salary->loadMissing('otherDeductions');
+
             foreach ($salary->otherDeductions as $deduction) {
                 $this->appendBalanceAwareDeduction($deductions, $deduction, $payroll, $summary, 'other_deduction');
             }
@@ -1601,7 +1595,7 @@ class PayrollComputationService
          * because the legacy basis excluded recurring allowances and therefore
          * understated the employee's monthly SSS compensation.
          */
-        if (is_numeric($item->gross_pay)) {
+        if ((float) $item->gross_pay > 0) {
             return max(0, round((float) $item->gross_pay, 2));
         }
 
@@ -2163,7 +2157,7 @@ class PayrollComputationService
         }
 
         return collect($tags)->unique(fn (array $tag): string => implode('|', [
-            $tag['source'] ?? '',
+            $tag['source'],
             $tag['adjustment_id'] ?? '',
             $tag['date'] ?? '',
         ]))->values()->all();

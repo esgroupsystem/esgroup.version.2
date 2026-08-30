@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Mail;
 
 use App\Models\PurchaseOrder;
@@ -23,7 +25,7 @@ class POCreatedMail extends Mailable
         return $this->subject("New Purchase Order: {$this->po->po_number}")
             ->view('emails.po_created')
             ->with([
-                'po' => $this->po
+                'po' => $this->po,
             ]);
     }
 }

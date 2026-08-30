@@ -67,10 +67,7 @@
     <div class="profile">
 
         @php
-            $profilePath =
-                $employee->asset && $employee->asset->profile_picture
-                    ? asset('storage/' . $employee->asset->profile_picture)
-                    : asset('assets/img/no-image-default.png');
+            $profilePath = $profileDataUri ?: asset('assets/img/no-image-default.png');
         @endphp
         <div class="avatar">
             <img src="{{ $profilePath }}" style="width:120px; height:120px; object-fit:cover;">

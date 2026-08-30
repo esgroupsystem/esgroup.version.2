@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -11,17 +13,17 @@ return new class extends Migration
         Schema::create('cctv_job_orders', function (Blueprint $table) {
             $table->id();
 
-            $table->string('jo_no')->unique();    
-            $table->string('bus_no');                  
-            $table->string('reported_by')->nullable(); 
+            $table->string('jo_no')->unique();
+            $table->string('bus_no');
+            $table->string('reported_by')->nullable();
 
-            $table->string('issue_type');     
-            $table->string('cctv_part')->nullable();  
+            $table->string('issue_type');
+            $table->string('cctv_part')->nullable();
 
-            $table->text('problem_details');          
-            $table->text('action_taken')->nullable();  
+            $table->text('problem_details');
+            $table->text('action_taken')->nullable();
 
-            $table->string('status')->default('Open'); 
+            $table->string('status')->default('Open');
 
             $table->unsignedBigInteger('assigned_to')->nullable();
             $table->foreign('assigned_to')->references('id')->on('users')->nullOnDelete();

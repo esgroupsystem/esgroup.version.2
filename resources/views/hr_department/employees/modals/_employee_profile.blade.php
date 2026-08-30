@@ -3,7 +3,7 @@
 
 @php
     $profilePath = $employee->asset?->profile_picture
-        ? asset('storage/' . $employee->asset->profile_picture)
+        ? route('employees.staff.profile-picture', $employee)
         : asset('assets/img/no-image-default.png');
 @endphp
 

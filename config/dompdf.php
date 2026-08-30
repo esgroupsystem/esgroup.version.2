@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     /*
@@ -233,7 +235,7 @@ return [
          *
          * @var bool
          */
-        'enable_php' => true,
+        'enable_php' => false,
 
         /**
          * Rnable inline JavaScript
@@ -245,7 +247,7 @@ return [
          *
          * @var bool
          */
-        'enable_javascript' => true,
+        'enable_javascript' => false,
 
         /**
          * Enable remote file access
@@ -297,7 +299,7 @@ return [
          */
         'enable_html5_parser' => true,
 
-        'remote_enabled' => true,
+        'remote_enabled' => false,
     ],
 
 ];

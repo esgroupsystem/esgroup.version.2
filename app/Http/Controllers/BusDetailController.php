@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\BusDetail;
@@ -12,7 +14,7 @@ class BusDetailController extends Controller
 {
     public function index(Request $request)
     {
-        $search = trim((string) $request->get('search', ''));
+        $search = trim((string) $request->input('search', ''));
 
         $buses = BusDetail::query()
             ->when($search !== '', function ($query) use ($search) {
@@ -32,7 +34,7 @@ class BusDetailController extends Controller
 
     public function show(Request $request, BusDetail $busDetail)
     {
-        $search = trim((string) $request->get('search', ''));
+        $search = trim((string) $request->input('search', ''));
 
         /*
          * Important:

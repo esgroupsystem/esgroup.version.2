@@ -649,7 +649,7 @@
                                         @php
                                             $fileName = $file->file_name ?: basename($file->file_path);
                                             $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                                            $fileUrl = asset('storage/' . ltrim($file->file_path, '/'));
+                                            $fileUrl = route('tickets.joborder.file.download', [$job->id, $file->id]);
 
                                             $isImage = in_array($extension, [
                                                 'jpg',

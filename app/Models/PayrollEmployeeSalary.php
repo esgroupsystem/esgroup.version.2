@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Support\PayrollEmployeeNameFormatter;
@@ -8,6 +10,61 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property int|null $employee_biometric_id
+ * @property int|null $employee_id
+ * @property string $biometric_employee_id
+ * @property string|null $employee_no
+ * @property string $employee_name
+ * @property string|null $crosschex_id
+ * @property string $rate_type
+ * @property string|float|int $basic_salary
+ * @property string|float|int $allowance
+ * @property string $allowance_release_schedule
+ * @property string|float|int $sim_load_allowance
+ * @property string $sim_load_release_schedule
+ * @property string $sss_contribution_cutoff
+ * @property string $pagibig_contribution_cutoff
+ * @property string $philhealth_contribution_cutoff
+ * @property string|float|int $ot_rate_per_hour
+ * @property string|float|int $late_deduction_per_minute
+ * @property string|float|int $undertime_deduction_per_minute
+ * @property string|float|int $absent_deduction_per_day
+ * @property string|float|int $sss_loan
+ * @property string|float|int $pagibig_loan
+ * @property string|float|int $vale
+ * @property string|float|int $other_loans
+ * @property-read array<string, mixed> $payroll_preview
+ * @property string|float|int $sss_loan_total_amount
+ * @property string|float|int $sss_loan_payment_amount
+ * @property string $sss_loan_deduction_schedule
+ * @property \Carbon\CarbonInterface|null $sss_loan_start_date
+ * @property string|float|int $pagibig_loan_total_amount
+ * @property string|float|int $pagibig_loan_payment_amount
+ * @property string $pagibig_loan_deduction_schedule
+ * @property \Carbon\CarbonInterface|null $pagibig_loan_start_date
+ * @property string|float|int $philhealth_loan_total_amount
+ * @property string|float|int $philhealth_loan_payment_amount
+ * @property string $philhealth_loan_deduction_schedule
+ * @property \Carbon\CarbonInterface|null $philhealth_loan_start_date
+ * @property string|float|int $cash_advance_total_amount
+ * @property string|float|int $cash_advance_payment_amount
+ * @property string $cash_advance_deduction_schedule
+ * @property \Carbon\CarbonInterface|null $cash_advance_start_date
+ * @property string|float|int $other_loan_total_amount
+ * @property string|float|int $other_loan_payment_amount
+ * @property string $other_loan_deduction_schedule
+ * @property \Carbon\CarbonInterface|null $other_loan_start_date
+ * @property bool $is_active
+ * @property-read string $payroll_display_name
+ * @property-read EmployeeBiometric|null $employeeBiometric
+ * @property-read Employee|null $employee
+ * @property-read array<string, mixed> $payroll_preview
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PayrollEmployeeSalaryOtherDeduction> $otherDeductions
+
+ * @property string|null $remarks
+ */
 class PayrollEmployeeSalary extends Model
 {
     protected $fillable = [
@@ -109,22 +166,26 @@ class PayrollEmployeeSalary extends Model
         'is_active' => 'boolean',
     ];
 
+    /** @return BelongsTo<EmployeeBiometric, $this> */
     public function employeeBiometric(): BelongsTo
     {
         return $this->belongsTo(EmployeeBiometric::class, 'employee_biometric_id');
     }
 
+    /** @return BelongsTo<Employee, $this> */
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class, 'employee_id');
     }
 
+    /** @return HasMany<PayrollEmployeeSalaryOtherDeduction, $this> */
     public function otherDeductions(): HasMany
     {
         return $this->hasMany(PayrollEmployeeSalaryOtherDeduction::class, 'payroll_employee_salary_id')
             ->orderBy('name');
     }
 
+    /** @return HasMany<PayrollEmployeeSalaryOtherDeduction, $this> */
     public function activeOtherDeductions(): HasMany
     {
         return $this->hasMany(PayrollEmployeeSalaryOtherDeduction::class, 'payroll_employee_salary_id')
@@ -140,6 +201,7 @@ class PayrollEmployeeSalary extends Model
     public function scopeForPayrollActiveEmployees(Builder $query): Builder
     {
         return $query->whereHas('employeeBiometric', function (Builder $query): void {
+            /** @var Builder<EmployeeBiometric> $query */
             $query->payrollActive();
         });
     }
@@ -148,5 +210,4 @@ class PayrollEmployeeSalary extends Model
     {
         return PayrollEmployeeNameFormatter::display($this->employee_name ?? null);
     }
-
 }

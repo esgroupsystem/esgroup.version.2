@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -12,14 +14,12 @@ class RoleMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
      * @param  mixed  ...$roles
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
         // ✅ Redirect if not logged in
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return redirect('/')
                 ->withErrors(['auth' => 'You must be logged in to access this page.']);
         }
@@ -27,7 +27,7 @@ class RoleMiddleware
         $user = Auth::user();
 
         // ✅ Check if the logged-in user's role is allowed
-        if (!in_array($user->role, $roles)) {
+        if (! $user->hasAnyRole($roles)) {
             abort(403, 'Unauthorized access.');
         }
 

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
@@ -25,7 +27,7 @@ class ConductorLeaveController extends Controller
     public function index(Request $request): View
     {
         $today = Carbon::now('Asia/Manila')->startOfDay();
-        $search = trim((string) $request->get('search', ''));
+        $search = trim((string) $request->input('search', ''));
 
         $baseQuery = ConductorLeave::query()
             ->with(['employee.position'])
@@ -222,7 +224,7 @@ class ConductorLeaveController extends Controller
             ->where(function ($query) use ($leave): void {
                 $query
                     ->whereIn('status', ['Active', 'Active(Re-Entry)', 'On Leave'])
-                    ->orWhereKey($leave->employee_id);
+                    ->orWhere('id', $leave->employee_id);
             })
             ->orderBy('garage')
             ->orderBy('full_name')
@@ -350,8 +352,7 @@ class ConductorLeaveController extends Controller
                     'completed' => '<span class="badge rounded-pill badge-subtle-success text-success">Completed / Ready</span>',
                     'cancelled' => '<span class="badge rounded-pill badge-subtle-secondary text-secondary">Cancelled</span>',
                     'terminated' => '<span class="badge rounded-pill badge-subtle-danger text-danger">Terminated</span>',
-                    'inactive' => '<span class="badge rounded-pill badge-subtle-warning text-warning">Inactive after 2nd Notice</span>',
-                    default => '<span class="badge rounded-pill badge-subtle-secondary text-secondary">N/A</span>',
+                    'inactive' => '<span class="badge rounded-pill badge-subtle-secondary text-secondary">Inactive</span>',
                 };
 
                 continue;
@@ -372,7 +373,7 @@ class ConductorLeaveController extends Controller
             }
 
             if ($today->lte($end)) {
-                $remainingDays = $today->diffInDays($end) + 1;
+                $remainingDays = (int) $today->diffInDays($end) + 1;
                 $label = $remainingDays === 1 ? 'day' : 'days';
 
                 $leave->remaining_status =

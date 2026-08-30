@@ -245,8 +245,8 @@
 
                                     <div class="collapse" id="proofDeliveryCollapse">
                                         <div class="p-3 border-top text-center">
-                                            <a href="{{ asset('storage/' . $receiving->proof_image) }}" target="_blank">
-                                                <img src="{{ asset('storage/' . $receiving->proof_image) }}"
+                                            <a href="{{ route('receivings.proof', $receiving) }}" target="_blank">
+                                                <img src="{{ route('receivings.proof', $receiving) }}"
                                                     alt="Proof of Delivery" class="img-fluid rounded border shadow-sm"
                                                     style="max-height: 380px;">
                                             </a>

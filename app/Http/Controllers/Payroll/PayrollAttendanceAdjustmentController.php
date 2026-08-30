@@ -793,11 +793,6 @@ class PayrollAttendanceAdjustmentController extends Controller
         return $this->scheduleForEmployeeDate($employeeBiometricId, $date)?->paidWorkMinutes() ?? 480;
     }
 
-    private function lunchMinutesForEmployee(int $employeeBiometricId, string $date): int
-    {
-        return $this->scheduleForEmployeeDate($employeeBiometricId, $date)?->lunchBreakMinutes() ?? 60;
-    }
-
     private function scheduleForEmployeeDate(int $employeeBiometricId, string $date): ?EmployeePlottingSchedule
     {
         $exact = EmployeePlottingSchedule::query()

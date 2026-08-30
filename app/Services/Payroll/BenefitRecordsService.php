@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Payroll;
 
 use App\Models\BenefitContributionRecord;
@@ -36,7 +38,10 @@ class BenefitRecordsService
 
         $employeeQuery->where(function (Builder $query) use ($month, $year): void {
             $query
-                ->where(fn (Builder $active) => $active->payrollActive())
+                ->where(function (Builder $active): Builder {
+                    /** @var Builder<EmployeeBiometric> $active */
+                    return $active->payrollActive();
+                })
                 ->orWhereHas('benefitContributionRecords', function (Builder $records) use ($month, $year): void {
                     $records
                         ->where('contribution_month', $month)
@@ -160,7 +165,10 @@ class BenefitRecordsService
 
         $employeeQuery->where(function (Builder $query) use ($month, $year): void {
             $query
-                ->where(fn (Builder $active) => $active->payrollActive())
+                ->where(function (Builder $active): Builder {
+                    /** @var Builder<EmployeeBiometric> $active */
+                    return $active->payrollActive();
+                })
                 ->orWhereHas('benefitContributionRecords', function (Builder $records) use ($month, $year): void {
                     $records
                         ->where('contribution_month', $month)
@@ -216,8 +224,7 @@ class BenefitRecordsService
             ->count();
 
         $activeDisplayedEmployeeIds = $employees
-            ->filter(fn (EmployeeBiometric $employee): bool =>
-                ($employee->is_payroll_active === null || (bool) $employee->is_payroll_active)
+            ->filter(fn (EmployeeBiometric $employee): bool => ($employee->is_payroll_active === null || (bool) $employee->is_payroll_active)
                 && ($employee->employment_status === null || $employee->employment_status === EmployeeBiometric::STATUS_ACTIVE)
             )
             ->pluck('id')

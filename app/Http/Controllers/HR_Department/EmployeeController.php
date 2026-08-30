@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
@@ -17,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class EmployeeController extends Controller
 {
@@ -253,15 +256,14 @@ class EmployeeController extends Controller
 
             $durationText = null;
             if ($start) {
-                $durationText = $end ? $start->diffForHumans($end, true) : $start->diffForHumans(now(), true);
+                $durationText = $end ? $start->diffForHumans($end, 1) : $start->diffForHumans(now(), 1);
             }
 
             // actions (ensure array)
-            $actions = $h->disciplinary_action;
+            $actions = $h->getAttribute('disciplinary_action');
             if (is_string($actions)) {
-                $actions = $actions ? [$actions] : [];
-            }
-            if (! is_array($actions)) {
+                $actions = $actions !== '' ? [$actions] : [];
+            } elseif (! is_array($actions)) {
                 $actions = [];
             }
 
@@ -327,15 +329,9 @@ class EmployeeController extends Controller
 
                 $first = $records->first();
 
-                $actions = $first->disciplinary_action;
-
-                if (is_string($actions)) {
-                    $actions = $actions ? [$actions] : [];
-                }
-
-                if (! is_array($actions)) {
-                    $actions = [];
-                }
+                $actions = is_array($first?->disciplinary_action)
+                    ? $first->disciplinary_action
+                    : [];
 
                 return [
                     'ir_number' => $irNumber,
@@ -381,7 +377,7 @@ class EmployeeController extends Controller
             $employee = DB::transaction(function () use ($validated) {
 
                 $lastId = Employee::lockForUpdate()->max('id') ?? 0;
-                $employee_id = 'EMP-'.str_pad($lastId + 1, 4, '0', STR_PAD_LEFT);
+                $employee_id = 'EMP-'.str_pad((string) ($lastId + 1), 4, '0', STR_PAD_LEFT);
 
                 return Employee::create([
                     'employee_id' => $employee_id,
@@ -415,7 +411,7 @@ class EmployeeController extends Controller
 
             Log::warning('Employee validation failed', [
                 'errors' => $e->errors(),
-                'input' => $request->all(),
+                'request_fields' => array_keys($request->all()),
             ]);
 
             return back()->withErrors($e->validator)->withInput();
@@ -496,7 +492,7 @@ class EmployeeController extends Controller
 
             if ($request->boolean('remove_profile_picture')) {
                 if ($asset->profile_picture) {
-                    Storage::disk('public')->delete($asset->profile_picture);
+                    Storage::disk('local')->delete($asset->profile_picture);
                 }
                 $asset->profile_picture = null;
                 $asset->save();
@@ -510,13 +506,17 @@ class EmployeeController extends Controller
             if ($request->filled('profile_picture_cropped')) {
                 $dataUrl = (string) $request->input('profile_picture_cropped');
 
+                if (strlen($dataUrl) > 4 * 1024 * 1024) {
+                    throw ValidationException::withMessages(['profile_picture_cropped' => 'The cropped image is too large.']);
+                }
+
                 if (preg_match('/^data:image\/\w+;base64,/', $dataUrl)) {
                     $data = substr($dataUrl, strpos($dataUrl, ',') + 1);
-                    $data = base64_decode($data);
+                    $data = base64_decode($data, true);
 
-                    if ($data !== false) {
+                    if ($data !== false && strlen($data) <= 2 * 1024 * 1024 && @getimagesizefromstring($data) !== false) {
                         if ($asset->profile_picture) {
-                            Storage::disk('public')->delete($asset->profile_picture);
+                            Storage::disk('local')->delete($asset->profile_picture);
                         }
 
                         $cleanName = strtolower(str_replace(' ', '_', $employee->full_name));
@@ -524,10 +524,10 @@ class EmployeeController extends Controller
                         $fileName = "employees/{$cleanName}_{$permanentId}.jpg";
 
                         if ($asset->profile_picture) {
-                            Storage::disk('public')->delete($asset->profile_picture);
+                            Storage::disk('local')->delete($asset->profile_picture);
                         }
 
-                        Storage::disk('public')->put($fileName, $data);
+                        Storage::disk('local')->put($fileName, $data);
 
                         $asset->profile_picture = $fileName;
                         $asset->save();
@@ -544,11 +544,11 @@ class EmployeeController extends Controller
                 $file = $request->file('profile_picture');
 
                 if ($asset->profile_picture) {
-                    Storage::disk('public')->delete($asset->profile_picture);
+                    Storage::disk('local')->delete($asset->profile_picture);
                 }
 
                 $fileName = 'employees/profile_'.$employee->id.'_'.time().'.'.$file->getClientOriginalExtension();
-                $path = $file->storeAs('employees', basename($fileName), 'public');
+                $path = $file->storeAs('employees', basename($fileName), 'local');
 
                 // store path with folder
                 $asset->profile_picture = 'employees/'.basename($fileName);
@@ -954,27 +954,32 @@ class EmployeeController extends Controller
     {
         try {
             $request->validate([
-                'attachment' => 'required|file|max:10240',
+                'attachment' => [
+                    'required',
+                    'file',
+                    'max:'.config('security.uploads.employee_attachment_max_kb', 10240),
+                    'mimes:pdf,doc,docx,xls,xlsx,csv,ppt,pptx,txt,jpg,jpeg,png,webp',
+                ],
             ]);
 
             $file = $request->file('attachment');
 
-            $cleanName = strtolower(str_replace(' ', '_', $employee->full_name));
-            $original = strtolower(str_replace([' ', '.', '-'], '_', $file->getClientOriginalName()));
+            $newName = bin2hex(random_bytes(24)).'.'.$file->extension();
+            $path = $file->storeAs('employees/attachments', $newName, 'local');
 
-            $newName = "{$cleanName}_{$original}_".uniqid().'.'.$file->getClientOriginalExtension();
-
-            $path = $file->storeAs('employees/attachments', $newName, 'public');
+            if (! $path || ! Storage::disk('local')->exists($path)) {
+                throw new \RuntimeException('Failed to save employee attachment.');
+            }
 
             $employee->attachments()->create([
-                'file_name' => $newName,
+                'file_name' => $file->getClientOriginalName(),
                 'file_path' => $path,
                 'mime_type' => $file->getMimeType(),
                 'size' => $file->getSize(),
             ]);
 
             $this->logEmployee($employee, 'uploaded_attachment', [
-                'file_name' => $newName,
+                'file_name' => $file->getClientOriginalName(),
                 'original_name' => $file->getClientOriginalName(),
                 'mime' => $file->getMimeType(),
                 'size' => $file->getSize(),
@@ -995,6 +1000,17 @@ class EmployeeController extends Controller
         }
     }
 
+    public function downloadAttachment(Employee $employee, int $attachment): BinaryFileResponse
+    {
+        $att = $employee->attachments()->findOrFail($attachment);
+
+        abort_unless(Storage::disk('local')->exists($att->file_path), 404);
+
+        $disk = Storage::disk('local');
+
+        return response()->download($disk->path($att->file_path), $att->file_name);
+    }
+
     /* ==========================================================
         DELETE ATTACHMENT
     ========================================================== */
@@ -1003,7 +1019,7 @@ class EmployeeController extends Controller
         try {
             $att = $employee->attachments()->findOrFail($attachmentId);
 
-            Storage::disk('public')->delete($att->file_path);
+            Storage::disk('local')->delete($att->file_path);
 
             $this->logEmployee($employee, 'deleted_attachment', [
                 'file_name' => $att->file_name,
@@ -1103,7 +1119,12 @@ class EmployeeController extends Controller
         $employee = Employee::with(['asset', 'histories', 'attachments', 'position', 'department'])
             ->findOrFail($id);
 
-        $pdf = Pdf::loadView('hr_department.employees.modals._employee_201_pdf', compact('employee'))
+        $profileDataUri = null;
+        if ($employee->asset?->profile_picture && Storage::disk('local')->exists($employee->asset->profile_picture)) {
+            $profileDataUri = 'data:'.(Storage::disk('local')->mimeType($employee->asset->profile_picture) ?: 'image/jpeg').';base64,'.base64_encode(Storage::disk('local')->get($employee->asset->profile_picture));
+        }
+
+        $pdf = Pdf::loadView('hr_department.employees.modals._employee_201_pdf', compact('employee', 'profileDataUri'))
             ->setPaper('A4', 'portrait');
 
         return $pdf->stream($employee->employee_id.'_201.pdf');

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
@@ -22,8 +24,8 @@ class JobOrderCreatedNotification extends Notification
 
         return [
             'title' => 'New Job Order Created',
-            'message' => "Job Order #{$this->jobOrder->id} ({$this->jobOrder->job_type}) has been created for bus " .
-                ($bus?->body_number ?? 'Unknown Bus') . ".",
+            'message' => "Job Order #{$this->jobOrder->id} ({$this->jobOrder->job_type}) has been created for bus ".
+                ($bus->body_number ?? 'Unknown Bus').'.',
         ];
     }
 }

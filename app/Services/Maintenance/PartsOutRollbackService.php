@@ -1,8 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Maintenance;
 
 use App\Models\PartsOut;
+use App\Models\PartsOutItem;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\StockMovement;
@@ -10,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
-class PartsOutRollbackService
+final class PartsOutRollbackService
 {
     public function rollback(int $partsOutId, ?string $reason = null): void
     {
@@ -21,11 +24,13 @@ class PartsOutRollbackService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if ($partsOut->status === 'rolled_back') {
+            $partsOutStatus = (string) $partsOut->getRawOriginal('status');
+
+            if ($partsOutStatus === 'rolled_back') {
                 throw new RuntimeException('This Parts Out record is already rolled back.');
             }
 
-            if ($partsOut->status !== 'posted') {
+            if ($partsOutStatus !== 'posted') {
                 throw new RuntimeException('Only posted Parts Out records can be rolled back.');
             }
 
@@ -33,6 +38,7 @@ class PartsOutRollbackService
                 throw new RuntimeException('Parts Out location is missing. Cannot return stock.');
             }
 
+            /** @var PartsOutItem $item */
             foreach ($partsOut->items as $item) {
                 $qtyUsed = (int) $item->qty_used;
 

@@ -1,27 +1,29 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Api\CreateFareAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreFareRequest;
 use App\Models\Fare;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
-class FareController extends Controller
+final class FareController extends Controller
 {
-    public function index()
+    public function __construct(
+        private readonly CreateFareAction $createFare,
+    ) {}
+
+    public function index(): JsonResponse
     {
-        return response()->json(Fare::all());
+        return response()->json(Fare::query()->get());
     }
 
-    public function store(Request $request)
+    public function store(StoreFareRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'from_location' => 'required|string|max:255',
-            'to_location'   => 'required|string|max:255',
-            'fare'          => 'required|numeric|min:0',
-        ]);
-
-        $fare = Fare::create($data);
+        $fare = $this->createFare->execute($request->validated());
 
         return response()->json($fare, 201);
     }

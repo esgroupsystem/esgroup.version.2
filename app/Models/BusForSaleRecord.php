@@ -1,11 +1,35 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string|null $company
+ * @property int|null $days_in_breakdown
+ * @property int|null $total
+ * @property-read string $status_label
+ * @property-read string $status_badge_class
+ * @property-read int $live_days_in_breakdown
+ * @property string|null $company_name
+ * @property int|float|string|null $total
+ * @property string|null $bus_id
+ * @property string|null $bus_no
+ * @property string|null $plate_no
+ * @property string|null $garage
+ * @property string|null $status
+ * @property string|null $storage_area
+ * @property \Carbon\CarbonInterface|null $breakdown_start_date
+ * @property \Carbon\CarbonInterface|null $breakdown_end_date
+ * @property string|null $column_11
+ * @property string|null $unit_location
+ * @property string|null $progress
+ * @property string|null $remarks
+ */
 class BusForSaleRecord extends Model
 {
     protected $fillable = [
@@ -49,6 +73,7 @@ class BusForSaleRecord extends Model
         ];
     }
 
+    /** @return BelongsTo<Bus, $this> */
     public function bus(): BelongsTo
     {
         return $this->belongsTo(Bus::class);

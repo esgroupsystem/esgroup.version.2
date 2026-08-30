@@ -1,11 +1,38 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * @property string|null $bus_no
+ * @property string|null $plate_no
+ * @property string|null $company
+ * @property string|null $garage
+ * @property string $operational_status
+ * @property string $sale_status
+ * @property int|null $not_for_sale
+ * @property int|null $mechanical_breakdown
+ * @property int|null $accident_related
+ * @property int|null $on_hold
+ * @property int|null $for_sale
+ * @property int|null $total_units
+ * @property string|null $group_name
+ * @property-read string $operational_status_label
+ * @property-read string $sale_status_label
+
+ * @property string|null $chassis_number
+ * @property string|null $engine_number
+ * @property string|null $case_number
+ * @property string|null $monitoring_remarks
+ * @property \Carbon\CarbonInterface|null $status_updated_at
+ * @property-read mixed $operational_status_badge_class
+ * @property-read mixed $sale_status_badge_class
+ */
 class Bus extends Model
 {
     public const STATUS_ACTIVE = 'active';
@@ -63,16 +90,19 @@ class Bus extends Model
         ];
     }
 
+    /** @return HasMany<BusForSaleRecord, $this> */
     public function forSaleRecords(): HasMany
     {
         return $this->hasMany(BusForSaleRecord::class);
     }
 
+    /** @return HasOne<BusForSaleRecord, $this> */
     public function forSaleRecord(): HasOne
     {
         return $this->hasOne(BusForSaleRecord::class);
     }
 
+    /** @return HasOne<BusForSaleRecord, $this> */
     public function currentForSaleRecord(): HasOne
     {
         return $this->hasOne(BusForSaleRecord::class)->latestOfMany();
@@ -109,16 +139,19 @@ class Bus extends Model
         };
     }
 
+    /** @return HasMany<JobOrderMaintenance, $this> */
     public function jobOrderMaintenances(): HasMany
     {
         return $this->hasMany(JobOrderMaintenance::class);
     }
 
+    /** @return HasOne<JobOrderMaintenance, $this> */
     public function latestJobOrderMaintenance(): HasOne
     {
         return $this->hasOne(JobOrderMaintenance::class)->latestOfMany();
     }
 
+    /** @return HasOne<JobOrderMaintenance, $this> */
     public function latestJobOrderMaintenanceWithOdometer(): HasOne
     {
         return $this->hasOne(JobOrderMaintenance::class)

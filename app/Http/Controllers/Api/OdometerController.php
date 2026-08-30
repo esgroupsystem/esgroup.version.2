@@ -1,50 +1,45 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Api\CreateOdometerSubmissionAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\StoreOdometerSubmissionRequest;
+use App\Http\Resources\Api\OdometerSubmissionResource;
+use App\Models\BusDetail;
 use App\Models\OdometerSubmission;
-use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
-class OdometerController extends Controller
+final class OdometerController extends Controller
 {
-    public function store(Request $request)
-    {
-        $request->validate([
-            'bus_detail_id' => 'required|exists:bus_details,id',
-            'new_odometer' => 'required|numeric',
-            'diesel_consumption' => 'required|numeric|min:0',
-            'driver_name' => 'required|string',
-            'date_bus_deployed' => 'required|date',
-            'date' => 'required|date',
-            'time' => 'required',
-        ]);
+    public function __construct(
+        private readonly CreateOdometerSubmissionAction $createSubmission,
+    ) {}
 
-        $submission = OdometerSubmission::create([
-            'user_id' => $request->user()->id,
-            'bus_detail_id' => $request->bus_detail_id,
-            'new_odometer' => $request->new_odometer,
-            'diesel_consumption' => $request->diesel_consumption,
-            'driver_name' => $request->driver_name,
-            'date_bus_deployed' => $request->date_bus_deployed,
-            'date' => $request->date,
-            'time' => $request->time,
-        ]);
+    public function store(StoreOdometerSubmissionRequest $request): JsonResponse
+    {
+        $submission = $this->createSubmission->execute(
+            $request->validated(),
+            $request->user(),
+        );
 
         return response()->json([
             'message' => 'Submitted successfully',
-            'data' => $submission,
+            'data' => OdometerSubmissionResource::make($submission)->resolve($request),
         ]);
     }
 
-    public function lastOdometer($busDetail)
+    public function lastOdometer(BusDetail $busDetail): JsonResponse
     {
-        $last = OdometerSubmission::where('bus_detail_id', $busDetail)
+        $last = OdometerSubmission::query()
+            ->where('bus_detail_id', $busDetail->getKey())
             ->latest()
             ->first();
 
         return response()->json([
-            'last_odometer' => $last?->new_odometer ?? 0,
+            'last_odometer' => $last->new_odometer ?? 0,
         ]);
     }
 }

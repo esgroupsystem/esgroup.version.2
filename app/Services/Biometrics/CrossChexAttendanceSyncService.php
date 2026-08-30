@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Biometrics;
 
 use App\Services\CrossChexService;
@@ -74,6 +76,7 @@ class CrossChexAttendanceSyncService
         foreach ($list as $record) {
             if (! is_array($record)) {
                 $invalid++;
+
                 continue;
             }
 
@@ -81,6 +84,7 @@ class CrossChexAttendanceSyncService
 
             if ($row === null) {
                 $invalid++;
+
                 continue;
             }
 

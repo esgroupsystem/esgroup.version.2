@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Exports;
 
 use App\Models\JobOrder;
@@ -26,7 +28,7 @@ class JobOrdersExport implements FromCollection, WithHeadings
             'Creator',
             'Job Type',
             'Status',
-            'Date Filled'
+            'Date Filled',
         ];
     }
 }

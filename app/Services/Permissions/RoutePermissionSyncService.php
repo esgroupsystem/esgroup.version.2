@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Permissions;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Route;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 class RoutePermissionSyncService
@@ -114,10 +117,11 @@ class RoutePermissionSyncService
 
             foreach ($permissionsToDelete as $permission) {
 
-                foreach ($permission->roles as $role) {
+                /** @var Collection<int, Role> $roles */
+                $roles = $permission->roles;
 
+                foreach ($roles as $role) {
                     $role->revokePermissionTo($permission);
-
                 }
 
                 $permission->delete();

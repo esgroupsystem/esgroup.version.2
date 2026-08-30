@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
 use App\Models\DailyAttendanceSummary;
 use App\Models\EmployeeBiometric;
 use App\Services\Payroll\DailyAttendanceSummaryService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -272,7 +275,8 @@ class AttendanceSummaryController extends Controller
                 $startDate->toDateString(),
                 $endDate->toDateString(),
             ])
-            ->whereHas('employeeBiometric', function ($employeeQuery) use ($groupName): void {
+            ->whereHas('employeeBiometric', function (Builder $employeeQuery) use ($groupName): void {
+                /** @var Builder<EmployeeBiometric> $employeeQuery */
                 $employeeQuery->payrollActive();
 
                 if ($groupName !== null && trim($groupName) !== '') {

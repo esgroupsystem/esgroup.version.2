@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Models\Payroll;
@@ -62,7 +64,7 @@ class BackfillBenefitContributionRecords extends Command
 
                         return $postingService->postForPayroll(
                             $lockedPayroll,
-                            $lockedPayroll->finalized_by,
+                            (int) $lockedPayroll->finalized_by ?: null,
                             $lockedPayroll->finalized_at ?? now('Asia/Manila')
                         );
                     });

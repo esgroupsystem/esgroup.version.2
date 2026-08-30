@@ -1,28 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Api\CreateTicketAction;
 use App\Http\Controllers\Controller;
-use App\Models\Ticket;
-use Illuminate\Http\Request;
+use App\Http\Requests\Api\StoreTicketRequest;
+use Illuminate\Http\JsonResponse;
 
-class TicketController extends Controller
+final class TicketController extends Controller
 {
-    public function store(Request $request)
+    public function __construct(
+        private readonly CreateTicketAction $createTicket,
+    ) {}
+
+    public function store(StoreTicketRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'trip_id'       => 'required|exists:trips,id',
-            'from_location' => 'required|string',
-            'to_location'   => 'required|string',
-            'fare'          => 'required|numeric|min:0',
-            'issued_at'     => 'required|date',
-        ]);
-
-        $data['user_id'] = $request->user()->id;
-
-        $ticket = Ticket::create($data);
+        $ticket = $this->createTicket->execute(
+            $request->validated(),
+            $request->user(),
+        );
 
         return response()->json($ticket, 201);
     }
 }
-

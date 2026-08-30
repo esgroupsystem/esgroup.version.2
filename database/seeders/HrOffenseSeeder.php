@@ -1,9 +1,11 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\HrOffense;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 
 class HrOffenseSeeder extends Seeder
@@ -12,7 +14,7 @@ class HrOffenseSeeder extends Seeder
     {
         $path = database_path('data/hr_offenses.csv');
 
-        if (!File::exists($path)) {
+        if (! File::exists($path)) {
             return;
         }
 

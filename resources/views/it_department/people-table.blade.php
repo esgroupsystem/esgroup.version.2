@@ -4,7 +4,7 @@
     $user = auth()->user();
 
     $isApprover =
-        in_array($user->role ?? '', ['IT Head', 'Developer']) ||
+        $user?->hasAnyRole(['IT Head', 'Developer']) ||
         (method_exists($user, 'can') && $user->can('tickets.approve')) ||
         (method_exists($user, 'hasPermissionTo') && $user->hasPermissionTo('tickets.approve'));
 @endphp

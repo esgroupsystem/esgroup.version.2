@@ -1,9 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Listeners;
 
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 
 class LogFailedLogin
@@ -23,9 +23,9 @@ class LogFailedLogin
     {
         Log::warning('❌ Failed Login Attempt', [
             'username_attempted' => $event->credentials['username'] ?? null,
-            'ip'       => request()->ip(),
-            'agent'    => request()->userAgent(),
-            'time'     => now()->toDateTimeString(),
+            'ip' => request()->ip(),
+            'agent' => request()->userAgent(),
+            'time' => now()->toDateTimeString(),
         ]);
     }
 }

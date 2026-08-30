@@ -1,9 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string|null $transfer_number
+ * @property string|null $from_location_id
+ * @property string|null $to_location_id
+ * @property \Carbon\CarbonInterface|null $transfer_date
+ * @property string|null $requested_by
+ * @property string|null $received_by
+ * @property string|null $remarks
+ * @property string|null $status
+ * @property \Carbon\CarbonInterface|null $rolled_back_at
+ * @property string|null $rolled_back_by
+ * @property string|null $rollback_reason
+ * @property string|null $created_by
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, StockTransferItem> $items
+ */
 class StockTransfer extends Model
 {
     protected $fillable = [
@@ -26,27 +45,32 @@ class StockTransfer extends Model
         'rolled_back_at' => 'datetime',
     ];
 
-    public function fromLocation()
+    /** @return BelongsTo<Location, $this> */
+    public function fromLocation(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'from_location_id');
     }
 
-    public function toLocation()
+    /** @return BelongsTo<Location, $this> */
+    public function toLocation(): BelongsTo
     {
         return $this->belongsTo(Location::class, 'to_location_id');
     }
 
-    public function items()
+    /** @return HasMany<StockTransferItem, $this> */
+    public function items(): HasMany
     {
         return $this->hasMany(StockTransferItem::class);
     }
 
-    public function creator()
+    /** @return BelongsTo<User, $this> */
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    public function rollbackUser()
+    /** @return BelongsTo<User, $this> */
+    public function rollbackUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'rolled_back_by');
     }

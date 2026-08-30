@@ -14,7 +14,7 @@
                 <div class="flex-grow-1 me-2 text-truncate">
                     <i class="fas fa-file mono-icon me-2"></i>
 
-                    <a href="{{ asset('storage/' . $att->file_path) }}" target="_blank"
+                    <a href="{{ route('employees.staff.attachments.download', [$employee->id, $att->id]) }}" target="_blank"
                         class="text-truncate d-inline-block" style="max-width: 180px;">
                         {{ $att->file_name }}
                     </a>

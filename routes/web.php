@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Http\Controllers\Accounting\AccountingController;
 use App\Http\Controllers\AllBusController;
 use App\Http\Controllers\Auth\AuthController;
@@ -41,6 +43,7 @@ use App\Http\Controllers\Payroll\PayrollBenefitSettlementController;
 use App\Http\Controllers\Payroll\PayrollController;
 use App\Http\Controllers\Payroll\PayrollEmployeeSalaryController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SecureFileController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Middleware\ForceLockscreen;
 use Illuminate\Support\Facades\Auth;
@@ -66,8 +69,6 @@ Route::controller(AuthController::class)->group(function () {
     Route::get('/login', 'showLogin')->name('login');
     Route::post('/login', 'login')
         ->name('login.post');
-    Route::post('/register', 'register')
-        ->name('register.post');
     Route::post('/logout', 'logout')->name('logout');
     Route::get('/lockscreen', 'showLockscreen')->name('lockscreen.show');
     Route::post('/unlock', 'unlock')
@@ -183,11 +184,15 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->name('joborder.addnote');
 
             Route::post('/joborder/{id}/addfile', 'addFiles')
-                ->middleware('permission:tickets.update')
+                ->middleware(['permission:tickets.update', 'throttle:expensive'])
                 ->name('joborder.addfile');
 
+            Route::get('/joborder/{id}/file/{file}/download', 'downloadFile')
+                ->middleware('permission:tickets.view')
+                ->name('joborder.file.download');
+
             Route::get('/export/{type}', 'export')
-                ->middleware('permission:tickets.export')
+                ->middleware(['permission:tickets.export', 'throttle:expensive'])
                 ->name('export');
 
             Route::get('/cctv', 'cctvindex')
@@ -351,6 +356,15 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:employees.view')
                     ->name('staff.index');
 
+                Route::get('/{employee}/profile-picture', [SecureFileController::class, 'employeeProfile'])
+                    ->middleware('permission:employees.view')
+                    ->name('staff.profile-picture');
+
+                Route::get('/{employee}/asset-file/{type}', [SecureFileController::class, 'employeeAssetFile'])
+                    ->middleware('permission:employees.view')
+                    ->whereIn('type', ['birth_certificate', 'resume', 'contract'])
+                    ->name('staff.asset-file');
+
                 Route::post('/store', 'store')
                     ->middleware('permission:employees.create')
                     ->name('staff.store');
@@ -390,6 +404,10 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::delete('/{employee}/attachments/{attachment}', 'destroyAttachment')
                     ->middleware('permission:employees.update')
                     ->name('staff.attachments.destroy');
+
+                Route::get('/{employee}/attachments/{attachment}/download', 'downloadAttachment')
+                    ->middleware('permission:employees.view')
+                    ->name('staff.attachments.download');
 
                 Route::put('/employees/{employee}/status-details', 'updateStatusDetails')
                     ->middleware('permission:employees.update')
@@ -509,6 +527,11 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('{leave}/action', 'action')
                 ->middleware('permission:driver-leave.update')
                 ->name('driver.action');
+
+            Route::get('{leave}/proof/{type}', [SecureFileController::class, 'driverLeaveProof'])
+                ->middleware('permission:driver-leave.view')
+                ->whereIn('type', ['first', 'second', 'final'])
+                ->name('driver.proof');
         });
 
     /*
@@ -545,6 +568,11 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('{leave}/action', 'action')
                 ->middleware('permission:conductor-leave.update')
                 ->name('conductor.action');
+
+            Route::get('{leave}/proof/{type}', [SecureFileController::class, 'conductorLeaveProof'])
+                ->middleware('permission:conductor-leave.view')
+                ->whereIn('type', ['first', 'second', 'final'])
+                ->name('conductor.proof');
         });
 
     /*
@@ -581,6 +609,11 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post('{leave}/action', 'action')
                 ->middleware('permission:employee-leave.update')
                 ->name('employee.action');
+
+            Route::get('{leave}/proof/{type}', [SecureFileController::class, 'employeeLeaveProof'])
+                ->middleware('permission:employee-leave.view')
+                ->whereIn('type', ['first', 'second', 'final'])
+                ->name('employee.proof');
         });
 
     /*
@@ -721,7 +754,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->name('rebuild');
 
             Route::get('/export-payroll', 'exportPayroll')
-                ->middleware('permission:attendance-summary.export')
+                ->middleware(['permission:attendance-summary.export', 'throttle:expensive'])
                 ->name('export-payroll');
         });
 
@@ -858,12 +891,12 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->name('destroy');
 
             Route::get('/{payroll}/export/excel', 'exportExcel')
-                ->middleware('permission:payroll.export')
+                ->middleware(['permission:payroll.export', 'throttle:expensive'])
                 ->whereNumber('payroll')
                 ->name('export.excel');
 
             Route::get('/{payroll}/export/pdf', 'exportPdf')
-                ->middleware('permission:payroll.export')
+                ->middleware(['permission:payroll.export', 'throttle:expensive'])
                 ->whereNumber('payroll')
                 ->name('export.pdf');
 
@@ -1227,6 +1260,10 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::get('/{id}', 'show')
                     ->middleware('permission:receivings.view')
                     ->name('show');
+
+                Route::get('/{receiving}/proof', 'downloadProof')
+                    ->middleware('permission:receivings.view')
+                    ->name('proof');
 
                 Route::post('/{receiving}/items/{item}/rollback', 'rollbackItem')
                     ->middleware('permission:receivings.rollback')

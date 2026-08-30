@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
@@ -78,18 +80,19 @@ class PayrollEmployeeSalaryController extends Controller
                 });
             })
             ->when($groupName !== '', function ($query) use ($groupName): void {
-                $query->whereHas('employeeBiometric', fn ($employeeQuery) => $employeeQuery->where('group_name', $groupName));
+                $query->whereHas('employeeBiometric', fn (\Illuminate\Database\Eloquent\Builder $employeeQuery) => $employeeQuery->where('group_name', $groupName));
             })
             ->when($employmentStatus !== '', function ($query) use ($employmentStatus): void {
-                $query->whereHas('employeeBiometric', function ($employeeQuery) use ($employmentStatus): void {
+                $query->whereHas('employeeBiometric', function (\Illuminate\Database\Eloquent\Builder $employeeQuery) use ($employmentStatus): void {
                     if ($employmentStatus === EmployeeBiometric::STATUS_ACTIVE) {
-                        $employeeQuery->payrollActive();
+                        $employeeQuery->where('is_payroll_active', true)
+                            ->where('employment_status', EmployeeBiometric::STATUS_ACTIVE);
 
                         return;
                     }
 
                     if ($employmentStatus === EmployeeBiometric::STATUS_INACTIVE) {
-                        $employeeQuery->inactive();
+                        $employeeQuery->where('employment_status', EmployeeBiometric::STATUS_INACTIVE);
                     }
                 });
             })
@@ -108,7 +111,7 @@ class PayrollEmployeeSalaryController extends Controller
             ->withQueryString();
 
         $salaries->getCollection()->transform(function (PayrollEmployeeSalary $salary) {
-            $salary->payroll_preview = $this->deductionService->salaryPreview($salary);
+            $salary->setAttribute('payroll_preview', $this->deductionService->salaryPreview($salary));
 
             return $salary;
         });

@@ -1,14 +1,40 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use App\Support\PayrollEmployeeNameFormatter;
 use App\Enums\WorkdayType;
+use App\Support\PayrollEmployeeNameFormatter;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int|null $employee_biometric_id
+ * @property string|null $crosschex_id
+ * @property string|null $biometric_employee_id
+ * @property string|null $employee_no
+ * @property string|null $employee_name
+ * @property \Carbon\CarbonInterface|null $work_date
+ * @property string|null $shift_name
+ * @property WorkdayType|null $workday_type
+ * @property int|null $paid_work_minutes
+ * @property int|null $lunch_break_minutes
+ * @property string|null $time_in
+ * @property string|null $time_out
+ * @property int|null $grace_minutes
+ * @property string|null $status
+ * @property string|null $day_off
+ * @property array<string, mixed>|null $day_offs
+ * @property string|null $remarks
+ * @property-read mixed $formatted_time_in
+ * @property-read mixed $formatted_time_out
+ * @property-read mixed $is_flexible
+ * @property-read mixed $is_permanent
+ * @property-read mixed $payroll_display_name
+ */
 class EmployeePlottingSchedule extends Model
 {
     protected $fillable = [
@@ -44,20 +70,27 @@ class EmployeePlottingSchedule extends Model
         ];
     }
 
+    /** @return BelongsTo<EmployeeBiometric, $this> */
     public function employeeBiometric(): BelongsTo
     {
         return $this->belongsTo(EmployeeBiometric::class, 'employee_biometric_id');
     }
 
+    /**
+     * @param  Builder<EmployeePlottingSchedule>  $query
+     * @return Builder<EmployeePlottingSchedule>
+     */
     public function scopePermanent(Builder $query): Builder
     {
         return $query->whereNull('work_date');
     }
 
+    /** @return Builder<EmployeePlottingSchedule> */
     public function scopeForPayrollActiveEmployees(Builder $query): Builder
     {
         return $query->whereHas('employeeBiometric', function (Builder $query): void {
-            $query->payrollActive();
+            $query->where('is_payroll_active', true)
+                ->where('employment_status', EmployeeBiometric::STATUS_ACTIVE);
         });
     }
 
@@ -83,19 +116,8 @@ class EmployeePlottingSchedule extends Model
 
     public function resolvedWorkdayType(): WorkdayType
     {
-        if ($this->workday_type instanceof WorkdayType) {
-            return $this->workday_type;
-        }
-
-        if (is_string($this->workday_type)) {
-            $resolved = WorkdayType::tryFrom($this->workday_type);
-
-            if ($resolved) {
-                return $resolved;
-            }
-        }
-
-        return WorkdayType::fromPaidMinutes((int) ($this->paid_work_minutes ?: 480));
+        return $this->workday_type
+            ?? WorkdayType::fromPaidMinutes((int) ($this->paid_work_minutes ?: 480));
     }
 
     public function paidWorkMinutes(): int
@@ -124,18 +146,11 @@ class EmployeePlottingSchedule extends Model
 
     public function resolvedDayOffs(): array
     {
-        $dayOffs = $this->day_offs;
+        /** @var array<int, mixed>|null $dayOffs */
+        $dayOffs = $this->getAttribute('day_offs');
 
         if (is_array($dayOffs) && $dayOffs !== []) {
             return $this->normalizeDayOffs($dayOffs);
-        }
-
-        if (is_string($dayOffs) && trim($dayOffs) !== '') {
-            $decoded = json_decode($dayOffs, true);
-
-            if (is_array($decoded)) {
-                return $this->normalizeDayOffs($decoded);
-            }
         }
 
         return $this->normalizeDayOffs(
@@ -173,5 +188,4 @@ class EmployeePlottingSchedule extends Model
     {
         return PayrollEmployeeNameFormatter::display($this->employee_name ?? null);
     }
-
 }

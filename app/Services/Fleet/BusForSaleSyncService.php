@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Fleet;
 
 use App\Models\Bus;
@@ -45,7 +47,7 @@ class BusForSaleSyncService
 
     public function syncFromForSaleRecord(BusForSaleRecord $record): Bus
     {
-        $bus = $this->resolveBus($record) ?? new Bus();
+        $bus = $this->resolveBus($record) ?? new Bus;
 
         $bus->fill([
             'bus_no' => $this->uppercase($record->bus_no),

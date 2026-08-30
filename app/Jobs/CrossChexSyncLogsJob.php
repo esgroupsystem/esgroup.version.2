@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Services\Biometrics\CrossChexAttendanceSyncService;
@@ -31,8 +33,7 @@ class CrossChexSyncLogsJob implements ShouldQueue
         public string $from,
         public string $to,
         public array $accounts = [],
-    ) {
-    }
+    ) {}
 
     public function backoff(): array
     {
@@ -70,6 +71,7 @@ class CrossChexSyncLogsJob implements ShouldQueue
 
                 if ($result['rate_limited']) {
                     sleep(max(1, (int) $result['retry_after']));
+
                     continue;
                 }
 

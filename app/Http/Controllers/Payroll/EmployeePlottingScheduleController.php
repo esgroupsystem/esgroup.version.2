@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Payroll;
 
 use App\Enums\WorkdayType;
@@ -90,7 +92,7 @@ class EmployeePlottingScheduleController extends Controller
                     ->filter(function (EmployeeBiometric $employee) use ($schedules, $status): bool {
                         $schedule = $schedules->get((int) $employee->id);
 
-                        return ($schedule?->status ?? 'scheduled') === $status;
+                        return ($schedule->status ?? 'scheduled') === $status;
                     })
                     ->values()
             );
@@ -102,7 +104,7 @@ class EmployeePlottingScheduleController extends Controller
                     ->filter(function (EmployeeBiometric $employee) use ($schedules, $shift): bool {
                         $schedule = $schedules->get((int) $employee->id);
 
-                        return ($schedule?->shift_name ?? 'Regular Shift') === $shift;
+                        return ($schedule->shift_name ?? 'Regular Shift') === $shift;
                     })
                     ->values()
             );

@@ -1,11 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string|null $request_id
+ * @property int|null $user_id
+ * @property int|null $garage_group
+ * @property string|null $module
+ * @property string|null $action
+ * @property string|null $auditable_type
+ * @property int|null $auditable_id
+ * @property int|null $payroll_id
+ * @property int|null $payroll_item_id
+ * @property int|null $employee_biometric_id
+ * @property int|null $employee_id
+ * @property string|null $description
+ * @property array<string, mixed>|null $old_values
+ * @property array<string, mixed>|null $new_values
+ * @property array<string, mixed>|null $context
+ * @property string|null $ip_address
+ * @property string|null $user_agent
+ * @property \Carbon\CarbonInterface|null $created_at
+ */
 class PayrollAuditLog extends Model
 {
     public $timestamps = false;
@@ -45,26 +67,34 @@ class PayrollAuditLog extends Model
         'created_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return BelongsTo<Payroll, $this> */
     public function payroll(): BelongsTo
     {
         return $this->belongsTo(Payroll::class);
     }
 
+    /** @return BelongsTo<PayrollItem, $this> */
     public function payrollItem(): BelongsTo
     {
         return $this->belongsTo(PayrollItem::class);
     }
 
+    /** @return BelongsTo<EmployeeBiometric, $this> */
     public function employeeBiometric(): BelongsTo
     {
         return $this->belongsTo(EmployeeBiometric::class);
     }
 
+    /**
+     * @param  Builder<PayrollAuditLog>  $query
+     * @return Builder<PayrollAuditLog>
+     */
     public function scopeForAllowedGroups(Builder $query, string|array|null $allowedGroups): Builder
     {
         if ($allowedGroups === 'all') {

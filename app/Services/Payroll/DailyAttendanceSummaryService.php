@@ -23,15 +23,9 @@ class DailyAttendanceSummaryService
 
     private const FULL_DAY_PAID_MINUTES = 480; // 8 paid working hours
 
-    private const HALF_DAY_PAID_MINUTES = 240; // 4 paid working hours
-
     private const FULL_DAY_PAYABLE_DAYS = 1.00;
 
     private const HALF_DAY_PAYABLE_DAYS = 0.50;
-
-    private const FULL_DAY_PAYABLE_HOURS = 8.00;
-
-    private const HALF_DAY_PAYABLE_HOURS = 4.00;
 
     private const DEFAULT_GRACE_MINUTES = 15;
 
@@ -41,10 +35,6 @@ class DailyAttendanceSummaryService
      * treat the later punch as duplicate scan, not a valid timeout.
      */
     private const DUPLICATE_PUNCH_WINDOW_MINUTES = 30;
-
-    private const REGULAR_HOLIDAY_WORKED_PAY_DAYS = 2.00;
-
-    private const SPECIAL_HOLIDAY_WORKED_PAY_DAYS = 1.30;
 
     private array $columnCache = [];
 
@@ -354,8 +344,7 @@ class DailyAttendanceSummaryService
         $adjustments = $this->applicableAdjustmentsForPersonDate($person, $workDate);
         $adjustment = $this->attendanceAdjustmentForSummary($adjustments);
         $offsetAdjustment = $adjustments->first(
-            fn (PayrollAttendanceAdjustment $row): bool =>
-                $row->adjustment_type === PayrollAttendanceAdjustment::TYPE_OFFSET
+            fn (PayrollAttendanceAdjustment $row): bool => $row->adjustment_type === PayrollAttendanceAdjustment::TYPE_OFFSET
         );
 
         $globalDisasterAdjustment = $this->globalDisasterAdjustmentForDate($workDate);
@@ -417,8 +406,7 @@ class DailyAttendanceSummaryService
         // Overtime is a payroll authorization interval only. It must never
         // replace normal attendance actual/scheduled time in Daily Summary.
         $eligible = $adjustments->reject(
-            fn (PayrollAttendanceAdjustment $adjustment): bool =>
-                $adjustment->adjustment_type === PayrollAttendanceAdjustment::TYPE_OVERTIME
+            fn (PayrollAttendanceAdjustment $adjustment): bool => $adjustment->adjustment_type === PayrollAttendanceAdjustment::TYPE_OVERTIME
         );
 
         $priority = [
@@ -431,8 +419,7 @@ class DailyAttendanceSummaryService
         ];
 
         return $eligible
-            ->sortByDesc(fn (PayrollAttendanceAdjustment $adjustment): int =>
-                (int) ($priority[$adjustment->adjustment_type] ?? 0)
+            ->sortByDesc(fn (PayrollAttendanceAdjustment $adjustment): int => (int) ($priority[$adjustment->adjustment_type] ?? 0)
             )
             ->first();
     }
@@ -555,8 +542,8 @@ class DailyAttendanceSummaryService
         $adjustmentIsPaid = $this->adjustmentQualifiesForPay($effectiveAdjustment);
 
         $isTyphoonDisasterAdjustment = $this->isTyphoonDisasterAdjustment($adjustment);
-        $ignoreLate = ! $isTyphoonDisasterAdjustment && (bool) ($adjustment?->ignore_late ?? false);
-        $ignoreUndertime = ! $isTyphoonDisasterAdjustment && (bool) ($adjustment?->ignore_undertime ?? false);
+        $ignoreLate = ! $isTyphoonDisasterAdjustment && (bool) ($adjustment->ignore_late ?? false);
+        $ignoreUndertime = ! $isTyphoonDisasterAdjustment && (bool) ($adjustment->ignore_undertime ?? false);
         $disasterRequiredMinutes = PayrollAttendanceAdjustment::typhoonDisasterRequiredMinutes($adjustment?->adjustment_type);
         $disasterQualified = false;
 
@@ -568,6 +555,7 @@ class DailyAttendanceSummaryService
         $unpaidBreakMinutes = 0;
         $payableDays = 0.00;
         $payableHours = 0.00;
+        /** @var string $attendanceStatus */
         $attendanceStatus = 'absent';
 
         if (! $schedule) {
@@ -780,6 +768,7 @@ class DailyAttendanceSummaryService
             $payableDays = 0.00;
             $payableHours = 0.00;
         } elseif (! $hasAttendanceProof) {
+            /** @var string $attendanceStatus */
             $attendanceStatus = 'absent';
             $payableDays = 0.00;
             $payableHours = 0.00;
@@ -1009,7 +998,7 @@ class DailyAttendanceSummaryService
                 'adjustment_remarks' => $adjustmentRemarks,
 
                 'is_absent' => $attendanceStatus === 'absent',
-                'is_incomplete_log' => $attendanceStatus === 'incomplete_log',
+                'is_incomplete_log' => $this->isIncompleteBiometricLog($actualTimeIn, $actualTimeOut, $hasRawBiometrics),
 
                 'payable_days' => round((float) $payableDays, 2),
                 'payable_hours' => round((float) $payableHours, 2),
@@ -1028,7 +1017,7 @@ class DailyAttendanceSummaryService
                     'paid_minutes_per_day' => $paidMinutesPerDay,
                     'offset_adjustment_id' => $offsetAdjustment?->id,
                     'offset_source_date' => $offsetAdjustment?->offset_source_date?->toDateString(),
-                    'offset_available_minutes' => max(0, (int) ($offsetAdjustment?->approved_minutes ?? 0)),
+                    'offset_available_minutes' => max(0, (int) ($offsetAdjustment->approved_minutes ?? 0)),
                     'offset_applied_minutes' => max(0, (int) $offsetAppliedMinutes),
                     'offset_mode' => $offsetAdjustment ? 'compensatory_time' : null,
                     'typhoon_disaster_required_minutes' => $isTyphoonDisasterAdjustment
@@ -1631,6 +1620,11 @@ class DailyAttendanceSummaryService
         return in_array($workDate->format('l'), $dayOffs, true);
     }
 
+    protected function isIncompleteBiometricLog(?Carbon $actualTimeIn, ?Carbon $actualTimeOut, bool $hasRawBiometrics): bool
+    {
+        return $hasRawBiometrics && (($actualTimeIn === null) xor ($actualTimeOut === null));
+    }
+
     protected function scheduleIndicatesLeave(?string $scheduleStatus): bool
     {
         $status = strtolower(trim((string) $scheduleStatus));
@@ -1641,12 +1635,8 @@ class DailyAttendanceSummaryService
 
     protected function isAutomaticHalfDay(?Carbon $actualTimeIn, ?Carbon $actualTimeOut): bool
     {
-        if (($actualTimeIn && ! $actualTimeOut) || (! $actualTimeIn && $actualTimeOut)) {
-            return true;
-        }
-
-        if (! $actualTimeIn || ! $actualTimeOut) {
-            return false;
+        if ($actualTimeIn === null || $actualTimeOut === null) {
+            return $actualTimeIn !== $actualTimeOut;
         }
 
         return $actualTimeOut->lessThanOrEqualTo($actualTimeIn);

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
@@ -20,10 +22,10 @@ class HRDashboardController extends Controller
     {
         $today = Carbon::now()->startOfDay();
 
-        $deptFilter = $request->get('filter_department');
-        $posFilter = $request->get('filter_position');
-        $statusFilter = $request->get('filter_status');
-        $companyFilter = $request->get('filter_company');
+        $deptFilter = $request->input('filter_department');
+        $posFilter = $request->input('filter_position');
+        $statusFilter = $request->input('filter_status');
+        $companyFilter = $request->input('filter_company');
 
         // Employees (with filters)
         $employeeQuery = Employee::with(['department', 'position'])
@@ -96,8 +98,8 @@ class HRDashboardController extends Controller
 
             $timeline[] = [
                 'time' => $date ? $date->diffForHumans() : '—',
-                'actor' => $rl->employee?->full_name ?? '—',
-                'action' => 'Updated Leave (' . ($rl->leave_type ?? 'Leave') . ')',
+                'actor' => $rl->employee->full_name ?? '—',
+                'action' => 'Updated Leave ('.($rl->leave_type ?? 'Leave').')',
             ];
         }
 
@@ -123,9 +125,13 @@ class HRDashboardController extends Controller
             ->orderByDesc('created_at')
             ->limit(8)
             ->get()
-            ->map(function ($o) {
-                $o->level_label = $o->offense_level == 1 ? '1st' : ($o->offense_level == 2 ? '2nd' : '3rd+');
-                $o->status_label = $o->status ?? 'Active';
+            ->map(function (DriverLeave $o): DriverLeave {
+                $o->setAttribute(
+                    'level_label',
+                    $o->offense_level === 1 ? '1st' : ($o->offense_level === 2 ? '2nd' : '3rd+')
+                );
+                $o->setAttribute('status_label', $o->status ?? 'Active');
+
                 return $o;
             });
 

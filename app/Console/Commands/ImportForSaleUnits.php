@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Models\Bus;
@@ -85,14 +87,14 @@ class ImportForSaleUnits extends Command
                         continue;
                     }
 
-                    $row = array_combine($headers, array_pad($data, count($headers), null));
-
-                    if ($row === false) {
+                    if (count($data) > count($headers)) {
                         $this->warn("Skipped row {$rowNumber}: invalid column count.");
                         $skipped++;
 
                         continue;
                     }
+
+                    $row = array_combine($headers, array_pad($data, count($headers), null));
 
                     $busNo = $this->cleanUpper($row['bus_number'] ?? null);
 

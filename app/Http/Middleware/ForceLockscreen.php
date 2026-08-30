@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -22,12 +24,12 @@ class ForceLockscreen
         }
 
         // 2. If not authenticated → allow (guest)
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return $next($request);
         }
 
         // 3. If authenticated but not unlocked → force lockscreen
-        if (!Session::get('unlocked', false)) {
+        if (! Session::get('unlocked', false)) {
             return redirect()->route('lockscreen.show');
         }
 

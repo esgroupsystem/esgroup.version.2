@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Payroll;
 
 use Carbon\Carbon;
@@ -57,7 +59,6 @@ class PayrollPeriodService
             $cycleMonth->copy()->day(10)->endOfDay(),
         ];
     }
-
 
     /**
      * Resolve the payroll cutoff that contains a specific calendar date.

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use Laravel\Sanctum\Sanctum;
 
 return [
@@ -47,7 +49,8 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Expire mobile bearer tokens after 24 hours by default. Override with SANCTUM_TOKEN_EXPIRATION.
+    'expiration' => (int) env('SANCTUM_TOKEN_EXPIRATION', 1440),
 
     /*
     |--------------------------------------------------------------------------
@@ -62,7 +65,7 @@ return [
     |
     */
 
-    'token_prefix' => env('SANCTUM_TOKEN_PREFIX', ''),
+    'token_prefix' => env('SANCTUM_TOKEN_PREFIX', 'esg_'),
 
     /*
     |--------------------------------------------------------------------------

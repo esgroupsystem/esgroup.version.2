@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Models\Bus;
@@ -64,16 +66,18 @@ class ImportBuses extends Command
 
                     if ($this->isEmptyRow($data)) {
                         $skipped++;
+
+                        continue;
+                    }
+
+                    if (count($data) > count($headers)) {
+                        $this->warn("Skipped row {$rowNumber}: invalid column count.");
+                        $skipped++;
+
                         continue;
                     }
 
                     $row = array_combine($headers, array_pad($data, count($headers), null));
-
-                    if ($row === false) {
-                        $this->warn("Skipped row {$rowNumber}: invalid column count.");
-                        $skipped++;
-                        continue;
-                    }
 
                     $busNo = $this->cleanValue($row['bus_no'] ?? null);
                     $plateNo = $this->cleanValue($row['plate_no'] ?? null);
@@ -81,6 +85,7 @@ class ImportBuses extends Command
                     if ($busNo === null || $busNo === '') {
                         $this->warn("Skipped row {$rowNumber}: missing BUS NO.");
                         $skipped++;
+
                         continue;
                     }
 

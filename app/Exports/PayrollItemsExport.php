@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Exports;
 
 use App\Models\Payroll;
@@ -10,9 +12,7 @@ use Maatwebsite\Excel\Concerns\WithTitle;
 
 class PayrollItemsExport implements FromArray, ShouldAutoSize, WithHeadings, WithTitle
 {
-    public function __construct(protected Payroll $payroll)
-    {
-    }
+    public function __construct(protected Payroll $payroll) {}
 
     public function title(): string
     {
@@ -54,26 +54,26 @@ class PayrollItemsExport implements FromArray, ShouldAutoSize, WithHeadings, Wit
                 return ($inactive ? '1' : '0').'|'.strtolower($item->payroll_display_name);
             })
             ->map(function ($item): array {
-            return [
-                $this->payroll->payroll_number,
-                $item->employee_no,
-                $item->payroll_display_name,
-                $item->biometric_employee_id,
-                (float) $item->total_payable_days,
-                (float) $item->total_payable_hours,
-                (float) $item->regular_pay,
-                (float) $item->holiday_pay,
-                (float) $item->rest_day_pay,
-                (float) $item->overtime_pay,
-                (float) $item->other_additions,
-                (float) $item->gross_pay,
-                (float) $item->sss_employee,
-                (float) $item->philhealth_employee,
-                (float) $item->pagibig_employee,
-                (float) $item->withholding_tax,
-                (float) $item->other_deductions,
-                (float) $item->net_pay,
-            ];
+                return [
+                    $this->payroll->payroll_number,
+                    $item->employee_no,
+                    $item->payroll_display_name,
+                    $item->biometric_employee_id,
+                    (float) $item->total_payable_days,
+                    (float) $item->total_payable_hours,
+                    (float) $item->regular_pay,
+                    (float) $item->holiday_pay,
+                    (float) $item->rest_day_pay,
+                    (float) $item->overtime_pay,
+                    (float) $item->other_additions,
+                    (float) $item->gross_pay,
+                    (float) $item->sss_employee,
+                    (float) $item->philhealth_employee,
+                    (float) $item->pagibig_employee,
+                    (float) $item->withholding_tax,
+                    (float) $item->other_deductions,
+                    (float) $item->net_pay,
+                ];
             })
             ->values()
             ->toArray();

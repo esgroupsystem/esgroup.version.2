@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Models\Payroll;
@@ -99,7 +101,7 @@ class RepairMonthlyGovernmentContributions extends Command
 
             $posted = $postingService->postForPayroll(
                 $lockedPayroll->fresh(),
-                $lockedPayroll->finalized_by,
+                (int) $lockedPayroll->finalized_by ?: null,
                 now('Asia/Manila')
             );
 

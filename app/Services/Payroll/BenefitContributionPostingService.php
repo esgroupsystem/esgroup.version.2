@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Payroll;
 
 use App\Models\BenefitContributionRecord;
@@ -95,8 +97,8 @@ class BenefitContributionPostingService
             );
 
             $calculation = $this->monthlyContributionService->compute(
-                (float) ($openingItem?->gross_pay ?? 0),
-                (float) ($closingItem?->gross_pay ?? 0),
+                (float) ($openingItem->gross_pay ?? 0),
+                (float) ($closingItem->gross_pay ?? 0),
                 $monthlyBasicSalary
             );
 
@@ -142,10 +144,7 @@ class BenefitContributionPostingService
         ?int $userId,
         CarbonInterface $postedAt
     ): array {
-        $asset = $anchorItem->employee?->asset
-            ?? $anchorItem->employeeBiometric?->activeSalaryProfile?->employee?->asset
-            ?? $closingItem?->employee?->asset
-            ?? $openingItem?->employee?->asset;
+        $asset = $anchorItem->employee->asset ?? $anchorItem->employeeBiometric?->activeSalaryProfile?->employee->asset ?? $closingItem?->employee->asset ?? $openingItem?->employee?->asset;
 
         $sssEmployeeTotal = $this->money($calculation['sss_employee'] ?? 0);
         $sssEmployerTotal = $this->money(
@@ -170,15 +169,15 @@ class BenefitContributionPostingService
 
         $sssEmployeeCollected = $this->collectedEmployeeShare(
             $sssEmployeeTotal,
-            (float) ($openingItem?->sss_employee ?? 0) + (float) ($closingItem?->sss_employee ?? 0)
+            (float) ($openingItem->sss_employee ?? 0) + (float) ($closingItem->sss_employee ?? 0)
         );
         $philHealthEmployeeCollected = $this->collectedEmployeeShare(
             $philHealthEmployee,
-            (float) ($openingItem?->philhealth_employee ?? 0) + (float) ($closingItem?->philhealth_employee ?? 0)
+            (float) ($openingItem->philhealth_employee ?? 0) + (float) ($closingItem->philhealth_employee ?? 0)
         );
         $pagibigEmployeeCollected = $this->collectedEmployeeShare(
             $pagibigEmployee,
-            (float) ($openingItem?->pagibig_employee ?? 0) + (float) ($closingItem?->pagibig_employee ?? 0)
+            (float) ($openingItem->pagibig_employee ?? 0) + (float) ($closingItem->pagibig_employee ?? 0)
         );
 
         $employeeShareUnrecovered = $this->money(
@@ -271,14 +270,14 @@ class BenefitContributionPostingService
                 'mode' => $settlementMode,
                 'reason' => $closingSettlementMeta['reason'] ?? null,
                 'opening_employee_share_cash' => [
-                    'sss' => round((float) ($openingItem?->sss_employee ?? 0), 2),
-                    'philhealth' => round((float) ($openingItem?->philhealth_employee ?? 0), 2),
-                    'pagibig' => round((float) ($openingItem?->pagibig_employee ?? 0), 2),
+                    'sss' => round((float) ($openingItem->sss_employee ?? 0), 2),
+                    'philhealth' => round((float) ($openingItem->philhealth_employee ?? 0), 2),
+                    'pagibig' => round((float) ($openingItem->pagibig_employee ?? 0), 2),
                 ],
                 'closing_employee_share_cash' => [
-                    'sss' => round((float) ($closingItem?->sss_employee ?? 0), 2),
-                    'philhealth' => round((float) ($closingItem?->philhealth_employee ?? 0), 2),
-                    'pagibig' => round((float) ($closingItem?->pagibig_employee ?? 0), 2),
+                    'sss' => round((float) ($closingItem->sss_employee ?? 0), 2),
+                    'philhealth' => round((float) ($closingItem->philhealth_employee ?? 0), 2),
+                    'pagibig' => round((float) ($closingItem->pagibig_employee ?? 0), 2),
                 ],
                 'monthly_employee_share_collected' => [
                     'sss' => $sssEmployeeCollected,
@@ -304,7 +303,7 @@ class BenefitContributionPostingService
                     'payroll_item_id' => $openingItem?->id,
                     'period_start' => $openingPayroll->period_start?->toDateString(),
                     'period_end' => $openingPayroll->period_end?->toDateString(),
-                    'gross' => $this->money($openingItem?->gross_pay ?? 0),
+                    'gross' => $this->money($openingItem->gross_pay ?? 0),
                 ],
                 'closing_payroll' => [
                     'id' => $closingPayroll->id,
@@ -312,7 +311,7 @@ class BenefitContributionPostingService
                     'payroll_item_id' => $closingItem?->id,
                     'period_start' => $closingPayroll->period_start?->toDateString(),
                     'period_end' => $closingPayroll->period_end?->toDateString(),
-                    'gross' => $this->money($closingItem?->gross_pay ?? 0),
+                    'gross' => $this->money($closingItem->gross_pay ?? 0),
                 ],
                 'sss_formula' => [
                     'compensation' => $this->money($calculation['sss_basis'] ?? 0),
@@ -380,7 +379,7 @@ class BenefitContributionPostingService
         $record = $existing->firstWhere('monthly_key', $monthlyKey)
             ?? $existing->firstWhere('payroll_item_id', $anchorItem->id)
             ?? $existing->first()
-            ?? new BenefitContributionRecord();
+            ?? new BenefitContributionRecord;
 
         $existing
             ->reject(fn (BenefitContributionRecord $candidate): bool => $candidate->is($record))

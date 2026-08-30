@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Payroll;
 
 use App\Models\BenefitContributionRecord;
@@ -97,13 +99,12 @@ class PayrollAuditService
         return PayrollAuditLog::query()->create([
             'request_id' => $this->requestId(),
             'user_id' => auth()->id(),
-            'garage_group' => $payroll?->garage_group
-                ?? $item?->payroll?->garage_group,
+            'garage_group' => $payroll->garage_group ?? ($item !== null ? $item->payroll->garage_group : null),
             'module' => $module,
             'action' => $action,
             'auditable_type' => null,
             'auditable_id' => null,
-            'payroll_id' => $payroll?->id ?? $item?->payroll_id,
+            'payroll_id' => $payroll->id ?? ($item !== null ? $item->payroll_id : null),
             'payroll_item_id' => $item?->id,
             'employee_biometric_id' => $employeeBiometricId ?? $item?->employee_biometric_id,
             'employee_id' => $employeeId ?? $item?->employee_id,

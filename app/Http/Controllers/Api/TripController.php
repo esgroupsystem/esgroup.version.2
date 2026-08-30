@@ -1,28 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Api\CreateTripAction;
 use App\Http\Controllers\Controller;
-use App\Models\Trip;
-use Illuminate\Http\Request;
+use App\Http\Requests\Api\StoreTripRequest;
+use Illuminate\Http\JsonResponse;
 
-class TripController extends Controller
+final class TripController extends Controller
 {
-    public function store(Request $request)
+    public function __construct(
+        private readonly CreateTripAction $createTrip,
+    ) {}
+
+    public function store(StoreTripRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'trip_code'   => 'required|string|unique:trips,trip_code',
-            'bus_number'  => 'required|string',
-            'driver_name' => 'required|string',
-        ]);
-
-        $data['user_id'] = $request->user()->id;
-        $data['started_at'] = now();
-
-        $trip = Trip::create($data);
+        $trip = $this->createTrip->execute(
+            $request->validated(),
+            $request->user(),
+        );
 
         return response()->json($trip, 201);
     }
 }
-
-

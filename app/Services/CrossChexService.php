@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use Carbon\Carbon;
@@ -120,7 +122,7 @@ class CrossChexService
                 $json = $response->json();
             } catch (RequestException $e) {
                 throw new \RuntimeException(
-                    'CrossChex token HTTP failed: '.($e->response?->body() ?? $e->getMessage()),
+                    'CrossChex token HTTP failed: '.$e->response->body(),
                     0,
                     $e
                 );
@@ -203,7 +205,7 @@ class CrossChexService
             $json = $response->json();
         } catch (RequestException $e) {
             throw new \RuntimeException(
-                'CrossChex getrecord HTTP failed: '.($e->response?->body() ?? $e->getMessage()),
+                'CrossChex getrecord HTTP failed: '.$e->response->body(),
                 0,
                 $e
             );

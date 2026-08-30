@@ -40,16 +40,19 @@
                     @include('hr_department.employees.partials._view_file', [
                         'label' => 'Birth Certificate',
                         'path' => $employee->asset?->birth_certificate,
+                        'file_type' => 'birth_certificate',
                         'date' => $employee->asset?->birth_certificate_updated_at,
                     ])
                     @include('hr_department.employees.partials._view_file', [
                         'label' => 'Resume',
                         'path' => $employee->asset?->resume,
+                        'file_type' => 'resume',
                         'date' => $employee->asset?->resume_updated_at,
                     ])
                     @include('hr_department.employees.partials._view_file', [
                         'label' => 'Contract',
                         'path' => $employee->asset?->contract,
+                        'file_type' => 'contract',
                         'date' => $employee->asset?->contract_updated_at,
                     ])
                 </div>

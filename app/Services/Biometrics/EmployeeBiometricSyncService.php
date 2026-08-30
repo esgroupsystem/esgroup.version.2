@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Biometrics;
 
 use App\Models\EmployeeBiometric;
@@ -630,7 +632,7 @@ class EmployeeBiometricSyncService
 
     private function defaultGroupName(
         mixed $account
-    ): string|int|null {
+    ): ?int {
         $account = mb_strtolower(
             $this->identityService->clean($account) ?? ''
         );

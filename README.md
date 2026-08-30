@@ -57,3 +57,11 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## Security deployment notes
+
+- Keep `.env` and `.env.testing` outside version control.
+- Use a dedicated disposable MariaDB/MySQL test database for PHPUnit.
+- Run `php artisan security:migrate-sensitive-files --dry-run` before migrating legacy public files; then run it without `--dry-run` after verifying backups.
+- Run `composer install` from the committed lock file and verify `composer audit`.
+- Keep `APP_DEBUG=false` in production and terminate TLS at a trusted proxy/load balancer.

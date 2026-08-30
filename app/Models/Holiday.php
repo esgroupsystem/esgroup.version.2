@@ -1,10 +1,25 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @property string|null $name
+ * @property \Carbon\CarbonInterface|null $actual_date
+ * @property \Carbon\CarbonInterface|null $observed_date
+ * @property string|null $holiday_type
+ * @property bool|null $is_moved
+ * @property string|float|int $not_worked_multiplier
+ * @property string|float|int $worked_multiplier
+ * @property string|null $source_proclamation
+ * @property string|null $notes
+ * @property bool|null $is_active
+ * @property-read mixed $type_badge_class
+ */
 class Holiday extends Model
 {
     public const TYPE_REGULAR = 'regular';

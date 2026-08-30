@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
@@ -239,8 +241,8 @@ class PartsOutController extends Controller
 
     public function searchProducts(Request $request): JsonResponse
     {
-        $search = trim((string) $request->get('search', ''));
-        $locationId = (int) $request->get('location_id');
+        $search = trim((string) $request->input('search', ''));
+        $locationId = (int) $request->input('location_id');
 
         if (! $locationId || strlen($search) < 2) {
             return response()->json([]);
@@ -252,7 +254,7 @@ class PartsOutController extends Controller
             return response()->json([]);
         }
 
-        $excludeIds = collect(explode(',', (string) $request->get('exclude_ids', '')))
+        $excludeIds = collect(explode(',', (string) $request->input('exclude_ids', '')))
             ->filter(fn ($id) => is_numeric($id))
             ->map(fn ($id) => (int) $id)
             ->unique()

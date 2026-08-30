@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -7,6 +9,32 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string|null $payroll_number
+ * @property int|null $cutoff_month
+ * @property int|null $cutoff_year
+ * @property string|null $cutoff_type
+ * @property int|string|null $garage_group
+ * @property int|null $contribution_month
+ * @property int|null $contribution_year
+ * @property \Carbon\CarbonInterface|null $period_start
+ * @property \Carbon\CarbonInterface|null $period_end
+ * @property string|null $status
+ * @property-read int|string|null $garage_group
+ * @property-read string $cutoff_label
+ * @property-read string $contribution_label
+ * @property-read string $garage_group_label
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PayrollItem> $items
+ * @property-read User|null $generator
+ * @property-read User|null $finalizer
+
+ * @property string|null $remarks
+ * @property string|null $generated_by
+ * @property \Carbon\CarbonInterface|null $generated_at
+ * @property string|null $finalized_by
+ * @property \Carbon\CarbonInterface|null $finalized_at
+ * @property array<string, mixed>|null $meta
+ */
 class Payroll extends Model
 {
     protected $fillable = [
@@ -36,31 +64,37 @@ class Payroll extends Model
         'meta' => 'array',
     ];
 
+    /** @return HasMany<PayrollItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(PayrollItem::class);
     }
 
+    /** @return HasMany<PaymentLog, $this> */
     public function paymentLogs(): HasMany
     {
         return $this->hasMany(PaymentLog::class);
     }
 
+    /** @return HasMany<PayrollReportLog, $this> */
     public function reportLogs(): HasMany
     {
         return $this->hasMany(PayrollReportLog::class);
     }
 
+    /** @return HasMany<BenefitContributionRecord, $this> */
     public function benefitContributionRecords(): HasMany
     {
         return $this->hasMany(BenefitContributionRecord::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function generator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'generated_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function finalizer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'finalized_by');

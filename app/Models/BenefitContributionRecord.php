@@ -1,10 +1,75 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string|null $monthly_key
+ * @property int|null $payroll_id
+ * @property int|null $payroll_item_id
+ * @property int|null $employee_biometric_id
+ * @property int|null $employee_id
+ * @property int|null $payroll_employee_salary_id
+ * @property int|null $posted_by
+ * @property int|null $garage_group
+ * @property int|null $contribution_month
+ * @property int|null $contribution_year
+ * @property \Carbon\CarbonInterface|null $period_start
+ * @property \Carbon\CarbonInterface|null $period_end
+ * @property string|null $payroll_number
+ * @property string|null $employee_no
+ * @property string|null $employee_name
+ * @property string|null $company_name
+ * @property string|null $sss_number
+ * @property string|null $philhealth_number
+ * @property string|null $pagibig_number
+ * @property string|float|int $gross_compensation
+ * @property string|float|int $business_first_cutoff_gross
+ * @property string|float|int $business_second_cutoff_gross
+ * @property string|float|int $monthly_basic_salary
+ * @property string|float|int $sss_compensation_basis
+ * @property string|float|int $sss_compensation_range_minimum
+ * @property string|float|int $sss_compensation_range_maximum
+ * @property string|float|int $sss_msc
+ * @property string|float|int $sss_regular_ss_msc
+ * @property string|float|int $sss_mpf_msc
+ * @property string|float|int $sss_employee_regular_ss
+ * @property string|float|int $sss_employee_mpf
+ * @property string|float|int $sss_employee_total
+ * @property string|float|int $sss_employee_collected
+ * @property string|float|int $sss_employer_regular_ss
+ * @property string|float|int $sss_employer_mpf
+ * @property string|float|int $sss_employer_ec
+ * @property string|float|int $sss_employer_total
+ * @property string|float|int $sss_total_contribution
+ * @property string|float|int $philhealth_basis
+ * @property string|float|int $philhealth_salary_base
+ * @property string|float|int $philhealth_premium_rate
+ * @property string|float|int $philhealth_employee
+ * @property string|float|int $philhealth_employee_collected
+ * @property string|float|int $philhealth_employer
+ * @property string|float|int $philhealth_total
+ * @property string|float|int $pagibig_basis
+ * @property string|float|int $pagibig_fund_salary
+ * @property string|float|int $pagibig_employee_rate
+ * @property string|float|int $pagibig_employer_rate
+ * @property string|float|int $pagibig_employee
+ * @property string|float|int $pagibig_employee_collected
+ * @property string|float|int $pagibig_employer
+ * @property string|float|int $pagibig_total
+ * @property string|float|int $employee_total
+ * @property string|float|int $employer_total
+ * @property string|float|int $grand_total
+ * @property string|float|int $employee_share_unrecovered
+ * @property string|null $settlement_status
+ * @property array<string, mixed>|null $settlement_meta
+ * @property \Carbon\CarbonInterface|null $posted_at
+ * @property array<string, mixed>|null $meta
+ */
 class BenefitContributionRecord extends Model
 {
     protected $fillable = [
@@ -126,31 +191,37 @@ class BenefitContributionRecord extends Model
         'meta' => 'array',
     ];
 
+    /** @return BelongsTo<Payroll, $this> */
     public function payroll(): BelongsTo
     {
         return $this->belongsTo(Payroll::class);
     }
 
+    /** @return BelongsTo<PayrollItem, $this> */
     public function payrollItem(): BelongsTo
     {
         return $this->belongsTo(PayrollItem::class);
     }
 
+    /** @return BelongsTo<EmployeeBiometric, $this> */
     public function employeeBiometric(): BelongsTo
     {
         return $this->belongsTo(EmployeeBiometric::class);
     }
 
+    /** @return BelongsTo<Employee, $this> */
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
     }
 
+    /** @return BelongsTo<PayrollEmployeeSalary, $this> */
     public function salaryProfile(): BelongsTo
     {
         return $this->belongsTo(PayrollEmployeeSalary::class, 'payroll_employee_salary_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function postedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'posted_by');

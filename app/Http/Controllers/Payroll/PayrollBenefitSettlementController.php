@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
@@ -46,15 +48,15 @@ class PayrollBenefitSettlementController extends Controller
             $openingItem = $this->openingItemFor($payroll, $item);
 
             $monthlyLiability = $this->monthlyContributionService->compute(
-                (float) ($openingItem?->gross_pay ?? 0),
+                (float) ($openingItem->gross_pay ?? 0),
                 (float) $item->gross_pay,
-                (float) ($item->monthly_rate ?: ($openingItem?->monthly_rate ?? 0))
+                (float) ($item->monthly_rate ?: ($openingItem->monthly_rate ?? 0))
             );
 
             $this->validateReimbursement(
                 'sss_employee_reimbursement',
                 (float) $validated['sss_employee_reimbursement'],
-                (float) ($openingItem?->sss_employee ?? 0),
+                (float) ($openingItem->sss_employee ?? 0),
                 (float) ($monthlyLiability['sss_employee'] ?? 0),
                 'SSS'
             );
@@ -62,7 +64,7 @@ class PayrollBenefitSettlementController extends Controller
             $this->validateReimbursement(
                 'philhealth_employee_reimbursement',
                 (float) $validated['philhealth_employee_reimbursement'],
-                (float) ($openingItem?->philhealth_employee ?? 0),
+                (float) ($openingItem->philhealth_employee ?? 0),
                 (float) ($monthlyLiability['philhealth_employee'] ?? 0),
                 'PhilHealth'
             );
@@ -70,7 +72,7 @@ class PayrollBenefitSettlementController extends Controller
             $this->validateReimbursement(
                 'pagibig_employee_reimbursement',
                 (float) $validated['pagibig_employee_reimbursement'],
-                (float) ($openingItem?->pagibig_employee ?? 0),
+                (float) ($openingItem->pagibig_employee ?? 0),
                 (float) ($monthlyLiability['pagibig_employee'] ?? 0),
                 'Pag-IBIG'
             );
@@ -95,9 +97,9 @@ class PayrollBenefitSettlementController extends Controller
                 'meta' => [
                     'opening_payroll_item_id' => $openingItem?->id,
                     'opening_collected' => [
-                        'sss' => round((float) ($openingItem?->sss_employee ?? 0), 2),
-                        'philhealth' => round((float) ($openingItem?->philhealth_employee ?? 0), 2),
-                        'pagibig' => round((float) ($openingItem?->pagibig_employee ?? 0), 2),
+                        'sss' => round((float) ($openingItem->sss_employee ?? 0), 2),
+                        'philhealth' => round((float) ($openingItem->philhealth_employee ?? 0), 2),
+                        'pagibig' => round((float) ($openingItem->pagibig_employee ?? 0), 2),
                     ],
                     'monthly_statutory_employee_share' => [
                         'sss' => round((float) ($monthlyLiability['sss_employee'] ?? 0), 2),

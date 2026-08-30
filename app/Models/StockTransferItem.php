@@ -1,9 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string|null $stock_transfer_id
+ * @property string|null $product_id
+ * @property int|null $qty
+ * @property string|null $status
+ * @property \Carbon\CarbonInterface|null $rolled_back_at
+ * @property string|null $rolled_back_by
+ */
 class StockTransferItem extends Model
 {
     protected $fillable = [
@@ -20,17 +31,20 @@ class StockTransferItem extends Model
         'rolled_back_at' => 'datetime',
     ];
 
-    public function stockTransfer()
+    /** @return BelongsTo<StockTransfer, $this> */
+    public function stockTransfer(): BelongsTo
     {
         return $this->belongsTo(StockTransfer::class);
     }
 
-    public function product()
+    /** @return BelongsTo<Product, $this> */
+    public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    public function rollbackUser()
+    /** @return BelongsTo<User, $this> */
+    public function rollbackUser(): BelongsTo
     {
         return $this->belongsTo(User::class, 'rolled_back_by');
     }

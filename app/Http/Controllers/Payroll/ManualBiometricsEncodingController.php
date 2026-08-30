@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
@@ -98,7 +100,7 @@ class ManualBiometricsEncodingController extends Controller
 
     public function searchEmployees(Request $request)
     {
-        $search = trim((string) $request->get('q'));
+        $search = trim((string) $request->input('q'));
 
         $employees = MirasolBiometricsLog::query()
             ->select(

@@ -3,29 +3,35 @@
     "name": "laravel/laravel",
     "type": "project",
     "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "barryvdh/laravel-dompdf": "^3.1",
+        "barryvdh/laravel-dompdf": "^3.1.2",
         "laracasts/flash": "^3.2",
-        "laravel/framework": "^12.0",
-        "laravel/sanctum": "^4.0",
+        "laravel/framework": "^12.61.1",
+        "laravel/sanctum": "^4.3.3",
         "laravel/tinker": "^2.10.1",
-        "maatwebsite/excel": "^3.1",
-        "pusher/pusher-php-server": "^7.2",
+        "maatwebsite/excel": "^3.1.69",
+        "pusher/pusher-php-server": "^7.3.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
-        "spatie/laravel-permission": "^6.25"
+        "spatie/laravel-permission": "^6.25",
+        "phpoffice/phpspreadsheet": "^1.30.6",
+        "symfony/yaml": "^7.4.17"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
+        "larastan/larastan": "^3.10",
         "laravel/breeze": "^2.3",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "laravel/sail": "^1.41",
         "mockery/mockery": "^1.6",
         "nunomaduro/collision": "^8.6",
-        "phpunit/phpunit": "^11.5.3"
+        "phpunit/phpunit": "^11.5.56"
     },
     "autoload": {
         "psr-4": {
@@ -39,9 +45,8 @@
             "Tests\\": "tests/"
         },
         "files": [
-        "app/Helpers/Notifier.php"
-    ]
-        
+            "app/Helpers/Notifier.php"
+        ]
     },
     "scripts": {
         "setup": [
@@ -77,6 +82,10 @@
         ],
         "pre-package-uninstall": [
             "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "security:update": "composer update laravel/framework laravel/sanctum barryvdh/laravel-dompdf dompdf/dompdf phpoffice/phpspreadsheet maatwebsite/excel pusher/pusher-php-server symfony/yaml phpunit/phpunit psy/psysh --with-all-dependencies",
+        "security:audit": [
+            "composer audit"
         ]
     },
     "extra": {

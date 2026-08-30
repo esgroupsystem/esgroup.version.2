@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
@@ -9,6 +11,7 @@ use Illuminate\Support\Str;
 class NormalizeTextCase extends Command
 {
     protected $signature = 'data:normalize-titlecase {table} {column}';
+
     protected $description = 'Normalize existing data to Title Case for a given table+column';
 
     public function handle()
@@ -31,6 +34,7 @@ class NormalizeTextCase extends Command
         }
 
         $this->info("Done. Updated {$updated} rows in {$table}.{$column}");
+
         return Command::SUCCESS;
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Support\PayrollEmployeeNameFormatter;
@@ -9,6 +11,35 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * @property string|null $employment_status
+ * @property bool|null $is_payroll_active
+ * @property int|string|null $group_name
+ * @property string|null $display_employee_no
+ * @property string|null $display_name
+ * @property string|null $source_employee_id
+ * @property string|null $source_employee_no
+ * @property string|null $source_employee_name
+ * @property string|null $source_crosschex_id
+ * @property string|null $source_crosschex_account_name
+ * @property string|null $source_crosschex_account
+ * @property string|null $last_check_time
+ * @property int $total_logs
+ * @property-read PayrollEmployeeSalary|null $activeSalaryProfile
+
+ * @property string|null $source_key
+ * @property string|null $employee_identity_hash
+ * @property int|null $biometric_company_id
+ * @property \Carbon\CarbonInterface|null $inactive_at
+ * @property string|null $device_sn
+ * @property string|null $device_name
+ * @property string|null $remarks
+ * @property-read mixed $effective_employee_no
+ * @property-read mixed $effective_name
+ * @property-read mixed $payroll_display_name
+ * @property-read mixed $legacy_biometric_employee_id
+ * @property-read mixed $payroll_group_label
+ */
 class EmployeeBiometric extends Model
 {
     public const STATUS_ACTIVE = 'active';
@@ -51,31 +82,37 @@ class EmployeeBiometric extends Model
         'total_logs' => 'integer',
     ];
 
+    /** @return BelongsTo<BiometricCompany, $this> */
     public function company(): BelongsTo
     {
         return $this->belongsTo(BiometricCompany::class, 'biometric_company_id');
     }
 
+    /** @return HasMany<DailyAttendanceSummary, $this> */
     public function attendanceSummaries(): HasMany
     {
         return $this->hasMany(DailyAttendanceSummary::class, 'employee_biometric_id');
     }
 
+    /** @return HasMany<PayrollAttendanceAdjustment, $this> */
     public function attendanceAdjustments(): HasMany
     {
         return $this->hasMany(PayrollAttendanceAdjustment::class, 'employee_biometric_id');
     }
 
+    /** @return HasMany<EmployeePlottingSchedule, $this> */
     public function plottingSchedules(): HasMany
     {
         return $this->hasMany(EmployeePlottingSchedule::class, 'employee_biometric_id');
     }
 
+    /** @return HasMany<PayrollEmployeeSalary, $this> */
     public function salaryProfiles(): HasMany
     {
         return $this->hasMany(PayrollEmployeeSalary::class, 'employee_biometric_id');
     }
 
+    /** @return HasOne<PayrollEmployeeSalary, $this> */
     public function activeSalaryProfile(): HasOne
     {
         return $this->hasOne(PayrollEmployeeSalary::class, 'employee_biometric_id')
@@ -83,11 +120,13 @@ class EmployeeBiometric extends Model
             ->latestOfMany();
     }
 
+    /** @return HasMany<BenefitContributionRecord, $this> */
     public function benefitContributionRecords(): HasMany
     {
         return $this->hasMany(BenefitContributionRecord::class, 'employee_biometric_id');
     }
 
+    /** @return HasMany<PayrollItem, $this> */
     public function payrollItems(): HasMany
     {
         return $this->hasMany(PayrollItem::class, 'employee_biometric_id');
@@ -185,7 +224,7 @@ class EmployeeBiometric extends Model
         )";
 
         // Production is MySQL/MariaDB. Keep SQLite-compatible fallback for tests.
-        if ($query->getConnection()->getDriverName() === 'sqlite') {
+        if (config('database.default') === 'sqlite') {
             return $query
                 ->orderByRaw("LOWER({$nameExpression}) ASC")
                 ->orderBy('id');

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\IT_Department;
 
 use App\Http\Controllers\Controller;
@@ -15,8 +17,8 @@ class CctvController extends Controller
 {
     public function index(Request $request)
     {
-        $q = trim((string) $request->get('q', ''));
-        $status = $request->get('status');
+        $q = trim((string) $request->input('q', ''));
+        $status = $request->input('status');
 
         $statusOptions = [
             '' => 'All',
@@ -36,13 +38,13 @@ class CctvController extends Controller
         $buses = BusDetail::query()
             ->orderBy('body_number', 'asc')
             ->get(['id', 'garage', 'name', 'body_number', 'plate_number'])
-            ->map(function ($bus) {
-                $bus->display_name = implode(' - ', array_filter([
+            ->map(function (BusDetail $bus): BusDetail {
+                $bus->setAttribute('display_name', implode(' - ', array_filter([
                     $bus->body_number,
                     $bus->plate_number,
                     $bus->name,
                     $bus->garage,
-                ]));
+                ])));
 
                 return $bus;
             });
@@ -101,7 +103,7 @@ class CctvController extends Controller
         $topPartCount = $partCounts->first() ?? 0;
 
         $assigneeCounts = $allJobOrders
-            ->map(fn ($job) => $job->assignee->full_name ?? null)
+            ->map(fn (CctvConcern $job): ?string => $job->assignee?->full_name)
             ->filter()
             ->groupBy(fn ($name) => $name)
             ->map->count()
@@ -172,7 +174,7 @@ class CctvController extends Controller
         try {
             $user = $request->user();
 
-            $data['reported_by'] = $user?->full_name ?? 'System';
+            $data['reported_by'] = $user->full_name ?? 'System';
             $data['created_by'] = $user?->id;
 
             $year = now()->year;
@@ -385,8 +387,8 @@ class CctvController extends Controller
 
     public function export(Request $request, string $type)
     {
-        $q = trim((string) $request->get('q', ''));
-        $status = trim((string) $request->get('status', ''));
+        $q = trim((string) $request->input('q', ''));
+        $status = trim((string) $request->input('status', ''));
 
         $busDisplayMap = BusDetail::query()
             ->get(['id', 'body_number', 'plate_number', 'name'])
@@ -489,7 +491,7 @@ class CctvController extends Controller
 
     public function busStatus(Request $request)
     {
-        $q = trim((string) $request->get('q', ''));
+        $q = trim((string) $request->input('q', ''));
 
         $issueColumns = [
             'CCTV' => ['Camera', 'Wiring'],
@@ -526,23 +528,23 @@ class CctvController extends Controller
         $allConcernsByBus = $allConcerns->groupBy('bus_no');
 
         $collection = $buses->getCollection()
-            ->map(function ($bus) use ($concernsByBus, $allConcernsByBus, $issueColumns) {
+            ->map(function (BusDetail $bus) use ($concernsByBus, $allConcernsByBus, $issueColumns): BusDetail {
                 $busConcerns = $concernsByBus->get($bus->id, collect());
                 $allBusConcerns = $allConcernsByBus->get($bus->id, collect());
 
-                $bus->display_name = implode(' - ', array_filter([
+                $bus->setAttribute('display_name', implode(' - ', array_filter([
                     $bus->body_number,
                     $bus->plate_number,
                     $bus->name,
                     $bus->garage,
-                ]));
+                ])));
 
-                $bus->status_summary = collect($issueColumns)->map(function ($types) use ($busConcerns) {
+                $bus->setAttribute('status_summary', collect($issueColumns)->map(function ($types) use ($busConcerns) {
                     return $busConcerns->whereIn('issue_type', $types)->count();
-                });
+                }));
 
-                $bus->total_issues = $bus->status_summary->sum();
-                $bus->completed_count = $allBusConcerns->whereIn('status', ['Fixed', 'Closed'])->count();
+                $bus->setAttribute('total_issues', $bus->getAttribute('status_summary')->sum());
+                $bus->setAttribute('completed_count', $allBusConcerns->whereIn('status', ['Fixed', 'Closed'])->count());
 
                 return $bus;
             })
@@ -560,8 +562,8 @@ class CctvController extends Controller
 
     public function busStatusShow(Request $request, string $bodyNumber)
     {
-        $issue = $request->get('issue');
-        $status = $request->get('status');
+        $issue = $request->input('issue');
+        $status = $request->input('status');
 
         $issueColumns = [
             'CCTV' => ['Camera', 'Wiring'],

@@ -9,14 +9,64 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int|null $employee_biometric_id
+ * @property int|null $employee_id
+ * @property string|null $employee_no
+ * @property string|null $employee_name
+ * @property string $adjustment_type
+ * @property \Carbon\CarbonInterface|null $work_date
+ * @property \Carbon\CarbonInterface|null $date_from
+ * @property \Carbon\CarbonInterface|null $date_to
+ * @property \Carbon\CarbonInterface|null $offset_source_date
+ * @property \Carbon\CarbonInterface|null $payroll_effective_date
+ * @property int|null $approved_minutes
+ * @property bool $defer_to_next_payroll
+ * @property bool $is_paid
+ * @property bool $ignore_late
+ * @property bool $ignore_undertime
+ * @property string|null $status
+ * @property string|null $adjusted_time_in
+ * @property string|null $adjusted_time_out
+ * @property string|null $offset_source_time_in
+ * @property string|null $offset_source_time_out
+ * @property-read string $type_label
+ * @property-read string $status_label
+ * @property-read string $period_label
+ * @property-read string $adjusted_time_label
+ * @property-read string $offset_proof_label
+
+ * @property string|null $biometric_employee_id
+ * @property string|null $crosschex_id
+ * @property string|null $adjusted_day_type
+ * @property array<string, mixed>|null $offset_source_logs
+ * @property int|null $paid_payroll_id
+ * @property int|null $paid_payroll_item_id
+ * @property string|null $reason
+ * @property string|null $remarks
+ * @property string|null $approved_by
+ * @property \Carbon\CarbonInterface|null $approved_at
+ * @property string|null $rejected_by
+ * @property \Carbon\CarbonInterface|null $rejected_at
+ * @property string|null $rejection_reason
+ * @property string|null $encoded_by
+ * @property \Carbon\CarbonInterface|null $encoded_at
+ * @property-read mixed $payroll_display_name
+ */
 class PayrollAttendanceAdjustment extends Model
 {
     public const TYPE_SICK_LEAVE = 'sick_leave';
+
     public const TYPE_MEDICAL_LEAVE = 'medical_leave';
+
     public const TYPE_CHANGE_SCHEDULE = 'change_schedule';
+
     public const TYPE_OFFSET = 'offset';
+
     public const TYPE_OFFICIAL_BUSINESS = 'official_business';
+
     public const TYPE_HOLIDAY_WORK = 'holiday_work';
+
     public const TYPE_OVERTIME = 'overtime';
 
     /**
@@ -25,9 +75,13 @@ class PayrollAttendanceAdjustment extends Model
      * be rebuilt safely before/after the data migration.
      */
     public const TYPE_TYPHOON_DISASTER = 'typhoon_disaster';
+
     public const TYPE_TYPHOON_DISASTER_3H = 'typhoon_disaster_3h';
+
     public const TYPE_TYPHOON_DISASTER_4H = 'typhoon_disaster_4h';
+
     public const TYPE_TYPHOON_DISASTER_5H = 'typhoon_disaster_5h';
+
     public const TYPE_TYPHOON_DISASTER_6H = 'typhoon_disaster_6h';
 
     public const TYPHOON_DISASTER_TYPES = [
@@ -39,10 +93,13 @@ class PayrollAttendanceAdjustment extends Model
     ];
 
     public const STATUS_PENDING = 'pending';
+
     public const STATUS_APPROVED = 'approved';
+
     public const STATUS_REJECTED = 'rejected';
 
     public const GLOBAL_DISASTER_BIOMETRIC_ID = 'GLOBAL-DISASTER';
+
     public const GLOBAL_DISASTER_EMPLOYEE_NAME = 'ALL EMPLOYEES';
 
     public const TYPES = [
@@ -226,31 +283,37 @@ class PayrollAttendanceAdjustment extends Model
         ];
     }
 
+    /** @return BelongsTo<EmployeeBiometric, $this> */
     public function employeeBiometric(): BelongsTo
     {
         return $this->belongsTo(EmployeeBiometric::class, 'employee_biometric_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function encoder(): BelongsTo
     {
         return $this->belongsTo(User::class, 'encoded_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function approver(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function rejector(): BelongsTo
     {
         return $this->belongsTo(User::class, 'rejected_by');
     }
 
+    /** @return BelongsTo<Payroll, $this> */
     public function paidPayroll(): BelongsTo
     {
         return $this->belongsTo(Payroll::class, 'paid_payroll_id');
     }
 
+    /** @return BelongsTo<PayrollItem, $this> */
     public function paidPayrollItem(): BelongsTo
     {
         return $this->belongsTo(PayrollItem::class, 'paid_payroll_item_id');
@@ -274,7 +337,8 @@ class PayrollAttendanceAdjustment extends Model
         return $query->where(function (Builder $query): void {
             $query->whereIn('adjustment_type', self::TYPHOON_DISASTER_TYPES)
                 ->orWhereHas('employeeBiometric', function (Builder $query): void {
-                    $query->payrollActive();
+                    $query->where('is_payroll_active', true)
+                        ->where('employment_status', 'active');
                 });
         });
     }
@@ -420,5 +484,4 @@ class PayrollAttendanceAdjustment extends Model
     {
         return PayrollEmployeeNameFormatter::display($this->employee_name ?? null);
     }
-
 }

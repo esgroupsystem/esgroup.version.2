@@ -159,7 +159,6 @@ class AttendancePayrollRulesTest extends TestCase
         $this->assertSame(361.64, $result['undertime_deduction']);
     }
 
-
     public function test_nine_hour_workday_half_day_is_four_and_one_half_paid_hours(): void
     {
         [$payableDays, $payableHours] = $this->invokeProtected(

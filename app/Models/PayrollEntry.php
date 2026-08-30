@@ -1,9 +1,33 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property string|null $payroll_period_id
+ * @property string|null $payroll_employee_id
+ * @property string|null $days_worked
+ * @property string|null $worked_minutes
+ * @property string|null $late_minutes
+ * @property string|null $undertime_minutes
+ * @property string|null $overtime_minutes
+ * @property string|float|int $basic_pay
+ * @property string|float|int $overtime_pay
+ * @property string|float|int $allowances
+ * @property string|float|int $gross_pay
+ * @property string|float|int $sss
+ * @property string|float|int $philhealth
+ * @property string|float|int $pagibig
+ * @property string|float|int $withholding_tax
+ * @property string|float|int $other_deductions
+ * @property string|float|int $net_pay
+ * @property string|null $status
+ */
 class PayrollEntry extends Model
 {
     protected $fillable = [
@@ -40,17 +64,20 @@ class PayrollEntry extends Model
         'net_pay' => 'decimal:2',
     ];
 
-    public function payrollEmployee()
+    /** @return BelongsTo<PayrollEmployee, $this> */
+    public function payrollEmployee(): BelongsTo
     {
         return $this->belongsTo(PayrollEmployee::class);
     }
 
-    public function payrollPeriod()
+    /** @return BelongsTo<PayrollPeriod, $this> */
+    public function payrollPeriod(): BelongsTo
     {
         return $this->belongsTo(PayrollPeriod::class);
     }
 
-    public function adjustments()
+    /** @return HasMany<PayrollAdjustment, $this> */
+    public function adjustments(): HasMany
     {
         return $this->hasMany(PayrollAdjustment::class);
     }

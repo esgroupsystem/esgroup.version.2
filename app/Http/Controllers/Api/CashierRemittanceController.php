@@ -1,32 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Api;
 
+use App\Actions\Api\CreateCashierRemittanceAction;
 use App\Http\Controllers\Controller;
-use App\Models\CashierRemittance;
-use Illuminate\Http\Request;
+use App\Http\Requests\Api\StoreCashierRemittanceRequest;
+use Illuminate\Http\JsonResponse;
 
-class CashierRemittanceController extends Controller
+final class CashierRemittanceController extends Controller
 {
-    public function store(Request $request)
+    public function __construct(
+        private readonly CreateCashierRemittanceAction $createRemittance,
+    ) {}
+
+    public function store(StoreCashierRemittanceRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'bus_number'        => 'required|string',
-            'driver_name'       => 'required|string',
-            'conductor_name'    => 'required|string',
-            'dispatcher_name'   => 'required|string',
-            'time_in'           => 'required|date_format:H:i',
-            'time_out'          => 'required|date_format:H:i',
-            'total_collection'  => 'required|numeric|min:0',
-            'diesel'            => 'nullable|numeric|min:0',
-        ]);
-
-        $data['user_id'] = $request->user()->id;
-        $data['synced_at'] = now();
-
-        $remittance = CashierRemittance::create($data);
+        $remittance = $this->createRemittance->execute(
+            $request->validated(),
+            $request->user(),
+        );
 
         return response()->json($remittance, 201);
     }
 }
-

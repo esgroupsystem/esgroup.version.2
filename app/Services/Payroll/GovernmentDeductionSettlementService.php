@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Payroll;
 
 use App\Models\PayrollBenefitSettlement;
@@ -38,9 +40,9 @@ class GovernmentDeductionSettlementService
         }
 
         $reimbursements = [
-            'sss_employee' => round(max(0, (float) ($settlement?->sss_employee_reimbursement ?? 0)), 2),
-            'philhealth_employee' => round(max(0, (float) ($settlement?->philhealth_employee_reimbursement ?? 0)), 2),
-            'pagibig_employee' => round(max(0, (float) ($settlement?->pagibig_employee_reimbursement ?? 0)), 2),
+            'sss_employee' => round(max(0, (float) ($settlement->sss_employee_reimbursement ?? 0)), 2),
+            'philhealth_employee' => round(max(0, (float) ($settlement->philhealth_employee_reimbursement ?? 0)), 2),
+            'pagibig_employee' => round(max(0, (float) ($settlement->pagibig_employee_reimbursement ?? 0)), 2),
         ];
 
         // First determine how much of the positive current-cutoff statutory due

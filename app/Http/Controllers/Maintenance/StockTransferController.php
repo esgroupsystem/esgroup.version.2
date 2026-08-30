@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
@@ -22,7 +24,7 @@ class StockTransferController extends Controller
     public function index(Request $request)
     {
         try {
-            $search = trim((string) $request->get('search', ''));
+            $search = trim((string) $request->input('search', ''));
 
             $transfers = StockTransfer::with(['fromLocation', 'toLocation', 'creator'])
                 ->when($search, function ($query) use ($search) {
@@ -50,7 +52,7 @@ class StockTransferController extends Controller
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'request' => $request->all(),
+                'request_fields' => array_keys($request->all()),
             ]);
 
             if ($request->ajax()) {
@@ -160,7 +162,7 @@ class StockTransferController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
-            $transferNumber = 'ST-'.now()->format('Y').'-'.str_pad($transfer->id, 5, '0', STR_PAD_LEFT);
+            $transferNumber = 'ST-'.now()->format('Y').'-'.str_pad((string) $transfer->id, 5, '0', STR_PAD_LEFT);
 
             $transfer->update([
                 'transfer_number' => $transferNumber,
@@ -232,7 +234,7 @@ class StockTransferController extends Controller
 
             Log::warning('StockTransferController@store model not found', [
                 'message' => $e->getMessage(),
-                'request' => $request->all(),
+                'request_fields' => array_keys($request->all()),
                 'user_id' => Auth::id(),
             ]);
 
@@ -246,7 +248,7 @@ class StockTransferController extends Controller
                 'message' => $e->getMessage(),
                 'sql' => $e->getSql(),
                 'bindings' => $e->getBindings(),
-                'request' => $request->all(),
+                'request_fields' => array_keys($request->all()),
                 'user_id' => Auth::id(),
             ]);
 
@@ -260,7 +262,7 @@ class StockTransferController extends Controller
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'request' => $request->all(),
+                'request_fields' => array_keys($request->all()),
                 'user_id' => Auth::id(),
             ]);
 
@@ -302,10 +304,10 @@ class StockTransferController extends Controller
     public function searchProducts(Request $request)
     {
         try {
-            $search = trim((string) $request->get('q', ''));
-            $locationId = (int) $request->get('from_location_id');
+            $search = trim((string) $request->input('q', ''));
+            $locationId = (int) $request->input('from_location_id');
 
-            $excludeIds = collect($request->get('exclude_ids', []))
+            $excludeIds = collect($request->input('exclude_ids', []))
                 ->flatten()
                 ->map(fn ($id) => is_numeric($id) ? (int) $id : null)
                 ->filter()
@@ -372,7 +374,7 @@ class StockTransferController extends Controller
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
-                'request' => $request->all(),
+                'request_fields' => array_keys($request->all()),
             ]);
 
             return response()->json([

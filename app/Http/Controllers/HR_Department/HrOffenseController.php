@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
@@ -27,14 +29,14 @@ class HrOffenseController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'section' => 'required|string|max:255',
             'offense_description' => 'required|string',
             'offense_type' => 'required|string',
             'offense_gravity' => 'required|string',
         ]);
 
-        HrOffense::create($request->all());
+        HrOffense::create($validated);
 
         return back()->with('success', 'Offense saved successfully.');
     }

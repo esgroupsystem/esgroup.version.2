@@ -1,9 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string|null $payroll_employee_id
+ * @property \Carbon\CarbonInterface|null $work_date
+ * @property \Carbon\CarbonInterface|null $time_in
+ * @property \Carbon\CarbonInterface|null $time_out
+ * @property string|null $worked_minutes
+ * @property string|null $late_minutes
+ * @property string|null $undertime_minutes
+ * @property string|null $overtime_minutes
+ * @property string|null $status
+ * @property string|null $remarks
+ */
 class AttendanceDailySummary extends Model
 {
     protected $fillable = [
@@ -25,7 +40,8 @@ class AttendanceDailySummary extends Model
         'time_out' => 'datetime',
     ];
 
-    public function payrollEmployee()
+    /** @return BelongsTo<PayrollEmployee, $this> */
+    public function payrollEmployee(): BelongsTo
     {
         return $this->belongsTo(PayrollEmployee::class);
     }

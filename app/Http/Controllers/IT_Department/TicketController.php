@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\IT_Department;
 
 use App\Events\JobOrderCreated;
@@ -22,13 +24,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use Throwable;
 
 class TicketController extends Controller
 {
     public function index(Request $request)
     {
-        $tab = $request->get('tab', 'pending');
-        $search = trim((string) $request->get('search', ''));
+        $tab = $request->input('tab', 'pending');
+        $search = trim((string) $request->input('search', ''));
 
         // Base query with optional search
         $baseQuery = JobOrder::with('bus')
@@ -128,7 +132,7 @@ class TicketController extends Controller
     {
         $job = JobOrder::findOrFail($id);
 
-        abort_unless(in_array(Auth::user()->role, ['IT Head', 'Developer']), 403);
+        abort_unless(Auth::user()->hasAnyRole(['IT Head', 'Developer']), 403);
 
         /*
         |--------------------------------------------------------------------------
@@ -173,7 +177,7 @@ class TicketController extends Controller
     {
         $job = JobOrder::findOrFail($id);
 
-        abort_unless(in_array(Auth::user()->role, ['IT Head', 'Developer']), 403);
+        abort_unless(Auth::user()->hasAnyRole(['IT Head', 'Developer']), 403);
 
         if ($job->approval_status !== 'Approval') {
             return redirect()
@@ -322,12 +326,12 @@ class TicketController extends Controller
 
                     $storedPath = $upload->store(
                         "joborders/{$job->id}",
-                        'public'
+                        'local'
                     );
 
                     if (
                         ! $storedPath
-                        || ! Storage::disk('public')->exists($storedPath)
+                        || ! Storage::disk('local')->exists($storedPath)
                     ) {
                         throw new \RuntimeException(
                             "Failed to save attachment: {$upload->getClientOriginalName()}"
@@ -373,10 +377,10 @@ class TicketController extends Controller
                 'line' => $exception->getLine(),
                 'bus_detail_id' => $validated['bus_detail_id'] ?? null,
                 'user_id' => $user?->id,
-                'input' => $request->except([
-                    '_token',
-                    'files',
-                ]),
+                'input' => array_diff_key(
+                    $request->except(['_token', 'files']),
+                    array_flip(['password', 'password_confirmation', 'current_password', 'token', 'api_token'])
+                ),
             ]);
 
             flash('Something went wrong while creating the job order.')
@@ -434,7 +438,7 @@ class TicketController extends Controller
 
     public function destroy($id)
     {
-        abort_unless(in_array(Auth::user()->role, ['IT Head', 'Developer']), 403);
+        abort_unless(Auth::user()->hasAnyRole(['IT Head', 'Developer']), 403);
 
         $job = JobOrder::with('files')->findOrFail($id);
 
@@ -447,11 +451,11 @@ class TicketController extends Controller
         return DB::transaction(function () use ($job) {
             foreach ($job->files as $file) {
                 if ($file->file_path) {
-                    Storage::disk('public')->delete($file->file_path);
+                    Storage::disk('local')->delete($file->file_path);
                 }
             }
 
-            Storage::disk('public')->deleteDirectory("joborders/{$job->id}");
+            Storage::disk('local')->deleteDirectory("joborders/{$job->id}");
 
             JobOrderFile::where('job_id', $job->id)->delete();
             JobOrderNote::where('joborder_id', $job->id)->delete();
@@ -497,19 +501,42 @@ class TicketController extends Controller
         $job = JobOrder::findOrFail($id);
 
         $request->validate([
-            'files.*' => ['required', 'file', 'max:1024000'],
+            'files' => ['nullable', 'array', 'max:10'],
+            'files.*' => [
+                'required',
+                'file',
+                'max:'.config('security.uploads.job_order_max_kb', 51200),
+                'mimes:pdf,doc,docx,xls,xlsx,csv,ppt,pptx,txt,jpg,jpeg,png,gif,webp,mp4,webm,ogg,zip',
+            ],
         ]);
 
         $files = $request->file('files', []);
+
+        abort_if(
+            count($files) > config('security.uploads.max_upload_files_per_request', 10),
+            422,
+            'Too many files were submitted in one request.'
+        );
+
+        $totalBytes = 0;
+        foreach ($files as $upload) {
+            $totalBytes += (int) $upload->getSize();
+        }
+
+        abort_if(
+            $totalBytes > ((int) config('security.uploads.max_upload_total_kb', 102400) * 1024),
+            413,
+            'The combined upload size is too large.'
+        );
 
         foreach ($files as $upload) {
             if (! $upload->isValid()) {
                 continue;
             }
 
-            $stored = $upload->store("joborders/{$job->id}", 'public');
+            $stored = $upload->store("joborders/{$job->id}", 'local');
 
-            if (! $stored || ! Storage::disk('public')->exists($stored)) {
+            if (! $stored || ! Storage::disk('local')->exists($stored)) {
                 continue;
             }
 
@@ -534,6 +561,20 @@ class TicketController extends Controller
         return back();
     }
 
+    public function downloadFile(int $id, int $file): BinaryFileResponse
+    {
+        $job = JobOrder::findOrFail($id);
+        $jobFile = $job->files()->findOrFail($file);
+
+        $downloadName = $jobFile->file_name ?: basename($jobFile->file_path);
+
+        abort_unless(Storage::disk('local')->exists($jobFile->file_path), 404);
+
+        $disk = Storage::disk('local');
+
+        return response()->download($disk->path($jobFile->file_path), $downloadName);
+    }
+
     public function export($type)
     {
         if ($type === 'excel') {
@@ -543,6 +584,7 @@ class TicketController extends Controller
         if ($type === 'pdf') {
             $data = JobOrder::with('bus')
                 ->orderByDesc('job_date_filled')
+                ->limit(5000)
                 ->get();
 
             $pdf = Pdf::loadView('it_department.export.pdf', compact('data'))

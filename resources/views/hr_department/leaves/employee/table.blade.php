@@ -115,9 +115,9 @@
                                     </div>
 
                                     @if ($leave->first_notice_proof)
-                                        <a href="{{ asset('storage/' . ltrim($leave->first_notice_proof, '/')) }}"
+                                        <a href="{{ route('employee-leave.employee.proof', [$leave, 'first']) }}"
                                             target="_blank" rel="noopener" class="notice-proof-link mt-1">
-                                            <img src="{{ asset('storage/' . ltrim($leave->first_notice_proof, '/')) }}"
+                                            <img src="{{ route('employee-leave.employee.proof', [$leave, 'first']) }}"
                                                 alt="1st Notice proof" class="notice-proof-thumb">
                                             <span>View proof</span>
                                         </a>
@@ -141,9 +141,9 @@
                                     </div>
 
                                     @if ($leave->second_notice_proof)
-                                        <a href="{{ asset('storage/' . ltrim($leave->second_notice_proof, '/')) }}"
+                                        <a href="{{ route('employee-leave.employee.proof', [$leave, 'second']) }}"
                                             target="_blank" rel="noopener" class="notice-proof-link mt-1">
-                                            <img src="{{ asset('storage/' . ltrim($leave->second_notice_proof, '/')) }}"
+                                            <img src="{{ route('employee-leave.employee.proof', [$leave, 'second']) }}"
                                                 alt="2nd Notice proof" class="notice-proof-thumb">
                                             <span>View proof</span>
                                         </a>
@@ -167,9 +167,9 @@
                                     </div>
 
                                     @if ($leave->final_notice_proof)
-                                        <a href="{{ asset('storage/' . ltrim($leave->final_notice_proof, '/')) }}"
+                                        <a href="{{ route('employee-leave.employee.proof', [$leave, 'final']) }}"
                                             target="_blank" rel="noopener" class="notice-proof-link mt-1">
-                                            <img src="{{ asset('storage/' . ltrim($leave->final_notice_proof, '/')) }}"
+                                            <img src="{{ route('employee-leave.employee.proof', [$leave, 'final']) }}"
                                                 alt="Final Notice proof" class="notice-proof-thumb">
                                             <span>View proof</span>
                                         </a>

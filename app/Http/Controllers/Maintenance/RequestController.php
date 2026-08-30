@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Maintenance;
 
 use App\Helpers\Notifier;
@@ -43,7 +45,7 @@ class RequestController extends Controller
     public function create()
     {
         return view('maintenance.request.store', [
-            'po_number' => 'PO-'.str_pad(PurchaseOrder::count() + 1, 5, '0', STR_PAD_LEFT),
+            'po_number' => 'PO-'.str_pad((string) (PurchaseOrder::count() + 1), 5, '0', STR_PAD_LEFT),
             'categories' => Category::all(),
             'products' => Product::all(),
         ]);

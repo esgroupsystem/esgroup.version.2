@@ -68,19 +68,25 @@
                     @include('hr_department.employees.partials._file_upload_field', [
                         'label'=>'Birth Certificate',
                         'name'=>'birth_certificate',
-                        'value'=>$employee->asset?->birth_certificate
+                        'value'=>$employee->asset?->birth_certificate,
+                        'employee'=>$employee,
+                        'file_type'=>'birth_certificate'
                     ])
 
                     @include('hr_department.employees.partials._file_upload_field', [
                         'label'=>'Resume',
                         'name'=>'resume',
-                        'value'=>$employee->asset?->resume
+                        'value'=>$employee->asset?->resume,
+                        'employee'=>$employee,
+                        'file_type'=>'resume'
                     ])
 
                     @include('hr_department.employees.partials._file_upload_field', [
                         'label'=>'Contract',
                         'name'=>'contract',
-                        'value'=>$employee->asset?->contract
+                        'value'=>$employee->asset?->contract,
+                        'employee'=>$employee,
+                        'file_type'=>'contract'
                     ])
 
                 </div>

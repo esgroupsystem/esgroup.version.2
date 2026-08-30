@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
 use App\Models\PurchaseOrder;
@@ -23,11 +25,11 @@ class POCreatedNotification extends Notification
     public function toDatabase($notifiable)
     {
         return [
-            'title'   => 'New Purchase Order Created',
+            'title' => 'New Purchase Order Created',
             'message' => "PO {$this->po->po_number} has been created by {$this->po->requester->full_name} for garage {$this->po->garage}.",
-            'po_id'   => $this->po->id,
+            'po_id' => $this->po->id,
             'po_number' => $this->po->po_number,
-            'status'  => $this->po->status,
+            'status' => $this->po->status,
         ];
     }
 }

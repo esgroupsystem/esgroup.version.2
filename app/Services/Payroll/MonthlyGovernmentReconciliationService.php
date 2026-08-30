@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Payroll;
 
 use App\Models\Payroll;
@@ -81,9 +83,9 @@ class MonthlyGovernmentReconciliationService
             $openingItem = $this->matchingItem($openingItems, $closingItem);
 
             $calculation = $this->monthlyContributionService->compute(
-                (float) ($openingItem?->gross_pay ?? 0),
+                (float) ($openingItem->gross_pay ?? 0),
                 (float) $closingItem->gross_pay,
-                (float) ($closingItem->monthly_rate ?: ($openingItem?->monthly_rate ?? 0))
+                (float) ($closingItem->monthly_rate ?: ($openingItem->monthly_rate ?? 0))
             );
 
             $old = $this->cashSnapshot($closingItem);
@@ -94,31 +96,31 @@ class MonthlyGovernmentReconciliationService
             $statutoryCurrent = [
                 'sss_employee' => $this->delta(
                     (float) $calculation['sss_employee'],
-                    (float) ($openingItem?->sss_employee ?? 0)
+                    (float) ($openingItem->sss_employee ?? 0)
                 ),
                 'sss_employer' => $this->delta(
                     (float) $calculation['sss_employer'],
-                    (float) ($openingItem?->sss_employer ?? 0)
+                    (float) ($openingItem->sss_employer ?? 0)
                 ),
                 'sss_ec' => $this->delta(
                     (float) $calculation['sss_ec'],
-                    (float) ($openingItem?->sss_ec ?? 0)
+                    (float) ($openingItem->sss_ec ?? 0)
                 ),
                 'philhealth_employee' => $this->delta(
                     (float) $calculation['philhealth_employee'],
-                    (float) ($openingItem?->philhealth_employee ?? 0)
+                    (float) ($openingItem->philhealth_employee ?? 0)
                 ),
                 'philhealth_employer' => $this->delta(
                     (float) $calculation['philhealth_employer'],
-                    (float) ($openingItem?->philhealth_employer ?? 0)
+                    (float) ($openingItem->philhealth_employer ?? 0)
                 ),
                 'pagibig_employee' => $this->delta(
                     (float) $calculation['pagibig_employee'],
-                    (float) ($openingItem?->pagibig_employee ?? 0)
+                    (float) ($openingItem->pagibig_employee ?? 0)
                 ),
                 'pagibig_employer' => $this->delta(
                     (float) $calculation['pagibig_employer'],
-                    (float) ($openingItem?->pagibig_employer ?? 0)
+                    (float) ($openingItem->pagibig_employer ?? 0)
                 ),
                 'withholding_tax' => round((float) ($closingItem->withholding_tax ?? 0), 2),
             ];
@@ -205,15 +207,15 @@ class MonthlyGovernmentReconciliationService
                 'settlement_status' => $collection['status'],
                 'manual_reimbursement_caps' => [
                     'sss' => $this->reimbursementCap(
-                        (float) ($openingItem?->sss_employee ?? 0),
+                        (float) ($openingItem->sss_employee ?? 0),
                         (float) ($calculation['sss_employee'] ?? 0)
                     ),
                     'philhealth' => $this->reimbursementCap(
-                        (float) ($openingItem?->philhealth_employee ?? 0),
+                        (float) ($openingItem->philhealth_employee ?? 0),
                         (float) ($calculation['philhealth_employee'] ?? 0)
                     ),
                     'pagibig' => $this->reimbursementCap(
-                        (float) ($openingItem?->pagibig_employee ?? 0),
+                        (float) ($openingItem->pagibig_employee ?? 0),
                         (float) ($calculation['pagibig_employee'] ?? 0)
                     ),
                 ],
@@ -325,7 +327,7 @@ class MonthlyGovernmentReconciliationService
 
         foreach ($map as $program => $field) {
             $liability = round(max(0, (float) ($calculation[$field] ?? 0)), 2);
-            $openingValue = round((float) ($openingItem?->{$field} ?? 0), 2);
+            $openingValue = round((float) ($openingItem->{$field} ?? 0), 2);
             $closingValue = round((float) ($closingCash[$field] ?? 0), 2);
             $fundedByEmployee = round($openingValue + $closingValue, 2);
             $collectedValue = round(max(0, min($liability, $fundedByEmployee)), 2);
