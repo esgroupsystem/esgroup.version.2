@@ -11143,7 +11143,7 @@ class Container_10f3a0483d extends _PHPStan_eca38da41\Nette\DI\Container
 				'TERM_PROGRAM' => 'vscode',
 				'_' => './vendor/bin/phpstan',
 				'LINES' => '54',
-				'COLUMNS' => '77',
+				'COLUMNS' => '81',
 				'SHELL_VERBOSITY' => '0',
 			],
 		];

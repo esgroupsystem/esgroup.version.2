@@ -2,7 +2,7 @@
 
 // odsl-/home/lenberd/Documents/esgroup.version.2/app/Models/EmployeeLeave.php-PHPStan\BetterReflection\Reflection\ReflectionClass-App\Models\EmployeeLeave
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-8.3.6-0d4c6a98d7f292ec8fe6db8986070878e81db3c715858af3249baa66835fdbb6',
+   'variableKey' => 'v2-6.70.0.3-8.3.6-00e6232912796b81fc187f6d6cdba5899ff8c10633abd8a05325586ed12570fb',
    'data' => 
   array (
     'locatedSource' => 
@@ -47,8 +47,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     'attributes' => 
     array (
     ),
-    'startLine' => 32,
-    'endLine' => 80,
+    'startLine' => 33,
+    'endLine' => 79,
     'startColumn' => 1,
     'endColumn' => 1,
     'parentClassName' => 'Illuminate\\Database\\Eloquent\\Model',
@@ -75,20 +75,20 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'code' => '\'employee_leaves\'',
           'attributes' => 
           array (
-            'startLine' => 34,
-            'endLine' => 34,
-            'startTokenPos' => 43,
-            'startFilePos' => 1138,
-            'endTokenPos' => 43,
-            'endFilePos' => 1154,
+            'startLine' => 35,
+            'endLine' => 35,
+            'startTokenPos' => 48,
+            'startFilePos' => 1165,
+            'endTokenPos' => 48,
+            'endFilePos' => 1181,
           ),
         ),
         'docComment' => NULL,
         'attributes' => 
         array (
         ),
-        'startLine' => 34,
-        'endLine' => 34,
+        'startLine' => 35,
+        'endLine' => 35,
         'startColumn' => 5,
         'endColumn' => 41,
         'isPromoted' => false,
@@ -110,20 +110,20 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'code' => '[\'employee_id\', \'leave_type\', \'start_date\', \'end_date\', \'days\', \'reason\', \'offense_level\', \'first_notice_sent_at\', \'first_notice_proof\', \'second_notice_sent_at\', \'second_notice_proof\', \'final_notice_sent_at\', \'final_notice_proof\', \'status\', \'last_action_note\', \'ready_for_duty_notified_at\']',
           'attributes' => 
           array (
-            'startLine' => 36,
-            'endLine' => 53,
-            'startTokenPos' => 52,
-            'startFilePos' => 1184,
-            'endTokenPos' => 102,
-            'endFilePos' => 1608,
+            'startLine' => 37,
+            'endLine' => 54,
+            'startTokenPos' => 57,
+            'startFilePos' => 1211,
+            'endTokenPos' => 107,
+            'endFilePos' => 1635,
           ),
         ),
         'docComment' => NULL,
         'attributes' => 
         array (
         ),
-        'startLine' => 36,
-        'endLine' => 53,
+        'startLine' => 37,
+        'endLine' => 54,
         'startColumn' => 5,
         'endColumn' => 6,
         'isPromoted' => false,
@@ -145,20 +145,20 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'code' => '[\'first_notice_sent_at\' => \'datetime\', \'second_notice_sent_at\' => \'datetime\', \'final_notice_sent_at\' => \'datetime\', \'ready_for_duty_notified_at\' => \'datetime\', \'start_date\' => \'date\', \'end_date\' => \'date\', \'days\' => \'integer\', \'offense_level\' => \'integer\']',
           'attributes' => 
           array (
-            'startLine' => 55,
-            'endLine' => 64,
-            'startTokenPos' => 111,
-            'startFilePos' => 1635,
-            'endTokenPos' => 169,
-            'endFilePos' => 1961,
+            'startLine' => 56,
+            'endLine' => 65,
+            'startTokenPos' => 116,
+            'startFilePos' => 1662,
+            'endTokenPos' => 174,
+            'endFilePos' => 1988,
           ),
         ),
         'docComment' => NULL,
         'attributes' => 
         array (
         ),
-        'startLine' => 55,
-        'endLine' => 64,
+        'startLine' => 56,
+        'endLine' => 65,
         'startColumn' => 5,
         'endColumn' => 6,
         'isPromoted' => false,
@@ -191,8 +191,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => '/** @return BelongsTo<Employee, $this> */',
-        'startLine' => 67,
-        'endLine' => 70,
+        'startLine' => 68,
+        'endLine' => 71,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -226,8 +226,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 72,
-        'endLine' => 79,
+        'startLine' => 73,
+        'endLine' => 78,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,

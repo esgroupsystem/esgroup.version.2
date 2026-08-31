@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\HR_Department;
 
+use App\Enums\LeaveActionType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -16,16 +17,12 @@ class DriverLeaveActionRequest extends FormRequest
 
     public function rules(): array
     {
-        $requiresProof = in_array(
-            (string) $this->input('action_type'),
-            ['first', 'second', 'terminate'],
-            true
-        );
+        $requiresProof = LeaveActionType::tryFrom((string) $this->input('action_type'))?->requiresProof() ?? false;
 
         return [
             'action_type' => [
                 'required',
-                Rule::in(['first', 'second', 'terminate', 'cancel', 'ready']),
+                Rule::enum(LeaveActionType::class),
             ],
             'note' => [
                 'nullable',

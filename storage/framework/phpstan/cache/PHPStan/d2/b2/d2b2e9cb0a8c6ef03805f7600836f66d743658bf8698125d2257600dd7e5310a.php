@@ -12,6 +12,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'leavestatus' => 'App\\Enums\\LeaveStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
         ),
@@ -36,6 +37,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'leavestatus' => 'App\\Enums\\LeaveStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
         ),
@@ -49,6 +51,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
            'namespace' => 'App\\Models',
            'uses' => 
           array (
+            'leavestatus' => 'App\\Enums\\LeaveStatus',
             'model' => 'Illuminate\\Database\\Eloquent\\Model',
             'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           ),
@@ -83,6 +86,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'leavestatus' => 'App\\Enums\\LeaveStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
         ),
@@ -96,6 +100,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
            'namespace' => 'App\\Models',
            'uses' => 
           array (
+            'leavestatus' => 'App\\Enums\\LeaveStatus',
             'model' => 'Illuminate\\Database\\Eloquent\\Model',
             'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           ),
@@ -128,7 +133,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     1 => 
     array (
-      '/home/lenberd/Documents/esgroup.version.2/app/Models/DriverLeave.php' => 'a428de7ef2051d4d9dcab24e7a71d70a12b2fca5d10a94ab01ab6a3e9b03fe15',
+      '/home/lenberd/Documents/esgroup.version.2/app/Models/DriverLeave.php' => 'bb102b776df99e5dd54231b0ec2fbbc137a22e3dc0c548106c3ae83fa70b5dc8',
     ),
   ),
 ));

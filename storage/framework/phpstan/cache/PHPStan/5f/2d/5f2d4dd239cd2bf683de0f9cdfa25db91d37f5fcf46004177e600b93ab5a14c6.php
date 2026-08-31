@@ -2,7 +2,7 @@
 
 // odsl-/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/EmployeeLeaveActionRequest.php-PHPStan\BetterReflection\Reflection\ReflectionClass-App\Http\Requests\HR_Department\EmployeeLeaveActionRequest
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-8.3.6-9d7f8e820a1feabe8a672f268e97141d66e4773e16cc59513dc491c4fcab6b9b',
+   'variableKey' => 'v2-6.70.0.3-8.3.6-dfe77058f9d919bbd1e967870187e90545eeac591e590614966d4ba3b951fc10',
    'data' => 
   array (
     'locatedSource' => 
@@ -26,8 +26,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     'attributes' => 
     array (
     ),
-    'startLine' => 10,
-    'endLine' => 55,
+    'startLine' => 11,
+    'endLine' => 52,
     'startColumn' => 1,
     'endColumn' => 1,
     'parentClassName' => 'Illuminate\\Foundation\\Http\\FormRequest',
@@ -65,8 +65,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 12,
-        'endLine' => 15,
+        'startLine' => 13,
+        'endLine' => 16,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -100,8 +100,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 17,
-        'endLine' => 42,
+        'startLine' => 18,
+        'endLine' => 39,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -135,8 +135,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 44,
-        'endLine' => 54,
+        'startLine' => 41,
+        'endLine' => 51,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,

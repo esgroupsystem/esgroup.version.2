@@ -12,6 +12,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Services\\Payroll',
          'uses' => 
         array (
+          'benefitprogram' => 'App\\Enums\\BenefitProgram',
           'benefitcontributionrecord' => 'App\\Models\\BenefitContributionRecord',
           'employeebiometric' => 'App\\Models\\EmployeeBiometric',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -39,6 +40,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Services\\Payroll',
          'uses' => 
         array (
+          'benefitprogram' => 'App\\Enums\\BenefitProgram',
           'benefitcontributionrecord' => 'App\\Models\\BenefitContributionRecord',
           'employeebiometric' => 'App\\Models\\EmployeeBiometric',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -66,6 +68,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Services\\Payroll',
          'uses' => 
         array (
+          'benefitprogram' => 'App\\Enums\\BenefitProgram',
           'benefitcontributionrecord' => 'App\\Models\\BenefitContributionRecord',
           'employeebiometric' => 'App\\Models\\EmployeeBiometric',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -93,6 +96,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Services\\Payroll',
          'uses' => 
         array (
+          'benefitprogram' => 'App\\Enums\\BenefitProgram',
           'benefitcontributionrecord' => 'App\\Models\\BenefitContributionRecord',
           'employeebiometric' => 'App\\Models\\EmployeeBiometric',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -120,6 +124,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Services\\Payroll',
          'uses' => 
         array (
+          'benefitprogram' => 'App\\Enums\\BenefitProgram',
           'benefitcontributionrecord' => 'App\\Models\\BenefitContributionRecord',
           'employeebiometric' => 'App\\Models\\EmployeeBiometric',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -147,6 +152,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Services\\Payroll',
          'uses' => 
         array (
+          'benefitprogram' => 'App\\Enums\\BenefitProgram',
           'benefitcontributionrecord' => 'App\\Models\\BenefitContributionRecord',
           'employeebiometric' => 'App\\Models\\EmployeeBiometric',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -174,6 +180,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Services\\Payroll',
          'uses' => 
         array (
+          'benefitprogram' => 'App\\Enums\\BenefitProgram',
           'benefitcontributionrecord' => 'App\\Models\\BenefitContributionRecord',
           'employeebiometric' => 'App\\Models\\EmployeeBiometric',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -201,6 +208,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Services\\Payroll',
          'uses' => 
         array (
+          'benefitprogram' => 'App\\Enums\\BenefitProgram',
           'benefitcontributionrecord' => 'App\\Models\\BenefitContributionRecord',
           'employeebiometric' => 'App\\Models\\EmployeeBiometric',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -226,7 +234,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     1 => 
     array (
-      '/home/lenberd/Documents/esgroup.version.2/app/Services/Payroll/BenefitRecordsService.php' => '424e13d6a415900000429d42302af86fce5692a7b2610bd77a4a007eb46b5cd8',
+      '/home/lenberd/Documents/esgroup.version.2/app/Services/Payroll/BenefitRecordsService.php' => '8fc0d610ea5365f4b1a74cf42b19250508bd1163b3ab9142737ca3a45071e546',
     ),
   ),
 ));

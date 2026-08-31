@@ -12,6 +12,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'leavestatus' => 'App\\Enums\\LeaveStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
         ),
@@ -36,6 +37,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'leavestatus' => 'App\\Enums\\LeaveStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
         ),
@@ -49,6 +51,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
            'namespace' => 'App\\Models',
            'uses' => 
           array (
+            'leavestatus' => 'App\\Enums\\LeaveStatus',
             'model' => 'Illuminate\\Database\\Eloquent\\Model',
             'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           ),
@@ -83,6 +86,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'leavestatus' => 'App\\Enums\\LeaveStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
         ),
@@ -96,6 +100,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
            'namespace' => 'App\\Models',
            'uses' => 
           array (
+            'leavestatus' => 'App\\Enums\\LeaveStatus',
             'model' => 'Illuminate\\Database\\Eloquent\\Model',
             'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           ),
@@ -128,7 +133,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     1 => 
     array (
-      '/home/lenberd/Documents/esgroup.version.2/app/Models/EmployeeLeave.php' => '0d4c6a98d7f292ec8fe6db8986070878e81db3c715858af3249baa66835fdbb6',
+      '/home/lenberd/Documents/esgroup.version.2/app/Models/EmployeeLeave.php' => '00e6232912796b81fc187f6d6cdba5899ff8c10633abd8a05325586ed12570fb',
     ),
   ),
 ));

@@ -5,89 +5,74 @@ declare(strict_types=1);
 namespace App\Http\Controllers\HR_Department;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\HR_Department\StoreDepartmentRequest;
+use App\Http\Requests\HR_Department\StorePositionRequest;
 use App\Models\Department;
 use App\Models\Position;
-use Illuminate\Http\Request;
+use App\Services\HR_Department\DepartmentService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
+use Throwable;
 
-class DepartmentController extends Controller
+final class DepartmentController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Index Routes
-    |--------------------------------------------------------------------------
-    */
-    public function index()
+    public function __construct(
+        private readonly DepartmentService $departmentService
+    ) {}
+
+    public function index(): View|RedirectResponse
     {
         try {
-            $departments = Department::with('positions')->latest()->get();
-
-            return view('hr_department.departments.index', compact('departments'));
-
-        } catch (\Exception $e) {
-            Log::error('Department Index Error: '.$e->getMessage());
+            return view('hr_department.departments.index', [
+                'departments' => $this->departmentService->directory(),
+            ]);
+        } catch (Throwable $exception) {
+            Log::error('Department index failed.', [
+                'user_id' => auth()->id(),
+                'exception' => $exception,
+            ]);
             flash('Something went wrong while loading departments.')->error();
 
-            return redirect()->back();
+            return back();
         }
     }
 
-    public function positions($id)
+    public function positions(int $id): JsonResponse
     {
-        $department = Department::with('positions')->find($id);
+        $department = Department::query()->with('positions')->find($id);
 
-        if (! $department) {
-            return response()->json([]);
-        }
-
-        return response()->json($department->positions);
+        return response()->json($department->positions ?? []);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Saving/Create Routes
-    |--------------------------------------------------------------------------
-    */
-
-    public function store(Request $request)
+    public function store(StoreDepartmentRequest $request): RedirectResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:departments,name',
-        ]);
-
-        Department::create(['name' => $request->name]);
+        $this->departmentService->createDepartment((string) $request->validated('name'));
 
         return back()->with('success', 'Department added successfully!');
     }
 
-    public function storePosition(Request $request)
+    public function storePosition(StorePositionRequest $request): RedirectResponse
     {
-        $request->validate([
-            'department_id' => 'required|exists:departments,id',
-            'title' => 'required|string|max:255',
-        ]);
-
-        Position::create($request->only('department_id', 'title'));
+        $this->departmentService->createPosition(
+            (int) $request->validated('department_id'),
+            (string) $request->validated('title')
+        );
 
         return back()->with('success', 'Position added successfully!');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Deleting Routes
-    |--------------------------------------------------------------------------
-    */
-
-    public function destroy(Department $department)
+    public function destroy(Department $department): RedirectResponse
     {
-        $department->delete();
+        $this->departmentService->deleteDepartment($department);
 
         return back()->with('success', 'Department deleted successfully!');
     }
 
-    public function destroyPosition(Position $position)
+    public function destroyPosition(Position $position): RedirectResponse
     {
-        $position->delete();
+        $this->departmentService->deletePosition($position);
 
         return back()->with('success', 'Position deleted successfully!');
     }

@@ -31,7 +31,7 @@ final class DatabaseSeeder extends Seeder
         $developerRole->syncPermissions(Permission::all());
 
         // Never create a privileged account automatically in production.
-        if (!filter_var(config('security.developer_seed.enabled', false), FILTER_VALIDATE_BOOL)) {
+        if (! filter_var(config('security.developer_seed.enabled', false), FILTER_VALIDATE_BOOL)) {
             return;
         }
 

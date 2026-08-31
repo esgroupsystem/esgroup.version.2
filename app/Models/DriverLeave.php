@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\LeaveStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -75,10 +76,8 @@ class DriverLeave extends Model
 
     public function isClosed(): bool
     {
-        return in_array(
-            strtolower((string) $this->status),
-            ['cancelled', 'completed', 'terminated'],
-            true
-        );
+        $status = LeaveStatus::tryFrom(ucfirst(strtolower((string) $this->status)));
+
+        return $status?->isClosed() ?? false;
     }
 }

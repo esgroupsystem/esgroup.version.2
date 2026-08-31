@@ -12,6 +12,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'leavestatus' => 'App\\Enums\\LeaveStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
         ),
@@ -36,6 +37,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'leavestatus' => 'App\\Enums\\LeaveStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
         ),
@@ -49,6 +51,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
            'namespace' => 'App\\Models',
            'uses' => 
           array (
+            'leavestatus' => 'App\\Enums\\LeaveStatus',
             'model' => 'Illuminate\\Database\\Eloquent\\Model',
             'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           ),
@@ -83,6 +86,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'leavestatus' => 'App\\Enums\\LeaveStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
         ),
@@ -96,6 +100,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
            'namespace' => 'App\\Models',
            'uses' => 
           array (
+            'leavestatus' => 'App\\Enums\\LeaveStatus',
             'model' => 'Illuminate\\Database\\Eloquent\\Model',
             'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           ),
@@ -128,7 +133,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     1 => 
     array (
-      '/home/lenberd/Documents/esgroup.version.2/app/Models/ConductorLeave.php' => 'a9d23cf7bd09ccc96ebdb786d9997d43cfcf70923a92342aabdd7377a57fd3a3',
+      '/home/lenberd/Documents/esgroup.version.2/app/Models/ConductorLeave.php' => '7e5f798d03bef0bb8dd90ec1654a2d0bd71419a89b9bd0ef9abc4966d2422d7e',
     ),
   ),
 ));

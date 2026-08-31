@@ -2700,6 +2700,21 @@ return [
       ),
     ),
   ),
+  '../../../app/Enums/BenefitProgram.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Enums\\BenefitProgram',
+        1 => 'label',
+        2 => 'App\\Enums\\BenefitProgram',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
   '../../../app/Enums/CctvConcernStatus.php' => 
   array (
     'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
@@ -2887,6 +2902,36 @@ return [
         0 => 'App\\Enums\\JobOrderStatus',
         1 => 'countsAsDowntime',
         2 => 'App\\Enums\\JobOrderStatus',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Enums/LeaveActionType.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Enums\\LeaveActionType',
+        1 => 'requiresProof',
+        2 => 'App\\Enums\\LeaveActionType',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Enums/LeaveStatus.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Enums\\LeaveStatus',
+        1 => 'isClosed',
+        2 => 'App\\Enums\\LeaveStatus',
         3 => 
         array (
         ),
@@ -3733,37 +3778,9 @@ return [
     array (
       0 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
-        1 => NULL,
-        2 => 'in_array($status, [\'cancelled\', \'terminated\', \'completed\', \'inactive\'], true):104',
-        3 => NULL,
-      ),
-      1 => 
-      array (
         0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
         1 => NULL,
-        2 => '$request->ajax():147',
-        3 => NULL,
-      ),
-      2 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => 'in_array($rawStatus, [\'cancelled\', \'terminated\', \'completed\', \'inactive\'], true):346',
-        3 => NULL,
-      ),
-      3 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => '$today->lt($start):368',
-        3 => NULL,
-      ),
-      4 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => '$today->lte($end):375',
+        2 => '$request->ajax():33',
         3 => NULL,
       ),
     ),
@@ -3777,25 +3794,30 @@ return [
         ),
       ),
     ),
-    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
     array (
       0 => 
       array (
-        0 => 'Illuminate\\Database\\Connection',
-        1 => 'transaction',
-        2 => 192,
-      ),
-      1 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
+        0 => 'App\\Http\\Controllers\\HR_Department\\ConductorLeaveController',
         1 => 'create',
-        2 => 193,
+        2 => 'App\\Http\\Controllers\\HR_Department\\ConductorLeaveController',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\hr_department\\leavedirectoryservice' . "\0" . 'conductors',
+          1 => 'f' . "\0" . 'view',
+        ),
       ),
-      2 => 
+    ),
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
+    array (
+      0 => 
       array (
-        0 => 'Illuminate\\Database\\Connection',
-        1 => 'transaction',
-        2 => 256,
+        0 => 
+        array (
+          0 => 'App\\Services\\HR_Department\\LeaveRecordService',
+        ),
+        1 => 'createConductorLeave',
+        2 => 53,
       ),
     ),
   ),
@@ -3805,19 +3827,35 @@ return [
     array (
       0 => 'hr_department.departments.index',
     ),
-    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
+    'PHPStan\\Rules\\DeadCode\\ConstructorWithoutImpurePointsCollector' => 
     array (
       0 => 
       array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 58,
+        0 => 'App\\Http\\Controllers\\HR_Department\\DepartmentController',
+        1 => 
+        array (
+        ),
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          0 => 'App\\Services\\HR_Department\\DepartmentService',
+        ),
+        1 => 'createDepartment',
+        2 => 51,
       ),
       1 => 
       array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 70,
+        0 => 
+        array (
+          0 => 'App\\Services\\HR_Department\\DepartmentService',
+        ),
+        1 => 'createPosition',
+        2 => 58,
       ),
     ),
   ),
@@ -3834,37 +3872,9 @@ return [
     array (
       0 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
-        1 => NULL,
-        2 => 'in_array($status, [\'cancelled\', \'terminated\', \'completed\', \'inactive\'], true):104',
-        3 => NULL,
-      ),
-      1 => 
-      array (
         0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
         1 => NULL,
-        2 => '$request->ajax():147',
-        3 => NULL,
-      ),
-      2 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => 'in_array($rawStatus, [\'cancelled\', \'terminated\', \'completed\', \'inactive\'], true):346',
-        3 => NULL,
-      ),
-      3 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => '$today->lt($start):368',
-        3 => NULL,
-      ),
-      4 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => '$today->lte($end):375',
+        2 => '$request->ajax():33',
         3 => NULL,
       ),
     ),
@@ -3878,25 +3888,30 @@ return [
         ),
       ),
     ),
-    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
     array (
       0 => 
       array (
-        0 => 'Illuminate\\Database\\Connection',
-        1 => 'transaction',
-        2 => 192,
-      ),
-      1 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
+        0 => 'App\\Http\\Controllers\\HR_Department\\DriverLeaveController',
         1 => 'create',
-        2 => 193,
+        2 => 'App\\Http\\Controllers\\HR_Department\\DriverLeaveController',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\hr_department\\leavedirectoryservice' . "\0" . 'drivers',
+          1 => 'f' . "\0" . 'view',
+        ),
       ),
-      2 => 
+    ),
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
+    array (
+      0 => 
       array (
-        0 => 'Illuminate\\Database\\Connection',
-        1 => 'transaction',
-        2 => 256,
+        0 => 
+        array (
+          0 => 'App\\Services\\HR_Department\\LeaveRecordService',
+        ),
+        1 => 'createDriverLeave',
+        2 => 53,
       ),
     ),
   ),
@@ -4008,37 +4023,9 @@ return [
     array (
       0 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
-        1 => NULL,
-        2 => 'in_array($status, [\'cancelled\', \'terminated\', \'completed\', \'inactive\'], true):104',
-        3 => NULL,
-      ),
-      1 => 
-      array (
         0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
         1 => NULL,
-        2 => '$request->ajax():147',
-        3 => NULL,
-      ),
-      2 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => 'in_array($rawStatus, [\'cancelled\', \'terminated\', \'completed\', \'inactive\'], true):356',
-        3 => NULL,
-      ),
-      3 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => '$today->lt($start):378',
-        3 => NULL,
-      ),
-      4 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => '$today->lte($end):385',
+        2 => '$request->ajax():33',
         3 => NULL,
       ),
     ),
@@ -4052,25 +4039,30 @@ return [
         ),
       ),
     ),
-    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
     array (
       0 => 
       array (
-        0 => 'Illuminate\\Database\\Connection',
-        1 => 'transaction',
-        2 => 195,
-      ),
-      1 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
+        0 => 'App\\Http\\Controllers\\HR_Department\\EmployeeLeaveController',
         1 => 'create',
-        2 => 196,
+        2 => 'App\\Http\\Controllers\\HR_Department\\EmployeeLeaveController',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\hr_department\\leavedirectoryservice' . "\0" . 'employees',
+          1 => 'f' . "\0" . 'view',
+        ),
       ),
-      2 => 
+    ),
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
+    array (
+      0 => 
       array (
-        0 => 'Illuminate\\Database\\Connection',
-        1 => 'transaction',
-        2 => 262,
+        0 => 
+        array (
+          0 => 'App\\Services\\HR_Department\\LeaveRecordService',
+        ),
+        1 => 'createEmployeeLeave',
+        2 => 53,
       ),
     ),
   ),
@@ -6850,6 +6842,66 @@ return [
       ),
     ),
   ),
+  '../../../app/Http/Requests/HR_Department/LeaveRecordRequest.php' => 
+  array (
+    'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
+        1 => NULL,
+        2 => '$this->filled(\'reason\'):32',
+        3 => NULL,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
+        1 => 'authorize',
+        2 => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
+        3 => 
+        array (
+        ),
+      ),
+      1 => 
+      array (
+        0 => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'illuminate\\validation\\rule' . "\0" . 'exists',
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/HR_Department/StoreDepartmentRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\HR_Department\\StoreDepartmentRequest',
+        1 => 'authorize',
+        2 => 'App\\Http\\Requests\\HR_Department\\StoreDepartmentRequest',
+        3 => 
+        array (
+        ),
+      ),
+      1 => 
+      array (
+        0 => 'App\\Http\\Requests\\HR_Department\\StoreDepartmentRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\HR_Department\\StoreDepartmentRequest',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'illuminate\\validation\\rule' . "\0" . 'unique',
+        ),
+      ),
+    ),
+  ),
   '../../../app/Http/Requests/HR_Department/StoreEmployeeAttachmentRequest.php' => 
   array (
     'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
@@ -6877,6 +6929,31 @@ return [
         2 => 'App\\Http\\Requests\\HR_Department\\StoreEmployeeRequest',
         3 => 
         array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/HR_Department/StorePositionRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\HR_Department\\StorePositionRequest',
+        1 => 'authorize',
+        2 => 'App\\Http\\Requests\\HR_Department\\StorePositionRequest',
+        3 => 
+        array (
+        ),
+      ),
+      1 => 
+      array (
+        0 => 'App\\Http\\Requests\\HR_Department\\StorePositionRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\HR_Department\\StorePositionRequest',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'illuminate\\validation\\rule' . "\0" . 'exists',
         ),
       ),
     ),
@@ -7833,6 +7910,7 @@ return [
         2 => 'App\\Models\\ConductorLeave',
         3 => 
         array (
+          0 => 'm' . "\0" . 'app\\enums\\leavestatus' . "\0" . 'isclosed',
         ),
       ),
     ),
@@ -7965,6 +8043,7 @@ return [
         2 => 'App\\Models\\DriverLeave',
         3 => 
         array (
+          0 => 'm' . "\0" . 'app\\enums\\leavestatus' . "\0" . 'isclosed',
         ),
       ),
     ),
@@ -8045,6 +8124,7 @@ return [
         2 => 'App\\Models\\EmployeeLeave',
         3 => 
         array (
+          0 => 'm' . "\0" . 'app\\enums\\leavestatus' . "\0" . 'isclosed',
         ),
       ),
     ),
@@ -9950,6 +10030,18 @@ return [
       ),
     ),
   ),
+  '../../../app/Services/HR_Department/DepartmentService.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'Illuminate\\Database\\Connection',
+        1 => 'transaction',
+        2 => 35,
+      ),
+    ),
+  ),
   '../../../app/Services/HR_Department/DriverLeaveActionService.php' => 
   array (
     'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
@@ -10297,6 +10389,165 @@ return [
       ),
     ),
   ),
+  '../../../app/Services/HR_Department/LeaveDirectoryService.php' => 
+  array (
+    'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
+        1 => NULL,
+        2 => 'in_array($status, [\'inactive\', \'completed\', \'cancelled\'], true):109',
+        3 => NULL,
+      ),
+      1 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
+        1 => NULL,
+        2 => 'in_array($status, [\'cancelled\', \'terminated\', \'completed\', \'inactive\'], true):118',
+        3 => NULL,
+      ),
+      2 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
+        1 => NULL,
+        2 => 'in_array($rawStatus, [\'cancelled\', \'completed\', \'terminated\'], true):181',
+        3 => NULL,
+      ),
+      3 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
+        1 => NULL,
+        2 => '$today->lte($end):194',
+        3 => NULL,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+        1 => 'driverIndex',
+        2 => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\hr_department\\leavedirectoryservice' . "\0" . 'buildindex',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+        1 => 'conductorIndex',
+        2 => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\hr_department\\leavedirectoryservice' . "\0" . 'buildindex',
+        ),
+      ),
+      2 => 
+      array (
+        0 => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+        1 => 'employeeIndex',
+        2 => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\hr_department\\leavedirectoryservice' . "\0" . 'buildindex',
+        ),
+      ),
+      3 => 
+      array (
+        0 => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+        1 => 'drivers',
+        2 => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\hr_department\\leavedirectoryservice' . "\0" . 'eligibleemployees',
+        ),
+      ),
+      4 => 
+      array (
+        0 => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+        1 => 'conductors',
+        2 => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\hr_department\\leavedirectoryservice' . "\0" . 'eligibleemployees',
+        ),
+      ),
+      5 => 
+      array (
+        0 => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+        1 => 'employees',
+        2 => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\hr_department\\leavedirectoryservice' . "\0" . 'eligibleemployees',
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Services/HR_Department/LeaveRecordService.php' => 
+  array (
+    'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
+        1 => NULL,
+        2 => 'in_array($employee->position?->title, [\\App\\Enums\\HrPositionType::Driver->value, \\App\\Enums\\HrPositionType::Conductor->value], true):130',
+        3 => NULL,
+      ),
+      1 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
+        1 => NULL,
+        2 => 'in_array((string) $employee->status, $allowedStatuses, true):135',
+        3 => NULL,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Services\\HR_Department\\LeaveRecordService',
+        1 => 'createDriverLeave',
+        2 => 'App\\Services\\HR_Department\\LeaveRecordService',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\hr_department\\leaverecordservice' . "\0" . 'create',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 'App\\Services\\HR_Department\\LeaveRecordService',
+        1 => 'createConductorLeave',
+        2 => 'App\\Services\\HR_Department\\LeaveRecordService',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\hr_department\\leaverecordservice' . "\0" . 'create',
+        ),
+      ),
+      2 => 
+      array (
+        0 => 'App\\Services\\HR_Department\\LeaveRecordService',
+        1 => 'createEmployeeLeave',
+        2 => 'App\\Services\\HR_Department\\LeaveRecordService',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\hr_department\\leaverecordservice' . "\0" . 'create',
+        ),
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'Illuminate\\Database\\Connection',
+        1 => 'transaction',
+        2 => 98,
+      ),
+    ),
+  ),
   '../../../app/Services/ITDepartment/CctvConcernService.php' => 
   array (
     'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
@@ -10607,56 +10858,56 @@ return [
       array (
         0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
         1 => NULL,
-        2 => '$records->pluck(\'sss_number\')->filter()->last():84',
+        2 => '$records->pluck(\'sss_number\')->filter()->last():85',
         3 => NULL,
       ),
       1 => 
       array (
         0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
         1 => NULL,
-        2 => '$records->pluck(\'philhealth_number\')->filter()->last():85',
+        2 => '$records->pluck(\'philhealth_number\')->filter()->last():86',
         3 => NULL,
       ),
       2 => 
       array (
         0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
         1 => NULL,
-        2 => '$records->pluck(\'pagibig_number\')->filter()->last():86',
+        2 => '$records->pluck(\'pagibig_number\')->filter()->last():87',
         3 => NULL,
       ),
       3 => 
       array (
         0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
         1 => NULL,
-        2 => '$employeeRecords->pluck(\'sss_number\')->filter()->last():210',
+        2 => '$employeeRecords->pluck(\'sss_number\')->filter()->last():211',
         3 => NULL,
       ),
       4 => 
       array (
         0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
         1 => NULL,
-        2 => '$employeeRecords->pluck(\'philhealth_number\')->filter()->last():211',
+        2 => '$employeeRecords->pluck(\'philhealth_number\')->filter()->last():212',
         3 => NULL,
       ),
       5 => 
       array (
         0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
         1 => NULL,
-        2 => '$employeeRecords->pluck(\'pagibig_number\')->filter()->last():212',
+        2 => '$employeeRecords->pluck(\'pagibig_number\')->filter()->last():213',
         3 => NULL,
       ),
       6 => 
       array (
         0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
         1 => NULL,
-        2 => '$employeeRecords->pluck(\'company_name\')->filter()->last():214',
+        2 => '$employeeRecords->pluck(\'company_name\')->filter()->last():215',
         3 => NULL,
       ),
       7 => 
       array (
         0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
         1 => NULL,
-        2 => 'in_array($requestedGroup, $allowedGroups, true):395',
+        2 => 'in_array($requestedGroup, $allowedGroups, true):396',
         3 => NULL,
       ),
     ),
@@ -13621,6 +13872,14 @@ return [
     array (
     ),
   ),
+  '../../../app/Enums/BenefitProgram.php' => 
+  array (
+    'fileHash' => '474ddb6c37381f90a7f2b546a7a39a8b3179c258c15ae710e1af0a6e74ec9d25',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Services/Payroll/BenefitRecordsService.php',
+    ),
+  ),
   '../../../app/Enums/CctvConcernStatus.php' => 
   array (
     'fileHash' => 'b09f4ffffa464fed2536c98c0ee4a56df947d2ec1264fdaf0a8563dc8dee0b39',
@@ -13640,6 +13899,15 @@ return [
     array (
       0 => '../../../app/Http/Requests/HR_Department/UpdateEmployeeRequest.php',
       1 => '../../../app/Services/HR_Department/EmployeeDirectoryService.php',
+    ),
+  ),
+  '../../../app/Enums/HrPositionType.php' => 
+  array (
+    'fileHash' => '1780be4ca59e09eb5fcf13dae89de2c96d967ec1c92e07d00a80ef2853b22655',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Services/HR_Department/LeaveDirectoryService.php',
+      1 => '../../../app/Services/HR_Department/LeaveRecordService.php',
     ),
   ),
   '../../../app/Enums/ItTicketApprovalStatus.php' => 
@@ -13684,6 +13952,27 @@ return [
       6 => '../../../app/Models/JobOrderMaintenanceStatusPeriod.php',
       7 => '../../../app/Services/Fleet/BusService.php',
       8 => '../../../app/Services/Maintenance/JobOrderMaintenanceService.php',
+    ),
+  ),
+  '../../../app/Enums/LeaveActionType.php' => 
+  array (
+    'fileHash' => 'd6d77f1a9068b782205e518660ba6eb8da7ca3be2b69d5f6c1035139eca1d670',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Requests/HR_Department/ConductorLeaveActionRequest.php',
+      1 => '../../../app/Http/Requests/HR_Department/DriverLeaveActionRequest.php',
+      2 => '../../../app/Http/Requests/HR_Department/EmployeeLeaveActionRequest.php',
+    ),
+  ),
+  '../../../app/Enums/LeaveStatus.php' => 
+  array (
+    'fileHash' => '0bd3a418531a5ffa4110d566dd8a373d1ac426170ae7e42762ed915281e801b0',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Models/ConductorLeave.php',
+      1 => '../../../app/Models/DriverLeave.php',
+      2 => '../../../app/Models/EmployeeLeave.php',
+      3 => '../../../app/Services/HR_Department/LeaveRecordService.php',
     ),
   ),
   '../../../app/Enums/WorkdayType.php' => 
@@ -13966,21 +14255,21 @@ return [
   ),
   '../../../app/Http/Controllers/HR_Department/ConductorLeaveController.php' => 
   array (
-    'fileHash' => '2bc448619ec5530df6f0ef3c41deba97cb4b4a987b1bac2d4916fceea2ca85b5',
+    'fileHash' => '75d585aa42e4bb9f2c94e059bc228ce9f0516d346ff2ec4c2e606115645dca4b',
     'dependentFiles' => 
     array (
     ),
   ),
   '../../../app/Http/Controllers/HR_Department/DepartmentController.php' => 
   array (
-    'fileHash' => '5bc8343fff9d846aa13ce50233d7e81aeee2c017ffe4d5daaf7a9822d2de7f52',
+    'fileHash' => 'aeffd35a0f09344a3a7af0dc5d35d5b9e53fd85b80cfc2de4ac6476d1266771e',
     'dependentFiles' => 
     array (
     ),
   ),
   '../../../app/Http/Controllers/HR_Department/DriverLeaveController.php' => 
   array (
-    'fileHash' => '2479d004177ea84dd35928cf76b02f58e932d06367758cbe5fe1c78f6190cc31',
+    'fileHash' => '96d425daad60dc9f45f0b67da261143116d0d71ab06f57af5acc6c111df7d991',
     'dependentFiles' => 
     array (
     ),
@@ -13994,7 +14283,7 @@ return [
   ),
   '../../../app/Http/Controllers/HR_Department/EmployeeLeaveController.php' => 
   array (
-    'fileHash' => '2465db82bb319366794b3920a7f8e52e312febf14621c0e1f5ce112f33f60710',
+    'fileHash' => '3e0ba70caf9c3d4c358bfb631ec62a17f305158c3b372edf4eb9e2fabc612303',
     'dependentFiles' => 
     array (
     ),
@@ -14449,7 +14738,7 @@ return [
   ),
   '../../../app/Http/Requests/HR_Department/ConductorLeaveActionRequest.php' => 
   array (
-    'fileHash' => 'c4c78d3a89a608ac2b9e8e1978c455c96540c5e282be1ef45e114498df2c5ad8',
+    'fileHash' => '165c188576ee527d4aad086f8a8aeca9f703665ef8a702529845ab479ce4b282',
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/HR_Department/ConductorLeaveController.php',
@@ -14457,7 +14746,7 @@ return [
   ),
   '../../../app/Http/Requests/HR_Department/DriverLeaveActionRequest.php' => 
   array (
-    'fileHash' => 'ca1854a1c21081fdbcaa1620f3245742b9ca386101a05028ad43a2e21f17be24',
+    'fileHash' => 'af87421ddc30988d390aed95421f2bec8c81011ae3c44e1f33ce0e2cd7f8836b',
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/HR_Department/DriverLeaveController.php',
@@ -14473,10 +14762,28 @@ return [
   ),
   '../../../app/Http/Requests/HR_Department/EmployeeLeaveActionRequest.php' => 
   array (
-    'fileHash' => '9d7f8e820a1feabe8a672f268e97141d66e4773e16cc59513dc491c4fcab6b9b',
+    'fileHash' => 'dfe77058f9d919bbd1e967870187e90545eeac591e590614966d4ba3b951fc10',
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/HR_Department/EmployeeLeaveController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/HR_Department/LeaveRecordRequest.php' => 
+  array (
+    'fileHash' => '610c3076ed396631797e34fef49147f14a0bc32e4a78de5b23ff7f8d919cf123',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/HR_Department/ConductorLeaveController.php',
+      1 => '../../../app/Http/Controllers/HR_Department/DriverLeaveController.php',
+      2 => '../../../app/Http/Controllers/HR_Department/EmployeeLeaveController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/HR_Department/StoreDepartmentRequest.php' => 
+  array (
+    'fileHash' => '39d5c098b74237e77fac80e6876334be1bc9f0828804d03fc9fd7859b2f281d0',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/HR_Department/DepartmentController.php',
     ),
   ),
   '../../../app/Http/Requests/HR_Department/StoreEmployeeAttachmentRequest.php' => 
@@ -14493,6 +14800,14 @@ return [
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/HR_Department/EmployeeController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/HR_Department/StorePositionRequest.php' => 
+  array (
+    'fileHash' => 'fe8259032bc92b9daa9c0a5b28117180c7168a65db414ce76176b6d4ec71324d',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/HR_Department/DepartmentController.php',
     ),
   ),
   '../../../app/Http/Requests/HR_Department/UpdateEmployeeAssetsRequest.php' => 
@@ -14910,7 +15225,7 @@ return [
   ),
   '../../../app/Models/ConductorLeave.php' => 
   array (
-    'fileHash' => 'a9d23cf7bd09ccc96ebdb786d9997d43cfcf70923a92342aabdd7377a57fd3a3',
+    'fileHash' => '7e5f798d03bef0bb8dd90ec1654a2d0bd71419a89b9bd0ef9abc4966d2422d7e',
     'dependentFiles' => 
     array (
       0 => '../../../app/Console/Commands/MigrateSensitiveFiles.php',
@@ -14918,7 +15233,9 @@ return [
       2 => '../../../app/Http/Controllers/HR_Department/ConductorLeaveController.php',
       3 => '../../../app/Http/Controllers/SecureFileController.php',
       4 => '../../../app/Services/HR_Department/ConductorLeaveActionService.php',
-      5 => '../../../app/Services/Reports/HrDataReportService.php',
+      5 => '../../../app/Services/HR_Department/LeaveDirectoryService.php',
+      6 => '../../../app/Services/HR_Department/LeaveRecordService.php',
+      7 => '../../../app/Services/Reports/HrDataReportService.php',
     ),
   ),
   '../../../app/Models/DailyAttendanceSummary.php' => 
@@ -14944,9 +15261,10 @@ return [
       1 => '../../../app/Http/Controllers/HR_Department/HRDashboardController.php',
       2 => '../../../app/Models/Employee.php',
       3 => '../../../app/Models/Position.php',
-      4 => '../../../app/Services/HR_Department/EmployeeDirectoryService.php',
-      5 => '../../../app/Services/HR_Department/EmployeeProfileService.php',
-      6 => '../../../app/Services/Reports/HrDataReportService.php',
+      4 => '../../../app/Services/HR_Department/DepartmentService.php',
+      5 => '../../../app/Services/HR_Department/EmployeeDirectoryService.php',
+      6 => '../../../app/Services/HR_Department/EmployeeProfileService.php',
+      7 => '../../../app/Services/Reports/HrDataReportService.php',
     ),
   ),
   '../../../app/Models/DieselStock.php' => 
@@ -14959,7 +15277,7 @@ return [
   ),
   '../../../app/Models/DriverLeave.php' => 
   array (
-    'fileHash' => 'a428de7ef2051d4d9dcab24e7a71d70a12b2fca5d10a94ab01ab6a3e9b03fe15',
+    'fileHash' => 'bb102b776df99e5dd54231b0ec2fbbc137a22e3dc0c548106c3ae83fa70b5dc8',
     'dependentFiles' => 
     array (
       0 => '../../../app/Console/Commands/MigrateSensitiveFiles.php',
@@ -14969,7 +15287,9 @@ return [
       4 => '../../../app/Http/Controllers/SecureFileController.php',
       5 => '../../../app/Models/Employee.php',
       6 => '../../../app/Services/HR_Department/DriverLeaveActionService.php',
-      7 => '../../../app/Services/Reports/HrDataReportService.php',
+      7 => '../../../app/Services/HR_Department/LeaveDirectoryService.php',
+      8 => '../../../app/Services/HR_Department/LeaveRecordService.php',
+      9 => '../../../app/Services/Reports/HrDataReportService.php',
     ),
   ),
   '../../../app/Models/Employee.php' => 
@@ -15022,15 +15342,17 @@ return [
       42 => '../../../app/Services/HR_Department/EmployeeLeaveActionService.php',
       43 => '../../../app/Services/HR_Department/EmployeeProfileService.php',
       44 => '../../../app/Services/HR_Department/EmployeeService.php',
-      45 => '../../../app/Services/Payroll/BenefitContributionPostingService.php',
-      46 => '../../../app/Services/Payroll/BenefitRecordsService.php',
-      47 => '../../../app/Services/Payroll/MonthlyGovernmentReconciliationService.php',
-      48 => '../../../app/Services/Payroll/PaymentLogService.php',
-      49 => '../../../app/Services/Payroll/PayrollAuditService.php',
-      50 => '../../../app/Services/Payroll/PayrollComputationService.php',
-      51 => '../../../app/Services/Payroll/PayrollDeductionService.php',
-      52 => '../../../app/Services/Payroll/PayrollPayslipService.php',
-      53 => '../../../app/Services/Reports/HrDataReportService.php',
+      45 => '../../../app/Services/HR_Department/LeaveDirectoryService.php',
+      46 => '../../../app/Services/HR_Department/LeaveRecordService.php',
+      47 => '../../../app/Services/Payroll/BenefitContributionPostingService.php',
+      48 => '../../../app/Services/Payroll/BenefitRecordsService.php',
+      49 => '../../../app/Services/Payroll/MonthlyGovernmentReconciliationService.php',
+      50 => '../../../app/Services/Payroll/PaymentLogService.php',
+      51 => '../../../app/Services/Payroll/PayrollAuditService.php',
+      52 => '../../../app/Services/Payroll/PayrollComputationService.php',
+      53 => '../../../app/Services/Payroll/PayrollDeductionService.php',
+      54 => '../../../app/Services/Payroll/PayrollPayslipService.php',
+      55 => '../../../app/Services/Reports/HrDataReportService.php',
     ),
   ),
   '../../../app/Models/EmployeeAsset.php' => 
@@ -15071,9 +15393,11 @@ return [
       30 => '../../../app/Services/HR_Department/EmployeeLeaveActionService.php',
       31 => '../../../app/Services/HR_Department/EmployeeProfileService.php',
       32 => '../../../app/Services/HR_Department/EmployeeService.php',
-      33 => '../../../app/Services/Payroll/BenefitContributionPostingService.php',
-      34 => '../../../app/Services/Payroll/BenefitRecordsService.php',
-      35 => '../../../app/Services/Reports/HrDataReportService.php',
+      33 => '../../../app/Services/HR_Department/LeaveDirectoryService.php',
+      34 => '../../../app/Services/HR_Department/LeaveRecordService.php',
+      35 => '../../../app/Services/Payroll/BenefitContributionPostingService.php',
+      36 => '../../../app/Services/Payroll/BenefitRecordsService.php',
+      37 => '../../../app/Services/Reports/HrDataReportService.php',
     ),
   ),
   '../../../app/Models/EmployeeAttachment.php' => 
@@ -15113,9 +15437,11 @@ return [
       29 => '../../../app/Services/HR_Department/EmployeeLeaveActionService.php',
       30 => '../../../app/Services/HR_Department/EmployeeProfileService.php',
       31 => '../../../app/Services/HR_Department/EmployeeService.php',
-      32 => '../../../app/Services/Payroll/BenefitContributionPostingService.php',
-      33 => '../../../app/Services/Payroll/BenefitRecordsService.php',
-      34 => '../../../app/Services/Reports/HrDataReportService.php',
+      32 => '../../../app/Services/HR_Department/LeaveDirectoryService.php',
+      33 => '../../../app/Services/HR_Department/LeaveRecordService.php',
+      34 => '../../../app/Services/Payroll/BenefitContributionPostingService.php',
+      35 => '../../../app/Services/Payroll/BenefitRecordsService.php',
+      36 => '../../../app/Services/Reports/HrDataReportService.php',
     ),
   ),
   '../../../app/Models/EmployeeBiometric.php' => 
@@ -15200,14 +15526,16 @@ return [
       29 => '../../../app/Services/HR_Department/EmployeeLeaveActionService.php',
       30 => '../../../app/Services/HR_Department/EmployeeProfileService.php',
       31 => '../../../app/Services/HR_Department/EmployeeService.php',
-      32 => '../../../app/Services/Payroll/BenefitContributionPostingService.php',
-      33 => '../../../app/Services/Payroll/BenefitRecordsService.php',
-      34 => '../../../app/Services/Reports/HrDataReportService.php',
+      32 => '../../../app/Services/HR_Department/LeaveDirectoryService.php',
+      33 => '../../../app/Services/HR_Department/LeaveRecordService.php',
+      34 => '../../../app/Services/Payroll/BenefitContributionPostingService.php',
+      35 => '../../../app/Services/Payroll/BenefitRecordsService.php',
+      36 => '../../../app/Services/Reports/HrDataReportService.php',
     ),
   ),
   '../../../app/Models/EmployeeLeave.php' => 
   array (
-    'fileHash' => '0d4c6a98d7f292ec8fe6db8986070878e81db3c715858af3249baa66835fdbb6',
+    'fileHash' => '00e6232912796b81fc187f6d6cdba5899ff8c10633abd8a05325586ed12570fb',
     'dependentFiles' => 
     array (
       0 => '../../../app/Console/Commands/MigrateSensitiveFiles.php',
@@ -15216,7 +15544,9 @@ return [
       3 => '../../../app/Http/Controllers/SecureFileController.php',
       4 => '../../../app/Models/Employee.php',
       5 => '../../../app/Services/HR_Department/EmployeeLeaveActionService.php',
-      6 => '../../../app/Services/Reports/HrDataReportService.php',
+      6 => '../../../app/Services/HR_Department/LeaveDirectoryService.php',
+      7 => '../../../app/Services/HR_Department/LeaveRecordService.php',
+      8 => '../../../app/Services/Reports/HrDataReportService.php',
     ),
   ),
   '../../../app/Models/EmployeeLog.php' => 
@@ -15692,8 +16022,10 @@ return [
       2 => '../../../app/Http/Controllers/HR_Department/HRDashboardController.php',
       3 => '../../../app/Models/Department.php',
       4 => '../../../app/Models/Employee.php',
-      5 => '../../../app/Services/HR_Department/EmployeeDirectoryService.php',
-      6 => '../../../app/Services/HR_Department/EmployeeProfileService.php',
+      5 => '../../../app/Services/HR_Department/DepartmentService.php',
+      6 => '../../../app/Services/HR_Department/EmployeeDirectoryService.php',
+      7 => '../../../app/Services/HR_Department/EmployeeProfileService.php',
+      8 => '../../../app/Services/HR_Department/LeaveRecordService.php',
     ),
   ),
   '../../../app/Models/Product.php' => 
@@ -16118,6 +16450,14 @@ return [
       0 => '../../../app/Http/Controllers/HR_Department/ConductorLeaveController.php',
     ),
   ),
+  '../../../app/Services/HR_Department/DepartmentService.php' => 
+  array (
+    'fileHash' => '3a4394ea6541fa9a23f67c34171a9a4ad0ad4cb81987fec979e1ec1bde93a588',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/HR_Department/DepartmentController.php',
+    ),
+  ),
   '../../../app/Services/HR_Department/DriverLeaveActionService.php' => 
   array (
     'fileHash' => '8d7cd40aabd735b95596a746b98e2214b21aa38156f0c57eebdc7eb73ece97b4',
@@ -16182,6 +16522,26 @@ return [
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/HR_Department/EmployeeController.php',
+    ),
+  ),
+  '../../../app/Services/HR_Department/LeaveDirectoryService.php' => 
+  array (
+    'fileHash' => '72b977fbfa5c995c3c6c1f5901a48ec6a318fcb09aef7a3be109dfaffaeb61e1',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/HR_Department/ConductorLeaveController.php',
+      1 => '../../../app/Http/Controllers/HR_Department/DriverLeaveController.php',
+      2 => '../../../app/Http/Controllers/HR_Department/EmployeeLeaveController.php',
+    ),
+  ),
+  '../../../app/Services/HR_Department/LeaveRecordService.php' => 
+  array (
+    'fileHash' => '00d765acf63fb7c8669e33e7c654c49fe7fc355b93211be05e2ff906857f3fe4',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/HR_Department/ConductorLeaveController.php',
+      1 => '../../../app/Http/Controllers/HR_Department/DriverLeaveController.php',
+      2 => '../../../app/Http/Controllers/HR_Department/EmployeeLeaveController.php',
     ),
   ),
   '../../../app/Services/IT/ItInventoryService.php' => 
@@ -16270,7 +16630,7 @@ return [
   ),
   '../../../app/Services/Payroll/BenefitRecordsService.php' => 
   array (
-    'fileHash' => '424e13d6a415900000429d42302af86fce5692a7b2610bd77a4a007eb46b5cd8',
+    'fileHash' => '8fc0d610ea5365f4b1a74cf42b19250508bd1163b3ab9142737ca3a45071e546',
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/Payroll/BenefitsRecordController.php',
@@ -17480,8 +17840,8 @@ return [
   '../../../app/Http/Controllers/HR_Department/DepartmentController.php' => 
   array (
     0 => 'laravel/framework',
-    1 => 'laracasts/flash',
-    2 => 'symfony/http-foundation',
+    1 => 'symfony/http-foundation',
+    2 => 'laracasts/flash',
     3 => 'psr/log',
     4 => 'monolog/monolog',
   ),
@@ -18191,6 +18551,48 @@ return [
     6 => 'psr/http-message',
     7 => 'psr/log',
     8 => 'monolog/monolog',
+  ),
+  '../../../app/Enums/BenefitProgram.php' => 
+  array (
+  ),
+  '../../../app/Enums/HrPositionType.php' => 
+  array (
+  ),
+  '../../../app/Enums/LeaveActionType.php' => 
+  array (
+  ),
+  '../../../app/Enums/LeaveStatus.php' => 
+  array (
+  ),
+  '../../../app/Http/Requests/HR_Department/LeaveRecordRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/HR_Department/StoreDepartmentRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/HR_Department/StorePositionRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Services/HR_Department/DepartmentService.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/HR_Department/LeaveDirectoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/HR_Department/LeaveRecordService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
   ),
 ),
 	'exportedNodesCallback' => static function (): array { return array (
@@ -20025,6 +20427,60 @@ return [
       ),
     )),
   ),
+  '../../../app/Enums/BenefitProgram.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedEnumNode::__set_state(array(
+       'name' => 'App\\Enums\\BenefitProgram',
+       'scalarType' => 'string',
+       'phpDoc' => NULL,
+       'implements' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Sss',
+           'value' => '\'sss\'',
+           'phpDoc' => NULL,
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'PhilHealth',
+           'value' => '\'philhealth\'',
+           'phpDoc' => NULL,
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'PagIbig',
+           'value' => '\'pagibig\'',
+           'phpDoc' => NULL,
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'label',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'string',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
   '../../../app/Enums/CctvConcernStatus.php' => 
   array (
     0 => 
@@ -20296,6 +20752,36 @@ return [
            'attributes' => 
           array (
           ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Enums/HrPositionType.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedEnumNode::__set_state(array(
+       'name' => 'App\\Enums\\HrPositionType',
+       'scalarType' => 'string',
+       'phpDoc' => NULL,
+       'implements' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Driver',
+           'value' => '\'Driver\'',
+           'phpDoc' => NULL,
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Conductor',
+           'value' => '\'Conductor\'',
+           'phpDoc' => NULL,
         )),
       ),
        'attributes' => 
@@ -20744,6 +21230,138 @@ return [
            'final' => false,
            'static' => true,
            'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Enums/LeaveActionType.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedEnumNode::__set_state(array(
+       'name' => 'App\\Enums\\LeaveActionType',
+       'scalarType' => 'string',
+       'phpDoc' => NULL,
+       'implements' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'FirstNotice',
+           'value' => '\'first\'',
+           'phpDoc' => NULL,
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'SecondNotice',
+           'value' => '\'second\'',
+           'phpDoc' => NULL,
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Terminate',
+           'value' => '\'terminate\'',
+           'phpDoc' => NULL,
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Cancel',
+           'value' => '\'cancel\'',
+           'phpDoc' => NULL,
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Ready',
+           'value' => '\'ready\'',
+           'phpDoc' => NULL,
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'requiresProof',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Enums/LeaveStatus.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedEnumNode::__set_state(array(
+       'name' => 'App\\Enums\\LeaveStatus',
+       'scalarType' => 'string',
+       'phpDoc' => NULL,
+       'implements' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Active',
+           'value' => '\'Active\'',
+           'phpDoc' => NULL,
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Inactive',
+           'value' => '\'Inactive\'',
+           'phpDoc' => NULL,
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Completed',
+           'value' => '\'Completed\'',
+           'phpDoc' => NULL,
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Cancelled',
+           'value' => '\'Cancelled\'',
+           'phpDoc' => NULL,
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Terminated',
+           'value' => '\'Terminated\'',
+           'phpDoc' => NULL,
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'isClosed',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
            'parameters' => 
           array (
           ),
@@ -24231,6 +24849,32 @@ return [
                'phpDoc' => NULL,
                'flags' => 68,
             )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'leaveRecordService',
+               'type' => 'App\\Services\\HR_Department\\LeaveRecordService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'leaveDirectoryService',
+               'type' => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
           ),
            'attributes' => 
           array (
@@ -24301,7 +24945,7 @@ return [
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -24363,7 +25007,7 @@ return [
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -24448,7 +25092,7 @@ return [
        'name' => 'App\\Http\\Controllers\\HR_Department\\DepartmentController',
        'phpDoc' => NULL,
        'abstract' => false,
-       'final' => false,
+       'final' => true,
        'extends' => 'App\\Http\\Controllers\\Controller',
        'implements' => 
       array (
@@ -24463,7 +25107,7 @@ return [
       array (
         0 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'index',
+           'name' => '__construct',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -24474,12 +25118,43 @@ return [
            'returnType' => NULL,
            'parameters' => 
           array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'departmentService',
+               'type' => 'App\\Services\\HR_Department\\DepartmentService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
           ),
            'attributes' => 
           array (
           ),
         )),
         1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'index',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\View\\View|Illuminate\\Http\\RedirectResponse',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'positions',
            'phpDoc' => NULL,
@@ -24489,44 +25164,13 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\JsonResponse',
            'parameters' => 
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'id',
-               'type' => NULL,
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        2 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'store',
-           'phpDoc' => NULL,
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => NULL,
-           'parameters' => 
-          array (
-            0 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'int',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -24543,7 +25187,7 @@ return [
         )),
         3 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'storePosition',
+           'name' => 'store',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -24551,13 +25195,13 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'App\\Http\\Requests\\HR_Department\\StoreDepartmentRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -24574,6 +25218,37 @@ return [
         )),
         4 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'storePosition',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'App\\Http\\Requests\\HR_Department\\StorePositionRequest',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'destroy',
            'phpDoc' => NULL,
            'byRef' => false,
@@ -24582,7 +25257,7 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
@@ -24603,7 +25278,7 @@ return [
           array (
           ),
         )),
-        5 => 
+        6 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'destroyPosition',
            'phpDoc' => NULL,
@@ -24613,7 +25288,7 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
@@ -24677,6 +25352,32 @@ return [
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'driverLeaveActionService',
                'type' => 'App\\Services\\HR_Department\\DriverLeaveActionService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'leaveRecordService',
+               'type' => 'App\\Services\\HR_Department\\LeaveRecordService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'leaveDirectoryService',
+               'type' => 'App\\Services\\HR_Department\\LeaveDirectoryService',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -24756,7 +25457,7 @@ return [
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -24818,7 +25519,7 @@ return [
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -25677,6 +26378,32 @@ return [
                'phpDoc' => NULL,
                'flags' => 68,
             )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'leaveRecordService',
+               'type' => 'App\\Services\\HR_Department\\LeaveRecordService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'leaveDirectoryService',
+               'type' => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
           ),
            'attributes' => 
           array (
@@ -25747,7 +26474,7 @@ return [
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -25809,7 +26536,7 @@ return [
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -35466,6 +36193,166 @@ return [
       ),
     )),
   ),
+  '../../../app/Http/Requests/HR_Department/LeaveRecordRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'prepareForValidation',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => false,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/HR_Department/StoreDepartmentRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\HR_Department\\StoreDepartmentRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'prepareForValidation',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => false,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
   '../../../app/Http/Requests/HR_Department/StoreEmployeeAttachmentRequest.php' => 
   array (
     0 => 
@@ -35599,6 +36486,86 @@ return [
            'final' => false,
            'static' => false,
            'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/HR_Department/StorePositionRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\HR_Department\\StorePositionRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'prepareForValidation',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => false,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
            'parameters' => 
           array (
           ),
@@ -41174,6 +42141,7 @@ return [
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'leavestatus' => 'App\\Enums\\LeaveStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
         ),
@@ -41279,6 +42247,7 @@ return [
              'namespace' => 'App\\Models',
              'uses' => 
             array (
+              'leavestatus' => 'App\\Enums\\LeaveStatus',
               'model' => 'Illuminate\\Database\\Eloquent\\Model',
               'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
             ),
@@ -42156,6 +43125,7 @@ return [
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'leavestatus' => 'App\\Enums\\LeaveStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
         ),
@@ -42261,6 +43231,7 @@ return [
              'namespace' => 'App\\Models',
              'uses' => 
             array (
+              'leavestatus' => 'App\\Enums\\LeaveStatus',
               'model' => 'Illuminate\\Database\\Eloquent\\Model',
               'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
             ),
@@ -43959,6 +44930,7 @@ return [
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'leavestatus' => 'App\\Enums\\LeaveStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
         ),
@@ -44064,6 +45036,7 @@ return [
              'namespace' => 'App\\Models',
              'uses' => 
             array (
+              'leavestatus' => 'App\\Enums\\LeaveStatus',
               'model' => 'Illuminate\\Database\\Eloquent\\Model',
               'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
             ),
@@ -56821,6 +57794,201 @@ return [
       ),
     )),
   ),
+  '../../../app/Services/HR_Department/DepartmentService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\HR_Department\\DepartmentService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'directory',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return Collection<int, Department> */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'department' => 'App\\Models\\Department',
+              'position' => 'App\\Models\\Position',
+              'collection' => 'Illuminate\\Database\\Eloquent\\Collection',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Database\\Eloquent\\Collection',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'createDepartment',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\Department',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'name',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'createPosition',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\Position',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'departmentId',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'title',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'deleteDepartment',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'department',
+               'type' => 'App\\Models\\Department',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'deletePosition',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'position',
+               'type' => 'App\\Models\\Position',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
   '../../../app/Services/HR_Department/DriverLeaveActionService.php' => 
   array (
     0 => 
@@ -57971,6 +59139,717 @@ return [
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'employee',
                'type' => 'App\\Models\\Employee',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/HR_Department/LeaveDirectoryService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'driverIndex',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return array{leaves:LengthAwarePaginator,today:Carbon,counts:array<string,int>,garageSummary:Collection} */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'hrpositiontype' => 'App\\Enums\\HrPositionType',
+              'conductorleave' => 'App\\Models\\ConductorLeave',
+              'driverleave' => 'App\\Models\\DriverLeave',
+              'employee' => 'App\\Models\\Employee',
+              'employeeleave' => 'App\\Models\\EmployeeLeave',
+              'carbon' => 'Carbon\\Carbon',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'eloquentcollection' => 'Illuminate\\Database\\Eloquent\\Collection',
+              'request' => 'Illuminate\\Http\\Request',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'Illuminate\\Http\\Request',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'conductorIndex',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return array{leaves:LengthAwarePaginator,today:Carbon,counts:array<string,int>,garageSummary:Collection} */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'hrpositiontype' => 'App\\Enums\\HrPositionType',
+              'conductorleave' => 'App\\Models\\ConductorLeave',
+              'driverleave' => 'App\\Models\\DriverLeave',
+              'employee' => 'App\\Models\\Employee',
+              'employeeleave' => 'App\\Models\\EmployeeLeave',
+              'carbon' => 'Carbon\\Carbon',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'eloquentcollection' => 'Illuminate\\Database\\Eloquent\\Collection',
+              'request' => 'Illuminate\\Http\\Request',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'Illuminate\\Http\\Request',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'employeeIndex',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return array{leaves:LengthAwarePaginator,today:Carbon,counts:array<string,int>,garageSummary:Collection} */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'hrpositiontype' => 'App\\Enums\\HrPositionType',
+              'conductorleave' => 'App\\Models\\ConductorLeave',
+              'driverleave' => 'App\\Models\\DriverLeave',
+              'employee' => 'App\\Models\\Employee',
+              'employeeleave' => 'App\\Models\\EmployeeLeave',
+              'carbon' => 'Carbon\\Carbon',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'eloquentcollection' => 'Illuminate\\Database\\Eloquent\\Collection',
+              'request' => 'Illuminate\\Http\\Request',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'Illuminate\\Http\\Request',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'drivers',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return EloquentCollection<int, Employee> */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'hrpositiontype' => 'App\\Enums\\HrPositionType',
+              'conductorleave' => 'App\\Models\\ConductorLeave',
+              'driverleave' => 'App\\Models\\DriverLeave',
+              'employee' => 'App\\Models\\Employee',
+              'employeeleave' => 'App\\Models\\EmployeeLeave',
+              'carbon' => 'Carbon\\Carbon',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'eloquentcollection' => 'Illuminate\\Database\\Eloquent\\Collection',
+              'request' => 'Illuminate\\Http\\Request',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Database\\Eloquent\\Collection',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'currentLeave',
+               'type' => '?App\\Models\\DriverLeave',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'conductors',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return EloquentCollection<int, Employee> */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'hrpositiontype' => 'App\\Enums\\HrPositionType',
+              'conductorleave' => 'App\\Models\\ConductorLeave',
+              'driverleave' => 'App\\Models\\DriverLeave',
+              'employee' => 'App\\Models\\Employee',
+              'employeeleave' => 'App\\Models\\EmployeeLeave',
+              'carbon' => 'Carbon\\Carbon',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'eloquentcollection' => 'Illuminate\\Database\\Eloquent\\Collection',
+              'request' => 'Illuminate\\Http\\Request',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Database\\Eloquent\\Collection',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'currentLeave',
+               'type' => '?App\\Models\\ConductorLeave',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'employees',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return EloquentCollection<int, Employee> */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'hrpositiontype' => 'App\\Enums\\HrPositionType',
+              'conductorleave' => 'App\\Models\\ConductorLeave',
+              'driverleave' => 'App\\Models\\DriverLeave',
+              'employee' => 'App\\Models\\Employee',
+              'employeeleave' => 'App\\Models\\EmployeeLeave',
+              'carbon' => 'Carbon\\Carbon',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'eloquentcollection' => 'Illuminate\\Database\\Eloquent\\Collection',
+              'request' => 'Illuminate\\Http\\Request',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Database\\Eloquent\\Collection',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'currentLeave',
+               'type' => '?App\\Models\\EmployeeLeave',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/HR_Department/LeaveRecordService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\HR_Department\\LeaveRecordService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'createDriverLeave',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/**
+     * @param  array{employee_id:int|string,leave_type:string,start_date:string,end_date:string,reason?:string|null}  $data
+     */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'hrpositiontype' => 'App\\Enums\\HrPositionType',
+              'leavestatus' => 'App\\Enums\\LeaveStatus',
+              'conductorleave' => 'App\\Models\\ConductorLeave',
+              'driverleave' => 'App\\Models\\DriverLeave',
+              'employee' => 'App\\Models\\Employee',
+              'employeeleave' => 'App\\Models\\EmployeeLeave',
+              'carbonimmutable' => 'Carbon\\CarbonImmutable',
+              'domainexception' => 'DomainException',
+              'model' => 'Illuminate\\Database\\Eloquent\\Model',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\DriverLeave',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'createConductorLeave',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array{employee_id:int|string,leave_type:string,start_date:string,end_date:string,reason?:string|null} $data */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'hrpositiontype' => 'App\\Enums\\HrPositionType',
+              'leavestatus' => 'App\\Enums\\LeaveStatus',
+              'conductorleave' => 'App\\Models\\ConductorLeave',
+              'driverleave' => 'App\\Models\\DriverLeave',
+              'employee' => 'App\\Models\\Employee',
+              'employeeleave' => 'App\\Models\\EmployeeLeave',
+              'carbonimmutable' => 'Carbon\\CarbonImmutable',
+              'domainexception' => 'DomainException',
+              'model' => 'Illuminate\\Database\\Eloquent\\Model',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\ConductorLeave',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'createEmployeeLeave',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array{employee_id:int|string,leave_type:string,start_date:string,end_date:string,reason?:string|null} $data */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'hrpositiontype' => 'App\\Enums\\HrPositionType',
+              'leavestatus' => 'App\\Enums\\LeaveStatus',
+              'conductorleave' => 'App\\Models\\ConductorLeave',
+              'driverleave' => 'App\\Models\\DriverLeave',
+              'employee' => 'App\\Models\\Employee',
+              'employeeleave' => 'App\\Models\\EmployeeLeave',
+              'carbonimmutable' => 'Carbon\\CarbonImmutable',
+              'domainexception' => 'DomainException',
+              'model' => 'Illuminate\\Database\\Eloquent\\Model',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\EmployeeLeave',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'updateDriverLeave',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array{employee_id:int|string,leave_type:string,start_date:string,end_date:string,reason?:string|null} $data */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'hrpositiontype' => 'App\\Enums\\HrPositionType',
+              'leavestatus' => 'App\\Enums\\LeaveStatus',
+              'conductorleave' => 'App\\Models\\ConductorLeave',
+              'driverleave' => 'App\\Models\\DriverLeave',
+              'employee' => 'App\\Models\\Employee',
+              'employeeleave' => 'App\\Models\\EmployeeLeave',
+              'carbonimmutable' => 'Carbon\\CarbonImmutable',
+              'domainexception' => 'DomainException',
+              'model' => 'Illuminate\\Database\\Eloquent\\Model',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'leave',
+               'type' => 'App\\Models\\DriverLeave',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'updateConductorLeave',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array{employee_id:int|string,leave_type:string,start_date:string,end_date:string,reason?:string|null} $data */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'hrpositiontype' => 'App\\Enums\\HrPositionType',
+              'leavestatus' => 'App\\Enums\\LeaveStatus',
+              'conductorleave' => 'App\\Models\\ConductorLeave',
+              'driverleave' => 'App\\Models\\DriverLeave',
+              'employee' => 'App\\Models\\Employee',
+              'employeeleave' => 'App\\Models\\EmployeeLeave',
+              'carbonimmutable' => 'Carbon\\CarbonImmutable',
+              'domainexception' => 'DomainException',
+              'model' => 'Illuminate\\Database\\Eloquent\\Model',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'leave',
+               'type' => 'App\\Models\\ConductorLeave',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'updateEmployeeLeave',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array{employee_id:int|string,leave_type:string,start_date:string,end_date:string,reason?:string|null} $data */',
+             'namespace' => 'App\\Services\\HR_Department',
+             'uses' => 
+            array (
+              'hrpositiontype' => 'App\\Enums\\HrPositionType',
+              'leavestatus' => 'App\\Enums\\LeaveStatus',
+              'conductorleave' => 'App\\Models\\ConductorLeave',
+              'driverleave' => 'App\\Models\\DriverLeave',
+              'employee' => 'App\\Models\\Employee',
+              'employeeleave' => 'App\\Models\\EmployeeLeave',
+              'carbonimmutable' => 'Carbon\\CarbonImmutable',
+              'domainexception' => 'DomainException',
+              'model' => 'Illuminate\\Database\\Eloquent\\Model',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'leave',
+               'type' => 'App\\Models\\EmployeeLeave',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,

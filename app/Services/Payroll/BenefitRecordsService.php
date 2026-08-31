@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Payroll;
 
+use App\Enums\BenefitProgram;
 use App\Models\BenefitContributionRecord;
 use App\Models\EmployeeBiometric;
 use Illuminate\Database\Eloquent\Builder;
@@ -81,9 +82,9 @@ class BenefitRecordsService
                     'records' => $records,
                     'summary' => $this->summarize($records),
                     'identifiers' => [
-                        'sss' => $records->pluck('sss_number')->filter()->last() ?: $asset?->sss_number,
-                        'philhealth' => $records->pluck('philhealth_number')->filter()->last() ?: $asset?->philhealth_number,
-                        'pagibig' => $records->pluck('pagibig_number')->filter()->last() ?: $asset?->pagibig_number,
+                        BenefitProgram::Sss->value => $records->pluck('sss_number')->filter()->last() ?: $asset?->sss_number,
+                        BenefitProgram::PhilHealth->value => $records->pluck('philhealth_number')->filter()->last() ?: $asset?->philhealth_number,
+                        BenefitProgram::PagIbig->value => $records->pluck('pagibig_number')->filter()->last() ?: $asset?->pagibig_number,
                     ],
                 ];
             })

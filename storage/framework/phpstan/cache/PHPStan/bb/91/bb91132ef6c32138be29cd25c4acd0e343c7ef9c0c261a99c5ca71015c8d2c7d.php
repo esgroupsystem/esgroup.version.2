@@ -2,7 +2,7 @@
 
 // odsl-/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/HR_Department/ConductorLeaveController.php-PHPStan\BetterReflection\Reflection\ReflectionClass-App\Http\Controllers\HR_Department\ConductorLeaveController
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-8.3.6-2bc448619ec5530df6f0ef3c41deba97cb4b4a987b1bac2d4916fceea2ca85b5',
+   'variableKey' => 'v2-6.70.0.3-8.3.6-75d585aa42e4bb9f2c94e059bc228ce9f0516d346ff2ec4c2e606115645dca4b',
    'data' => 
   array (
     'locatedSource' => 
@@ -27,7 +27,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     array (
     ),
     'startLine' => 21,
-    'endLine' => 406,
+    'endLine' => 118,
     'startColumn' => 1,
     'endColumn' => 1,
     'parentClassName' => 'App\\Http\\Controllers\\Controller',
@@ -73,6 +73,68 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
       ),
+      'leaveRecordService' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\ConductorLeaveController',
+        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\ConductorLeaveController',
+        'name' => 'leaveRecordService',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\HR_Department\\LeaveRecordService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 25,
+        'endLine' => 25,
+        'startColumn' => 9,
+        'endColumn' => 63,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
+      'leaveDirectoryService' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\ConductorLeaveController',
+        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\ConductorLeaveController',
+        'name' => 'leaveDirectoryService',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 26,
+        'endLine' => 26,
+        'startColumn' => 9,
+        'endColumn' => 69,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
     ),
     'immediateMethods' => 
     array (
@@ -107,6 +169,58 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
+          'leaveRecordService' => 
+          array (
+            'name' => 'leaveRecordService',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\HR_Department\\LeaveRecordService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 25,
+            'endLine' => 25,
+            'startColumn' => 9,
+            'endColumn' => 63,
+            'parameterIndex' => 1,
+            'isOptional' => false,
+          ),
+          'leaveDirectoryService' => 
+          array (
+            'name' => 'leaveDirectoryService',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\HR_Department\\LeaveDirectoryService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 26,
+            'endLine' => 26,
+            'startColumn' => 9,
+            'endColumn' => 69,
+            'parameterIndex' => 2,
+            'isOptional' => false,
+          ),
         ),
         'returnsReference' => false,
         'returnType' => NULL,
@@ -115,7 +229,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         ),
         'docComment' => NULL,
         'startLine' => 23,
-        'endLine' => 25,
+        'endLine' => 27,
         'startColumn' => 5,
         'endColumn' => 8,
         'couldThrow' => false,
@@ -153,8 +267,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 27,
-            'endLine' => 27,
+            'startLine' => 29,
+            'endLine' => 29,
             'startColumn' => 27,
             'endColumn' => 42,
             'parameterIndex' => 0,
@@ -175,8 +289,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 27,
-        'endLine' => 158,
+        'startLine' => 29,
+        'endLine' => 41,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -210,8 +324,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 160,
-        'endLine' => 177,
+        'startLine' => 43,
+        'endLine' => 48,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -239,7 +353,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -249,10 +363,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 179,
-            'endLine' => 179,
+            'startLine' => 50,
+            'endLine' => 50,
             'startColumn' => 27,
-            'endColumn' => 42,
+            'endColumn' => 53,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -271,8 +385,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 179,
-        'endLine' => 212,
+        'startLine' => 50,
+        'endLine' => 62,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -310,8 +424,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 214,
-            'endLine' => 214,
+            'startLine' => 64,
+            'endLine' => 64,
             'startColumn' => 26,
             'endColumn' => 46,
             'parameterIndex' => 0,
@@ -332,8 +446,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 214,
-        'endLine' => 237,
+        'startLine' => 64,
+        'endLine' => 72,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -361,7 +475,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\HR_Department\\LeaveRecordRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -371,10 +485,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 240,
-            'endLine' => 240,
+            'startLine' => 75,
+            'endLine' => 75,
             'startColumn' => 9,
-            'endColumn' => 24,
+            'endColumn' => 35,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -397,8 +511,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 241,
-            'endLine' => 241,
+            'startLine' => 76,
+            'endLine' => 76,
             'startColumn' => 9,
             'endColumn' => 29,
             'parameterIndex' => 1,
@@ -419,8 +533,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 239,
-        'endLine' => 287,
+        'startLine' => 74,
+        'endLine' => 88,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -458,8 +572,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 290,
-            'endLine' => 290,
+            'startLine' => 91,
+            'endLine' => 91,
             'startColumn' => 9,
             'endColumn' => 44,
             'parameterIndex' => 0,
@@ -484,8 +598,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 291,
-            'endLine' => 291,
+            'startLine' => 92,
+            'endLine' => 92,
             'startColumn' => 9,
             'endColumn' => 29,
             'parameterIndex' => 1,
@@ -506,8 +620,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 289,
-        'endLine' => 316,
+        'startLine' => 90,
+        'endLine' => 117,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -515,85 +629,6 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         'isGenerator' => false,
         'isVariadic' => false,
         'modifiers' => 1,
-        'namespace' => 'App\\Http\\Controllers\\HR_Department',
-        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\ConductorLeaveController',
-        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\ConductorLeaveController',
-        'currentClassName' => 'App\\Http\\Controllers\\HR_Department\\ConductorLeaveController',
-        'aliasName' => NULL,
-      ),
-      'decorateLeaveRows' => 
-      array (
-        'name' => 'decorateLeaveRows',
-        'parameters' => 
-        array (
-          'leaves' => 
-          array (
-            'name' => 'leaves',
-            'default' => NULL,
-            'type' => NULL,
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 318,
-            'endLine' => 318,
-            'startColumn' => 40,
-            'endColumn' => 46,
-            'parameterIndex' => 0,
-            'isOptional' => false,
-          ),
-          'today' => 
-          array (
-            'name' => 'today',
-            'default' => NULL,
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-              'data' => 
-              array (
-                'name' => 'Carbon\\Carbon',
-                'isIdentifier' => false,
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 318,
-            'endLine' => 318,
-            'startColumn' => 49,
-            'endColumn' => 61,
-            'parameterIndex' => 1,
-            'isOptional' => false,
-          ),
-        ),
-        'returnsReference' => false,
-        'returnType' => 
-        array (
-          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-          'data' => 
-          array (
-            'name' => 'void',
-            'isIdentifier' => true,
-          ),
-        ),
-        'attributes' => 
-        array (
-        ),
-        'docComment' => NULL,
-        'startLine' => 318,
-        'endLine' => 405,
-        'startColumn' => 5,
-        'endColumn' => 5,
-        'couldThrow' => false,
-        'isClosure' => false,
-        'isGenerator' => false,
-        'isVariadic' => false,
-        'modifiers' => 4,
         'namespace' => 'App\\Http\\Controllers\\HR_Department',
         'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\ConductorLeaveController',
         'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\ConductorLeaveController',

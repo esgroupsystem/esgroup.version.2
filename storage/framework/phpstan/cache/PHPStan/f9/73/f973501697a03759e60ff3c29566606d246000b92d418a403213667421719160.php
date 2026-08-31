@@ -754,7 +754,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/HR_Department/ConductorLeaveController.php' => 
     array (
-      0 => '2bc448619ec5530df6f0ef3c41deba97cb4b4a987b1bac2d4916fceea2ca85b5',
+      0 => '75d585aa42e4bb9f2c94e059bc228ce9f0516d346ff2ec4c2e606115645dca4b',
       1 => 
       array (
         0 => 'app\\http\\controllers\\hr_department\\conductorleavecontroller',
@@ -768,7 +768,6 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         4 => 'app\\http\\controllers\\hr_department\\edit',
         5 => 'app\\http\\controllers\\hr_department\\update',
         6 => 'app\\http\\controllers\\hr_department\\action',
-        7 => 'app\\http\\controllers\\hr_department\\decorateleaverows',
       ),
       3 => 
       array (
@@ -776,19 +775,20 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/HR_Department/DepartmentController.php' => 
     array (
-      0 => '5bc8343fff9d846aa13ce50233d7e81aeee2c017ffe4d5daaf7a9822d2de7f52',
+      0 => 'aeffd35a0f09344a3a7af0dc5d35d5b9e53fd85b80cfc2de4ac6476d1266771e',
       1 => 
       array (
         0 => 'app\\http\\controllers\\hr_department\\departmentcontroller',
       ),
       2 => 
       array (
-        0 => 'app\\http\\controllers\\hr_department\\index',
-        1 => 'app\\http\\controllers\\hr_department\\positions',
-        2 => 'app\\http\\controllers\\hr_department\\store',
-        3 => 'app\\http\\controllers\\hr_department\\storeposition',
-        4 => 'app\\http\\controllers\\hr_department\\destroy',
-        5 => 'app\\http\\controllers\\hr_department\\destroyposition',
+        0 => 'app\\http\\controllers\\hr_department\\__construct',
+        1 => 'app\\http\\controllers\\hr_department\\index',
+        2 => 'app\\http\\controllers\\hr_department\\positions',
+        3 => 'app\\http\\controllers\\hr_department\\store',
+        4 => 'app\\http\\controllers\\hr_department\\storeposition',
+        5 => 'app\\http\\controllers\\hr_department\\destroy',
+        6 => 'app\\http\\controllers\\hr_department\\destroyposition',
       ),
       3 => 
       array (
@@ -796,7 +796,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/HR_Department/DriverLeaveController.php' => 
     array (
-      0 => '2479d004177ea84dd35928cf76b02f58e932d06367758cbe5fe1c78f6190cc31',
+      0 => '96d425daad60dc9f45f0b67da261143116d0d71ab06f57af5acc6c111df7d991',
       1 => 
       array (
         0 => 'app\\http\\controllers\\hr_department\\driverleavecontroller',
@@ -810,7 +810,6 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         4 => 'app\\http\\controllers\\hr_department\\edit',
         5 => 'app\\http\\controllers\\hr_department\\update',
         6 => 'app\\http\\controllers\\hr_department\\action',
-        7 => 'app\\http\\controllers\\hr_department\\decorateleaverows',
       ),
       3 => 
       array (
@@ -849,7 +848,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/HR_Department/EmployeeLeaveController.php' => 
     array (
-      0 => '2465db82bb319366794b3920a7f8e52e312febf14621c0e1f5ce112f33f60710',
+      0 => '3e0ba70caf9c3d4c358bfb631ec62a17f305158c3b372edf4eb9e2fabc612303',
       1 => 
       array (
         0 => 'app\\http\\controllers\\hr_department\\employeeleavecontroller',
@@ -863,7 +862,6 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         4 => 'app\\http\\controllers\\hr_department\\edit',
         5 => 'app\\http\\controllers\\hr_department\\update',
         6 => 'app\\http\\controllers\\hr_department\\action',
-        7 => 'app\\http\\controllers\\hr_department\\decorateleaverows',
       ),
       3 => 
       array (
@@ -1930,7 +1928,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/ConductorLeaveActionRequest.php' => 
     array (
-      0 => 'c4c78d3a89a608ac2b9e8e1978c455c96540c5e282be1ef45e114498df2c5ad8',
+      0 => '165c188576ee527d4aad086f8a8aeca9f703665ef8a702529845ab479ce4b282',
       1 => 
       array (
         0 => 'app\\http\\requests\\hr_department\\conductorleaveactionrequest',
@@ -1947,7 +1945,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/DriverLeaveActionRequest.php' => 
     array (
-      0 => 'ca1854a1c21081fdbcaa1620f3245742b9ca386101a05028ad43a2e21f17be24',
+      0 => 'af87421ddc30988d390aed95421f2bec8c81011ae3c44e1f33ce0e2cd7f8836b',
       1 => 
       array (
         0 => 'app\\http\\requests\\hr_department\\driverleaveactionrequest',
@@ -1964,7 +1962,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/EmployeeLeaveActionRequest.php' => 
     array (
-      0 => '9d7f8e820a1feabe8a672f268e97141d66e4773e16cc59513dc491c4fcab6b9b',
+      0 => 'dfe77058f9d919bbd1e967870187e90545eeac591e590614966d4ba3b951fc10',
       1 => 
       array (
         0 => 'app\\http\\requests\\hr_department\\employeeleaveactionrequest',
@@ -2538,7 +2536,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Models/ConductorLeave.php' => 
     array (
-      0 => 'a9d23cf7bd09ccc96ebdb786d9997d43cfcf70923a92342aabdd7377a57fd3a3',
+      0 => '7e5f798d03bef0bb8dd90ec1654a2d0bd71419a89b9bd0ef9abc4966d2422d7e',
       1 => 
       array (
         0 => 'app\\models\\conductorleave',
@@ -2613,7 +2611,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Models/DriverLeave.php' => 
     array (
-      0 => 'a428de7ef2051d4d9dcab24e7a71d70a12b2fca5d10a94ab01ab6a3e9b03fe15',
+      0 => 'bb102b776df99e5dd54231b0ec2fbbc137a22e3dc0c548106c3ae83fa70b5dc8',
       1 => 
       array (
         0 => 'app\\models\\driverleave',
@@ -2734,7 +2732,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Models/EmployeeLeave.php' => 
     array (
-      0 => '0d4c6a98d7f292ec8fe6db8986070878e81db3c715858af3249baa66835fdbb6',
+      0 => '00e6232912796b81fc187f6d6cdba5899ff8c10633abd8a05325586ed12570fb',
       1 => 
       array (
         0 => 'app\\models\\employeeleave',
@@ -4128,7 +4126,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Services/Payroll/BenefitRecordsService.php' => 
     array (
-      0 => '424e13d6a415900000429d42302af86fce5692a7b2610bd77a4a007eb46b5cd8',
+      0 => '8fc0d610ea5365f4b1a74cf42b19250508bd1163b3ab9142737ca3a45071e546',
       1 => 
       array (
         0 => 'app\\services\\payroll\\benefitrecordsservice',
@@ -5393,6 +5391,181 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         9 => 'app\\services\\itdepartment\\storefiles',
         10 => 'app\\services\\itdepartment\\log',
         11 => 'app\\services\\itdepartment\\dispatchcreatedreactions',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Enums/BenefitProgram.php' => 
+    array (
+      0 => '474ddb6c37381f90a7f2b546a7a39a8b3179c258c15ae710e1af0a6e74ec9d25',
+      1 => 
+      array (
+        0 => 'app\\enums\\benefitprogram',
+      ),
+      2 => 
+      array (
+        0 => 'app\\enums\\label',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Enums/HrPositionType.php' => 
+    array (
+      0 => '1780be4ca59e09eb5fcf13dae89de2c96d967ec1c92e07d00a80ef2853b22655',
+      1 => 
+      array (
+        0 => 'app\\enums\\hrpositiontype',
+      ),
+      2 => 
+      array (
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Enums/LeaveActionType.php' => 
+    array (
+      0 => 'd6d77f1a9068b782205e518660ba6eb8da7ca3be2b69d5f6c1035139eca1d670',
+      1 => 
+      array (
+        0 => 'app\\enums\\leaveactiontype',
+      ),
+      2 => 
+      array (
+        0 => 'app\\enums\\requiresproof',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Enums/LeaveStatus.php' => 
+    array (
+      0 => '0bd3a418531a5ffa4110d566dd8a373d1ac426170ae7e42762ed915281e801b0',
+      1 => 
+      array (
+        0 => 'app\\enums\\leavestatus',
+      ),
+      2 => 
+      array (
+        0 => 'app\\enums\\isclosed',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/LeaveRecordRequest.php' => 
+    array (
+      0 => '610c3076ed396631797e34fef49147f14a0bc32e4a78de5b23ff7f8d919cf123',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\leaverecordrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\authorize',
+        1 => 'app\\http\\requests\\hr_department\\rules',
+        2 => 'app\\http\\requests\\hr_department\\prepareforvalidation',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/StoreDepartmentRequest.php' => 
+    array (
+      0 => '39d5c098b74237e77fac80e6876334be1bc9f0828804d03fc9fd7859b2f281d0',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\storedepartmentrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\authorize',
+        1 => 'app\\http\\requests\\hr_department\\rules',
+        2 => 'app\\http\\requests\\hr_department\\prepareforvalidation',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/StorePositionRequest.php' => 
+    array (
+      0 => 'fe8259032bc92b9daa9c0a5b28117180c7168a65db414ce76176b6d4ec71324d',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\storepositionrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\authorize',
+        1 => 'app\\http\\requests\\hr_department\\rules',
+        2 => 'app\\http\\requests\\hr_department\\prepareforvalidation',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/HR_Department/DepartmentService.php' => 
+    array (
+      0 => '3a4394ea6541fa9a23f67c34171a9a4ad0ad4cb81987fec979e1ec1bde93a588',
+      1 => 
+      array (
+        0 => 'app\\services\\hr_department\\departmentservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\hr_department\\directory',
+        1 => 'app\\services\\hr_department\\createdepartment',
+        2 => 'app\\services\\hr_department\\createposition',
+        3 => 'app\\services\\hr_department\\deletedepartment',
+        4 => 'app\\services\\hr_department\\deleteposition',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/HR_Department/LeaveDirectoryService.php' => 
+    array (
+      0 => '72b977fbfa5c995c3c6c1f5901a48ec6a318fcb09aef7a3be109dfaffaeb61e1',
+      1 => 
+      array (
+        0 => 'app\\services\\hr_department\\leavedirectoryservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\hr_department\\driverindex',
+        1 => 'app\\services\\hr_department\\conductorindex',
+        2 => 'app\\services\\hr_department\\employeeindex',
+        3 => 'app\\services\\hr_department\\drivers',
+        4 => 'app\\services\\hr_department\\conductors',
+        5 => 'app\\services\\hr_department\\employees',
+        6 => 'app\\services\\hr_department\\buildindex',
+        7 => 'app\\services\\hr_department\\eligibleemployees',
+        8 => 'app\\services\\hr_department\\decorateleaverows',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/HR_Department/LeaveRecordService.php' => 
+    array (
+      0 => '00d765acf63fb7c8669e33e7c654c49fe7fc355b93211be05e2ff906857f3fe4',
+      1 => 
+      array (
+        0 => 'app\\services\\hr_department\\leaverecordservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\hr_department\\createdriverleave',
+        1 => 'app\\services\\hr_department\\createconductorleave',
+        2 => 'app\\services\\hr_department\\createemployeeleave',
+        3 => 'app\\services\\hr_department\\updatedriverleave',
+        4 => 'app\\services\\hr_department\\updateconductorleave',
+        5 => 'app\\services\\hr_department\\updateemployeeleave',
+        6 => 'app\\services\\hr_department\\create',
+        7 => 'app\\services\\hr_department\\update',
+        8 => 'app\\services\\hr_department\\lockeligibleemployee',
       ),
       3 => 
       array (
