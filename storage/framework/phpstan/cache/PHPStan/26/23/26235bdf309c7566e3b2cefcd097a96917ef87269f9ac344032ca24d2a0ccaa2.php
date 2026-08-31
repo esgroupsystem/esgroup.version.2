@@ -12,6 +12,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -37,6 +38,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -51,6 +53,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
            'namespace' => 'App\\Models',
            'uses' => 
           array (
+            'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
             'model' => 'Illuminate\\Database\\Eloquent\\Model',
             'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
             'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -86,6 +89,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -100,6 +104,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
            'namespace' => 'App\\Models',
            'uses' => 
           array (
+            'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
             'model' => 'Illuminate\\Database\\Eloquent\\Model',
             'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
             'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -135,6 +140,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -149,6 +155,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
            'namespace' => 'App\\Models',
            'uses' => 
           array (
+            'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
             'model' => 'Illuminate\\Database\\Eloquent\\Model',
             'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
             'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -184,6 +191,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -198,6 +206,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
            'namespace' => 'App\\Models',
            'uses' => 
           array (
+            'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
             'model' => 'Illuminate\\Database\\Eloquent\\Model',
             'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
             'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -233,6 +242,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -247,6 +257,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
            'namespace' => 'App\\Models',
            'uses' => 
           array (
+            'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
             'model' => 'Illuminate\\Database\\Eloquent\\Model',
             'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
             'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -282,6 +293,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -296,6 +308,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
            'namespace' => 'App\\Models',
            'uses' => 
           array (
+            'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
             'model' => 'Illuminate\\Database\\Eloquent\\Model',
             'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
             'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -329,7 +342,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     1 => 
     array (
-      '/home/lenberd/Documents/esgroup.version.2/app/Models/StockTransfer.php' => '0765f001477a5c8ea12b17e8c227d18f4cd5f7199269cbed59f8c48229ff2574',
+      '/home/lenberd/Documents/esgroup.version.2/app/Models/StockTransfer.php' => 'f34fbd3fa0336b4d0e0e99a39973740fa5e1cc38db3b29480db10d85874e4694',
     ),
   ),
 ));

@@ -2781,6 +2781,21 @@ return [
       ),
     ),
   ),
+  '../../../app/Enums/InventoryTransactionStatus.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Enums\\InventoryTransactionStatus',
+        1 => 'isRolledBack',
+        2 => 'App\\Enums\\InventoryTransactionStatus',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
   '../../../app/Enums/ItTicketStatus.php' => 
   array (
     'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
@@ -2932,6 +2947,21 @@ return [
         0 => 'App\\Enums\\LeaveStatus',
         1 => 'isClosed',
         2 => 'App\\Enums\\LeaveStatus',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Enums/StockLevelStatus.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Enums\\StockLevelStatus',
+        1 => 'fromQuantity',
+        2 => 'App\\Enums\\StockLevelStatus',
         3 => 
         array (
         ),
@@ -3535,6 +3565,16 @@ return [
     array (
       0 => 'maintenance.bus.index',
       1 => 'maintenance.bus.show',
+    ),
+    'PHPStan\\Rules\\DeadCode\\ConstructorWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Controllers\\BusDetailController',
+        1 => 
+        array (
+        ),
+      ),
     ),
   ),
   '../../../app/Http/Controllers/Chairman/HrDataController.php' => 
@@ -4567,13 +4607,35 @@ return [
     array (
       0 => 'maintenance.category.index',
     ),
-    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
+    'PHPStan\\Rules\\DeadCode\\ConstructorWithoutImpurePointsCollector' => 
     array (
       0 => 
       array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
+        0 => 'App\\Http\\Controllers\\Maintenance\\CategoryController',
+        1 => 
+        array (
+        ),
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          0 => 'App\\Services\\Maintenance\\CategoryService',
+        ),
         1 => 'create',
         2 => 28,
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          0 => 'App\\Services\\Maintenance\\CategoryService',
+        ),
+        1 => 'update',
+        2 => 36,
       ),
     ),
   ),
@@ -4592,38 +4654,60 @@ return [
       array (
         0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
         1 => NULL,
-        2 => '$request->ajax():70',
+        2 => '$request->ajax():26',
         3 => NULL,
       ),
       1 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
         1 => NULL,
-        2 => '$request->ajax():94',
+        2 => 'in_array($locationFilter, [\'main\', \'balintawak\', \'needs_transfer\', null, \'\'], true):44',
         3 => NULL,
       ),
       2 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
+        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
         1 => NULL,
-        2 => 'in_array($locationFilter, $allowedFilters, true):114',
+        2 => 'is_string($locationFilter):53',
         3 => NULL,
       ),
       3 => 
       array (
         0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
         1 => NULL,
-        2 => 'request()->ajax():400',
+        2 => '$request->ajax():89',
         3 => NULL,
       ),
     ),
-    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
+    'PHPStan\\Rules\\DeadCode\\ConstructorWithoutImpurePointsCollector' => 
     array (
       0 => 
       array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
+        0 => 'App\\Http\\Controllers\\Maintenance\\ItemsController',
+        1 => 
+        array (
+        ),
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          0 => 'App\\Services\\Maintenance\\ProductCatalogService',
+        ),
         1 => 'create',
-        2 => 299,
+        2 => 70,
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          0 => 'App\\Services\\Maintenance\\ProductCatalogService',
+        ),
+        1 => 'update',
+        2 => 78,
       ),
     ),
   ),
@@ -4643,99 +4727,53 @@ return [
       array (
         0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
         1 => NULL,
-        2 => 'in_array($exportType, [\'csv\', \'xls\'], true):81',
+        2 => 'in_array($exportType, [\'csv\', \'xls\'], true):87',
         3 => NULL,
       ),
       1 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
+        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
         1 => NULL,
-        2 => '$request->integer(\'bus_id\'):261',
+        2 => 'filled($filters[\'status\']):374',
         3 => NULL,
       ),
       2 => 
       array (
         0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
         1 => NULL,
-        2 => 'filled($filters[\'status\']):275',
+        2 => 'filled($filters[\'filter_date\']):378',
         3 => NULL,
       ),
       3 => 
       array (
         0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
         1 => NULL,
-        2 => 'filled($filters[\'filter_date\']):288',
+        2 => 'filled($filters[\'filter_month\']):382',
         3 => NULL,
       ),
       4 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
         1 => NULL,
-        2 => 'preg_match(\'/^\\d{4}-\\d{2}-\\d{2}$/\', $filters[\'filter_date\']):289',
+        2 => 'filled($filters[\'filter_year\']):386',
         3 => NULL,
       ),
       5 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
-        1 => NULL,
-        2 => 'filled($filters[\'filter_month\']):294',
-        3 => NULL,
-      ),
-      6 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => 'preg_match(\'/^\\d{4}-\\d{2}$/\', $filters[\'filter_month\']):295',
-        3 => NULL,
-      ),
-      7 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
-        1 => NULL,
-        2 => 'filled($filters[\'filter_year\']):303',
-        3 => NULL,
-      ),
-      8 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => 'preg_match(\'/^\\d{4}$/\', $filters[\'filter_year\']):304',
-        3 => NULL,
-      ),
-      9 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => 'filled($filters[\'status\']):425',
-        3 => NULL,
-      ),
-      10 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
-        1 => NULL,
-        2 => 'filled($filters[\'filter_date\']):429',
-        3 => NULL,
-      ),
-      11 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
-        1 => NULL,
-        2 => 'filled($filters[\'filter_month\']):433',
-        3 => NULL,
-      ),
-      12 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
-        1 => NULL,
-        2 => 'filled($filters[\'filter_year\']):437',
-        3 => NULL,
-      ),
-      13 => 
-      array (
         0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
         1 => NULL,
-        2 => 'in_array($exportType, [\'csv\', \'xls\'], true):450',
+        2 => 'in_array($exportType, [\'csv\', \'xls\'], true):399',
         3 => NULL,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\ConstructorWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Controllers\\Maintenance\\JobOrderMaintenanceController',
+        1 => 
+        array (
+        ),
       ),
     ),
     'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
@@ -4757,84 +4795,84 @@ return [
         0 => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
         1 => 'create',
         2 => 'data',
-        3 => 128,
+        3 => 133,
       ),
       1 => 
       array (
         0 => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
         1 => 'create',
         2 => 'userId',
-        3 => 129,
+        3 => 134,
       ),
       2 => 
       array (
         0 => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
         1 => 'updateStatus',
         2 => 'jobOrderMaintenance',
-        3 => 188,
+        3 => 192,
       ),
       3 => 
       array (
         0 => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
         1 => 'updateStatus',
         2 => 'status',
-        3 => 189,
+        3 => 193,
       ),
       4 => 
       array (
         0 => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
         1 => 'updateStatus',
         2 => 'userId',
-        3 => 190,
+        3 => 194,
       ),
       5 => 
       array (
         0 => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
         1 => 'updateStatus',
         2 => 'remarks',
-        3 => 191,
+        3 => 195,
       ),
       6 => 
       array (
         0 => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
         1 => 'updateStatus',
         2 => 'mechanicNames',
-        3 => 192,
+        3 => 196,
       ),
       7 => 
       array (
         0 => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
         1 => 'updateStatus',
         2 => 'repairTypes',
-        3 => 193,
+        3 => 197,
       ),
       8 => 
       array (
         0 => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
         1 => 'updateJobOrderNumber',
         2 => 'jobOrderMaintenance',
-        3 => 232,
+        3 => 235,
       ),
       9 => 
       array (
         0 => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
         1 => 'updateJobOrderNumber',
         2 => 'jobOrderNo',
-        3 => 233,
+        3 => 236,
       ),
       10 => 
       array (
         0 => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
         1 => 'updateJobOrderNumber',
         2 => 'userId',
-        3 => 234,
+        3 => 237,
       ),
       11 => 
       array (
         0 => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
         1 => 'updateJobOrderNumber',
         2 => 'remarks',
-        3 => 235,
+        3 => 238,
       ),
     ),
   ),
@@ -4944,8 +4982,34 @@ return [
       array (
         0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
         1 => NULL,
-        2 => '$request->ajax():60',
+        2 => '$request->ajax():35',
         3 => NULL,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\ConstructorWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Controllers\\Maintenance\\PartsOutController',
+        1 => 
+        array (
+        ),
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Controllers\\Maintenance\\PartsOutController',
+        1 => 'create',
+        2 => 'App\\Http\\Controllers\\Maintenance\\PartsOutController',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\maintenance\\inventorydirectoryservice' . "\0" . 'vehicles',
+          1 => 'm' . "\0" . 'app\\services\\maintenance\\inventorydirectoryservice' . "\0" . 'activelocations',
+          2 => 'm' . "\0" . 'app\\http\\controllers\\maintenance\\partsoutcontroller' . "\0" . 'userlocationid',
+          3 => 'f' . "\0" . 'view',
+        ),
       ),
     ),
     'PHPStan\\Rules\\DeadCode\\PossiblyPureFuncCallCollector' => 
@@ -4953,24 +5017,7 @@ return [
       0 => 
       array (
         0 => 'abort',
-        1 => 236,
-      ),
-      1 => 
-      array (
-        0 => 'abort',
-        1 => 322,
-      ),
-    ),
-    'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
-    array (
-      0 => 
-      array (
-        0 => 
-        array (
-          0 => 'App\\Http\\Controllers\\Maintenance\\PartsOutController',
-        ),
-        1 => 'restrictLocation',
-        2 => 35,
+        1 => 119,
       ),
     ),
   ),
@@ -5020,22 +5067,41 @@ return [
       array (
         0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
         1 => NULL,
-        2 => '$request->ajax():50',
+        2 => '$request->ajax():34',
         3 => NULL,
       ),
       1 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => '$request->hasFile(\'proof_image\'):121',
-        3 => NULL,
-      ),
-      2 => 
-      array (
         0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
         1 => NULL,
-        2 => '\\Illuminate\\Support\\Facades\\Storage::disk(\'local\')->exists($proofPath):169',
+        2 => '\\Illuminate\\Support\\Facades\\Storage::disk(\'local\')->exists($proofPath):76',
         3 => NULL,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\ConstructorWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Controllers\\Maintenance\\ReceivingController',
+        1 => 
+        array (
+        ),
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Controllers\\Maintenance\\ReceivingController',
+        1 => 'create',
+        2 => 'App\\Http\\Controllers\\Maintenance\\ReceivingController',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\maintenance\\inventorydirectoryservice' . "\0" . 'products',
+          1 => 'm' . "\0" . 'app\\services\\maintenance\\inventorydirectoryservice' . "\0" . 'activelocations',
+          2 => 'm' . "\0" . 'app\\http\\controllers\\maintenance\\receivingcontroller' . "\0" . 'userlocationid',
+          3 => 'f' . "\0" . 'view',
+        ),
       ),
     ),
     'PHPStan\\Rules\\DeadCode\\PossiblyPureFuncCallCollector' => 
@@ -5043,12 +5109,7 @@ return [
       0 => 
       array (
         0 => 'abort',
-        1 => 188,
-      ),
-      1 => 
-      array (
-        0 => 'abort',
-        1 => 199,
+        1 => 118,
       ),
     ),
     'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
@@ -5057,25 +5118,10 @@ return [
       array (
         0 => 
         array (
-          0 => 'App\\Http\\Controllers\\Maintenance\\ReceivingController',
+          0 => 'App\\Services\\Maintenance\\ReceivingService',
         ),
-        1 => 'restrictLocation',
-        2 => 33,
-      ),
-    ),
-    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
-    array (
-      0 => 
-      array (
-        0 => 'Illuminate\\Database\\Connection',
-        1 => 'transaction',
-        2 => 120,
-      ),
-      1 => 
-      array (
-        0 => 'Illuminate\\Database\\Connection',
-        1 => 'transaction',
-        2 => 275,
+        1 => 'create',
+        2 => 52,
       ),
     ),
   ),
@@ -5143,22 +5189,32 @@ return [
       array (
         0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
         1 => NULL,
-        2 => '$request->ajax():42',
+        2 => '$request->ajax():36',
         3 => NULL,
       ),
-      1 => 
+    ),
+    'PHPStan\\Rules\\DeadCode\\ConstructorWithoutImpurePointsCollector' => 
+    array (
+      0 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => '$request->ajax():58',
-        3 => NULL,
+        0 => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        1 => 
+        array (
+        ),
       ),
-      2 => 
+    ),
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
-        1 => NULL,
-        2 => 'is_numeric($id):312',
-        3 => NULL,
+        0 => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        1 => 'create',
+        2 => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'app\\services\\maintenance\\inventorydirectoryservice' . "\0" . 'activelocations',
+          1 => 'f' . "\0" . 'view',
+        ),
       ),
     ),
     'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
@@ -5170,16 +5226,7 @@ return [
           0 => 'App\\Services\\Maintenance\\StockTransferRollbackService',
         ),
         1 => 'rollback',
-        2 => 398,
-      ),
-    ),
-    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
-    array (
-      0 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 215,
+        2 => 95,
       ),
     ),
   ),
@@ -7122,6 +7169,96 @@ return [
       ),
     ),
   ),
+  '../../../app/Http/Requests/Maintenance/ProductRequest.php' => 
+  array (
+    'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
+        1 => NULL,
+        2 => '$this->routeIs(\'items.store\'):13',
+        3 => NULL,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\Maintenance\\ProductRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\Maintenance\\ProductRequest',
+        3 => 
+        array (
+        ),
+      ),
+      1 => 
+      array (
+        0 => 'App\\Http\\Requests\\Maintenance\\ProductRequest',
+        1 => 'messages',
+        2 => 'App\\Http\\Requests\\Maintenance\\ProductRequest',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/RollbackInventoryRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\Maintenance\\RollbackInventoryRequest',
+        1 => 'authorize',
+        2 => 'App\\Http\\Requests\\Maintenance\\RollbackInventoryRequest',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'illuminate\\http\\request' . "\0" . 'user',
+        ),
+      ),
+      1 => 
+      array (
+        0 => 'App\\Http\\Requests\\Maintenance\\RollbackInventoryRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\Maintenance\\RollbackInventoryRequest',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/RollbackReceivingItemRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\Maintenance\\RollbackReceivingItemRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\Maintenance\\RollbackReceivingItemRequest',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreCategoryRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\Maintenance\\StoreCategoryRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\Maintenance\\StoreCategoryRequest',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'illuminate\\validation\\rule' . "\0" . 'unique',
+        ),
+      ),
+    ),
+  ),
   '../../../app/Http/Requests/Maintenance/StoreJobOrderMaintenanceRequest.php' => 
   array (
     'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
@@ -7160,6 +7297,78 @@ return [
         0 => 'App\\Http\\Requests\\Maintenance\\StoreJobOrderMaintenanceRequest',
         1 => 'messages',
         2 => 'App\\Http\\Requests\\Maintenance\\StoreJobOrderMaintenanceRequest',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/StorePartsOutRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\Maintenance\\StorePartsOutRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\Maintenance\\StorePartsOutRequest',
+        3 => 
+        array (
+        ),
+      ),
+      1 => 
+      array (
+        0 => 'App\\Http\\Requests\\Maintenance\\StorePartsOutRequest',
+        1 => 'after',
+        2 => 'App\\Http\\Requests\\Maintenance\\StorePartsOutRequest',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreReceivingRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\Maintenance\\StoreReceivingRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\Maintenance\\StoreReceivingRequest',
+        3 => 
+        array (
+        ),
+      ),
+      1 => 
+      array (
+        0 => 'App\\Http\\Requests\\Maintenance\\StoreReceivingRequest',
+        1 => 'after',
+        2 => 'App\\Http\\Requests\\Maintenance\\StoreReceivingRequest',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreStockTransferRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\Maintenance\\StoreStockTransferRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\Maintenance\\StoreStockTransferRequest',
+        3 => 
+        array (
+        ),
+      ),
+      1 => 
+      array (
+        0 => 'App\\Http\\Requests\\Maintenance\\StoreStockTransferRequest',
+        1 => 'after',
+        2 => 'App\\Http\\Requests\\Maintenance\\StoreStockTransferRequest',
         3 => 
         array (
         ),
@@ -8668,7 +8877,7 @@ return [
       array (
         0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
         1 => NULL,
-        2 => 'is_null($this->rolled_back_at):80',
+        2 => 'is_null($this->rolled_back_at):81',
         3 => NULL,
       ),
     ),
@@ -10697,6 +10906,47 @@ return [
       ),
     ),
   ),
+  '../../../app/Services/Maintenance/JobOrderMaintenanceDirectoryService.php' => 
+  array (
+    'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
+        1 => NULL,
+        2 => '$request->integer(\'bus_id\'):19',
+        3 => NULL,
+      ),
+      1 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
+        1 => NULL,
+        2 => 'filled($filters[\'status\']):32',
+        3 => NULL,
+      ),
+      2 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
+        1 => NULL,
+        2 => 'preg_match(\'/^\\d{4}-\\d{2}-\\d{2}$/\', $filters[\'filter_date\']):40',
+        3 => NULL,
+      ),
+      3 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
+        1 => NULL,
+        2 => 'preg_match(\'/^\\d{4}-\\d{2}$/\', $filters[\'filter_month\']):44',
+        3 => NULL,
+      ),
+      4 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
+        1 => NULL,
+        2 => 'preg_match(\'/^\\d{4}$/\', $filters[\'filter_year\']):49',
+        3 => NULL,
+      ),
+    ),
+  ),
   '../../../app/Services/Maintenance/JobOrderMaintenanceService.php' => 
   array (
     'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
@@ -10774,13 +11024,41 @@ return [
       array (
         0 => 'Illuminate\\Database\\Connection',
         1 => 'transaction',
-        2 => 20,
+        2 => 21,
       ),
       1 => 
       array (
         0 => 'Illuminate\\Database\\Eloquent\\Builder',
         1 => 'create',
-        2 => 85,
+        2 => 86,
+      ),
+    ),
+  ),
+  '../../../app/Services/Maintenance/ProductCatalogService.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Services\\Maintenance\\ProductCatalogService',
+        1 => 'transferSuggestion',
+        2 => 'App\\Services\\Maintenance\\ProductCatalogService',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Services/Maintenance/ReceivingService.php' => 
+  array (
+    'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
+        1 => NULL,
+        2 => '\\Illuminate\\Support\\Facades\\Storage::disk(\'local\')->exists($proofPath):60',
+        3 => NULL,
       ),
     ),
   ),
@@ -10792,7 +11070,7 @@ return [
       array (
         0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
         1 => NULL,
-        2 => '$transfer->items->isEmpty():34',
+        2 => '$transfer->items->isEmpty():35',
         3 => NULL,
       ),
     ),
@@ -13910,6 +14188,19 @@ return [
       1 => '../../../app/Services/HR_Department/LeaveRecordService.php',
     ),
   ),
+  '../../../app/Enums/InventoryTransactionStatus.php' => 
+  array (
+    'fileHash' => 'c8bbc74485c8e11138cf6c06b03c9b26e43d72eaa61e74051f861dee8c85621a',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Models/StockTransfer.php',
+      1 => '../../../app/Services/Maintenance/PartsOutRollbackService.php',
+      2 => '../../../app/Services/Maintenance/PartsOutService.php',
+      3 => '../../../app/Services/Maintenance/StockTransferCreationService.php',
+      4 => '../../../app/Services/Maintenance/StockTransferRollbackService.php',
+      5 => '../../../app/Services/Maintenance/VehicleHistoryService.php',
+    ),
+  ),
   '../../../app/Enums/ItTicketApprovalStatus.php' => 
   array (
     'fileHash' => '3d3c67345d6783f02ff35c627efa018fd09a462654505326374dcf2f3b747433',
@@ -13951,7 +14242,8 @@ return [
       5 => '../../../app/Models/JobOrderMaintenanceHistory.php',
       6 => '../../../app/Models/JobOrderMaintenanceStatusPeriod.php',
       7 => '../../../app/Services/Fleet/BusService.php',
-      8 => '../../../app/Services/Maintenance/JobOrderMaintenanceService.php',
+      8 => '../../../app/Services/Maintenance/JobOrderMaintenanceDirectoryService.php',
+      9 => '../../../app/Services/Maintenance/JobOrderMaintenanceService.php',
     ),
   ),
   '../../../app/Enums/LeaveActionType.php' => 
@@ -13973,6 +14265,14 @@ return [
       1 => '../../../app/Models/DriverLeave.php',
       2 => '../../../app/Models/EmployeeLeave.php',
       3 => '../../../app/Services/HR_Department/LeaveRecordService.php',
+    ),
+  ),
+  '../../../app/Enums/StockLevelStatus.php' => 
+  array (
+    'fileHash' => '770240482caac5b954caa585e6c5fdb7f3ce86d2be1df717917d208ea42ff955',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Services/Maintenance/ProductCatalogService.php',
     ),
   ),
   '../../../app/Enums/WorkdayType.php' => 
@@ -14152,7 +14452,7 @@ return [
   ),
   '../../../app/Http/Controllers/BusDetailController.php' => 
   array (
-    'fileHash' => '9db6898195e3fd2c3b1802c24a22fcc41c45717425b0738ee7589cdce5494712',
+    'fileHash' => '32c158ded5b58d0849e2848f3c089c9bd34692b65aabf5fd3066b0d292239ea7',
     'dependentFiles' => 
     array (
     ),
@@ -14332,21 +14632,21 @@ return [
   ),
   '../../../app/Http/Controllers/Maintenance/CategoryController.php' => 
   array (
-    'fileHash' => '44fa802fe4151bf21ba6c86f0d4d3dbc2e3293107ea5a165d49cc82dbfe72782',
+    'fileHash' => 'b75c169a164ee5f53467a6387ff1f93282686eda6fbad8ff0c1f9022bfc6596d',
     'dependentFiles' => 
     array (
     ),
   ),
   '../../../app/Http/Controllers/Maintenance/ItemsController.php' => 
   array (
-    'fileHash' => '597a44f9b2ef510093f73bbd1d778289879ec7c097b9d953d5a353fc526ed4a0',
+    'fileHash' => 'e75c43b924443863e291b14f476c8acdaff648bee2ee4f4d5e0d18f2bc7fe263',
     'dependentFiles' => 
     array (
     ),
   ),
   '../../../app/Http/Controllers/Maintenance/JobOrderMaintenanceController.php' => 
   array (
-    'fileHash' => 'e60ab8396ff791056288ae4ebae1536a9e8fa04d805c7a1d4640f529e7b45567',
+    'fileHash' => '6fdd8eaec765568d2dc950bd3c9c55359f7d6565440d1e1ff94c8ff7dc1596be',
     'dependentFiles' => 
     array (
     ),
@@ -14360,7 +14660,7 @@ return [
   ),
   '../../../app/Http/Controllers/Maintenance/PartsOutController.php' => 
   array (
-    'fileHash' => '172a9764a2b7597d4d7279ee0ea6511014f67246c04dcdb0482b4f5e46169fee',
+    'fileHash' => '71843f2ae5239b2fa30ebdd1da4ba468c1884e50c8c446f89e2f5eb7c7aeec25',
     'dependentFiles' => 
     array (
     ),
@@ -14374,7 +14674,7 @@ return [
   ),
   '../../../app/Http/Controllers/Maintenance/ReceivingController.php' => 
   array (
-    'fileHash' => '2f09a761e5674f5ea47752b9738956ae2c118954c5459c77b45f2fcbca228203',
+    'fileHash' => '0f1a30526e8d89f25d0fc8da87f3a52c211ad958b3ee46242224a579dba93515',
     'dependentFiles' => 
     array (
     ),
@@ -14388,7 +14688,7 @@ return [
   ),
   '../../../app/Http/Controllers/Maintenance/StockTransferController.php' => 
   array (
-    'fileHash' => '01eb1e64fb8b9c1a4c012f59e4967b783c7cf2c341af563210a61c7e66af1077',
+    'fileHash' => '0b2d0152273ee4eb25e0b1158810f16fbbb4b90158e47b2799c7f63b1fcd2ce3',
     'dependentFiles' => 
     array (
     ),
@@ -14898,12 +15198,77 @@ return [
       0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
     ),
   ),
+  '../../../app/Http/Requests/Maintenance/ProductRequest.php' => 
+  array (
+    'fileHash' => '9b36cd8e5312b5b6c986606ba38fe8956bf8193781711ccb40a4934a2839a819',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/ItemsController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/RollbackInventoryRequest.php' => 
+  array (
+    'fileHash' => 'cd050dfba100125873481cca642bae9cd28f9fd932dfb3d3ce5970a507cfdb82',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
+      1 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/RollbackReceivingItemRequest.php' => 
+  array (
+    'fileHash' => '606102350bd5a084aec8267afd972c841a7b87c9f4f54d3ead9bf23f2d8e5228',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreCategoryRequest.php' => 
+  array (
+    'fileHash' => 'cc596ef5e9300eaeca0600185643ddd5e6910dda02e3c44d656233a665844191',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/CategoryController.php',
+    ),
+  ),
   '../../../app/Http/Requests/Maintenance/StoreJobOrderMaintenanceRequest.php' => 
   array (
     'fileHash' => '5dca6486d4bcdfff22435da10c39e5b92bda4309eb45c80e267bc65401c6ff62',
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/Maintenance/JobOrderMaintenanceController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/StorePartsOutRequest.php' => 
+  array (
+    'fileHash' => '4d6addf507bee1c87ab06ac43ba94740fcb8769f53de39d7d65d9b6d17e19f66',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreReceivingRequest.php' => 
+  array (
+    'fileHash' => 'd90675796f1043d11cc5c527900a0b241ddc2795afb7ab689a360458ebb8f1de',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreStockTransferRequest.php' => 
+  array (
+    'fileHash' => 'dcd0ba3cda7bad593dd11faf5c29e648c5f970c93694cb00591f6d2daa982d53',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/Maintenance/UpdateCategoryRequest.php' => 
+  array (
+    'fileHash' => '66ba7ca58a5a55a4cc8e35cb02ff70b8309bf75f384aebfeea06953ebb0ce404',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/CategoryController.php',
     ),
   ),
   '../../../app/Http/Requests/Maintenance/UpdateJobOrderMaintenanceNumberRequest.php' => 
@@ -15151,6 +15516,8 @@ return [
       13 => '../../../app/Models/PartsOut.php',
       14 => '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php',
       15 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
+      16 => '../../../app/Services/Maintenance/InventoryDirectoryService.php',
+      17 => '../../../app/Services/Maintenance/VehicleHistoryService.php',
     ),
   ),
   '../../../app/Models/BusForSaleRecord.php' => 
@@ -15184,11 +15551,10 @@ return [
       0 => '../../../app/Exports/ItemsExport.php',
       1 => '../../../app/Http/Controllers/Maintenance/CategoryController.php',
       2 => '../../../app/Http/Controllers/Maintenance/ItemsController.php',
-      3 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
-      4 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
-      5 => '../../../app/Http/Controllers/Maintenance/RequestController.php',
-      6 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
-      7 => '../../../app/Models/Product.php',
+      3 => '../../../app/Http/Controllers/Maintenance/RequestController.php',
+      4 => '../../../app/Models/Product.php',
+      5 => '../../../app/Services/Maintenance/CategoryService.php',
+      6 => '../../../app/Services/Maintenance/ProductCatalogService.php',
     ),
   ),
   '../../../app/Models/CctvConcern.php' => 
@@ -15673,7 +16039,8 @@ return [
       3 => '../../../app/Models/JobOrderMaintenanceHistory.php',
       4 => '../../../app/Models/JobOrderMaintenanceStatusPeriod.php',
       5 => '../../../app/Services/Fleet/BusService.php',
-      6 => '../../../app/Services/Maintenance/JobOrderMaintenanceService.php',
+      6 => '../../../app/Services/Maintenance/JobOrderMaintenanceDirectoryService.php',
+      7 => '../../../app/Services/Maintenance/JobOrderMaintenanceService.php',
     ),
   ),
   '../../../app/Models/JobOrderMaintenanceHistory.php' => 
@@ -15697,7 +16064,8 @@ return [
       3 => '../../../app/Models/JobOrderMaintenance.php',
       4 => '../../../app/Models/JobOrderMaintenanceHistory.php',
       5 => '../../../app/Services/Fleet/BusService.php',
-      6 => '../../../app/Services/Maintenance/JobOrderMaintenanceService.php',
+      6 => '../../../app/Services/Maintenance/JobOrderMaintenanceDirectoryService.php',
+      7 => '../../../app/Services/Maintenance/JobOrderMaintenanceService.php',
     ),
   ),
   '../../../app/Models/JobOrderNote.php' => 
@@ -15715,18 +16083,22 @@ return [
     'dependentFiles' => 
     array (
       0 => '../../../app/Console/Commands/SyncMissingProductStocks.php',
-      1 => '../../../app/Http/Controllers/Maintenance/ItemsController.php',
-      2 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
-      3 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
-      4 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
-      5 => '../../../app/Http/Controllers/UserManagementController.php',
-      6 => '../../../app/Models/PartsOut.php',
-      7 => '../../../app/Models/Product.php',
-      8 => '../../../app/Models/ProductStock.php',
-      9 => '../../../app/Models/Receiving.php',
+      1 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
+      2 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
+      3 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
+      4 => '../../../app/Http/Controllers/UserManagementController.php',
+      5 => '../../../app/Models/PartsOut.php',
+      6 => '../../../app/Models/Product.php',
+      7 => '../../../app/Models/ProductStock.php',
+      8 => '../../../app/Models/Receiving.php',
+      9 => '../../../app/Models/StockMovement.php',
       10 => '../../../app/Models/StockTransfer.php',
       11 => '../../../app/Models/User.php',
-      12 => '../../../app/Services/Maintenance/StockTransferRollbackService.php',
+      12 => '../../../app/Services/Maintenance/InventoryDirectoryService.php',
+      13 => '../../../app/Services/Maintenance/PartsOutService.php',
+      14 => '../../../app/Services/Maintenance/ProductCatalogService.php',
+      15 => '../../../app/Services/Maintenance/StockTransferCreationService.php',
+      16 => '../../../app/Services/Maintenance/StockTransferRollbackService.php',
     ),
   ),
   '../../../app/Models/MirasolBiometricsLog.php' => 
@@ -15761,11 +16133,13 @@ return [
     'fileHash' => 'cf4dde21c9cb1a49748c688a36a4288a609d52b33ad12abac557673a583549f9',
     'dependentFiles' => 
     array (
-      0 => '../../../app/Http/Controllers/BusDetailController.php',
-      1 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
-      2 => '../../../app/Models/BusDetail.php',
-      3 => '../../../app/Models/PartsOutItem.php',
+      0 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
+      1 => '../../../app/Models/BusDetail.php',
+      2 => '../../../app/Models/PartsOutItem.php',
+      3 => '../../../app/Services/Maintenance/InventoryDirectoryService.php',
       4 => '../../../app/Services/Maintenance/PartsOutRollbackService.php',
+      5 => '../../../app/Services/Maintenance/PartsOutService.php',
+      6 => '../../../app/Services/Maintenance/VehicleHistoryService.php',
     ),
   ),
   '../../../app/Models/PartsOutItem.php' => 
@@ -15773,11 +16147,13 @@ return [
     'fileHash' => '68374a2d962d97da5f577d747c22fc15d5efa41026c2321e33af75a89cbbee74',
     'dependentFiles' => 
     array (
-      0 => '../../../app/Http/Controllers/BusDetailController.php',
-      1 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
-      2 => '../../../app/Models/BusDetail.php',
-      3 => '../../../app/Models/PartsOut.php',
+      0 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
+      1 => '../../../app/Models/BusDetail.php',
+      2 => '../../../app/Models/PartsOut.php',
+      3 => '../../../app/Services/Maintenance/InventoryDirectoryService.php',
       4 => '../../../app/Services/Maintenance/PartsOutRollbackService.php',
+      5 => '../../../app/Services/Maintenance/PartsOutService.php',
+      6 => '../../../app/Services/Maintenance/VehicleHistoryService.php',
     ),
   ),
   '../../../app/Models/PaymentLog.php' => 
@@ -16036,21 +16412,24 @@ return [
       0 => '../../../app/Console/Commands/SyncMissingProductStocks.php',
       1 => '../../../app/Exports/ItemsExport.php',
       2 => '../../../app/Http/Controllers/Maintenance/ItemsController.php',
-      3 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
-      4 => '../../../app/Http/Controllers/Maintenance/PurchaseReceiveController.php',
-      5 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
-      6 => '../../../app/Http/Controllers/Maintenance/RequestController.php',
-      7 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
-      8 => '../../../app/Http/Controllers/Stock/StockController.php',
-      9 => '../../../app/Models/PartsOutItem.php',
-      10 => '../../../app/Models/ProductStock.php',
-      11 => '../../../app/Models/PurchaseOrderItem.php',
-      12 => '../../../app/Models/ReceivingItem.php',
-      13 => '../../../app/Models/StockMovement.php',
-      14 => '../../../app/Models/StockTransferItem.php',
-      15 => '../../../app/Services/Maintenance/PartsOutRollbackService.php',
-      16 => '../../../app/Services/Maintenance/StockTransferRollbackService.php',
-      17 => '../../../app/Services/StockTransferService.php',
+      3 => '../../../app/Http/Controllers/Maintenance/PurchaseReceiveController.php',
+      4 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
+      5 => '../../../app/Http/Controllers/Maintenance/RequestController.php',
+      6 => '../../../app/Http/Controllers/Stock/StockController.php',
+      7 => '../../../app/Models/PartsOutItem.php',
+      8 => '../../../app/Models/ProductStock.php',
+      9 => '../../../app/Models/PurchaseOrderItem.php',
+      10 => '../../../app/Models/ReceivingItem.php',
+      11 => '../../../app/Models/StockMovement.php',
+      12 => '../../../app/Models/StockTransferItem.php',
+      13 => '../../../app/Services/Maintenance/InventoryDirectoryService.php',
+      14 => '../../../app/Services/Maintenance/PartsOutRollbackService.php',
+      15 => '../../../app/Services/Maintenance/PartsOutService.php',
+      16 => '../../../app/Services/Maintenance/ProductCatalogService.php',
+      17 => '../../../app/Services/Maintenance/ReceivingService.php',
+      18 => '../../../app/Services/Maintenance/StockTransferCreationService.php',
+      19 => '../../../app/Services/Maintenance/StockTransferRollbackService.php',
+      20 => '../../../app/Services/StockTransferService.php',
     ),
   ),
   '../../../app/Models/ProductStock.php' => 
@@ -16059,13 +16438,13 @@ return [
     'dependentFiles' => 
     array (
       0 => '../../../app/Console/Commands/SyncMissingProductStocks.php',
-      1 => '../../../app/Http/Controllers/Maintenance/ItemsController.php',
-      2 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
-      3 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
-      4 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
-      5 => '../../../app/Models/Location.php',
-      6 => '../../../app/Models/Product.php',
-      7 => '../../../app/Services/Maintenance/PartsOutRollbackService.php',
+      1 => '../../../app/Models/Location.php',
+      2 => '../../../app/Models/Product.php',
+      3 => '../../../app/Services/Maintenance/PartsOutRollbackService.php',
+      4 => '../../../app/Services/Maintenance/PartsOutService.php',
+      5 => '../../../app/Services/Maintenance/ProductCatalogService.php',
+      6 => '../../../app/Services/Maintenance/ReceivingService.php',
+      7 => '../../../app/Services/Maintenance/StockTransferCreationService.php',
       8 => '../../../app/Services/Maintenance/StockTransferRollbackService.php',
       9 => '../../../app/Services/StockTransferService.php',
     ),
@@ -16116,6 +16495,8 @@ return [
       0 => '../../../app/Console/Commands/MigrateSensitiveFiles.php',
       1 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
       2 => '../../../app/Models/ReceivingItem.php',
+      3 => '../../../app/Services/Maintenance/InventoryDirectoryService.php',
+      4 => '../../../app/Services/Maintenance/ReceivingService.php',
     ),
   ),
   '../../../app/Models/ReceivingItem.php' => 
@@ -16123,8 +16504,8 @@ return [
     'fileHash' => '7fe9ade6cc5bd445f07c15d51ee130f473b742ecac01676cb42512dc027ed74d',
     'dependentFiles' => 
     array (
-      0 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
-      1 => '../../../app/Models/Receiving.php',
+      0 => '../../../app/Models/Receiving.php',
+      1 => '../../../app/Services/Maintenance/ReceivingService.php',
     ),
   ),
   '../../../app/Models/Role.php' => 
@@ -16136,23 +16517,25 @@ return [
   ),
   '../../../app/Models/StockMovement.php' => 
   array (
-    'fileHash' => '303e85ad2e4d99c71bd1a44d9a29998b34bffd891050ff6dc1a915218d7e7189',
+    'fileHash' => '630e8cc97e81a227d95720819fdf85b16bcc5bdb61725b71fef58a7c054dd8fb',
     'dependentFiles' => 
     array (
-      0 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
-      1 => '../../../app/Services/Maintenance/PartsOutRollbackService.php',
+      0 => '../../../app/Services/Maintenance/PartsOutRollbackService.php',
+      1 => '../../../app/Services/Maintenance/PartsOutService.php',
     ),
   ),
   '../../../app/Models/StockTransfer.php' => 
   array (
-    'fileHash' => '0765f001477a5c8ea12b17e8c227d18f4cd5f7199269cbed59f8c48229ff2574',
+    'fileHash' => 'f34fbd3fa0336b4d0e0e99a39973740fa5e1cc38db3b29480db10d85874e4694',
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
       1 => '../../../app/Models/Location.php',
       2 => '../../../app/Models/StockTransferItem.php',
-      3 => '../../../app/Services/Maintenance/StockTransferRollbackService.php',
-      4 => '../../../app/Services/StockTransferService.php',
+      3 => '../../../app/Services/Maintenance/InventoryDirectoryService.php',
+      4 => '../../../app/Services/Maintenance/StockTransferCreationService.php',
+      5 => '../../../app/Services/Maintenance/StockTransferRollbackService.php',
+      6 => '../../../app/Services/StockTransferService.php',
     ),
   ),
   '../../../app/Models/StockTransferItem.php' => 
@@ -16164,8 +16547,10 @@ return [
       1 => '../../../app/Models/Location.php',
       2 => '../../../app/Models/Product.php',
       3 => '../../../app/Models/StockTransfer.php',
-      4 => '../../../app/Services/Maintenance/StockTransferRollbackService.php',
-      5 => '../../../app/Services/StockTransferService.php',
+      4 => '../../../app/Services/Maintenance/InventoryDirectoryService.php',
+      5 => '../../../app/Services/Maintenance/StockTransferCreationService.php',
+      6 => '../../../app/Services/Maintenance/StockTransferRollbackService.php',
+      7 => '../../../app/Services/StockTransferService.php',
     ),
   ),
   '../../../app/Models/Ticket.php' => 
@@ -16206,89 +16591,99 @@ return [
       12 => '../../../app/Http/Controllers/Auth/AuthController.php',
       13 => '../../../app/Http/Controllers/IT_Department/CctvController.php',
       14 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
-      15 => '../../../app/Http/Controllers/Maintenance/JobOrderMaintenanceController.php',
-      16 => '../../../app/Http/Controllers/Maintenance/OdometerReportController.php',
-      17 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
-      18 => '../../../app/Http/Controllers/Maintenance/PurchaseReceiveController.php',
-      19 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
-      20 => '../../../app/Http/Controllers/Maintenance/RequestController.php',
-      21 => '../../../app/Http/Controllers/Payroll/PayrollAuditLogController.php',
-      22 => '../../../app/Http/Controllers/Payroll/PayrollBenefitSettlementController.php',
-      23 => '../../../app/Http/Controllers/Payroll/PayrollController.php',
-      24 => '../../../app/Http/Controllers/RoleController.php',
-      25 => '../../../app/Http/Controllers/UserManagementController.php',
-      26 => '../../../app/Http/Middleware/ForcePasswordChange.php',
-      27 => '../../../app/Http/Middleware/InactivityLogout.php',
-      28 => '../../../app/Http/Middleware/PayrollGroupAccess.php',
-      29 => '../../../app/Http/Middleware/RoleMiddleware.php',
-      30 => '../../../app/Http/Middleware/SecurityHeaders.php',
-      31 => '../../../app/Http/Requests/Api/StoreCashierRemittanceRequest.php',
-      32 => '../../../app/Http/Requests/Api/StoreFareRequest.php',
-      33 => '../../../app/Http/Requests/Api/StoreOdometerSubmissionRequest.php',
-      34 => '../../../app/Http/Requests/Api/StoreTicketRequest.php',
-      35 => '../../../app/Http/Requests/Api/StoreTripRequest.php',
-      36 => '../../../app/Http/Requests/Auth/ChangePasswordRequest.php',
-      37 => '../../../app/Http/Requests/HR_Department/EmployeeHistoryRequest.php',
-      38 => '../../../app/Http/Requests/HR_Department/StoreEmployeeAttachmentRequest.php',
-      39 => '../../../app/Http/Requests/HR_Department/StoreEmployeeRequest.php',
-      40 => '../../../app/Http/Requests/HR_Department/UpdateEmployeeAssetsRequest.php',
-      41 => '../../../app/Http/Requests/HR_Department/UpdateEmployeeRequest.php',
-      42 => '../../../app/Http/Requests/HR_Department/UpdateEmployeeStatusDetailsRequest.php',
-      43 => '../../../app/Http/Requests/ITDepartment/AddJobOrderFilesRequest.php',
-      44 => '../../../app/Http/Requests/ITDepartment/AddJobOrderNoteRequest.php',
-      45 => '../../../app/Http/Requests/ITDepartment/StoreCctvConcernRequest.php',
-      46 => '../../../app/Http/Requests/ITDepartment/StoreItInventoryItemRequest.php',
-      47 => '../../../app/Http/Requests/ITDepartment/StoreJobOrderRequest.php',
-      48 => '../../../app/Http/Requests/ITDepartment/UpdateCctvConcernRequest.php',
-      49 => '../../../app/Http/Requests/ITDepartment/UpdateItInventoryItemRequest.php',
-      50 => '../../../app/Http/Requests/ITDepartment/UpdateJobOrderRequest.php',
-      51 => '../../../app/Http/Requests/Maintenance/StoreJobOrderMaintenanceRequest.php',
-      52 => '../../../app/Http/Requests/Maintenance/UpdateJobOrderMaintenanceNumberRequest.php',
-      53 => '../../../app/Http/Requests/Maintenance/UpdateJobOrderMaintenanceStatusRequest.php',
-      54 => '../../../app/Http/Requests/Payroll/UpdatePayrollBenefitSettlementRequest.php',
-      55 => '../../../app/Http/Requests/UserManagement/StoreUserRequest.php',
-      56 => '../../../app/Http/Requests/UserManagement/UpdateUserRequest.php',
-      57 => '../../../app/Listeners/SendJobOrderNotification.php',
-      58 => '../../../app/Listeners/SendPOCreatedNotification.php',
-      59 => '../../../app/Mail/POCreatedMail.php',
-      60 => '../../../app/Models/BenefitContributionRecord.php',
-      61 => '../../../app/Models/CctvConcern.php',
-      62 => '../../../app/Models/Claim.php',
-      63 => '../../../app/Models/DieselStock.php',
-      64 => '../../../app/Models/EmployeeLog.php',
-      65 => '../../../app/Models/JobOrder.php',
-      66 => '../../../app/Models/JobOrderLog.php',
-      67 => '../../../app/Models/JobOrderMaintenance.php',
-      68 => '../../../app/Models/JobOrderMaintenanceHistory.php',
-      69 => '../../../app/Models/JobOrderMaintenanceStatusPeriod.php',
-      70 => '../../../app/Models/JobOrderNote.php',
-      71 => '../../../app/Models/PartsOut.php',
-      72 => '../../../app/Models/PaymentLog.php',
-      73 => '../../../app/Models/Payroll.php',
-      74 => '../../../app/Models/PayrollAttendanceAdjustment.php',
-      75 => '../../../app/Models/PayrollAuditLog.php',
-      76 => '../../../app/Models/PayrollBenefitSettlement.php',
-      77 => '../../../app/Models/PayrollItem.php',
-      78 => '../../../app/Models/PayrollReportLog.php',
-      79 => '../../../app/Models/PurchaseOrder.php',
-      80 => '../../../app/Models/PurchaseOrderItem.php',
-      81 => '../../../app/Models/PurchaseReceive.php',
-      82 => '../../../app/Models/Receiving.php',
-      83 => '../../../app/Models/StockTransfer.php',
-      84 => '../../../app/Models/StockTransferItem.php',
-      85 => '../../../app/Notifications/POCreatedNotification.php',
-      86 => '../../../app/Providers/AppServiceProvider.php',
-      87 => '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php',
-      88 => '../../../app/Services/ITDepartment/CctvConcernService.php',
-      89 => '../../../app/Services/ITDepartment/ItJobOrderDirectoryService.php',
-      90 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
-      91 => '../../../app/Services/LeaveNotificationService.php',
-      92 => '../../../app/Services/Payroll/BenefitContributionPostingService.php',
-      93 => '../../../app/Services/Payroll/MonthlyGovernmentReconciliationService.php',
-      94 => '../../../app/Services/Payroll/PaymentLogService.php',
-      95 => '../../../app/Services/Payroll/PayrollAuditService.php',
-      96 => '../../../app/Services/Payroll/PayrollComputationService.php',
-      97 => '../../../app/Services/Payroll/PayrollPayslipService.php',
+      15 => '../../../app/Http/Controllers/Maintenance/ItemsController.php',
+      16 => '../../../app/Http/Controllers/Maintenance/JobOrderMaintenanceController.php',
+      17 => '../../../app/Http/Controllers/Maintenance/OdometerReportController.php',
+      18 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
+      19 => '../../../app/Http/Controllers/Maintenance/PurchaseReceiveController.php',
+      20 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
+      21 => '../../../app/Http/Controllers/Maintenance/RequestController.php',
+      22 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
+      23 => '../../../app/Http/Controllers/Payroll/PayrollAuditLogController.php',
+      24 => '../../../app/Http/Controllers/Payroll/PayrollBenefitSettlementController.php',
+      25 => '../../../app/Http/Controllers/Payroll/PayrollController.php',
+      26 => '../../../app/Http/Controllers/RoleController.php',
+      27 => '../../../app/Http/Controllers/UserManagementController.php',
+      28 => '../../../app/Http/Middleware/ForcePasswordChange.php',
+      29 => '../../../app/Http/Middleware/InactivityLogout.php',
+      30 => '../../../app/Http/Middleware/PayrollGroupAccess.php',
+      31 => '../../../app/Http/Middleware/RoleMiddleware.php',
+      32 => '../../../app/Http/Middleware/SecurityHeaders.php',
+      33 => '../../../app/Http/Requests/Api/StoreCashierRemittanceRequest.php',
+      34 => '../../../app/Http/Requests/Api/StoreFareRequest.php',
+      35 => '../../../app/Http/Requests/Api/StoreOdometerSubmissionRequest.php',
+      36 => '../../../app/Http/Requests/Api/StoreTicketRequest.php',
+      37 => '../../../app/Http/Requests/Api/StoreTripRequest.php',
+      38 => '../../../app/Http/Requests/Auth/ChangePasswordRequest.php',
+      39 => '../../../app/Http/Requests/HR_Department/EmployeeHistoryRequest.php',
+      40 => '../../../app/Http/Requests/HR_Department/StoreEmployeeAttachmentRequest.php',
+      41 => '../../../app/Http/Requests/HR_Department/StoreEmployeeRequest.php',
+      42 => '../../../app/Http/Requests/HR_Department/UpdateEmployeeAssetsRequest.php',
+      43 => '../../../app/Http/Requests/HR_Department/UpdateEmployeeRequest.php',
+      44 => '../../../app/Http/Requests/HR_Department/UpdateEmployeeStatusDetailsRequest.php',
+      45 => '../../../app/Http/Requests/ITDepartment/AddJobOrderFilesRequest.php',
+      46 => '../../../app/Http/Requests/ITDepartment/AddJobOrderNoteRequest.php',
+      47 => '../../../app/Http/Requests/ITDepartment/StoreCctvConcernRequest.php',
+      48 => '../../../app/Http/Requests/ITDepartment/StoreItInventoryItemRequest.php',
+      49 => '../../../app/Http/Requests/ITDepartment/StoreJobOrderRequest.php',
+      50 => '../../../app/Http/Requests/ITDepartment/UpdateCctvConcernRequest.php',
+      51 => '../../../app/Http/Requests/ITDepartment/UpdateItInventoryItemRequest.php',
+      52 => '../../../app/Http/Requests/ITDepartment/UpdateJobOrderRequest.php',
+      53 => '../../../app/Http/Requests/Maintenance/ProductRequest.php',
+      54 => '../../../app/Http/Requests/Maintenance/RollbackInventoryRequest.php',
+      55 => '../../../app/Http/Requests/Maintenance/RollbackReceivingItemRequest.php',
+      56 => '../../../app/Http/Requests/Maintenance/StoreCategoryRequest.php',
+      57 => '../../../app/Http/Requests/Maintenance/StoreJobOrderMaintenanceRequest.php',
+      58 => '../../../app/Http/Requests/Maintenance/StorePartsOutRequest.php',
+      59 => '../../../app/Http/Requests/Maintenance/StoreReceivingRequest.php',
+      60 => '../../../app/Http/Requests/Maintenance/StoreStockTransferRequest.php',
+      61 => '../../../app/Http/Requests/Maintenance/UpdateCategoryRequest.php',
+      62 => '../../../app/Http/Requests/Maintenance/UpdateJobOrderMaintenanceNumberRequest.php',
+      63 => '../../../app/Http/Requests/Maintenance/UpdateJobOrderMaintenanceStatusRequest.php',
+      64 => '../../../app/Http/Requests/Payroll/UpdatePayrollBenefitSettlementRequest.php',
+      65 => '../../../app/Http/Requests/UserManagement/StoreUserRequest.php',
+      66 => '../../../app/Http/Requests/UserManagement/UpdateUserRequest.php',
+      67 => '../../../app/Listeners/SendJobOrderNotification.php',
+      68 => '../../../app/Listeners/SendPOCreatedNotification.php',
+      69 => '../../../app/Mail/POCreatedMail.php',
+      70 => '../../../app/Models/BenefitContributionRecord.php',
+      71 => '../../../app/Models/CctvConcern.php',
+      72 => '../../../app/Models/Claim.php',
+      73 => '../../../app/Models/DieselStock.php',
+      74 => '../../../app/Models/EmployeeLog.php',
+      75 => '../../../app/Models/JobOrder.php',
+      76 => '../../../app/Models/JobOrderLog.php',
+      77 => '../../../app/Models/JobOrderMaintenance.php',
+      78 => '../../../app/Models/JobOrderMaintenanceHistory.php',
+      79 => '../../../app/Models/JobOrderMaintenanceStatusPeriod.php',
+      80 => '../../../app/Models/JobOrderNote.php',
+      81 => '../../../app/Models/PartsOut.php',
+      82 => '../../../app/Models/PaymentLog.php',
+      83 => '../../../app/Models/Payroll.php',
+      84 => '../../../app/Models/PayrollAttendanceAdjustment.php',
+      85 => '../../../app/Models/PayrollAuditLog.php',
+      86 => '../../../app/Models/PayrollBenefitSettlement.php',
+      87 => '../../../app/Models/PayrollItem.php',
+      88 => '../../../app/Models/PayrollReportLog.php',
+      89 => '../../../app/Models/PurchaseOrder.php',
+      90 => '../../../app/Models/PurchaseOrderItem.php',
+      91 => '../../../app/Models/PurchaseReceive.php',
+      92 => '../../../app/Models/Receiving.php',
+      93 => '../../../app/Models/StockTransfer.php',
+      94 => '../../../app/Models/StockTransferItem.php',
+      95 => '../../../app/Notifications/POCreatedNotification.php',
+      96 => '../../../app/Providers/AppServiceProvider.php',
+      97 => '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php',
+      98 => '../../../app/Services/ITDepartment/CctvConcernService.php',
+      99 => '../../../app/Services/ITDepartment/ItJobOrderDirectoryService.php',
+      100 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
+      101 => '../../../app/Services/LeaveNotificationService.php',
+      102 => '../../../app/Services/Payroll/BenefitContributionPostingService.php',
+      103 => '../../../app/Services/Payroll/MonthlyGovernmentReconciliationService.php',
+      104 => '../../../app/Services/Payroll/PaymentLogService.php',
+      105 => '../../../app/Services/Payroll/PayrollAuditService.php',
+      106 => '../../../app/Services/Payroll/PayrollComputationService.php',
+      107 => '../../../app/Services/Payroll/PayrollPayslipService.php',
     ),
   ),
   '../../../app/Notifications/JobOrderCreatedNotification.php' => 
@@ -16594,6 +16989,32 @@ return [
       2 => '../../../app/Console/Commands/ProcessEmployeeLeaveReadyForDuty.php',
     ),
   ),
+  '../../../app/Services/Maintenance/CategoryService.php' => 
+  array (
+    'fileHash' => 'f38ccbfd9e7872f4285c7faacb62067d839dbd443b1b57e588a9e6cdc5603ed5',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/CategoryController.php',
+    ),
+  ),
+  '../../../app/Services/Maintenance/InventoryDirectoryService.php' => 
+  array (
+    'fileHash' => '8818cc8710292c68d70113d5f30fe6079f6be134c44cbe8a16bdfe9a9cdf8c3b',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
+      1 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
+      2 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
+    ),
+  ),
+  '../../../app/Services/Maintenance/JobOrderMaintenanceDirectoryService.php' => 
+  array (
+    'fileHash' => '87189ed7ae8a81d04965dc2983df5e2ba47267a945f81bcd9a601d6a3b0b9cb6',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/JobOrderMaintenanceController.php',
+    ),
+  ),
   '../../../app/Services/Maintenance/JobOrderMaintenanceService.php' => 
   array (
     'fileHash' => '61c83b72662e49b521bbb904cb82cf2cd89cffd87744f2601e3ca99fb3344d1f',
@@ -16604,18 +17025,61 @@ return [
   ),
   '../../../app/Services/Maintenance/PartsOutRollbackService.php' => 
   array (
-    'fileHash' => '3d96132143dc005e9f42ef0abbbc3435c40d7026b0d0fa122f0d52c2dd9cb71d',
+    'fileHash' => 'fa96c286c1802542cf7f539130391e629ada62a58bedb0f734c5b32ecac75b5c',
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
     ),
   ),
-  '../../../app/Services/Maintenance/StockTransferRollbackService.php' => 
+  '../../../app/Services/Maintenance/PartsOutService.php' => 
   array (
-    'fileHash' => 'f07837eb3087aa02437de1b52810ff174a4704b49e1d120adf84beafceb2cdd4',
+    'fileHash' => '0a924e4643d6eff0cd60e023c314c7570f1cee282e71db5cc0850d0fe44a47c4',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
+    ),
+  ),
+  '../../../app/Services/Maintenance/ProductCatalogService.php' => 
+  array (
+    'fileHash' => 'd536490e5a6e83e7160f009315b6648529d247a01ebf0abae14408143421d9f4',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/ItemsController.php',
+      1 => '../../../app/Http/Controllers/Maintenance/PartsOutController.php',
+      2 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
+      3 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
+    ),
+  ),
+  '../../../app/Services/Maintenance/ReceivingService.php' => 
+  array (
+    'fileHash' => 'a522625d6030468da5c233b1c0d76690f9ae5f01c9a275e1cd89da5d7bd2e02f',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/ReceivingController.php',
+    ),
+  ),
+  '../../../app/Services/Maintenance/StockTransferCreationService.php' => 
+  array (
+    'fileHash' => 'c195e31870f4a1cc41d45631f25bb001b426415901c8bde183d6b0c89e9a6bd6',
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
+    ),
+  ),
+  '../../../app/Services/Maintenance/StockTransferRollbackService.php' => 
+  array (
+    'fileHash' => '89b42a7583311cdfabfa93afe158a511161d842f87cb971efb2794f4ff2e7b5f',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/Maintenance/StockTransferController.php',
+    ),
+  ),
+  '../../../app/Services/Maintenance/VehicleHistoryService.php' => 
+  array (
+    'fileHash' => '7e5c2d11de929bbc8724474727d42d3449d5431d0279b779885479ed221c7a90',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/BusDetailController.php',
     ),
   ),
   '../../../app/Services/Payroll/BenefitContributionPostingService.php' => 
@@ -16967,9 +17431,10 @@ return [
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
-    2 => 'psr/log',
-    3 => 'monolog/monolog',
-    4 => 'laracasts/flash',
+    2 => 'laracasts/flash',
+    3 => 'laravel/sanctum',
+    4 => 'spatie/laravel-permission',
+    5 => 'nesbot/carbon',
   ),
   '../../../app/Http/Controllers/Payroll/PayrollAuditLogController.php' => 
   array (
@@ -17040,9 +17505,9 @@ return [
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'laravel/sanctum',
-    4 => 'spatie/laravel-permission',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
   ),
   '../../../app/Http/Controllers/Payroll/PayrollAttendanceAdjustmentController.php' => 
   array (
@@ -17415,10 +17880,9 @@ return [
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'psr/log',
-    4 => 'monolog/monolog',
-    5 => 'laracasts/flash',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
   ),
   '../../../app/Http/Requests/Auth/UnlockRequest.php' => 
   array (
@@ -17719,12 +18183,11 @@ return [
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'ramsey/uuid',
-    4 => 'league/flysystem',
-    5 => 'psr/http-message',
-    6 => 'laravel/sanctum',
-    7 => 'spatie/laravel-permission',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+    5 => 'league/flysystem',
+    6 => 'psr/http-message',
   ),
   '../../../app/Http/Kernel.php' => 
   array (
@@ -17938,7 +18401,6 @@ return [
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
   ),
   '../../../app/Http/Controllers/HR_Department/ConductorLeaveController.php' => 
   array (
@@ -18590,6 +19052,118 @@ return [
     2 => 'nesbot/carbon',
   ),
   '../../../app/Services/HR_Department/LeaveRecordService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Enums/InventoryTransactionStatus.php' => 
+  array (
+  ),
+  '../../../app/Enums/StockLevelStatus.php' => 
+  array (
+  ),
+  '../../../app/Http/Requests/Maintenance/ProductRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/RollbackInventoryRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/RollbackReceivingItemRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreCategoryRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/StorePartsOutRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreReceivingRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreStockTransferRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/UpdateCategoryRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Maintenance/CategoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/Maintenance/InventoryDirectoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Maintenance/JobOrderMaintenanceDirectoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Services/Maintenance/PartsOutService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Maintenance/ProductCatalogService.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/Maintenance/ReceivingService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'ramsey/uuid',
+    4 => 'league/flysystem',
+    5 => 'psr/http-message',
+  ),
+  '../../../app/Services/Maintenance/StockTransferCreationService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Maintenance/VehicleHistoryService.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'nesbot/carbon',
@@ -20789,6 +21363,60 @@ return [
       ),
     )),
   ),
+  '../../../app/Enums/InventoryTransactionStatus.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedEnumNode::__set_state(array(
+       'name' => 'App\\Enums\\InventoryTransactionStatus',
+       'scalarType' => 'string',
+       'phpDoc' => NULL,
+       'implements' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Posted',
+           'value' => '\'posted\'',
+           'phpDoc' => NULL,
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Completed',
+           'value' => '\'completed\'',
+           'phpDoc' => NULL,
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'RolledBack',
+           'value' => '\'rolled_back\'',
+           'phpDoc' => NULL,
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'isRolledBack',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
   '../../../app/Enums/ItTicketApprovalStatus.php' => 
   array (
     0 => 
@@ -21364,6 +21992,86 @@ return [
            'returnType' => 'bool',
            'parameters' => 
           array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Enums/StockLevelStatus.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedEnumNode::__set_state(array(
+       'name' => 'App\\Enums\\StockLevelStatus',
+       'scalarType' => 'string',
+       'phpDoc' => NULL,
+       'implements' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Out',
+           'value' => '\'out\'',
+           'phpDoc' => NULL,
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Low',
+           'value' => '\'low\'',
+           'phpDoc' => NULL,
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Available',
+           'value' => '\'available\'',
+           'phpDoc' => NULL,
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'fromQuantity',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => true,
+           'returnType' => 'self',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'quantity',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'lowStockThreshold',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
           ),
            'attributes' => 
           array (
@@ -23820,7 +24528,7 @@ return [
        'name' => 'App\\Http\\Controllers\\BusDetailController',
        'phpDoc' => NULL,
        'abstract' => false,
-       'final' => false,
+       'final' => true,
        'extends' => 'App\\Http\\Controllers\\Controller',
        'implements' => 
       array (
@@ -23835,7 +24543,7 @@ return [
       array (
         0 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'index',
+           'name' => '__construct',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -23844,6 +24552,37 @@ return [
            'final' => false,
            'static' => false,
            'returnType' => NULL,
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'vehicleHistoryService',
+               'type' => 'App\\Services\\Maintenance\\VehicleHistoryService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'index',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\View\\View',
            'parameters' => 
           array (
             0 => 
@@ -23864,7 +24603,7 @@ return [
           array (
           ),
         )),
-        1 => 
+        2 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'show',
            'phpDoc' => NULL,
@@ -23874,7 +24613,7 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\View\\View',
            'parameters' => 
           array (
             0 => 
@@ -28322,7 +29061,7 @@ return [
        'name' => 'App\\Http\\Controllers\\Maintenance\\CategoryController',
        'phpDoc' => NULL,
        'abstract' => false,
-       'final' => false,
+       'final' => true,
        'extends' => 'App\\Http\\Controllers\\Controller',
        'implements' => 
       array (
@@ -28337,7 +29076,7 @@ return [
       array (
         0 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'index',
+           'name' => '__construct',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -28348,12 +29087,43 @@ return [
            'returnType' => NULL,
            'parameters' => 
           array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'categoryService',
+               'type' => 'App\\Services\\Maintenance\\CategoryService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
           ),
            'attributes' => 
           array (
           ),
         )),
         1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'index',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\View\\View',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'store',
            'phpDoc' => NULL,
@@ -28363,57 +29133,13 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        2 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'update',
-           'phpDoc' => NULL,
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => NULL,
-           'parameters' => 
-          array (
-            0 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-            1 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'id',
-               'type' => NULL,
+               'type' => 'App\\Http\\Requests\\Maintenance\\StoreCategoryRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -28430,6 +29156,50 @@ return [
         )),
         3 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'update',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'App\\Http\\Requests\\Maintenance\\UpdateCategoryRequest',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'id',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'destroy',
            'phpDoc' => NULL,
            'byRef' => false,
@@ -28438,13 +29208,13 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'id',
-               'type' => NULL,
+               'type' => 'int',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -28472,7 +29242,7 @@ return [
        'name' => 'App\\Http\\Controllers\\Maintenance\\ItemsController',
        'phpDoc' => NULL,
        'abstract' => false,
-       'final' => false,
+       'final' => true,
        'extends' => 'App\\Http\\Controllers\\Controller',
        'implements' => 
       array (
@@ -28487,7 +29257,7 @@ return [
       array (
         0 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'index',
+           'name' => '__construct',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -28500,8 +29270,8 @@ return [
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'name' => 'productCatalogService',
+               'type' => 'App\\Services\\Maintenance\\ProductCatalogService',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -28509,7 +29279,7 @@ return [
               array (
               ),
                'phpDoc' => NULL,
-               'flags' => 0,
+               'flags' => 68,
             )),
           ),
            'attributes' => 
@@ -28518,7 +29288,7 @@ return [
         )),
         1 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'dashboard',
+           'name' => 'index',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -28526,7 +29296,7 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\View\\View|string|Illuminate\\Http\\Response',
            'parameters' => 
           array (
             0 => 
@@ -28549,7 +29319,7 @@ return [
         )),
         2 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'store',
+           'name' => 'dashboard',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -28557,7 +29327,7 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\View\\View|Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
@@ -28580,6 +29350,37 @@ return [
         )),
         3 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'store',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'App\\Http\\Requests\\Maintenance\\ProductRequest',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'update',
            'phpDoc' => NULL,
            'byRef' => false,
@@ -28588,7 +29389,51 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'App\\Http\\Requests\\Maintenance\\ProductRequest',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'id',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'destroy',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse|Illuminate\\Http\\JsonResponse',
            'parameters' => 
           array (
             0 => 
@@ -28607,38 +29452,7 @@ return [
             1 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'id',
-               'type' => NULL,
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        4 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'destroy',
-           'phpDoc' => NULL,
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => NULL,
-           'parameters' => 
-          array (
-            0 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'id',
-               'type' => NULL,
+               'type' => 'int',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -28666,7 +29480,7 @@ return [
        'name' => 'App\\Http\\Controllers\\Maintenance\\JobOrderMaintenanceController',
        'phpDoc' => NULL,
        'abstract' => false,
-       'final' => false,
+       'final' => true,
        'extends' => 'App\\Http\\Controllers\\Controller',
        'implements' => 
       array (
@@ -28680,6 +29494,50 @@ return [
        'statements' => 
       array (
         0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => '__construct',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => NULL,
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'directoryService',
+               'type' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'jobOrderMaintenanceService',
+               'type' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'index',
            'phpDoc' => NULL,
@@ -28710,7 +29568,7 @@ return [
           array (
           ),
         )),
-        1 => 
+        2 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'export',
            'phpDoc' => NULL,
@@ -28741,7 +29599,7 @@ return [
           array (
           ),
         )),
-        2 => 
+        3 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'create',
            'phpDoc' => NULL,
@@ -28759,7 +29617,7 @@ return [
           array (
           ),
         )),
-        3 => 
+        4 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'store',
            'phpDoc' => NULL,
@@ -28785,25 +29643,12 @@ return [
                'phpDoc' => NULL,
                'flags' => 0,
             )),
-            1 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'jobOrderMaintenanceService',
-               'type' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
           ),
            'attributes' => 
           array (
           ),
         )),
-        4 => 
+        5 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'show',
            'phpDoc' => NULL,
@@ -28834,7 +29679,7 @@ return [
           array (
           ),
         )),
-        5 => 
+        6 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'editStatus',
            'phpDoc' => NULL,
@@ -28865,7 +29710,7 @@ return [
           array (
           ),
         )),
-        6 => 
+        7 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'updateStatus',
            'phpDoc' => NULL,
@@ -28904,25 +29749,12 @@ return [
                'phpDoc' => NULL,
                'flags' => 0,
             )),
-            2 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'jobOrderMaintenanceService',
-               'type' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
           ),
            'attributes' => 
           array (
           ),
         )),
-        7 => 
+        8 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'editNumber',
            'phpDoc' => NULL,
@@ -28953,7 +29785,7 @@ return [
           array (
           ),
         )),
-        8 => 
+        9 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'updateNumber',
            'phpDoc' => NULL,
@@ -28992,25 +29824,12 @@ return [
                'phpDoc' => NULL,
                'flags' => 0,
             )),
-            2 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'jobOrderMaintenanceService',
-               'type' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
           ),
            'attributes' => 
           array (
           ),
         )),
-        9 => 
+        10 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'exportSingle',
            'phpDoc' => NULL,
@@ -29292,7 +30111,7 @@ return [
        'name' => 'App\\Http\\Controllers\\Maintenance\\PartsOutController',
        'phpDoc' => NULL,
        'abstract' => false,
-       'final' => false,
+       'final' => true,
        'extends' => 'App\\Http\\Controllers\\Controller',
        'implements' => 
       array (
@@ -29306,6 +30125,76 @@ return [
        'statements' => 
       array (
         0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => '__construct',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => NULL,
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'directoryService',
+               'type' => 'App\\Services\\Maintenance\\InventoryDirectoryService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'productCatalogService',
+               'type' => 'App\\Services\\Maintenance\\ProductCatalogService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'partsOutService',
+               'type' => 'App\\Services\\Maintenance\\PartsOutService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            3 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'rollbackService',
+               'type' => 'App\\Services\\Maintenance\\PartsOutRollbackService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'index',
            'phpDoc' => NULL,
@@ -29336,7 +30225,7 @@ return [
           array (
           ),
         )),
-        1 => 
+        2 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'create',
            'phpDoc' => NULL,
@@ -29347,24 +30236,6 @@ return [
            'final' => false,
            'static' => false,
            'returnType' => 'Illuminate\\View\\View',
-           'parameters' => 
-          array (
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        2 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'store',
-           'phpDoc' => NULL,
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
@@ -29387,6 +30258,37 @@ return [
         )),
         3 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'store',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'App\\Http\\Requests\\Maintenance\\StorePartsOutRequest',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'show',
            'phpDoc' => NULL,
            'byRef' => false,
@@ -29399,6 +30301,19 @@ return [
            'parameters' => 
           array (
             0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'Illuminate\\Http\\Request',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'partsOut',
                'type' => 'App\\Models\\PartsOut',
@@ -29416,7 +30331,7 @@ return [
           array (
           ),
         )),
-        4 => 
+        5 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'searchProducts',
            'phpDoc' => NULL,
@@ -29447,7 +30362,7 @@ return [
           array (
           ),
         )),
-        5 => 
+        6 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'rollback',
            'phpDoc' => NULL,
@@ -29463,7 +30378,7 @@ return [
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'App\\Http\\Requests\\Maintenance\\RollbackInventoryRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -29477,19 +30392,6 @@ return [
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'partsOut',
                'type' => 'App\\Models\\PartsOut',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-            2 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'rollbackService',
-               'type' => 'App\\Services\\Maintenance\\PartsOutRollbackService',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -29649,7 +30551,7 @@ return [
        'name' => 'App\\Http\\Controllers\\Maintenance\\ReceivingController',
        'phpDoc' => NULL,
        'abstract' => false,
-       'final' => false,
+       'final' => true,
        'extends' => 'App\\Http\\Controllers\\Controller',
        'implements' => 
       array (
@@ -29663,6 +30565,63 @@ return [
        'statements' => 
       array (
         0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => '__construct',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => NULL,
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'directoryService',
+               'type' => 'App\\Services\\Maintenance\\InventoryDirectoryService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'productCatalogService',
+               'type' => 'App\\Services\\Maintenance\\ProductCatalogService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'receivingService',
+               'type' => 'App\\Services\\Maintenance\\ReceivingService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'index',
            'phpDoc' => NULL,
@@ -29693,7 +30652,7 @@ return [
           array (
           ),
         )),
-        1 => 
+        2 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'create',
            'phpDoc' => NULL,
@@ -29704,24 +30663,6 @@ return [
            'final' => false,
            'static' => false,
            'returnType' => 'Illuminate\\View\\View',
-           'parameters' => 
-          array (
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        2 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'store',
-           'phpDoc' => NULL,
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
@@ -29744,6 +30685,37 @@ return [
         )),
         3 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'store',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'App\\Http\\Requests\\Maintenance\\StoreReceivingRequest',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'show',
            'phpDoc' => NULL,
            'byRef' => false,
@@ -29756,6 +30728,19 @@ return [
            'parameters' => 
           array (
             0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'Illuminate\\Http\\Request',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'receiving',
                'type' => 'int',
@@ -29773,7 +30758,7 @@ return [
           array (
           ),
         )),
-        4 => 
+        5 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'downloadProof',
            'phpDoc' => NULL,
@@ -29787,6 +30772,19 @@ return [
            'parameters' => 
           array (
             0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'Illuminate\\Http\\Request',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'receiving',
                'type' => 'App\\Models\\Receiving',
@@ -29804,7 +30802,7 @@ return [
           array (
           ),
         )),
-        5 => 
+        6 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'searchProducts',
            'phpDoc' => NULL,
@@ -29835,7 +30833,7 @@ return [
           array (
           ),
         )),
-        6 => 
+        7 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'rollbackItem',
            'phpDoc' => NULL,
@@ -29851,7 +30849,7 @@ return [
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'App\\Http\\Requests\\Maintenance\\RollbackReceivingItemRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -30055,7 +31053,7 @@ return [
        'name' => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
        'phpDoc' => NULL,
        'abstract' => false,
-       'final' => false,
+       'final' => true,
        'extends' => 'App\\Http\\Controllers\\Controller',
        'implements' => 
       array (
@@ -30070,7 +31068,7 @@ return [
       array (
         0 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'index',
+           'name' => '__construct',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -30079,6 +31077,76 @@ return [
            'final' => false,
            'static' => false,
            'returnType' => NULL,
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'directoryService',
+               'type' => 'App\\Services\\Maintenance\\InventoryDirectoryService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'productCatalogService',
+               'type' => 'App\\Services\\Maintenance\\ProductCatalogService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'creationService',
+               'type' => 'App\\Services\\Maintenance\\StockTransferCreationService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            3 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'rollbackService',
+               'type' => 'App\\Services\\Maintenance\\StockTransferRollbackService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'index',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\View\\View|Illuminate\\Http\\JsonResponse',
            'parameters' => 
           array (
             0 => 
@@ -30099,7 +31167,7 @@ return [
           array (
           ),
         )),
-        1 => 
+        2 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'create',
            'phpDoc' => NULL,
@@ -30109,7 +31177,7 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\View\\View',
            'parameters' => 
           array (
           ),
@@ -30117,7 +31185,7 @@ return [
           array (
           ),
         )),
-        2 => 
+        3 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'store',
            'phpDoc' => NULL,
@@ -30127,44 +31195,13 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        3 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'show',
-           'phpDoc' => NULL,
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => NULL,
-           'parameters' => 
-          array (
-            0 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'stock_transfer',
-               'type' => 'App\\Models\\StockTransfer',
+               'type' => 'App\\Http\\Requests\\Maintenance\\StoreStockTransferRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -30181,6 +31218,37 @@ return [
         )),
         4 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'show',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\View\\View',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'stock_transfer',
+               'type' => 'App\\Models\\StockTransfer',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'searchProducts',
            'phpDoc' => NULL,
            'byRef' => false,
@@ -30189,7 +31257,7 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\JsonResponse',
            'parameters' => 
           array (
             0 => 
@@ -30210,7 +31278,7 @@ return [
           array (
           ),
         )),
-        5 => 
+        6 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'rollback',
            'phpDoc' => NULL,
@@ -30220,13 +31288,13 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'App\\Http\\Requests\\Maintenance\\RollbackInventoryRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -30240,19 +31308,6 @@ return [
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'stock_transfer',
                'type' => 'App\\Models\\StockTransfer',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-            2 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'rollbackService',
-               'type' => 'App\\Services\\Maintenance\\StockTransferRollbackService',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -37395,6 +38450,272 @@ return [
       ),
     )),
   ),
+  '../../../app/Http/Requests/Maintenance/ProductRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\Maintenance\\ProductRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'messages',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/Maintenance/RollbackInventoryRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\Maintenance\\RollbackInventoryRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/Maintenance/RollbackReceivingItemRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\Maintenance\\RollbackReceivingItemRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreCategoryRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\Maintenance\\StoreCategoryRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
   '../../../app/Http/Requests/Maintenance/StoreJobOrderMaintenanceRequest.php' => 
   array (
     0 => 
@@ -37472,6 +38793,308 @@ return [
         3 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'messages',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/Maintenance/StorePartsOutRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\Maintenance\\StorePartsOutRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'after',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreReceivingRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\Maintenance\\StoreReceivingRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'after',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreStockTransferRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\Maintenance\\StoreStockTransferRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'after',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/Maintenance/UpdateCategoryRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\Maintenance\\UpdateCategoryRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -54146,6 +55769,7 @@ return [
       \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
          'phpDocString' => '/**
  * @property string|null $product_id
+ * @property string|null $location_id
  * @property string|null $reference_type
  * @property string|null $reference_id
  * @property string|null $movement_type
@@ -54235,6 +55859,36 @@ return [
           array (
           ),
         )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'location',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return BelongsTo<Location, $this> */',
+             'namespace' => 'App\\Models',
+             'uses' => 
+            array (
+              'model' => 'Illuminate\\Database\\Eloquent\\Model',
+              'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
       ),
        'attributes' => 
       array (
@@ -54266,6 +55920,7 @@ return [
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
           'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -54347,6 +56002,7 @@ return [
              'namespace' => 'App\\Models',
              'uses' => 
             array (
+              'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
               'model' => 'Illuminate\\Database\\Eloquent\\Model',
               'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
               'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -54378,6 +56034,7 @@ return [
              'namespace' => 'App\\Models',
              'uses' => 
             array (
+              'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
               'model' => 'Illuminate\\Database\\Eloquent\\Model',
               'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
               'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -54409,6 +56066,7 @@ return [
              'namespace' => 'App\\Models',
              'uses' => 
             array (
+              'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
               'model' => 'Illuminate\\Database\\Eloquent\\Model',
               'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
               'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -54440,6 +56098,7 @@ return [
              'namespace' => 'App\\Models',
              'uses' => 
             array (
+              'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
               'model' => 'Illuminate\\Database\\Eloquent\\Model',
               'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
               'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -54471,6 +56130,7 @@ return [
              'namespace' => 'App\\Models',
              'uses' => 
             array (
+              'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
               'model' => 'Illuminate\\Database\\Eloquent\\Model',
               'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
               'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
@@ -61244,6 +62904,547 @@ return [
       ),
     )),
   ),
+  '../../../app/Services/Maintenance/CategoryService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\Maintenance\\CategoryService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'create',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\Category',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'name',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'update',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\Category',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'category',
+               'type' => 'App\\Models\\Category',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'name',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'delete',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'category',
+               'type' => 'App\\Models\\Category',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/Maintenance/InventoryDirectoryService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\Maintenance\\InventoryDirectoryService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'partsOuts',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'locationId',
+               'type' => '?int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'receivings',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'locationId',
+               'type' => '?int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'stockTransfers',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'activeLocations',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return Collection<int, Location> */',
+             'namespace' => 'App\\Services\\Maintenance',
+             'uses' => 
+            array (
+              'busdetail' => 'App\\Models\\BusDetail',
+              'location' => 'App\\Models\\Location',
+              'partsout' => 'App\\Models\\PartsOut',
+              'product' => 'App\\Models\\Product',
+              'receiving' => 'App\\Models\\Receiving',
+              'stocktransfer' => 'App\\Models\\StockTransfer',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Support\\Collection',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'locationId',
+               'type' => '?int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'vehicles',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return Collection<int, BusDetail> */',
+             'namespace' => 'App\\Services\\Maintenance',
+             'uses' => 
+            array (
+              'busdetail' => 'App\\Models\\BusDetail',
+              'location' => 'App\\Models\\Location',
+              'partsout' => 'App\\Models\\PartsOut',
+              'product' => 'App\\Models\\Product',
+              'receiving' => 'App\\Models\\Receiving',
+              'stocktransfer' => 'App\\Models\\StockTransfer',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Support\\Collection',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'products',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return Collection<int, Product> */',
+             'namespace' => 'App\\Services\\Maintenance',
+             'uses' => 
+            array (
+              'busdetail' => 'App\\Models\\BusDetail',
+              'location' => 'App\\Models\\Location',
+              'partsout' => 'App\\Models\\PartsOut',
+              'product' => 'App\\Models\\Product',
+              'receiving' => 'App\\Models\\Receiving',
+              'stocktransfer' => 'App\\Models\\StockTransfer',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Support\\Collection',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/Maintenance/JobOrderMaintenanceDirectoryService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'filters',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return array{search:string,status:string,bus_id:?int,date_filter:string,filter_date:string,filter_month:string,filter_year:string} */',
+             'namespace' => 'App\\Services\\Maintenance',
+             'uses' => 
+            array (
+              'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'request' => 'Illuminate\\Http\\Request',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'Illuminate\\Http\\Request',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'apply',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param Builder<JobOrderMaintenance> $query */',
+             'namespace' => 'App\\Services\\Maintenance',
+             'uses' => 
+            array (
+              'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'request' => 'Illuminate\\Http\\Request',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Database\\Eloquent\\Builder',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'query',
+               'type' => 'Illuminate\\Database\\Eloquent\\Builder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'filters',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'includeStatus',
+               'type' => 'bool',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
   '../../../app/Services/Maintenance/JobOrderMaintenanceService.php' => 
   array (
     0 => 
@@ -61550,6 +63751,700 @@ return [
       ),
     )),
   ),
+  '../../../app/Services/Maintenance/PartsOutService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\Maintenance\\PartsOutService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'create',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\PartsOut',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'userId',
+               'type' => '?int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/Maintenance/ProductCatalogService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\Maintenance\\ProductCatalogService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'create',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\Product',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'update',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\Product',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'product',
+               'type' => 'App\\Models\\Product',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'delete',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'product',
+               'type' => 'App\\Models\\Product',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'indexData',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return array{categories: Collection<int, Category>, items: LengthAwarePaginator, stock: LengthAwarePaginator, search: string} */',
+             'namespace' => 'App\\Services\\Maintenance',
+             'uses' => 
+            array (
+              'stocklevelstatus' => 'App\\Enums\\StockLevelStatus',
+              'category' => 'App\\Models\\Category',
+              'location' => 'App\\Models\\Location',
+              'product' => 'App\\Models\\Product',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'searchProducts',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/**
+     * @return array<int, array{
+     *     id: int,
+     *     name: string,
+     *     supplier_name: string|null,
+     *     category: string|null,
+     *     unit: string|null,
+     *     part_number: string|null,
+     *     details: string|null,
+     *     stock: int
+     * }>
+     */',
+             'namespace' => 'App\\Services\\Maintenance',
+             'uses' => 
+            array (
+              'stocklevelstatus' => 'App\\Enums\\StockLevelStatus',
+              'category' => 'App\\Models\\Category',
+              'location' => 'App\\Models\\Location',
+              'product' => 'App\\Models\\Product',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'excludeIds',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'locationId',
+               'type' => '?int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            3 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'requireStock',
+               'type' => 'bool',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'dashboardData',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return array<string, mixed> */',
+             'namespace' => 'App\\Services\\Maintenance',
+             'uses' => 
+            array (
+              'stocklevelstatus' => 'App\\Enums\\StockLevelStatus',
+              'category' => 'App\\Models\\Category',
+              'location' => 'App\\Models\\Location',
+              'product' => 'App\\Models\\Product',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'locationFilter',
+               'type' => '?string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'mainPage',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            3 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'balintawakPage',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            4 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'transferPage',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            5 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'path',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            6 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'query',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/Maintenance/ReceivingService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\Maintenance\\ReceivingService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'create',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\Receiving',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'proof',
+               'type' => '?Illuminate\\Http\\UploadedFile',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'userId',
+               'type' => '?int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rollbackItem',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'string',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'receivingId',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'itemId',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'qty',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            3 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'userLocationId',
+               'type' => '?int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/Maintenance/StockTransferCreationService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\Maintenance\\StockTransferCreationService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'create',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\StockTransfer',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'userId',
+               'type' => '?int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
   '../../../app/Services/Maintenance/StockTransferRollbackService.php' => 
   array (
     0 => 
@@ -61616,6 +64511,123 @@ return [
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/Maintenance/VehicleHistoryService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\Maintenance\\VehicleHistoryService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'buses',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'history',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return array<string, mixed> */',
+             'namespace' => 'App\\Services\\Maintenance',
+             'uses' => 
+            array (
+              'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
+              'busdetail' => 'App\\Models\\BusDetail',
+              'partsout' => 'App\\Models\\PartsOut',
+              'partsoutitem' => 'App\\Models\\PartsOutItem',
+              'lengthawarepaginator' => 'Illuminate\\Pagination\\LengthAwarePaginator',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'bus',
+               'type' => 'App\\Models\\BusDetail',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
                'attributes' => 
               array (
               ),

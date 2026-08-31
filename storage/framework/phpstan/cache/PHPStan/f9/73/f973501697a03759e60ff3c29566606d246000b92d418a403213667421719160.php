@@ -630,15 +630,16 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/BusDetailController.php' => 
     array (
-      0 => '9db6898195e3fd2c3b1802c24a22fcc41c45717425b0738ee7589cdce5494712',
+      0 => '32c158ded5b58d0849e2848f3c089c9bd34692b65aabf5fd3066b0d292239ea7',
       1 => 
       array (
         0 => 'app\\http\\controllers\\busdetailcontroller',
       ),
       2 => 
       array (
-        0 => 'app\\http\\controllers\\index',
-        1 => 'app\\http\\controllers\\show',
+        0 => 'app\\http\\controllers\\__construct',
+        1 => 'app\\http\\controllers\\index',
+        2 => 'app\\http\\controllers\\show',
       ),
       3 => 
       array (
@@ -1015,33 +1016,15 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/Maintenance/CategoryController.php' => 
     array (
-      0 => '44fa802fe4151bf21ba6c86f0d4d3dbc2e3293107ea5a165d49cc82dbfe72782',
+      0 => 'b75c169a164ee5f53467a6387ff1f93282686eda6fbad8ff0c1f9022bfc6596d',
       1 => 
       array (
         0 => 'app\\http\\controllers\\maintenance\\categorycontroller',
       ),
       2 => 
       array (
-        0 => 'app\\http\\controllers\\maintenance\\index',
-        1 => 'app\\http\\controllers\\maintenance\\store',
-        2 => 'app\\http\\controllers\\maintenance\\update',
-        3 => 'app\\http\\controllers\\maintenance\\destroy',
-      ),
-      3 => 
-      array (
-      ),
-    ),
-    '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/Maintenance/ItemsController.php' => 
-    array (
-      0 => '597a44f9b2ef510093f73bbd1d778289879ec7c097b9d953d5a353fc526ed4a0',
-      1 => 
-      array (
-        0 => 'app\\http\\controllers\\maintenance\\itemscontroller',
-      ),
-      2 => 
-      array (
-        0 => 'app\\http\\controllers\\maintenance\\index',
-        1 => 'app\\http\\controllers\\maintenance\\dashboard',
+        0 => 'app\\http\\controllers\\maintenance\\__construct',
+        1 => 'app\\http\\controllers\\maintenance\\index',
         2 => 'app\\http\\controllers\\maintenance\\store',
         3 => 'app\\http\\controllers\\maintenance\\update',
         4 => 'app\\http\\controllers\\maintenance\\destroy',
@@ -1050,36 +1033,54 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
       array (
       ),
     ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/Maintenance/ItemsController.php' => 
+    array (
+      0 => 'e75c43b924443863e291b14f476c8acdaff648bee2ee4f4d5e0d18f2bc7fe263',
+      1 => 
+      array (
+        0 => 'app\\http\\controllers\\maintenance\\itemscontroller',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\controllers\\maintenance\\__construct',
+        1 => 'app\\http\\controllers\\maintenance\\index',
+        2 => 'app\\http\\controllers\\maintenance\\dashboard',
+        3 => 'app\\http\\controllers\\maintenance\\store',
+        4 => 'app\\http\\controllers\\maintenance\\update',
+        5 => 'app\\http\\controllers\\maintenance\\destroy',
+      ),
+      3 => 
+      array (
+      ),
+    ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/Maintenance/JobOrderMaintenanceController.php' => 
     array (
-      0 => 'e60ab8396ff791056288ae4ebae1536a9e8fa04d805c7a1d4640f529e7b45567',
+      0 => '6fdd8eaec765568d2dc950bd3c9c55359f7d6565440d1e1ff94c8ff7dc1596be',
       1 => 
       array (
         0 => 'app\\http\\controllers\\maintenance\\jobordermaintenancecontroller',
       ),
       2 => 
       array (
-        0 => 'app\\http\\controllers\\maintenance\\index',
-        1 => 'app\\http\\controllers\\maintenance\\export',
-        2 => 'app\\http\\controllers\\maintenance\\create',
-        3 => 'app\\http\\controllers\\maintenance\\store',
-        4 => 'app\\http\\controllers\\maintenance\\show',
-        5 => 'app\\http\\controllers\\maintenance\\editstatus',
-        6 => 'app\\http\\controllers\\maintenance\\updatestatus',
-        7 => 'app\\http\\controllers\\maintenance\\editnumber',
-        8 => 'app\\http\\controllers\\maintenance\\updatenumber',
-        9 => 'app\\http\\controllers\\maintenance\\resolvefilters',
-        10 => 'app\\http\\controllers\\maintenance\\applyindexfilters',
-        11 => 'app\\http\\controllers\\maintenance\\applydatefilter',
-        12 => 'app\\http\\controllers\\maintenance\\exportcsv',
-        13 => 'app\\http\\controllers\\maintenance\\exportexcel',
-        14 => 'app\\http\\controllers\\maintenance\\exportheadings',
-        15 => 'app\\http\\controllers\\maintenance\\exportrow',
-        16 => 'app\\http\\controllers\\maintenance\\exportfilename',
-        17 => 'app\\http\\controllers\\maintenance\\exportsingle',
-        18 => 'app\\http\\controllers\\maintenance\\exportsinglecsv',
-        19 => 'app\\http\\controllers\\maintenance\\exportsingleexcel',
-        20 => 'app\\http\\controllers\\maintenance\\singleexportdetails',
+        0 => 'app\\http\\controllers\\maintenance\\__construct',
+        1 => 'app\\http\\controllers\\maintenance\\index',
+        2 => 'app\\http\\controllers\\maintenance\\export',
+        3 => 'app\\http\\controllers\\maintenance\\create',
+        4 => 'app\\http\\controllers\\maintenance\\store',
+        5 => 'app\\http\\controllers\\maintenance\\show',
+        6 => 'app\\http\\controllers\\maintenance\\editstatus',
+        7 => 'app\\http\\controllers\\maintenance\\updatestatus',
+        8 => 'app\\http\\controllers\\maintenance\\editnumber',
+        9 => 'app\\http\\controllers\\maintenance\\updatenumber',
+        10 => 'app\\http\\controllers\\maintenance\\exportcsv',
+        11 => 'app\\http\\controllers\\maintenance\\exportexcel',
+        12 => 'app\\http\\controllers\\maintenance\\exportheadings',
+        13 => 'app\\http\\controllers\\maintenance\\exportrow',
+        14 => 'app\\http\\controllers\\maintenance\\exportfilename',
+        15 => 'app\\http\\controllers\\maintenance\\exportsingle',
+        16 => 'app\\http\\controllers\\maintenance\\exportsinglecsv',
+        17 => 'app\\http\\controllers\\maintenance\\exportsingleexcel',
+        18 => 'app\\http\\controllers\\maintenance\\singleexportdetails',
       ),
       3 => 
       array (
@@ -1116,23 +1117,22 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/Maintenance/PartsOutController.php' => 
     array (
-      0 => '172a9764a2b7597d4d7279ee0ea6511014f67246c04dcdb0482b4f5e46169fee',
+      0 => '71843f2ae5239b2fa30ebdd1da4ba468c1884e50c8c446f89e2f5eb7c7aeec25',
       1 => 
       array (
         0 => 'app\\http\\controllers\\maintenance\\partsoutcontroller',
       ),
       2 => 
       array (
-        0 => 'app\\http\\controllers\\maintenance\\index',
-        1 => 'app\\http\\controllers\\maintenance\\create',
-        2 => 'app\\http\\controllers\\maintenance\\store',
-        3 => 'app\\http\\controllers\\maintenance\\show',
-        4 => 'app\\http\\controllers\\maintenance\\searchproducts',
-        5 => 'app\\http\\controllers\\maintenance\\rollback',
-        6 => 'app\\http\\controllers\\maintenance\\generatepartsoutnumber',
-        7 => 'app\\http\\controllers\\maintenance\\syncproducttotalstock',
-        8 => 'app\\http\\controllers\\maintenance\\userlocationid',
-        9 => 'app\\http\\controllers\\maintenance\\restrictlocation',
+        0 => 'app\\http\\controllers\\maintenance\\__construct',
+        1 => 'app\\http\\controllers\\maintenance\\index',
+        2 => 'app\\http\\controllers\\maintenance\\create',
+        3 => 'app\\http\\controllers\\maintenance\\store',
+        4 => 'app\\http\\controllers\\maintenance\\show',
+        5 => 'app\\http\\controllers\\maintenance\\searchproducts',
+        6 => 'app\\http\\controllers\\maintenance\\rollback',
+        7 => 'app\\http\\controllers\\maintenance\\userlocationid',
+        8 => 'app\\http\\controllers\\maintenance\\assertlocationaccess',
       ),
       3 => 
       array (
@@ -1157,25 +1157,23 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/Maintenance/ReceivingController.php' => 
     array (
-      0 => '2f09a761e5674f5ea47752b9738956ae2c118954c5459c77b45f2fcbca228203',
+      0 => '0f1a30526e8d89f25d0fc8da87f3a52c211ad958b3ee46242224a579dba93515',
       1 => 
       array (
         0 => 'app\\http\\controllers\\maintenance\\receivingcontroller',
       ),
       2 => 
       array (
-        0 => 'app\\http\\controllers\\maintenance\\index',
-        1 => 'app\\http\\controllers\\maintenance\\create',
-        2 => 'app\\http\\controllers\\maintenance\\store',
-        3 => 'app\\http\\controllers\\maintenance\\show',
-        4 => 'app\\http\\controllers\\maintenance\\downloadproof',
-        5 => 'app\\http\\controllers\\maintenance\\searchproducts',
-        6 => 'app\\http\\controllers\\maintenance\\rollbackitem',
-        7 => 'app\\http\\controllers\\maintenance\\stockrowforupdate',
-        8 => 'app\\http\\controllers\\maintenance\\syncproducttotalstock',
-        9 => 'app\\http\\controllers\\maintenance\\generatereceivingnumber',
-        10 => 'app\\http\\controllers\\maintenance\\userlocationid',
-        11 => 'app\\http\\controllers\\maintenance\\restrictlocation',
+        0 => 'app\\http\\controllers\\maintenance\\__construct',
+        1 => 'app\\http\\controllers\\maintenance\\index',
+        2 => 'app\\http\\controllers\\maintenance\\create',
+        3 => 'app\\http\\controllers\\maintenance\\store',
+        4 => 'app\\http\\controllers\\maintenance\\show',
+        5 => 'app\\http\\controllers\\maintenance\\downloadproof',
+        6 => 'app\\http\\controllers\\maintenance\\searchproducts',
+        7 => 'app\\http\\controllers\\maintenance\\rollbackitem',
+        8 => 'app\\http\\controllers\\maintenance\\userlocationid',
+        9 => 'app\\http\\controllers\\maintenance\\assertlocationaccess',
       ),
       3 => 
       array (
@@ -1201,19 +1199,20 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/Maintenance/StockTransferController.php' => 
     array (
-      0 => '01eb1e64fb8b9c1a4c012f59e4967b783c7cf2c341af563210a61c7e66af1077',
+      0 => '0b2d0152273ee4eb25e0b1158810f16fbbb4b90158e47b2799c7f63b1fcd2ce3',
       1 => 
       array (
         0 => 'app\\http\\controllers\\maintenance\\stocktransfercontroller',
       ),
       2 => 
       array (
-        0 => 'app\\http\\controllers\\maintenance\\index',
-        1 => 'app\\http\\controllers\\maintenance\\create',
-        2 => 'app\\http\\controllers\\maintenance\\store',
-        3 => 'app\\http\\controllers\\maintenance\\show',
-        4 => 'app\\http\\controllers\\maintenance\\searchproducts',
-        5 => 'app\\http\\controllers\\maintenance\\rollback',
+        0 => 'app\\http\\controllers\\maintenance\\__construct',
+        1 => 'app\\http\\controllers\\maintenance\\index',
+        2 => 'app\\http\\controllers\\maintenance\\create',
+        3 => 'app\\http\\controllers\\maintenance\\store',
+        4 => 'app\\http\\controllers\\maintenance\\show',
+        5 => 'app\\http\\controllers\\maintenance\\searchproducts',
+        6 => 'app\\http\\controllers\\maintenance\\rollback',
       ),
       3 => 
       array (
@@ -3481,7 +3480,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Models/StockMovement.php' => 
     array (
-      0 => '303e85ad2e4d99c71bd1a44d9a29998b34bffd891050ff6dc1a915218d7e7189',
+      0 => '630e8cc97e81a227d95720819fdf85b16bcc5bdb61725b71fef58a7c054dd8fb',
       1 => 
       array (
         0 => 'app\\models\\stockmovement',
@@ -3489,6 +3488,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
       2 => 
       array (
         0 => 'app\\models\\product',
+        1 => 'app\\models\\location',
       ),
       3 => 
       array (
@@ -3496,7 +3496,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Models/StockTransfer.php' => 
     array (
-      0 => '0765f001477a5c8ea12b17e8c227d18f4cd5f7199269cbed59f8c48229ff2574',
+      0 => 'f34fbd3fa0336b4d0e0e99a39973740fa5e1cc38db3b29480db10d85874e4694',
       1 => 
       array (
         0 => 'app\\models\\stocktransfer',
@@ -4073,7 +4073,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/PartsOutRollbackService.php' => 
     array (
-      0 => '3d96132143dc005e9f42ef0abbbc3435c40d7026b0d0fa122f0d52c2dd9cb71d',
+      0 => 'fa96c286c1802542cf7f539130391e629ada62a58bedb0f734c5b32ecac75b5c',
       1 => 
       array (
         0 => 'app\\services\\maintenance\\partsoutrollbackservice',
@@ -4088,7 +4088,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/StockTransferRollbackService.php' => 
     array (
-      0 => 'f07837eb3087aa02437de1b52810ff174a4704b49e1d120adf84beafceb2cdd4',
+      0 => '89b42a7583311cdfabfa93afe158a511161d842f87cb971efb2794f4ff2e7b5f',
       1 => 
       array (
         0 => 'app\\services\\maintenance\\stocktransferrollbackservice',
@@ -5566,6 +5566,310 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         6 => 'app\\services\\hr_department\\create',
         7 => 'app\\services\\hr_department\\update',
         8 => 'app\\services\\hr_department\\lockeligibleemployee',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Enums/InventoryTransactionStatus.php' => 
+    array (
+      0 => 'c8bbc74485c8e11138cf6c06b03c9b26e43d72eaa61e74051f861dee8c85621a',
+      1 => 
+      array (
+        0 => 'app\\enums\\inventorytransactionstatus',
+      ),
+      2 => 
+      array (
+        0 => 'app\\enums\\isrolledback',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Enums/StockLevelStatus.php' => 
+    array (
+      0 => '770240482caac5b954caa585e6c5fdb7f3ce86d2be1df717917d208ea42ff955',
+      1 => 
+      array (
+        0 => 'app\\enums\\stocklevelstatus',
+      ),
+      2 => 
+      array (
+        0 => 'app\\enums\\fromquantity',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/Maintenance/ProductRequest.php' => 
+    array (
+      0 => '9b36cd8e5312b5b6c986606ba38fe8956bf8193781711ccb40a4934a2839a819',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\productrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\authorize',
+        1 => 'app\\http\\requests\\maintenance\\rules',
+        2 => 'app\\http\\requests\\maintenance\\messages',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/Maintenance/RollbackInventoryRequest.php' => 
+    array (
+      0 => 'cd050dfba100125873481cca642bae9cd28f9fd932dfb3d3ce5970a507cfdb82',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\rollbackinventoryrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\authorize',
+        1 => 'app\\http\\requests\\maintenance\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/Maintenance/RollbackReceivingItemRequest.php' => 
+    array (
+      0 => '606102350bd5a084aec8267afd972c841a7b87c9f4f54d3ead9bf23f2d8e5228',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\rollbackreceivingitemrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\authorize',
+        1 => 'app\\http\\requests\\maintenance\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/Maintenance/StoreCategoryRequest.php' => 
+    array (
+      0 => 'cc596ef5e9300eaeca0600185643ddd5e6910dda02e3c44d656233a665844191',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\storecategoryrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\authorize',
+        1 => 'app\\http\\requests\\maintenance\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/Maintenance/StorePartsOutRequest.php' => 
+    array (
+      0 => '4d6addf507bee1c87ab06ac43ba94740fcb8769f53de39d7d65d9b6d17e19f66',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\storepartsoutrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\authorize',
+        1 => 'app\\http\\requests\\maintenance\\rules',
+        2 => 'app\\http\\requests\\maintenance\\after',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/Maintenance/StoreReceivingRequest.php' => 
+    array (
+      0 => 'd90675796f1043d11cc5c527900a0b241ddc2795afb7ab689a360458ebb8f1de',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\storereceivingrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\authorize',
+        1 => 'app\\http\\requests\\maintenance\\rules',
+        2 => 'app\\http\\requests\\maintenance\\after',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/Maintenance/StoreStockTransferRequest.php' => 
+    array (
+      0 => 'dcd0ba3cda7bad593dd11faf5c29e648c5f970c93694cb00591f6d2daa982d53',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\storestocktransferrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\authorize',
+        1 => 'app\\http\\requests\\maintenance\\rules',
+        2 => 'app\\http\\requests\\maintenance\\after',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/Maintenance/UpdateCategoryRequest.php' => 
+    array (
+      0 => '66ba7ca58a5a55a4cc8e35cb02ff70b8309bf75f384aebfeea06953ebb0ce404',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\updatecategoryrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\maintenance\\authorize',
+        1 => 'app\\http\\requests\\maintenance\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/CategoryService.php' => 
+    array (
+      0 => 'f38ccbfd9e7872f4285c7faacb62067d839dbd443b1b57e588a9e6cdc5603ed5',
+      1 => 
+      array (
+        0 => 'app\\services\\maintenance\\categoryservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\maintenance\\create',
+        1 => 'app\\services\\maintenance\\update',
+        2 => 'app\\services\\maintenance\\delete',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/InventoryDirectoryService.php' => 
+    array (
+      0 => '8818cc8710292c68d70113d5f30fe6079f6be134c44cbe8a16bdfe9a9cdf8c3b',
+      1 => 
+      array (
+        0 => 'app\\services\\maintenance\\inventorydirectoryservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\maintenance\\partsouts',
+        1 => 'app\\services\\maintenance\\receivings',
+        2 => 'app\\services\\maintenance\\stocktransfers',
+        3 => 'app\\services\\maintenance\\activelocations',
+        4 => 'app\\services\\maintenance\\vehicles',
+        5 => 'app\\services\\maintenance\\products',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/JobOrderMaintenanceDirectoryService.php' => 
+    array (
+      0 => '87189ed7ae8a81d04965dc2983df5e2ba47267a945f81bcd9a601d6a3b0b9cb6',
+      1 => 
+      array (
+        0 => 'app\\services\\maintenance\\jobordermaintenancedirectoryservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\maintenance\\filters',
+        1 => 'app\\services\\maintenance\\apply',
+        2 => 'app\\services\\maintenance\\applydatefilter',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/PartsOutService.php' => 
+    array (
+      0 => '0a924e4643d6eff0cd60e023c314c7570f1cee282e71db5cc0850d0fe44a47c4',
+      1 => 
+      array (
+        0 => 'app\\services\\maintenance\\partsoutservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\maintenance\\create',
+        1 => 'app\\services\\maintenance\\syncproducttotalstock',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/ProductCatalogService.php' => 
+    array (
+      0 => 'd536490e5a6e83e7160f009315b6648529d247a01ebf0abae14408143421d9f4',
+      1 => 
+      array (
+        0 => 'app\\services\\maintenance\\productcatalogservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\maintenance\\create',
+        1 => 'app\\services\\maintenance\\update',
+        2 => 'app\\services\\maintenance\\delete',
+        3 => 'app\\services\\maintenance\\indexdata',
+        4 => 'app\\services\\maintenance\\searchproducts',
+        5 => 'app\\services\\maintenance\\dashboarddata',
+        6 => 'app\\services\\maintenance\\applysearch',
+        7 => 'app\\services\\maintenance\\transfersuggestion',
+        8 => 'app\\services\\maintenance\\paginatecollection',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/ReceivingService.php' => 
+    array (
+      0 => 'a522625d6030468da5c233b1c0d76690f9ae5f01c9a275e1cd89da5d7bd2e02f',
+      1 => 
+      array (
+        0 => 'app\\services\\maintenance\\receivingservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\maintenance\\create',
+        1 => 'app\\services\\maintenance\\rollbackitem',
+        2 => 'app\\services\\maintenance\\stockrowforupdate',
+        3 => 'app\\services\\maintenance\\syncproducttotalstock',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/StockTransferCreationService.php' => 
+    array (
+      0 => 'c195e31870f4a1cc41d45631f25bb001b426415901c8bde183d6b0c89e9a6bd6',
+      1 => 
+      array (
+        0 => 'app\\services\\maintenance\\stocktransfercreationservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\maintenance\\create',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/VehicleHistoryService.php' => 
+    array (
+      0 => '7e5c2d11de929bbc8724474727d42d3449d5431d0279b779885479ed221c7a90',
+      1 => 
+      array (
+        0 => 'app\\services\\maintenance\\vehiclehistoryservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\maintenance\\buses',
+        1 => 'app\\services\\maintenance\\history',
       ),
       3 => 
       array (

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\InventoryTransactionStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -77,6 +78,6 @@ class StockTransfer extends Model
 
     public function isRolledBack(): bool
     {
-        return $this->status === 'rolled_back' || ! is_null($this->rolled_back_at);
+        return $this->status === InventoryTransactionStatus::RolledBack->value || ! is_null($this->rolled_back_at);
     }
 }

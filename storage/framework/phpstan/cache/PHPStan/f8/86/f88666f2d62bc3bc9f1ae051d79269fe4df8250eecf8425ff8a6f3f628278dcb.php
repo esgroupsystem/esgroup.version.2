@@ -12,6 +12,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Services\\Maintenance',
          'uses' => 
         array (
+          'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
           'partsout' => 'App\\Models\\PartsOut',
           'partsoutitem' => 'App\\Models\\PartsOutItem',
           'product' => 'App\\Models\\Product',
@@ -42,6 +43,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Services\\Maintenance',
          'uses' => 
         array (
+          'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
           'partsout' => 'App\\Models\\PartsOut',
           'partsoutitem' => 'App\\Models\\PartsOutItem',
           'product' => 'App\\Models\\Product',
@@ -70,7 +72,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     1 => 
     array (
-      '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/PartsOutRollbackService.php' => '3d96132143dc005e9f42ef0abbbc3435c40d7026b0d0fa122f0d52c2dd9cb71d',
+      '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/PartsOutRollbackService.php' => 'fa96c286c1802542cf7f539130391e629ada62a58bedb0f734c5b32ecac75b5c',
     ),
   ),
 ));

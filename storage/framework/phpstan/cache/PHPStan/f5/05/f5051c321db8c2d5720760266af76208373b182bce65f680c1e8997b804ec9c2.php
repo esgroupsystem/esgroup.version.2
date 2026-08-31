@@ -2,7 +2,7 @@
 
 // odsl-/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/PartsOutRollbackService.php-PHPStan\BetterReflection\Reflection\ReflectionClass-App\Services\Maintenance\PartsOutRollbackService
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-8.3.6-3d96132143dc005e9f42ef0abbbc3435c40d7026b0d0fa122f0d52c2dd9cb71d',
+   'variableKey' => 'v2-6.70.0.3-8.3.6-fa96c286c1802542cf7f539130391e629ada62a58bedb0f734c5b32ecac75b5c',
    'data' => 
   array (
     'locatedSource' => 
@@ -26,8 +26,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     'attributes' => 
     array (
     ),
-    'startLine' => 16,
-    'endLine' => 110,
+    'startLine' => 17,
+    'endLine' => 111,
     'startColumn' => 1,
     'endColumn' => 1,
     'parentClassName' => NULL,
@@ -69,8 +69,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 18,
-            'endLine' => 18,
+            'startLine' => 19,
+            'endLine' => 19,
             'startColumn' => 30,
             'endColumn' => 44,
             'parameterIndex' => 0,
@@ -84,12 +84,12 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'code' => 'null',
               'attributes' => 
               array (
-                'startLine' => 18,
-                'endLine' => 18,
-                'startTokenPos' => 81,
-                'startFilePos' => 404,
-                'endTokenPos' => 81,
-                'endFilePos' => 407,
+                'startLine' => 19,
+                'endLine' => 19,
+                'startTokenPos' => 86,
+                'startFilePos' => 446,
+                'endTokenPos' => 86,
+                'endFilePos' => 449,
               ),
             ),
             'type' => 
@@ -126,8 +126,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 18,
-            'endLine' => 18,
+            'startLine' => 19,
+            'endLine' => 19,
             'startColumn' => 47,
             'endColumn' => 68,
             'parameterIndex' => 1,
@@ -148,8 +148,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 18,
-        'endLine' => 109,
+        'startLine' => 19,
+        'endLine' => 110,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => true,

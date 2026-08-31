@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Maintenance;
 
+use App\Enums\InventoryTransactionStatus;
 use App\Models\PartsOut;
 use App\Models\PartsOutItem;
 use App\Models\Product;
@@ -26,11 +27,11 @@ final class PartsOutRollbackService
 
             $partsOutStatus = (string) $partsOut->getRawOriginal('status');
 
-            if ($partsOutStatus === 'rolled_back') {
+            if ($partsOutStatus === InventoryTransactionStatus::RolledBack->value) {
                 throw new RuntimeException('This Parts Out record is already rolled back.');
             }
 
-            if ($partsOutStatus !== 'posted') {
+            if ($partsOutStatus !== InventoryTransactionStatus::Posted->value) {
                 throw new RuntimeException('Only posted Parts Out records can be rolled back.');
             }
 
@@ -98,7 +99,7 @@ final class PartsOutRollbackService
             }
 
             $partsOut->update([
-                'status' => 'rolled_back',
+                'status' => InventoryTransactionStatus::RolledBack->value,
                 'rolled_back_at' => now(),
                 'rolled_back_by' => Auth::id(),
                 'rollback_reason' => $reason,

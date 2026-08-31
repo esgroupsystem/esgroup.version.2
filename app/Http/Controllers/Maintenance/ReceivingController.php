@@ -5,47 +5,31 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
-use App\Models\Location;
-use App\Models\Product;
-use App\Models\ProductStock;
+use App\Http\Requests\Maintenance\RollbackReceivingItemRequest;
+use App\Http\Requests\Maintenance\StoreReceivingRequest;
 use App\Models\Receiving;
-use App\Models\ReceivingItem;
-use Illuminate\Database\Eloquent\Builder;
+use App\Services\Maintenance\InventoryDirectoryService;
+use App\Services\Maintenance\ProductCatalogService;
+use App\Services\Maintenance\ReceivingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Throwable;
 
-class ReceivingController extends Controller
+final class ReceivingController extends Controller
 {
+    public function __construct(
+        private readonly InventoryDirectoryService $directoryService,
+        private readonly ProductCatalogService $productCatalogService,
+        private readonly ReceivingService $receivingService,
+    ) {}
+
     public function index(Request $request): View|string
     {
-        $search = trim((string) $request->search);
-
-        $receivings = Receiving::query()
-            ->with(['location', 'receiver'])
-            ->withCount('items');
-
-        $this->restrictLocation($receivings);
-
-        $receivings = $receivings
-            ->when($search !== '', function (Builder $query) use ($search): void {
-                $query->where(function (Builder $q) use ($search): void {
-                    $q->where('receiving_number', 'like', "%{$search}%")
-                        ->orWhere('delivered_by', 'like', "%{$search}%")
-                        ->orWhere('remarks', 'like', "%{$search}%")
-                        ->orWhereHas('location', function (Builder $locationQuery) use ($search): void {
-                            $locationQuery->where('name', 'like', "%{$search}%");
-                        });
-                });
-            })
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+        $search = trim((string) $request->input('search', ''));
+        $receivings = $this->directoryService->receivings($search, $this->userLocationId($request));
 
         if ($request->ajax()) {
             return view('maintenance.receive.table', compact('receivings'))->render();
@@ -54,355 +38,84 @@ class ReceivingController extends Controller
         return view('maintenance.receive.index', compact('receivings', 'search'));
     }
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        $products = Product::query()
-            ->with('category')
-            ->select([
-                'id',
-                'category_id',
-                'product_name',
-                'supplier_name',
-                'unit',
-                'part_number',
-                'details',
-                'stock_qty',
-            ])
-            ->orderBy('product_name')
-            ->get();
-
-        $locationId = $this->userLocationId();
-
-        $locations = Location::query()
-            ->where('is_active', 1)
-            ->when($locationId, function (Builder $query) use ($locationId): void {
-                $query->where('id', $locationId);
-            })
-            ->orderBy('name')
-            ->get();
-
-        return view('maintenance.receive.create', compact('products', 'locations'));
-    }
-
-    public function store(Request $request): RedirectResponse
-    {
-        $validated = $request->validate([
-            'location_id' => ['required', 'integer', 'exists:locations,id'],
-            'delivered_by' => ['required', 'string', 'max:255'],
-            'delivery_date' => ['required', 'date'],
-            'remarks' => ['nullable', 'string', 'max:5000'],
-            'proof_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png', 'max:2048'],
-
-            'product_id' => ['required', 'array', 'min:1'],
-            'product_id.*' => ['required', 'integer', 'distinct', 'exists:products,id'],
-
-            'qty_delivered' => ['required', 'array', 'min:1'],
-            'qty_delivered.*' => ['required', 'integer', 'min:1'],
+        return view('maintenance.receive.create', [
+            'products' => $this->directoryService->products(),
+            'locations' => $this->directoryService->activeLocations($this->userLocationId($request)),
         ]);
+    }
 
-        if (count($validated['product_id']) !== count($validated['qty_delivered'])) {
-            return back()
-                ->withInput()
-                ->with('error', 'Product count and quantity count do not match.');
-        }
-
-        $locationId = $this->userLocationId();
-
-        if ($locationId && (int) $validated['location_id'] !== (int) $locationId) {
-            return back()
-                ->withInput()
-                ->with('error', 'You are only allowed to receive items for your assigned garage.');
-        }
-
-        $proofPath = null;
-
+    public function store(StoreReceivingRequest $request): RedirectResponse
+    {
         try {
-            DB::transaction(function () use ($request, $validated, &$proofPath): void {
-                if ($request->hasFile('proof_image')) {
-                    $proofPath = $request->file('proof_image')->store('receiving_proofs', 'local');
-                }
+            $this->receivingService->create(
+                $request->validated(),
+                $request->file('proof_image'),
+                $request->user()?->id
+            );
 
-                $receiving = Receiving::query()->create([
-                    'receiving_number' => 'PENDING-'.Str::uuid(),
-                    'location_id' => $validated['location_id'],
-                    'delivered_by' => $validated['delivered_by'],
-                    'delivery_date' => $validated['delivery_date'],
-                    'remarks' => $validated['remarks'] ?? null,
-                    'proof_image' => $proofPath,
-                    'received_by' => Auth::id(),
-                ]);
-
-                $receiving->update([
-                    'receiving_number' => $this->generateReceivingNumber($receiving),
-                ]);
-
-                foreach ($validated['product_id'] as $index => $productId) {
-                    $qty = (int) $validated['qty_delivered'][$index];
-
-                    $product = Product::query()
-                        ->whereKey($productId)
-                        ->lockForUpdate()
-                        ->firstOrFail();
-
-                    ReceivingItem::query()->create([
-                        'receiving_id' => $receiving->id,
-                        'product_id' => $product->id,
-                        'qty_delivered' => $qty,
-                        'qty_rolled_back' => 0,
-                    ]);
-
-                    $productStock = $this->stockRowForUpdate(
-                        productId: (int) $product->id,
-                        locationId: (int) $validated['location_id']
-                    );
-
-                    $productStock->increment('qty', $qty);
-
-                    $this->syncProductTotalStock((int) $product->id);
-                }
-            }, 3);
-
-            return redirect()
-                ->route('receivings.index')
-                ->with('success', 'Receiving saved successfully. Stock quantities were updated.');
-        } catch (\Throwable $e) {
-            if ($proofPath && Storage::disk('local')->exists($proofPath)) {
-                Storage::disk('local')->delete($proofPath);
-            }
-
-            return back()
-                ->withInput()
-                ->with('error', $e->getMessage());
+            return redirect()->route('receivings.index')->with('success', 'Receiving saved successfully. Stock quantities were updated.');
+        } catch (Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
         }
     }
 
-    public function show(int $receiving): View
+    public function show(Request $request, int $receiving): View
     {
-        $receiving = Receiving::query()
-            ->with(['receiver', 'items.product', 'location'])
-            ->findOrFail($receiving);
+        $record = Receiving::query()->with(['receiver', 'items.product', 'location'])->findOrFail($receiving);
+        $this->assertLocationAccess($request, (int) $record->location_id);
 
-        $locationId = $this->userLocationId();
-
-        if ($locationId && (int) $receiving->location_id !== (int) $locationId) {
-            abort(403, 'You are not allowed to view this receiving record.');
-        }
-
-        return view('maintenance.receive.show', compact('receiving'));
+        return view('maintenance.receive.show', ['receiving' => $record]);
     }
 
-    public function downloadProof(Receiving $receiving): mixed
+    public function downloadProof(Request $request, Receiving $receiving): mixed
     {
-        $locationId = $this->userLocationId();
-
-        if ($locationId && (int) $receiving->location_id !== (int) $locationId) {
-            abort(403, 'You are not allowed to view this receiving proof.');
-        }
-
+        $this->assertLocationAccess($request, (int) $receiving->location_id);
         $proofPath = (string) $receiving->proof_image;
-        abort_unless($proofPath !== '', 404);
-        abort_unless(Storage::disk('local')->exists($proofPath), 404);
+        abort_unless($proofPath !== '' && Storage::disk('local')->exists($proofPath), 404);
 
-        return Storage::disk('local')->response(
-            $proofPath,
-            basename($receiving->proof_image),
-            ['Content-Disposition' => 'inline']
-        );
+        return Storage::disk('local')->response($proofPath, basename($proofPath), ['Content-Disposition' => 'inline']);
     }
 
     public function searchProducts(Request $request): JsonResponse
     {
-        $search = trim((string) $request->search);
+        $excludeIds = collect(explode(',', (string) $request->input('exclude_ids', '')))
+            ->filter(fn ($id): bool => is_numeric($id))
+            ->map(fn ($id): int => (int) $id)
+            ->unique()->values()->all();
 
-        if ($search === '') {
-            return response()->json([]);
-        }
-
-        $excludeIds = collect(explode(',', (string) $request->exclude_ids))
-            ->filter(fn ($id) => is_numeric($id))
-            ->map(fn ($id) => (int) $id)
-            ->unique()
-            ->values()
-            ->all();
-
-        $products = Product::query()
-            ->with('category')
-            ->where(function (Builder $query) use ($search): void {
-                $query->where('product_name', 'like', "%{$search}%")
-                    ->orWhere('supplier_name', 'like', "%{$search}%")
-                    ->orWhere('unit', 'like', "%{$search}%")
-                    ->orWhere('part_number', 'like', "%{$search}%")
-                    ->orWhere('details', 'like', "%{$search}%");
-            })
-            ->when(! empty($excludeIds), function (Builder $query) use ($excludeIds): void {
-                $query->whereNotIn('id', $excludeIds);
-            })
-            ->orderBy('product_name')
-            ->limit(20)
-            ->get();
-
-        return response()->json(
-            $products->map(function (Product $product): array {
-                return [
-                    'id' => $product->id,
-                    'name' => $product->product_name,
-                    'supplier_name' => $product->supplier_name,
-                    'unit' => $product->unit,
-                    'part_number' => $product->part_number,
-                    'stock' => (int) $product->stock_qty,
-                    'category' => optional($product->category)->name,
-                ];
-            })->values()
-        );
+        return response()->json($this->productCatalogService->searchProducts(
+            (string) $request->input('search', ''),
+            $excludeIds
+        ));
     }
 
-    public function rollbackItem(Request $request, int $receiving, int $item): RedirectResponse
+    public function rollbackItem(RollbackReceivingItemRequest $request, int $receiving, int $item): RedirectResponse
     {
-        abort_unless(
-            $request->user()->can('receivings.rollback'),
-            403,
-            'You are not authorized to rollback receiving items.'
-        );
-
-        $validated = $request->validate([
-            'rollback_qty' => ['required', 'integer', 'min:1'],
-        ]);
-
-        $productName = 'Selected product';
-        $rollbackQty = (int) $validated['rollback_qty'];
+        $qty = (int) $request->validated('rollback_qty');
 
         try {
-            DB::transaction(function () use ($validated, $receiving, $item, &$productName, &$rollbackQty): void {
-                $receivingRecord = Receiving::query()
-                    ->with('location')
-                    ->whereKey($receiving)
-                    ->lockForUpdate()
-                    ->firstOrFail();
+            $productName = $this->receivingService->rollbackItem($receiving, $item, $qty, $this->userLocationId($request));
 
-                $locationId = $this->userLocationId();
-
-                if ($locationId && (int) $receivingRecord->location_id !== (int) $locationId) {
-                    throw new \RuntimeException('You are not allowed to rollback this receiving record.');
-                }
-
-                $receivingItem = ReceivingItem::query()
-                    ->with('product')
-                    ->where('receiving_id', $receivingRecord->id)
-                    ->whereKey($item)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                if (! $receivingItem->product) {
-                    throw new \RuntimeException('The selected product no longer exists.');
-                }
-
-                $productName = $receivingItem->product->product_name ?? 'Selected product';
-                $rollbackQty = (int) $validated['rollback_qty'];
-
-                $alreadyRolledBack = (int) ($receivingItem->qty_rolled_back ?? 0);
-                $deliveredQty = (int) $receivingItem->qty_delivered;
-                $remainingQty = $deliveredQty - $alreadyRolledBack;
-
-                if ($remainingQty <= 0) {
-                    throw new \RuntimeException("{$productName} is already fully rolled back.");
-                }
-
-                if ($rollbackQty > $remainingQty) {
-                    throw new \RuntimeException(
-                        "Rollback quantity exceeds remaining quantity for {$productName}. Remaining quantity: {$remainingQty}."
-                    );
-                }
-
-                $productStock = ProductStock::query()
-                    ->where('product_id', $receivingItem->product_id)
-                    ->where('location_id', $receivingRecord->location_id)
-                    ->lockForUpdate()
-                    ->first();
-
-                if (! $productStock) {
-                    throw new \RuntimeException(
-                        "No stock record found for {$productName} in {$receivingRecord->location->name}."
-                    );
-                }
-
-                if ((int) $productStock->qty < $rollbackQty) {
-                    throw new \RuntimeException(
-                        "Current stock is lower than rollback quantity for {$productName}. Available stock: {$productStock->qty}."
-                    );
-                }
-
-                $productStock->decrement('qty', $rollbackQty);
-
-                $receivingItem->update([
-                    'qty_rolled_back' => $alreadyRolledBack + $rollbackQty,
-                    'last_rolled_back_at' => now(),
-                ]);
-
-                $this->syncProductTotalStock((int) $receivingItem->product_id);
-            }, 3);
-        } catch (\Throwable $e) {
-            return redirect()
-                ->route('receivings.show', $receiving)
-                ->with('error', $e->getMessage());
+            return redirect()->route('receivings.show', $receiving)->with('success', "{$productName} rollback completed. Quantity rolled back: {$qty}.");
+        } catch (Throwable $e) {
+            return redirect()->route('receivings.show', $receiving)->with('error', $e->getMessage());
         }
-
-        return redirect()
-            ->route('receivings.show', $receiving)
-            ->with('success', "{$productName} rollback completed. Quantity rolled back: {$rollbackQty}.");
     }
 
-    private function stockRowForUpdate(int $productId, int $locationId): ProductStock
+    private function userLocationId(Request $request): ?int
     {
-        $productStock = ProductStock::query()
-            ->where('product_id', $productId)
-            ->where('location_id', $locationId)
-            ->lockForUpdate()
-            ->first();
-
-        if ($productStock) {
-            return $productStock;
-        }
-
-        return ProductStock::query()->create([
-            'product_id' => $productId,
-            'location_id' => $locationId,
-            'qty' => 0,
-        ]);
-    }
-
-    private function syncProductTotalStock(int $productId): void
-    {
-        $totalStock = ProductStock::query()
-            ->where('product_id', $productId)
-            ->sum('qty');
-
-        Product::query()
-            ->whereKey($productId)
-            ->update([
-                'stock_qty' => $totalStock,
-            ]);
-    }
-
-    private function generateReceivingNumber(Receiving $receiving): string
-    {
-        return 'RCV-'.now()->format('Y').'-'.str_pad((string) $receiving->id, 5, '0', STR_PAD_LEFT);
-    }
-
-    private function userLocationId(): ?int
-    {
-        $locationId = Auth::user()->location_id ?? null;
+        $locationId = $request->user()?->location_id;
 
         return $locationId ? (int) $locationId : null;
     }
 
-    private function restrictLocation(Builder $query): Builder
+    private function assertLocationAccess(Request $request, int $locationId): void
     {
-        $locationId = $this->userLocationId();
-
-        if ($locationId) {
-            $query->where('location_id', $locationId);
+        $userLocationId = $this->userLocationId($request);
+        if ($userLocationId && $userLocationId !== $locationId) {
+            abort(403, 'You are not allowed to access this receiving record.');
         }
-
-        return $query;
     }
 }

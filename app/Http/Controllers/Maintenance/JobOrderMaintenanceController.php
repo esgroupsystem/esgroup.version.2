@@ -12,6 +12,7 @@ use App\Http\Requests\Maintenance\UpdateJobOrderMaintenanceNumberRequest;
 use App\Http\Requests\Maintenance\UpdateJobOrderMaintenanceStatusRequest;
 use App\Models\Bus;
 use App\Models\JobOrderMaintenance;
+use App\Services\Maintenance\JobOrderMaintenanceDirectoryService;
 use App\Services\Maintenance\JobOrderMaintenanceService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,13 +23,18 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
-class JobOrderMaintenanceController extends Controller
+final class JobOrderMaintenanceController extends Controller
 {
+    public function __construct(
+        private readonly JobOrderMaintenanceDirectoryService $directoryService,
+        private readonly JobOrderMaintenanceService $jobOrderMaintenanceService,
+    ) {}
+
     public function index(Request $request): View
     {
-        $filters = $this->resolveFilters($request);
+        $filters = $this->directoryService->filters($request);
 
-        $jobOrders = $this->applyIndexFilters(
+        $jobOrders = $this->directoryService->apply(
             query: JobOrderMaintenance::query()->with(['bus', 'creator', 'statusPeriods']),
             filters: $filters,
             includeStatus: true
@@ -42,7 +48,7 @@ class JobOrderMaintenanceController extends Controller
             ->orderBy('bus_no')
             ->get();
 
-        $groupedStatusCounts = $this->applyIndexFilters(
+        $groupedStatusCounts = $this->directoryService->apply(
             query: JobOrderMaintenance::query(),
             filters: $filters,
             includeStatus: false
@@ -74,7 +80,7 @@ class JobOrderMaintenanceController extends Controller
 
     public function export(Request $request): StreamedResponse|Response
     {
-        $filters = $this->resolveFilters($request);
+        $filters = $this->directoryService->filters($request);
 
         $exportType = strtolower($request->string('export_type')->toString());
 
@@ -82,7 +88,7 @@ class JobOrderMaintenanceController extends Controller
             $exportType = 'csv';
         }
 
-        $query = $this->applyIndexFilters(
+        $query = $this->directoryService->apply(
             query: JobOrderMaintenance::query()->with(['bus', 'creator', 'statusPeriods']),
             filters: $filters,
             includeStatus: true
@@ -121,10 +127,9 @@ class JobOrderMaintenanceController extends Controller
 
     public function store(
         StoreJobOrderMaintenanceRequest $request,
-        JobOrderMaintenanceService $jobOrderMaintenanceService
     ): RedirectResponse {
         try {
-            $jobOrderMaintenance = $jobOrderMaintenanceService->create(
+            $jobOrderMaintenance = $this->jobOrderMaintenanceService->create(
                 data: $request->validated(),
                 userId: $request->user()?->id
             );
@@ -179,12 +184,11 @@ class JobOrderMaintenanceController extends Controller
     public function updateStatus(
         UpdateJobOrderMaintenanceStatusRequest $request,
         JobOrderMaintenance $jobOrderMaintenance,
-        JobOrderMaintenanceService $jobOrderMaintenanceService
     ): RedirectResponse {
         try {
             $validated = $request->validated();
 
-            $jobOrderMaintenanceService->updateStatus(
+            $this->jobOrderMaintenanceService->updateStatus(
                 jobOrderMaintenance: $jobOrderMaintenance,
                 status: JobOrderStatus::from($validated['status']),
                 userId: $request->user()?->id,
@@ -223,12 +227,11 @@ class JobOrderMaintenanceController extends Controller
     public function updateNumber(
         UpdateJobOrderMaintenanceNumberRequest $request,
         JobOrderMaintenance $jobOrderMaintenance,
-        JobOrderMaintenanceService $jobOrderMaintenanceService
     ): RedirectResponse {
         try {
             $validated = $request->validated();
 
-            $jobOrderMaintenanceService->updateJobOrderNumber(
+            $this->jobOrderMaintenanceService->updateJobOrderNumber(
                 jobOrderMaintenance: $jobOrderMaintenance,
                 jobOrderNo: $validated['job_order_no'],
                 userId: $request->user()?->id,
@@ -250,60 +253,6 @@ class JobOrderMaintenanceController extends Controller
             return back()
                 ->withInput()
                 ->with('error', 'Failed to update job order number. Please try again.');
-        }
-    }
-
-    private function resolveFilters(Request $request): array
-    {
-        return [
-            'search' => $request->string('search')->toString(),
-            'status' => $request->string('status')->toString(),
-            'bus_id' => $request->integer('bus_id') ?: null,
-            'date_filter' => $request->string('date_filter')->toString(),
-            'filter_date' => $request->string('filter_date')->toString(),
-            'filter_month' => $request->string('filter_month')->toString(),
-            'filter_year' => $request->string('filter_year')->toString(),
-        ];
-    }
-
-    /** @param Builder<JobOrderMaintenance> $query */
-    /** @param Builder<JobOrderMaintenance> $query */
-    private function applyIndexFilters(Builder $query, array $filters, bool $includeStatus = true): Builder
-    {
-        return $query
-            ->search($filters['search'])
-            ->when($includeStatus && filled($filters['status']), function (Builder $query) use ($filters) {
-                $query->where('status', $filters['status']);
-            })
-            ->when(filled($filters['bus_id']), function (Builder $query) use ($filters) {
-                $query->where('bus_id', $filters['bus_id']);
-            })
-            ->tap(function (Builder $query) use ($filters) {
-                $this->applyDateFilter($query, $filters);
-            });
-    }
-
-    private function applyDateFilter(Builder $query, array $filters): void
-    {
-        if ($filters['date_filter'] === 'day' && filled($filters['filter_date'])) {
-            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $filters['filter_date'])) {
-                $query->whereDate('created_at', $filters['filter_date']);
-            }
-        }
-
-        if ($filters['date_filter'] === 'month' && filled($filters['filter_month'])) {
-            if (preg_match('/^\d{4}-\d{2}$/', $filters['filter_month'])) {
-                [$year, $month] = explode('-', $filters['filter_month']);
-
-                $query->whereYear('created_at', $year)
-                    ->whereMonth('created_at', $month);
-            }
-        }
-
-        if ($filters['date_filter'] === 'year' && filled($filters['filter_year'])) {
-            if (preg_match('/^\d{4}$/', $filters['filter_year'])) {
-                $query->whereYear('created_at', $filters['filter_year']);
-            }
         }
     }
 

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * @property string|null $product_id
+ * @property string|null $location_id
  * @property string|null $reference_type
  * @property string|null $reference_id
  * @property string|null $movement_type
@@ -23,6 +24,7 @@ class StockMovement extends Model
 {
     protected $fillable = [
         'product_id',
+        'location_id',
         'reference_type',
         'reference_id',
         'movement_type',
@@ -38,5 +40,11 @@ class StockMovement extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /** @return BelongsTo<Location, $this> */
+    public function location(): BelongsTo
+    {
+        return $this->belongsTo(Location::class);
     }
 }

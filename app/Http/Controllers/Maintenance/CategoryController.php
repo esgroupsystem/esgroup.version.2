@@ -5,59 +5,45 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Maintenance\StoreCategoryRequest;
+use App\Http\Requests\Maintenance\UpdateCategoryRequest;
 use App\Models\Category;
-use Illuminate\Http\Request;
+use App\Services\Maintenance\CategoryService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\View\View;
 
-class CategoryController extends Controller
+final class CategoryController extends Controller
 {
-    // LIST VIEW
-    public function index()
-    {
-        $categories = Category::orderBy('name')->get();
+    public function __construct(private readonly CategoryService $categoryService) {}
 
-        return view('maintenance.category.index', compact('categories'));
+    public function index(): View
+    {
+        return view('maintenance.category.index', [
+            'categories' => Category::query()->orderBy('name')->get(),
+        ]);
     }
 
-    // SAVE CATEGORY
-    public function store(Request $request)
+    public function store(StoreCategoryRequest $request): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'unique:categories,name'],
-        ]);
-
-        Category::create([
-            'name' => $request->name,
-        ]);
-
+        $this->categoryService->create($request->validated('name'));
         flash('Category added successfully!')->success();
 
-        return redirect()->back();
+        return back();
     }
 
-    // UPDATE CATEGORY
-    public function update(Request $request, $id)
+    public function update(UpdateCategoryRequest $request, int $id): RedirectResponse
     {
-        $request->validate([
-            'name' => ['required', 'unique:categories,name,'.$id],
-        ]);
-
-        $category = Category::findOrFail($id);
-        $category->update([
-            'name' => $request->name,
-        ]);
-
+        $this->categoryService->update(Category::query()->findOrFail($id), $request->validated('name'));
         flash('Category updated successfully!')->success();
 
-        return redirect()->back();
+        return back();
     }
 
-    // DELETE CATEGORY
-    public function destroy($id)
+    public function destroy(int $id): RedirectResponse
     {
-        Category::findOrFail($id)->delete();
-
+        $this->categoryService->delete(Category::query()->findOrFail($id));
         flash('Category deleted successfully!')->success();
 
-        return redirect()->back();
+        return back();
     }
 }

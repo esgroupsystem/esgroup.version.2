@@ -12,6 +12,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Services\\Maintenance',
          'uses' => 
         array (
+          'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
           'product' => 'App\\Models\\Product',
           'productstock' => 'App\\Models\\ProductStock',
           'stocktransfer' => 'App\\Models\\StockTransfer',
@@ -40,6 +41,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
          'namespace' => 'App\\Services\\Maintenance',
          'uses' => 
         array (
+          'inventorytransactionstatus' => 'App\\Enums\\InventoryTransactionStatus',
           'product' => 'App\\Models\\Product',
           'productstock' => 'App\\Models\\ProductStock',
           'stocktransfer' => 'App\\Models\\StockTransfer',
@@ -66,7 +68,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     1 => 
     array (
-      '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/StockTransferRollbackService.php' => 'f07837eb3087aa02437de1b52810ff174a4704b49e1d120adf84beafceb2cdd4',
+      '/home/lenberd/Documents/esgroup.version.2/app/Services/Maintenance/StockTransferRollbackService.php' => '89b42a7583311cdfabfa93afe158a511161d842f87cb971efb2794f4ff2e7b5f',
     ),
   ),
 ));

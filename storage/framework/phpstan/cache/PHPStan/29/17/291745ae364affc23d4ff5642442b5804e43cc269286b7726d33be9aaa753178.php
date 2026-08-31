@@ -2,7 +2,7 @@
 
 // odsl-/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/Maintenance/ItemsController.php-PHPStan\BetterReflection\Reflection\ReflectionClass-App\Http\Controllers\Maintenance\ItemsController
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-8.3.6-597a44f9b2ef510093f73bbd1d778289879ec7c097b9d953d5a353fc526ed4a0',
+   'variableKey' => 'v2-6.70.0.3-8.3.6-e75c43b924443863e291b14f476c8acdaff648bee2ee4f4d5e0d18f2bc7fe263',
    'data' => 
   array (
     'locatedSource' => 
@@ -21,13 +21,13 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     'isTrait' => false,
     'isEnum' => false,
     'isBackedEnum' => false,
-    'modifiers' => 0,
+    'modifiers' => 32,
     'docComment' => NULL,
     'attributes' => 
     array (
     ),
-    'startLine' => 18,
-    'endLine' => 409,
+    'startLine' => 17,
+    'endLine' => 95,
     'startColumn' => 1,
     'endColumn' => 1,
     'parentClassName' => 'App\\Http\\Controllers\\Controller',
@@ -42,9 +42,93 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     'immediateProperties' => 
     array (
+      'productCatalogService' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\Maintenance\\ItemsController',
+        'implementingClassName' => 'App\\Http\\Controllers\\Maintenance\\ItemsController',
+        'name' => 'productCatalogService',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\Maintenance\\ProductCatalogService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 19,
+        'endLine' => 19,
+        'startColumn' => 33,
+        'endColumn' => 93,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
     ),
     'immediateMethods' => 
     array (
+      '__construct' => 
+      array (
+        'name' => '__construct',
+        'parameters' => 
+        array (
+          'productCatalogService' => 
+          array (
+            'name' => 'productCatalogService',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\Maintenance\\ProductCatalogService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 19,
+            'endLine' => 19,
+            'startColumn' => 33,
+            'endColumn' => 93,
+            'parameterIndex' => 0,
+            'isOptional' => false,
+          ),
+        ),
+        'returnsReference' => false,
+        'returnType' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'docComment' => NULL,
+        'startLine' => 19,
+        'endLine' => 19,
+        'startColumn' => 5,
+        'endColumn' => 97,
+        'couldThrow' => false,
+        'isClosure' => false,
+        'isGenerator' => false,
+        'isVariadic' => false,
+        'modifiers' => 1,
+        'namespace' => 'App\\Http\\Controllers\\Maintenance',
+        'declaringClassName' => 'App\\Http\\Controllers\\Maintenance\\ItemsController',
+        'implementingClassName' => 'App\\Http\\Controllers\\Maintenance\\ItemsController',
+        'currentClassName' => 'App\\Http\\Controllers\\Maintenance\\ItemsController',
+        'aliasName' => NULL,
+      ),
       'index' => 
       array (
         'name' => 'index',
@@ -69,8 +153,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 20,
-            'endLine' => 20,
+            'startLine' => 21,
+            'endLine' => 21,
             'startColumn' => 27,
             'endColumn' => 42,
             'parameterIndex' => 0,
@@ -78,13 +162,49 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionUnionType',
+          'data' => 
+          array (
+            'types' => 
+            array (
+              0 => 
+              array (
+                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+                'data' => 
+                array (
+                  'name' => 'Illuminate\\View\\View',
+                  'isIdentifier' => false,
+                ),
+              ),
+              1 => 
+              array (
+                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+                'data' => 
+                array (
+                  'name' => 'string',
+                  'isIdentifier' => true,
+                ),
+              ),
+              2 => 
+              array (
+                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+                'data' => 
+                array (
+                  'name' => 'Illuminate\\Http\\Response',
+                  'isIdentifier' => false,
+                ),
+              ),
+            ),
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 20,
-        'endLine' => 105,
+        'startLine' => 21,
+        'endLine' => 39,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -122,8 +242,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 107,
-            'endLine' => 107,
+            'startLine' => 41,
+            'endLine' => 41,
             'startColumn' => 31,
             'endColumn' => 46,
             'parameterIndex' => 0,
@@ -131,13 +251,40 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionUnionType',
+          'data' => 
+          array (
+            'types' => 
+            array (
+              0 => 
+              array (
+                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+                'data' => 
+                array (
+                  'name' => 'Illuminate\\View\\View',
+                  'isIdentifier' => false,
+                ),
+              ),
+              1 => 
+              array (
+                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+                'data' => 
+                array (
+                  'name' => 'Illuminate\\Http\\RedirectResponse',
+                  'isIdentifier' => false,
+                ),
+              ),
+            ),
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 107,
-        'endLine' => 277,
+        'startLine' => 41,
+        'endLine' => 66,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -165,7 +312,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\Maintenance\\ProductRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -175,22 +322,30 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 279,
-            'endLine' => 279,
+            'startLine' => 68,
+            'endLine' => 68,
             'startColumn' => 27,
-            'endColumn' => 42,
+            'endColumn' => 49,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 279,
-        'endLine' => 327,
+        'startLine' => 68,
+        'endLine' => 74,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -218,7 +373,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\Maintenance\\ProductRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -228,10 +383,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 329,
-            'endLine' => 329,
+            'startLine' => 76,
+            'endLine' => 76,
             'startColumn' => 28,
-            'endColumn' => 43,
+            'endColumn' => 50,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -239,29 +394,45 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'id',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 329,
-            'endLine' => 329,
-            'startColumn' => 46,
-            'endColumn' => 48,
+            'startLine' => 76,
+            'endLine' => 76,
+            'startColumn' => 53,
+            'endColumn' => 59,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 329,
-        'endLine' => 390,
+        'startLine' => 76,
+        'endLine' => 82,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -280,33 +451,94 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         'name' => 'destroy',
         'parameters' => 
         array (
-          'id' => 
+          'request' => 
           array (
-            'name' => 'id',
+            'name' => 'request',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'Illuminate\\Http\\Request',
+                'isIdentifier' => false,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 392,
-            'endLine' => 392,
+            'startLine' => 84,
+            'endLine' => 84,
             'startColumn' => 29,
-            'endColumn' => 31,
+            'endColumn' => 44,
             'parameterIndex' => 0,
+            'isOptional' => false,
+          ),
+          'id' => 
+          array (
+            'name' => 'id',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => false,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 84,
+            'endLine' => 84,
+            'startColumn' => 47,
+            'endColumn' => 53,
+            'parameterIndex' => 1,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionUnionType',
+          'data' => 
+          array (
+            'types' => 
+            array (
+              0 => 
+              array (
+                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+                'data' => 
+                array (
+                  'name' => 'Illuminate\\Http\\RedirectResponse',
+                  'isIdentifier' => false,
+                ),
+              ),
+              1 => 
+              array (
+                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+                'data' => 
+                array (
+                  'name' => 'Illuminate\\Http\\JsonResponse',
+                  'isIdentifier' => false,
+                ),
+              ),
+            ),
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 392,
-        'endLine' => 408,
+        'startLine' => 84,
+        'endLine' => 94,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,

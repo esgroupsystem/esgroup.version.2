@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Maintenance;
 
+use App\Enums\InventoryTransactionStatus;
 use App\Models\Product;
 use App\Models\ProductStock;
 use App\Models\StockTransfer;
@@ -27,7 +28,7 @@ final class StockTransferRollbackService
                 'items.product',
             ]);
 
-            if ((string) $transfer->getRawOriginal('status') === 'rolled_back' || $transfer->rolled_back_at) {
+            if ((string) $transfer->getRawOriginal('status') === InventoryTransactionStatus::RolledBack->value || $transfer->rolled_back_at) {
                 throw new Exception('This stock transfer has already been rolled back.');
             }
 
@@ -82,7 +83,7 @@ final class StockTransferRollbackService
                 $fromStock->increment('qty', $qty);
 
                 $item->update([
-                    'status' => 'rolled_back',
+                    'status' => InventoryTransactionStatus::RolledBack->value,
                     'rolled_back_at' => now(),
                     'rolled_back_by' => $userId,
                 ]);
@@ -93,7 +94,7 @@ final class StockTransferRollbackService
             }
 
             $transfer->update([
-                'status' => 'rolled_back',
+                'status' => InventoryTransactionStatus::RolledBack->value,
                 'rolled_back_at' => now(),
                 'rolled_back_by' => $userId,
                 'rollback_reason' => $reason,

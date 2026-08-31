@@ -2,7 +2,7 @@
 
 // odsl-/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/Maintenance/StockTransferController.php-PHPStan\BetterReflection\Reflection\ReflectionClass-App\Http\Controllers\Maintenance\StockTransferController
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-8.3.6-01eb1e64fb8b9c1a4c012f59e4967b783c7cf2c341af563210a61c7e66af1077',
+   'variableKey' => 'v2-6.70.0.3-8.3.6-0b2d0152273ee4eb25e0b1158810f16fbbb4b90158e47b2799c7f63b1fcd2ce3',
    'data' => 
   array (
     'locatedSource' => 
@@ -21,13 +21,13 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     'isTrait' => false,
     'isEnum' => false,
     'isBackedEnum' => false,
-    'modifiers' => 0,
+    'modifiers' => 32,
     'docComment' => NULL,
     'attributes' => 
     array (
     ),
     'startLine' => 22,
-    'endLine' => 420,
+    'endLine' => 102,
     'startColumn' => 1,
     'endColumn' => 1,
     'parentClassName' => 'App\\Http\\Controllers\\Controller',
@@ -42,9 +42,264 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     'immediateProperties' => 
     array (
+      'directoryService' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        'implementingClassName' => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        'name' => 'directoryService',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\Maintenance\\InventoryDirectoryService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 25,
+        'endLine' => 25,
+        'startColumn' => 9,
+        'endColumn' => 68,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
+      'productCatalogService' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        'implementingClassName' => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        'name' => 'productCatalogService',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\Maintenance\\ProductCatalogService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 26,
+        'endLine' => 26,
+        'startColumn' => 9,
+        'endColumn' => 69,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
+      'creationService' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        'implementingClassName' => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        'name' => 'creationService',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\Maintenance\\StockTransferCreationService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 27,
+        'endLine' => 27,
+        'startColumn' => 9,
+        'endColumn' => 70,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
+      'rollbackService' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        'implementingClassName' => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        'name' => 'rollbackService',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\Maintenance\\StockTransferRollbackService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 28,
+        'endLine' => 28,
+        'startColumn' => 9,
+        'endColumn' => 70,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
     ),
     'immediateMethods' => 
     array (
+      '__construct' => 
+      array (
+        'name' => '__construct',
+        'parameters' => 
+        array (
+          'directoryService' => 
+          array (
+            'name' => 'directoryService',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\Maintenance\\InventoryDirectoryService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 25,
+            'endLine' => 25,
+            'startColumn' => 9,
+            'endColumn' => 68,
+            'parameterIndex' => 0,
+            'isOptional' => false,
+          ),
+          'productCatalogService' => 
+          array (
+            'name' => 'productCatalogService',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\Maintenance\\ProductCatalogService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 26,
+            'endLine' => 26,
+            'startColumn' => 9,
+            'endColumn' => 69,
+            'parameterIndex' => 1,
+            'isOptional' => false,
+          ),
+          'creationService' => 
+          array (
+            'name' => 'creationService',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\Maintenance\\StockTransferCreationService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 27,
+            'endLine' => 27,
+            'startColumn' => 9,
+            'endColumn' => 70,
+            'parameterIndex' => 2,
+            'isOptional' => false,
+          ),
+          'rollbackService' => 
+          array (
+            'name' => 'rollbackService',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\Maintenance\\StockTransferRollbackService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 28,
+            'endLine' => 28,
+            'startColumn' => 9,
+            'endColumn' => 70,
+            'parameterIndex' => 3,
+            'isOptional' => false,
+          ),
+        ),
+        'returnsReference' => false,
+        'returnType' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'docComment' => NULL,
+        'startLine' => 24,
+        'endLine' => 29,
+        'startColumn' => 5,
+        'endColumn' => 8,
+        'couldThrow' => false,
+        'isClosure' => false,
+        'isGenerator' => false,
+        'isVariadic' => false,
+        'modifiers' => 1,
+        'namespace' => 'App\\Http\\Controllers\\Maintenance',
+        'declaringClassName' => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        'implementingClassName' => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        'currentClassName' => 'App\\Http\\Controllers\\Maintenance\\StockTransferController',
+        'aliasName' => NULL,
+      ),
       'index' => 
       array (
         'name' => 'index',
@@ -69,8 +324,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 24,
-            'endLine' => 24,
+            'startLine' => 31,
+            'endLine' => 31,
             'startColumn' => 27,
             'endColumn' => 42,
             'parameterIndex' => 0,
@@ -78,13 +333,40 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionUnionType',
+          'data' => 
+          array (
+            'types' => 
+            array (
+              0 => 
+              array (
+                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+                'data' => 
+                array (
+                  'name' => 'Illuminate\\View\\View',
+                  'isIdentifier' => false,
+                ),
+              ),
+              1 => 
+              array (
+                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+                'data' => 
+                array (
+                  'name' => 'Illuminate\\Http\\JsonResponse',
+                  'isIdentifier' => false,
+                ),
+              ),
+            ),
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 24,
-        'endLine' => 70,
+        'startLine' => 31,
+        'endLine' => 44,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -105,13 +387,21 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\View\\View',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 72,
-        'endLine' => 91,
+        'startLine' => 46,
+        'endLine' => 51,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -139,7 +429,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\Maintenance\\StoreStockTransferRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -149,25 +439,33 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 93,
-            'endLine' => 93,
+            'startLine' => 53,
+            'endLine' => 53,
             'startColumn' => 27,
-            'endColumn' => 42,
+            'endColumn' => 60,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 93,
-        'endLine' => 273,
+        'startLine' => 53,
+        'endLine' => 62,
         'startColumn' => 5,
         'endColumn' => 5,
-        'couldThrow' => true,
+        'couldThrow' => false,
         'isClosure' => false,
         'isGenerator' => false,
         'isVariadic' => false,
@@ -202,8 +500,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 275,
-            'endLine' => 275,
+            'startLine' => 64,
+            'endLine' => 64,
             'startColumn' => 26,
             'endColumn' => 54,
             'parameterIndex' => 0,
@@ -211,13 +509,21 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\View\\View',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 275,
-        'endLine' => 302,
+        'startLine' => 64,
+        'endLine' => 69,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -255,8 +561,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 304,
-            'endLine' => 304,
+            'startLine' => 71,
+            'endLine' => 71,
             'startColumn' => 36,
             'endColumn' => 51,
             'parameterIndex' => 0,
@@ -264,13 +570,21 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\JsonResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 304,
-        'endLine' => 386,
+        'startLine' => 71,
+        'endLine' => 88,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -298,7 +612,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\Maintenance\\RollbackInventoryRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -308,10 +622,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 389,
-            'endLine' => 389,
-            'startColumn' => 9,
-            'endColumn' => 24,
+            'startLine' => 90,
+            'endLine' => 90,
+            'startColumn' => 30,
+            'endColumn' => 62,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -334,48 +648,30 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 390,
-            'endLine' => 390,
-            'startColumn' => 9,
-            'endColumn' => 37,
+            'startLine' => 90,
+            'endLine' => 90,
+            'startColumn' => 65,
+            'endColumn' => 93,
             'parameterIndex' => 1,
-            'isOptional' => false,
-          ),
-          'rollbackService' => 
-          array (
-            'name' => 'rollbackService',
-            'default' => NULL,
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-              'data' => 
-              array (
-                'name' => 'App\\Services\\Maintenance\\StockTransferRollbackService',
-                'isIdentifier' => false,
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 391,
-            'endLine' => 391,
-            'startColumn' => 9,
-            'endColumn' => 53,
-            'parameterIndex' => 2,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 388,
-        'endLine' => 419,
+        'startLine' => 90,
+        'endLine' => 101,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,

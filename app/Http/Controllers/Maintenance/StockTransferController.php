@@ -5,416 +5,98 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Maintenance;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Maintenance\RollbackInventoryRequest;
+use App\Http\Requests\Maintenance\StoreStockTransferRequest;
 use App\Models\Location;
-use App\Models\Product;
-use App\Models\ProductStock;
 use App\Models\StockTransfer;
-use App\Models\StockTransferItem;
+use App\Services\Maintenance\InventoryDirectoryService;
+use App\Services\Maintenance\ProductCatalogService;
+use App\Services\Maintenance\StockTransferCreationService;
 use App\Services\Maintenance\StockTransferRollbackService;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Database\QueryException;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 use Throwable;
 
-class StockTransferController extends Controller
+final class StockTransferController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        private readonly InventoryDirectoryService $directoryService,
+        private readonly ProductCatalogService $productCatalogService,
+        private readonly StockTransferCreationService $creationService,
+        private readonly StockTransferRollbackService $rollbackService,
+    ) {}
+
+    public function index(Request $request): View|JsonResponse
     {
-        try {
-            $search = trim((string) $request->input('search', ''));
+        $search = trim((string) $request->input('search', ''));
+        $transfers = $this->directoryService->stockTransfers($search);
 
-            $transfers = StockTransfer::with(['fromLocation', 'toLocation', 'creator'])
-                ->when($search, function ($query) use ($search) {
-                    $query->where(function ($q) use ($search) {
-                        $q->where('transfer_number', 'like', "%{$search}%")
-                            ->orWhere('requested_by', 'like', "%{$search}%")
-                            ->orWhere('received_by', 'like', "%{$search}%")
-                            ->orWhere('remarks', 'like', "%{$search}%");
-                    });
-                })
-                ->latest()
-                ->paginate(10)
-                ->withQueryString();
-
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'html' => view('maintenance.stock_transfers.table', compact('transfers'))->render(),
-                ]);
-            }
-
-            return view('maintenance.stock_transfers.index', compact('transfers', 'search'));
-        } catch (Throwable $e) {
-            Log::error('StockTransferController@index failed', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'request_fields' => array_keys($request->all()),
-            ]);
-
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to load stock transfers.',
-                    'error' => $e->getMessage(),
-                ], 500);
-            }
-
-            flash('Failed to load stock transfers. Please check the logs.')->error();
-
-            return back();
-        }
-    }
-
-    public function create()
-    {
-        try {
-            $locations = Location::where('is_active', true)
-                ->orderBy('name')
-                ->get();
-
-            return view('maintenance.stock_transfers.create', compact('locations'));
-        } catch (Throwable $e) {
-            Log::error('StockTransferController@create failed', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-
-            flash('Failed to load stock transfer form.')->error();
-
-            return back();
-        }
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'from_location_id' => ['required', 'integer', 'exists:locations,id'],
-            'to_location_id' => ['required', 'integer', 'exists:locations,id', 'different:from_location_id'],
-            'transfer_date' => ['required', 'date'],
-            'requested_by' => ['nullable', 'string', 'max:255'],
-            'received_by' => ['nullable', 'string', 'max:255'],
-            'remarks' => ['nullable', 'string'],
-
-            'product_id' => ['required', 'array', 'min:1'],
-            'product_id.*' => ['required', 'integer', 'exists:products,id', 'distinct'],
-
-            'qty' => ['required', 'array', 'min:1'],
-            'qty.*' => ['required', 'integer', 'min:1'],
-        ], [
-            'from_location_id.required' => 'From location is required.',
-            'from_location_id.exists' => 'Selected source location does not exist.',
-            'to_location_id.required' => 'To location is required.',
-            'to_location_id.exists' => 'Selected destination location does not exist.',
-            'to_location_id.different' => 'From location and To location must be different.',
-            'transfer_date.required' => 'Transfer date is required.',
-            'transfer_date.date' => 'Transfer date must be a valid date.',
-            'product_id.required' => 'At least one product is required.',
-            'product_id.array' => 'Product list format is invalid.',
-            'product_id.min' => 'Please add at least one product.',
-            'product_id.*.exists' => 'One of the selected products does not exist.',
-            'product_id.*.distinct' => 'Duplicate products are not allowed in the same transfer.',
-            'qty.required' => 'Quantity is required.',
-            'qty.array' => 'Quantity list format is invalid.',
-            'qty.min' => 'Please provide quantity for at least one product.',
-            'qty.*.integer' => 'Each quantity must be a whole number.',
-            'qty.*.min' => 'Each quantity must be at least 1.',
-        ]);
-
-        if (count($validated['product_id']) !== count($validated['qty'])) {
-            return back()
-                ->withInput()
-                ->with('error', 'Product count and quantity count do not match.');
-        }
-
-        DB::beginTransaction();
-
-        try {
-            $fromLocation = Location::where('id', $validated['from_location_id'])
-                ->where('is_active', true)
-                ->first();
-
-            $toLocation = Location::where('id', $validated['to_location_id'])
-                ->where('is_active', true)
-                ->first();
-
-            if (! $fromLocation) {
-                throw new \Exception('Source location is inactive or not found.');
-            }
-
-            if (! $toLocation) {
-                throw new \Exception('Destination location is inactive or not found.');
-            }
-
-            $transfer = StockTransfer::create([
-                'transfer_number' => 'TEMP',
-                'from_location_id' => $validated['from_location_id'],
-                'to_location_id' => $validated['to_location_id'],
-                'transfer_date' => $validated['transfer_date'],
-                'requested_by' => $validated['requested_by'] ?? null,
-                'received_by' => $validated['received_by'] ?? null,
-                'remarks' => $validated['remarks'] ?? null,
-                'status' => 'completed',
-                'created_by' => Auth::id(),
-            ]);
-
-            $transferNumber = 'ST-'.now()->format('Y').'-'.str_pad((string) $transfer->id, 5, '0', STR_PAD_LEFT);
-
-            $transfer->update([
-                'transfer_number' => $transferNumber,
-            ]);
-
-            foreach ($validated['product_id'] as $index => $productId) {
-                $rowNumber = $index + 1;
-                $qty = (int) ($validated['qty'][$index] ?? 0);
-
-                if ($qty <= 0) {
-                    throw new \Exception("Quantity must be greater than zero on row {$rowNumber}.");
-                }
-
-                $product = Product::lockForUpdate()->find($productId);
-
-                if (! $product) {
-                    throw new ModelNotFoundException("Product not found on row {$rowNumber}.");
-                }
-
-                $fromStock = ProductStock::lockForUpdate()->firstOrCreate(
-                    [
-                        'product_id' => $productId,
-                        'location_id' => $validated['from_location_id'],
-                    ],
-                    [
-                        'qty' => 0,
-                    ]
-                );
-
-                if ((int) $fromStock->qty < $qty) {
-                    throw new \Exception(
-                        "Insufficient stock for product: {$product->product_name} on row {$rowNumber}. ".
-                        "Available in {$fromLocation->name}: {$fromStock->qty}, Requested: {$qty}."
-                    );
-                }
-
-                $toStock = ProductStock::lockForUpdate()->firstOrCreate(
-                    [
-                        'product_id' => $productId,
-                        'location_id' => $validated['to_location_id'],
-                    ],
-                    [
-                        'qty' => 0,
-                    ]
-                );
-
-                $fromStock->decrement('qty', $qty);
-                $toStock->increment('qty', $qty);
-
-                StockTransferItem::create([
-                    'stock_transfer_id' => $transfer->id,
-                    'product_id' => $productId,
-                    'qty' => $qty,
-                    'status' => 'completed',
-                ]);
-
-                $product->update([
-                    'stock_qty' => ProductStock::where('product_id', $productId)->sum('qty'),
-                ]);
-            }
-
-            DB::commit();
-
-            return redirect()
-                ->route('stock-transfers.show', $transfer->id)
-                ->with('success', 'Stock transfer created successfully.');
-        } catch (ModelNotFoundException $e) {
-            DB::rollBack();
-
-            Log::warning('StockTransferController@store model not found', [
-                'message' => $e->getMessage(),
-                'request_fields' => array_keys($request->all()),
-                'user_id' => Auth::id(),
-            ]);
-
-            return back()
-                ->withInput()
-                ->with('error', 'One of the selected records was not found. Please refresh and try again.');
-        } catch (QueryException $e) {
-            DB::rollBack();
-
-            Log::error('StockTransferController@store database error', [
-                'message' => $e->getMessage(),
-                'sql' => $e->getSql(),
-                'bindings' => $e->getBindings(),
-                'request_fields' => array_keys($request->all()),
-                'user_id' => Auth::id(),
-            ]);
-
-            return back()
-                ->withInput()
-                ->with('error', 'Database error while saving stock transfer. Please check the logs.');
-        } catch (Throwable $e) {
-            DB::rollBack();
-
-            Log::error('StockTransferController@store failed', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'request_fields' => array_keys($request->all()),
-                'user_id' => Auth::id(),
-            ]);
-
-            return back()
-                ->withInput()
-                ->with('error', $e->getMessage());
-        }
-    }
-
-    public function show(StockTransfer $stock_transfer)
-    {
-        try {
-            $stock_transfer->load([
-                'fromLocation',
-                'toLocation',
-                'creator',
-                'rollbackUser',
-                'items.product.category',
-                'items.rollbackUser',
-            ]);
-
-            $transfer = $stock_transfer;
-
-            return view('maintenance.stock_transfers.show', compact('transfer'));
-        } catch (Throwable $e) {
-            Log::error('StockTransferController@show failed', [
-                'stock_transfer_id' => $stock_transfer->id ?? null,
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ]);
-
-            flash('Failed to load stock transfer details.')->error();
-
-            return back();
-        }
-    }
-
-    public function searchProducts(Request $request)
-    {
-        try {
-            $search = trim((string) $request->input('q', ''));
-            $locationId = (int) $request->input('from_location_id');
-
-            $excludeIds = collect($request->input('exclude_ids', []))
-                ->flatten()
-                ->map(fn ($id) => is_numeric($id) ? (int) $id : null)
-                ->filter()
-                ->unique()
-                ->values()
-                ->all();
-
-            if (strlen($search) < 2 || ! $locationId) {
-                return response()->json([]);
-            }
-
-            $location = Location::where('id', $locationId)
-                ->where('is_active', true)
-                ->first();
-
-            if (! $location) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Selected source location is invalid or inactive.',
-                ], 422);
-            }
-
-            $products = Product::with([
-                'category',
-                'stocks' => function ($query) use ($locationId) {
-                    $query->where('location_id', $locationId);
-                },
-            ])
-                ->when(! empty($excludeIds), function ($query) use ($excludeIds) {
-                    $query->whereNotIn('id', $excludeIds);
-                })
-                ->where(function ($query) use ($search) {
-                    $query->where('product_name', 'like', "%{$search}%")
-                        ->orWhere('part_number', 'like', "%{$search}%")
-                        ->orWhere('supplier_name', 'like', "%{$search}%")
-                        ->orWhere('details', 'like', "%{$search}%");
-                })
-                ->orderBy('product_name')
-                ->take(20)
-                ->get()
-                ->map(function ($product) {
-                    $stockRow = $product->stocks->first();
-                    $stockQty = $stockRow ? (int) $stockRow->qty : 0;
-
-                    return [
-                        'id' => $product->id,
-                        'name' => $product->product_name,
-                        'supplier_name' => $product->supplier_name,
-                        'category' => optional($product->category)->name,
-                        'unit' => $product->unit,
-                        'part_number' => $product->part_number,
-                        'details' => $product->details,
-                        'stock' => $stockQty,
-                    ];
-                })
-                ->filter(function ($product) {
-                    return $product['stock'] > 0;
-                })
-                ->values();
-
-            return response()->json($products);
-        } catch (Throwable $e) {
-            Log::error('StockTransferController@searchProducts failed', [
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'request_fields' => array_keys($request->all()),
-            ]);
-
+        if ($request->ajax()) {
             return response()->json([
-                'success' => false,
-                'message' => 'Failed to search products.',
-                'error' => $e->getMessage(),
-            ], 500);
+                'success' => true,
+                'html' => view('maintenance.stock_transfers.table', compact('transfers'))->render(),
+            ]);
+        }
+
+        return view('maintenance.stock_transfers.index', compact('transfers', 'search'));
+    }
+
+    public function create(): View
+    {
+        return view('maintenance.stock_transfers.create', [
+            'locations' => $this->directoryService->activeLocations(),
+        ]);
+    }
+
+    public function store(StoreStockTransferRequest $request): RedirectResponse
+    {
+        try {
+            $transfer = $this->creationService->create($request->validated(), $request->user()?->id);
+
+            return redirect()->route('stock-transfers.show', $transfer)->with('success', 'Stock transfer created successfully.');
+        } catch (Throwable $e) {
+            return back()->withInput()->with('error', $e->getMessage());
         }
     }
 
-    public function rollback(
-        Request $request,
-        StockTransfer $stock_transfer,
-        StockTransferRollbackService $rollbackService
-    ) {
-        $validated = $request->validate([
-            'rollback_reason' => ['nullable', 'string', 'max:1000'],
-        ]);
+    public function show(StockTransfer $stock_transfer): View
+    {
+        $stock_transfer->load(['fromLocation', 'toLocation', 'creator', 'rollbackUser', 'items.product.category', 'items.rollbackUser']);
+
+        return view('maintenance.stock_transfers.show', ['transfer' => $stock_transfer]);
+    }
+
+    public function searchProducts(Request $request): JsonResponse
+    {
+        $search = trim((string) $request->input('q', ''));
+        $locationId = (int) $request->input('from_location_id');
+        if (mb_strlen($search) < 2 || ! $locationId) {
+            return response()->json([]);
+        }
+
+        $locationExists = Location::query()->whereKey($locationId)->where('is_active', true)->exists();
+        if (! $locationExists) {
+            return response()->json(['success' => false, 'message' => 'Selected source location is invalid or inactive.'], 422);
+        }
+
+        $excludeIds = collect($request->input('exclude_ids', []))
+            ->flatten()->filter(fn ($id): bool => is_numeric($id))->map(fn ($id): int => (int) $id)->unique()->values()->all();
+
+        return response()->json($this->productCatalogService->searchProducts($search, $excludeIds, $locationId, true));
+    }
+
+    public function rollback(RollbackInventoryRequest $request, StockTransfer $stock_transfer): RedirectResponse
+    {
+        abort_unless($request->user()?->can('stock-transfers.rollback'), 403);
 
         try {
-            $rollbackService->rollback(
-                stockTransfer: $stock_transfer,
-                userId: (int) Auth::id(),
-                reason: $validated['rollback_reason'] ?? null
-            );
+            $this->rollbackService->rollback($stock_transfer, (int) $request->user()->id, $request->validated('rollback_reason'));
 
-            return redirect()
-                ->route('stock-transfers.show', $stock_transfer->id)
-                ->with('success', 'Stock transfer rolled back successfully. Item quantities were returned to the original location.');
+            return redirect()->route('stock-transfers.show', $stock_transfer)->with('success', 'Stock transfer rolled back successfully. Item quantities were returned to the original location.');
         } catch (Throwable $e) {
-            Log::error('StockTransferController@rollback failed', [
-                'stock_transfer_id' => $stock_transfer->id,
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'user_id' => Auth::id(),
-            ]);
-
-            return back()
-                ->with('error', $e->getMessage());
+            return back()->with('error', $e->getMessage());
         }
     }
 }

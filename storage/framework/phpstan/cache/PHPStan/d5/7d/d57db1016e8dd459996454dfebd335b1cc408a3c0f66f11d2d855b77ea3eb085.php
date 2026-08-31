@@ -20,6 +20,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -32,6 +33,46 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         ),
          'className' => 'App\\Http\\Controllers\\Maintenance\\JobOrderMaintenanceController',
          'functionName' => NULL,
+         'templatePhpDocNodes' => 
+        array (
+        ),
+         'parent' => NULL,
+         'typeAliasesMap' => 
+        array (
+        ),
+         'bypassTypeAliases' => false,
+         'constUses' => 
+        array (
+        ),
+         'typeAliasClassName' => NULL,
+         'traitData' => NULL,
+      )),
+      '2dcaa1954c9186df56daec6db3710503' => 
+      \PHPStan\Analyser\IntermediaryNameScope::__set_state(array(
+         'namespace' => 'App\\Http\\Controllers\\Maintenance',
+         'uses' => 
+        array (
+          'joborderrepairtype' => 'App\\Enums\\JobOrderRepairType',
+          'joborderstatus' => 'App\\Enums\\JobOrderStatus',
+          'controller' => 'App\\Http\\Controllers\\Controller',
+          'storejobordermaintenancerequest' => 'App\\Http\\Requests\\Maintenance\\StoreJobOrderMaintenanceRequest',
+          'updatejobordermaintenancenumberrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceNumberRequest',
+          'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
+          'bus' => 'App\\Models\\Bus',
+          'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
+          'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
+          'view' => 'Illuminate\\Contracts\\View\\View',
+          'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+          'redirectresponse' => 'Illuminate\\Http\\RedirectResponse',
+          'request' => 'Illuminate\\Http\\Request',
+          'response' => 'Illuminate\\Http\\Response',
+          'log' => 'Illuminate\\Support\\Facades\\Log',
+          'streamedresponse' => 'Symfony\\Component\\HttpFoundation\\StreamedResponse',
+          'throwable' => 'Throwable',
+        ),
+         'className' => 'App\\Http\\Controllers\\Maintenance\\JobOrderMaintenanceController',
+         'functionName' => '__construct',
          'templatePhpDocNodes' => 
         array (
         ),
@@ -59,6 +100,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -98,6 +140,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -137,6 +180,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -176,6 +220,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -215,6 +260,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -254,6 +300,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -293,6 +340,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -332,6 +380,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -371,6 +420,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -383,123 +433,6 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         ),
          'className' => 'App\\Http\\Controllers\\Maintenance\\JobOrderMaintenanceController',
          'functionName' => 'updateNumber',
-         'templatePhpDocNodes' => 
-        array (
-        ),
-         'parent' => NULL,
-         'typeAliasesMap' => 
-        array (
-        ),
-         'bypassTypeAliases' => false,
-         'constUses' => 
-        array (
-        ),
-         'typeAliasClassName' => NULL,
-         'traitData' => NULL,
-      )),
-      '3b48ea940e554ef40dd6edd22e058629' => 
-      \PHPStan\Analyser\IntermediaryNameScope::__set_state(array(
-         'namespace' => 'App\\Http\\Controllers\\Maintenance',
-         'uses' => 
-        array (
-          'joborderrepairtype' => 'App\\Enums\\JobOrderRepairType',
-          'joborderstatus' => 'App\\Enums\\JobOrderStatus',
-          'controller' => 'App\\Http\\Controllers\\Controller',
-          'storejobordermaintenancerequest' => 'App\\Http\\Requests\\Maintenance\\StoreJobOrderMaintenanceRequest',
-          'updatejobordermaintenancenumberrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceNumberRequest',
-          'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
-          'bus' => 'App\\Models\\Bus',
-          'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
-          'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
-          'view' => 'Illuminate\\Contracts\\View\\View',
-          'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
-          'redirectresponse' => 'Illuminate\\Http\\RedirectResponse',
-          'request' => 'Illuminate\\Http\\Request',
-          'response' => 'Illuminate\\Http\\Response',
-          'log' => 'Illuminate\\Support\\Facades\\Log',
-          'streamedresponse' => 'Symfony\\Component\\HttpFoundation\\StreamedResponse',
-          'throwable' => 'Throwable',
-        ),
-         'className' => 'App\\Http\\Controllers\\Maintenance\\JobOrderMaintenanceController',
-         'functionName' => 'resolveFilters',
-         'templatePhpDocNodes' => 
-        array (
-        ),
-         'parent' => NULL,
-         'typeAliasesMap' => 
-        array (
-        ),
-         'bypassTypeAliases' => false,
-         'constUses' => 
-        array (
-        ),
-         'typeAliasClassName' => NULL,
-         'traitData' => NULL,
-      )),
-      'ffe0147c84edd99e2574e5cc9b56d698' => 
-      \PHPStan\Analyser\IntermediaryNameScope::__set_state(array(
-         'namespace' => 'App\\Http\\Controllers\\Maintenance',
-         'uses' => 
-        array (
-          'joborderrepairtype' => 'App\\Enums\\JobOrderRepairType',
-          'joborderstatus' => 'App\\Enums\\JobOrderStatus',
-          'controller' => 'App\\Http\\Controllers\\Controller',
-          'storejobordermaintenancerequest' => 'App\\Http\\Requests\\Maintenance\\StoreJobOrderMaintenanceRequest',
-          'updatejobordermaintenancenumberrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceNumberRequest',
-          'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
-          'bus' => 'App\\Models\\Bus',
-          'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
-          'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
-          'view' => 'Illuminate\\Contracts\\View\\View',
-          'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
-          'redirectresponse' => 'Illuminate\\Http\\RedirectResponse',
-          'request' => 'Illuminate\\Http\\Request',
-          'response' => 'Illuminate\\Http\\Response',
-          'log' => 'Illuminate\\Support\\Facades\\Log',
-          'streamedresponse' => 'Symfony\\Component\\HttpFoundation\\StreamedResponse',
-          'throwable' => 'Throwable',
-        ),
-         'className' => 'App\\Http\\Controllers\\Maintenance\\JobOrderMaintenanceController',
-         'functionName' => 'applyIndexFilters',
-         'templatePhpDocNodes' => 
-        array (
-        ),
-         'parent' => NULL,
-         'typeAliasesMap' => 
-        array (
-        ),
-         'bypassTypeAliases' => false,
-         'constUses' => 
-        array (
-        ),
-         'typeAliasClassName' => NULL,
-         'traitData' => NULL,
-      )),
-      'f6b2e21fd2ecd21b5602cb5ac733ed92' => 
-      \PHPStan\Analyser\IntermediaryNameScope::__set_state(array(
-         'namespace' => 'App\\Http\\Controllers\\Maintenance',
-         'uses' => 
-        array (
-          'joborderrepairtype' => 'App\\Enums\\JobOrderRepairType',
-          'joborderstatus' => 'App\\Enums\\JobOrderStatus',
-          'controller' => 'App\\Http\\Controllers\\Controller',
-          'storejobordermaintenancerequest' => 'App\\Http\\Requests\\Maintenance\\StoreJobOrderMaintenanceRequest',
-          'updatejobordermaintenancenumberrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceNumberRequest',
-          'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
-          'bus' => 'App\\Models\\Bus',
-          'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
-          'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
-          'view' => 'Illuminate\\Contracts\\View\\View',
-          'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
-          'redirectresponse' => 'Illuminate\\Http\\RedirectResponse',
-          'request' => 'Illuminate\\Http\\Request',
-          'response' => 'Illuminate\\Http\\Response',
-          'log' => 'Illuminate\\Support\\Facades\\Log',
-          'streamedresponse' => 'Symfony\\Component\\HttpFoundation\\StreamedResponse',
-          'throwable' => 'Throwable',
-        ),
-         'className' => 'App\\Http\\Controllers\\Maintenance\\JobOrderMaintenanceController',
-         'functionName' => 'applyDateFilter',
          'templatePhpDocNodes' => 
         array (
         ),
@@ -527,6 +460,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -566,6 +500,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -605,6 +540,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -644,6 +580,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -683,6 +620,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -722,6 +660,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -761,6 +700,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -800,6 +740,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -839,6 +780,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'updatejobordermaintenancestatusrequest' => 'App\\Http\\Requests\\Maintenance\\UpdateJobOrderMaintenanceStatusRequest',
           'bus' => 'App\\Models\\Bus',
           'jobordermaintenance' => 'App\\Models\\JobOrderMaintenance',
+          'jobordermaintenancedirectoryservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceDirectoryService',
           'jobordermaintenanceservice' => 'App\\Services\\Maintenance\\JobOrderMaintenanceService',
           'view' => 'Illuminate\\Contracts\\View\\View',
           'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
@@ -868,7 +810,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     1 => 
     array (
-      '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/Maintenance/JobOrderMaintenanceController.php' => 'e60ab8396ff791056288ae4ebae1536a9e8fa04d805c7a1d4640f529e7b45567',
+      '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/Maintenance/JobOrderMaintenanceController.php' => '6fdd8eaec765568d2dc950bd3c9c55359f7d6565440d1e1ff94c8ff7dc1596be',
     ),
   ),
 ));
