@@ -543,7 +543,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/Auth/AuthController.php' => 
     array (
-      0 => '2ab386b328915b01b2a8ad25693b06a261c494e5a317e279d7aae4b09faf23c9',
+      0 => '4f48c9d84075671a9561fa274b523d0a3e2f4be30c917b3e18abb137635f9173',
       1 => 
       array (
         0 => 'app\\http\\controllers\\auth\\authcontroller',
@@ -818,34 +818,30 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/HR_Department/EmployeeController.php' => 
     array (
-      0 => 'bdb2184230bf589e6e7258d93ae4b6502913162a8a879c3d2dd6c201d43740d9',
+      0 => 'fecc9632bf3d13969e533e6e601f3f45262f44e107b5bfddbd1bca03f02b41fa',
       1 => 
       array (
         0 => 'app\\http\\controllers\\hr_department\\employeecontroller',
       ),
       2 => 
       array (
-        0 => 'app\\http\\controllers\\hr_department\\index',
-        1 => 'app\\http\\controllers\\hr_department\\show',
-        2 => 'app\\http\\controllers\\hr_department\\store',
-        3 => 'app\\http\\controllers\\hr_department\\update',
-        4 => 'app\\http\\controllers\\hr_department\\updatestatusdetails',
-        5 => 'app\\http\\controllers\\hr_department\\updateassets',
-        6 => 'app\\http\\controllers\\hr_department\\storehistory',
-        7 => 'app\\http\\controllers\\hr_department\\updatehistory',
-        8 => 'app\\http\\controllers\\hr_department\\storeattachment',
-        9 => 'app\\http\\controllers\\hr_department\\downloadattachment',
-        10 => 'app\\http\\controllers\\hr_department\\destroyattachment',
-        11 => 'app\\http\\controllers\\hr_department\\destroyhistory',
-        12 => 'app\\http\\controllers\\hr_department\\destroy',
-        13 => 'app\\http\\controllers\\hr_department\\print201',
-        14 => 'app\\http\\controllers\\hr_department\\getpositions',
-        15 => 'app\\http\\controllers\\hr_department\\logemployee',
-        16 => 'app\\http\\controllers\\hr_department\\diffchanges',
-        17 => 'app\\http\\controllers\\hr_department\\normalizedate',
-        18 => 'app\\http\\controllers\\hr_department\\checkpermanentid',
-        19 => 'app\\http\\controllers\\hr_department\\normalizedisciplinaryactions',
-        20 => 'app\\http\\controllers\\hr_department\\preparedisciplinaryfields',
+        0 => 'app\\http\\controllers\\hr_department\\__construct',
+        1 => 'app\\http\\controllers\\hr_department\\index',
+        2 => 'app\\http\\controllers\\hr_department\\show',
+        3 => 'app\\http\\controllers\\hr_department\\store',
+        4 => 'app\\http\\controllers\\hr_department\\update',
+        5 => 'app\\http\\controllers\\hr_department\\updatestatusdetails',
+        6 => 'app\\http\\controllers\\hr_department\\updateassets',
+        7 => 'app\\http\\controllers\\hr_department\\storehistory',
+        8 => 'app\\http\\controllers\\hr_department\\updatehistory',
+        9 => 'app\\http\\controllers\\hr_department\\storeattachment',
+        10 => 'app\\http\\controllers\\hr_department\\downloadattachment',
+        11 => 'app\\http\\controllers\\hr_department\\destroyattachment',
+        12 => 'app\\http\\controllers\\hr_department\\destroyhistory',
+        13 => 'app\\http\\controllers\\hr_department\\destroy',
+        14 => 'app\\http\\controllers\\hr_department\\print201',
+        15 => 'app\\http\\controllers\\hr_department\\getpositions',
+        16 => 'app\\http\\controllers\\hr_department\\checkpermanentid',
       ),
       3 => 
       array (
@@ -4910,6 +4906,226 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
       2 => 
       array (
         0 => 'app\\http\\resources\\api\\toarray',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Enums/EmployeeStatus.php' => 
+    array (
+      0 => 'dfcf76fd0432e3633af00ae08df6d652651abf8dd35415e124d7d3b5c9273199',
+      1 => 
+      array (
+        0 => 'app\\enums\\employeestatus',
+      ),
+      2 => 
+      array (
+        0 => 'app\\enums\\values',
+        1 => 'app\\enums\\activevalues',
+        2 => 'app\\enums\\inactivevalues',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/EmployeeHistoryRequest.php' => 
+    array (
+      0 => '7db4c44ee7685694836d764da4ad4a76ffe212e818b8fba3764a5ffa667677d5',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\employeehistoryrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\authorize',
+        1 => 'app\\http\\requests\\hr_department\\rules',
+        2 => 'app\\http\\requests\\hr_department\\after',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/StoreEmployeeAttachmentRequest.php' => 
+    array (
+      0 => '59e35d76b5a3dc4598327c90b29462c11cd0e70ac5b9d367f1fb9b4b74a9f89e',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\storeemployeeattachmentrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\authorize',
+        1 => 'app\\http\\requests\\hr_department\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/StoreEmployeeRequest.php' => 
+    array (
+      0 => '3e1d97f5c3645117b7a8bbc9d47b96bbf56d6d040ee42d11fd93f94d281c6e7f',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\storeemployeerequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\authorize',
+        1 => 'app\\http\\requests\\hr_department\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/UpdateEmployeeAssetsRequest.php' => 
+    array (
+      0 => '474f9bf1390c5941ae70263daae06c7ec6e7cc541e7ac4ad862d148ba456ce1e',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\updateemployeeassetsrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\authorize',
+        1 => 'app\\http\\requests\\hr_department\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/UpdateEmployeeRequest.php' => 
+    array (
+      0 => 'c4493aa5ef991ce34c8653e731ac1ca6a7fa3803883916654da2cb86f997236d',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\updateemployeerequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\authorize',
+        1 => 'app\\http\\requests\\hr_department\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/HR_Department/UpdateEmployeeStatusDetailsRequest.php' => 
+    array (
+      0 => 'c9a1779f9ed5737b1cbdec1f7dfa5f40a6d8fe53dc8d7a39b40195b082ed90ae',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\updateemployeestatusdetailsrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\hr_department\\authorize',
+        1 => 'app\\http\\requests\\hr_department\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/HR_Department/EmployeeAttachmentService.php' => 
+    array (
+      0 => '4d745aed0ae1f60637f796d2977c8e5bd784ee5a4f982894ef711260107ce265',
+      1 => 
+      array (
+        0 => 'app\\services\\hr_department\\employeeattachmentservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\hr_department\\__construct',
+        1 => 'app\\services\\hr_department\\store',
+        2 => 'app\\services\\hr_department\\delete',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/HR_Department/EmployeeAuditService.php' => 
+    array (
+      0 => '50b20c974d23373a3ec86f3b5b0f3c46dcaf63084fd57ce8ed2e75bcffee9e12',
+      1 => 
+      array (
+        0 => 'app\\services\\hr_department\\employeeauditservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\hr_department\\log',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/HR_Department/EmployeeDirectoryService.php' => 
+    array (
+      0 => 'c94b959cf3802f6e315a37e63446e9c8d14c5b6f813a7b35f6ed6f0a26fa934f',
+      1 => 
+      array (
+        0 => 'app\\services\\hr_department\\employeedirectoryservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\hr_department\\indexdata',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/HR_Department/EmployeeHistoryService.php' => 
+    array (
+      0 => '9b4432dd1ef7b0482838cd5ed279b8fba42db8cd5c984b864a5893c7fd07d49a',
+      1 => 
+      array (
+        0 => 'app\\services\\hr_department\\employeehistoryservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\hr_department\\__construct',
+        1 => 'app\\services\\hr_department\\createviolation',
+        2 => 'app\\services\\hr_department\\updateviolation',
+        3 => 'app\\services\\hr_department\\delete',
+        4 => 'app\\services\\hr_department\\createviolationrows',
+        5 => 'app\\services\\hr_department\\actions',
+        6 => 'app\\services\\hr_department\\clearunuseddisciplinaryfields',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/HR_Department/EmployeeProfileService.php' => 
+    array (
+      0 => '042d44d07c21aacb44b8f44dc66e7bedf5585bc280aef38cc91f0579f12a181d',
+      1 => 
+      array (
+        0 => 'app\\services\\hr_department\\employeeprofileservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\hr_department\\data',
+        1 => 'app\\services\\hr_department\\tenure',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/HR_Department/EmployeeService.php' => 
+    array (
+      0 => 'a63c59e067f80df81196f2576ec5e5c6e5c88fe09be7a33ef86f96748cfd3983',
+      1 => 
+      array (
+        0 => 'app\\services\\hr_department\\employeeservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\hr_department\\__construct',
+        1 => 'app\\services\\hr_department\\create',
+        2 => 'app\\services\\hr_department\\updateprofile',
+        3 => 'app\\services\\hr_department\\updatestatusdetails',
+        4 => 'app\\services\\hr_department\\updateassets',
+        5 => 'app\\services\\hr_department\\delete',
+        6 => 'app\\services\\hr_department\\diffchanges',
+        7 => 'app\\services\\hr_department\\normalizedate',
       ),
       3 => 
       array (

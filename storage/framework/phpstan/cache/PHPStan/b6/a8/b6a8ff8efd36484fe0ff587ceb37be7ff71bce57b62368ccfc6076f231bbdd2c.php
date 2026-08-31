@@ -2,7 +2,7 @@
 
 // odsl-/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/HR_Department/EmployeeController.php-PHPStan\BetterReflection\Reflection\ReflectionClass-App\Http\Controllers\HR_Department\EmployeeController
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-8.3.6-bdb2184230bf589e6e7258d93ae4b6502913162a8a879c3d2dd6c201d43740d9',
+   'variableKey' => 'v2-6.70.0.3-8.3.6-fecc9632bf3d13969e533e6e601f3f45262f44e107b5bfddbd1bca03f02b41fa',
    'data' => 
   array (
     'locatedSource' => 
@@ -21,13 +21,13 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     'isTrait' => false,
     'isEnum' => false,
     'isBackedEnum' => false,
-    'modifiers' => 0,
+    'modifiers' => 32,
     'docComment' => NULL,
     'attributes' => 
     array (
     ),
-    'startLine' => 24,
-    'endLine' => 1300,
+    'startLine' => 28,
+    'endLine' => 303,
     'startColumn' => 1,
     'endColumn' => 1,
     'parentClassName' => 'App\\Http\\Controllers\\Controller',
@@ -42,9 +42,321 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     'immediateProperties' => 
     array (
+      'employees' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'name' => 'employees',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\HR_Department\\EmployeeService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 31,
+        'endLine' => 31,
+        'startColumn' => 9,
+        'endColumn' => 51,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
+      'histories' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'name' => 'histories',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\HR_Department\\EmployeeHistoryService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 32,
+        'endLine' => 32,
+        'startColumn' => 9,
+        'endColumn' => 58,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
+      'attachments' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'name' => 'attachments',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\HR_Department\\EmployeeAttachmentService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 33,
+        'endLine' => 33,
+        'startColumn' => 9,
+        'endColumn' => 63,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
+      'directory' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'name' => 'directory',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\HR_Department\\EmployeeDirectoryService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 34,
+        'endLine' => 34,
+        'startColumn' => 9,
+        'endColumn' => 60,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
+      'profiles' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'name' => 'profiles',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\HR_Department\\EmployeeProfileService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 35,
+        'endLine' => 35,
+        'startColumn' => 9,
+        'endColumn' => 57,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
     ),
     'immediateMethods' => 
     array (
+      '__construct' => 
+      array (
+        'name' => '__construct',
+        'parameters' => 
+        array (
+          'employees' => 
+          array (
+            'name' => 'employees',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\HR_Department\\EmployeeService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 31,
+            'endLine' => 31,
+            'startColumn' => 9,
+            'endColumn' => 51,
+            'parameterIndex' => 0,
+            'isOptional' => false,
+          ),
+          'histories' => 
+          array (
+            'name' => 'histories',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\HR_Department\\EmployeeHistoryService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 32,
+            'endLine' => 32,
+            'startColumn' => 9,
+            'endColumn' => 58,
+            'parameterIndex' => 1,
+            'isOptional' => false,
+          ),
+          'attachments' => 
+          array (
+            'name' => 'attachments',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\HR_Department\\EmployeeAttachmentService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 33,
+            'endLine' => 33,
+            'startColumn' => 9,
+            'endColumn' => 63,
+            'parameterIndex' => 2,
+            'isOptional' => false,
+          ),
+          'directory' => 
+          array (
+            'name' => 'directory',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\HR_Department\\EmployeeDirectoryService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 34,
+            'endLine' => 34,
+            'startColumn' => 9,
+            'endColumn' => 60,
+            'parameterIndex' => 3,
+            'isOptional' => false,
+          ),
+          'profiles' => 
+          array (
+            'name' => 'profiles',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\HR_Department\\EmployeeProfileService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 35,
+            'endLine' => 35,
+            'startColumn' => 9,
+            'endColumn' => 57,
+            'parameterIndex' => 4,
+            'isOptional' => false,
+          ),
+        ),
+        'returnsReference' => false,
+        'returnType' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'docComment' => NULL,
+        'startLine' => 30,
+        'endLine' => 36,
+        'startColumn' => 5,
+        'endColumn' => 8,
+        'couldThrow' => false,
+        'isClosure' => false,
+        'isGenerator' => false,
+        'isVariadic' => false,
+        'modifiers' => 1,
+        'namespace' => 'App\\Http\\Controllers\\HR_Department',
+        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'currentClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
+        'aliasName' => NULL,
+      ),
       'index' => 
       array (
         'name' => 'index',
@@ -69,8 +381,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 29,
-            'endLine' => 29,
+            'startLine' => 41,
+            'endLine' => 41,
             'startColumn' => 27,
             'endColumn' => 42,
             'parameterIndex' => 0,
@@ -83,8 +395,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 29,
-        'endLine' => 191,
+        'startLine' => 41,
+        'endLine' => 44,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -122,8 +434,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 196,
-            'endLine' => 196,
+            'startLine' => 49,
+            'endLine' => 49,
             'startColumn' => 26,
             'endColumn' => 43,
             'parameterIndex' => 0,
@@ -136,8 +448,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 196,
-        'endLine' => 357,
+        'startLine' => 49,
+        'endLine' => 52,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -165,7 +477,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\HR_Department\\StoreEmployeeRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -175,22 +487,30 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 363,
-            'endLine' => 363,
+            'startLine' => 58,
+            'endLine' => 58,
             'startColumn' => 27,
-            'endColumn' => 42,
+            'endColumn' => 55,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 363,
-        'endLine' => 429,
+        'startLine' => 58,
+        'endLine' => 71,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -218,7 +538,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\HR_Department\\UpdateEmployeeRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -228,10 +548,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 435,
-            'endLine' => 435,
+            'startLine' => 77,
+            'endLine' => 77,
             'startColumn' => 28,
-            'endColumn' => 43,
+            'endColumn' => 57,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -254,25 +574,33 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 435,
-            'endLine' => 435,
-            'startColumn' => 46,
-            'endColumn' => 63,
+            'startLine' => 77,
+            'endLine' => 77,
+            'startColumn' => 60,
+            'endColumn' => 77,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 435,
-        'endLine' => 581,
+        'startLine' => 77,
+        'endLine' => 102,
         'startColumn' => 5,
         'endColumn' => 5,
-        'couldThrow' => true,
+        'couldThrow' => false,
         'isClosure' => false,
         'isGenerator' => false,
         'isVariadic' => false,
@@ -297,7 +625,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\HR_Department\\UpdateEmployeeStatusDetailsRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -307,10 +635,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 586,
-            'endLine' => 586,
+            'startLine' => 107,
+            'endLine' => 107,
             'startColumn' => 41,
-            'endColumn' => 56,
+            'endColumn' => 83,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -333,22 +661,30 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 586,
-            'endLine' => 586,
-            'startColumn' => 59,
-            'endColumn' => 76,
+            'startLine' => 107,
+            'endLine' => 107,
+            'startColumn' => 86,
+            'endColumn' => 103,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 586,
-        'endLine' => 628,
+        'startLine' => 107,
+        'endLine' => 113,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -376,7 +712,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\HR_Department\\UpdateEmployeeAssetsRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -386,10 +722,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 633,
-            'endLine' => 633,
+            'startLine' => 118,
+            'endLine' => 118,
             'startColumn' => 34,
-            'endColumn' => 49,
+            'endColumn' => 69,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -412,22 +748,30 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 633,
-            'endLine' => 633,
-            'startColumn' => 52,
-            'endColumn' => 69,
+            'startLine' => 118,
+            'endLine' => 118,
+            'startColumn' => 72,
+            'endColumn' => 89,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 633,
-        'endLine' => 739,
+        'startLine' => 118,
+        'endLine' => 129,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -455,7 +799,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\HR_Department\\EmployeeHistoryRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -465,10 +809,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 744,
-            'endLine' => 744,
+            'startLine' => 134,
+            'endLine' => 134,
             'startColumn' => 34,
-            'endColumn' => 49,
+            'endColumn' => 64,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -491,10 +835,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 744,
-            'endLine' => 744,
-            'startColumn' => 52,
-            'endColumn' => 69,
+            'startLine' => 134,
+            'endLine' => 134,
+            'startColumn' => 67,
+            'endColumn' => 84,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
@@ -513,8 +857,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 744,
-        'endLine' => 838,
+        'startLine' => 134,
+        'endLine' => 147,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -542,7 +886,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\HR_Department\\EmployeeHistoryRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -552,10 +896,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 843,
-            'endLine' => 843,
+            'startLine' => 152,
+            'endLine' => 152,
             'startColumn' => 35,
-            'endColumn' => 50,
+            'endColumn' => 65,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -578,10 +922,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 843,
-            'endLine' => 843,
-            'startColumn' => 53,
-            'endColumn' => 70,
+            'startLine' => 152,
+            'endLine' => 152,
+            'startColumn' => 68,
+            'endColumn' => 85,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
@@ -589,17 +933,25 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'historyId',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 843,
-            'endLine' => 843,
-            'startColumn' => 73,
-            'endColumn' => 82,
+            'startLine' => 152,
+            'endLine' => 152,
+            'startColumn' => 88,
+            'endColumn' => 101,
             'parameterIndex' => 2,
             'isOptional' => false,
           ),
@@ -618,8 +970,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 843,
-        'endLine' => 948,
+        'startLine' => 152,
+        'endLine' => 165,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -647,7 +999,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\HR_Department\\StoreEmployeeAttachmentRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -657,10 +1009,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 953,
-            'endLine' => 953,
+            'startLine' => 170,
+            'endLine' => 170,
             'startColumn' => 37,
-            'endColumn' => 52,
+            'endColumn' => 75,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -683,25 +1035,33 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 953,
-            'endLine' => 953,
-            'startColumn' => 55,
-            'endColumn' => 72,
+            'startLine' => 170,
+            'endLine' => 170,
+            'startColumn' => 78,
+            'endColumn' => 95,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 953,
-        'endLine' => 1001,
+        'startLine' => 170,
+        'endLine' => 185,
         'startColumn' => 5,
         'endColumn' => 5,
-        'couldThrow' => true,
+        'couldThrow' => false,
         'isClosure' => false,
         'isGenerator' => false,
         'isVariadic' => false,
@@ -736,8 +1096,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 1003,
-            'endLine' => 1003,
+            'startLine' => 187,
+            'endLine' => 187,
             'startColumn' => 40,
             'endColumn' => 57,
             'parameterIndex' => 0,
@@ -762,8 +1122,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 1003,
-            'endLine' => 1003,
+            'startLine' => 187,
+            'endLine' => 187,
             'startColumn' => 60,
             'endColumn' => 74,
             'parameterIndex' => 1,
@@ -784,8 +1144,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 1003,
-        'endLine' => 1012,
+        'startLine' => 187,
+        'endLine' => 196,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -823,8 +1183,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 1017,
-            'endLine' => 1017,
+            'startLine' => 201,
+            'endLine' => 201,
             'startColumn' => 39,
             'endColumn' => 56,
             'parameterIndex' => 0,
@@ -834,29 +1194,45 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'attachmentId',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 1017,
-            'endLine' => 1017,
+            'startLine' => 201,
+            'endLine' => 201,
             'startColumn' => 59,
-            'endColumn' => 71,
+            'endColumn' => 75,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 1017,
-        'endLine' => 1040,
+        'startLine' => 201,
+        'endLine' => 212,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -894,8 +1270,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 1045,
-            'endLine' => 1045,
+            'startLine' => 217,
+            'endLine' => 217,
             'startColumn' => 36,
             'endColumn' => 53,
             'parameterIndex' => 0,
@@ -905,17 +1281,25 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'historyId',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 1045,
-            'endLine' => 1045,
+            'startLine' => 217,
+            'endLine' => 217,
             'startColumn' => 56,
-            'endColumn' => 65,
+            'endColumn' => 69,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
@@ -934,8 +1318,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 1045,
-        'endLine' => 1096,
+        'startLine' => 217,
+        'endLine' => 228,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -958,29 +1342,45 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'id',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 1101,
-            'endLine' => 1101,
+            'startLine' => 233,
+            'endLine' => 233,
             'startColumn' => 29,
-            'endColumn' => 31,
+            'endColumn' => 35,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 1101,
-        'endLine' => 1112,
+        'startLine' => 233,
+        'endLine' => 244,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -1010,8 +1410,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 1117,
-            'endLine' => 1117,
+            'startLine' => 249,
+            'endLine' => 249,
             'startColumn' => 30,
             'endColumn' => 32,
             'parameterIndex' => 0,
@@ -1024,8 +1424,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 1117,
-        'endLine' => 1131,
+        'startLine' => 249,
+        'endLine' => 263,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -1055,8 +1455,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 1136,
-            'endLine' => 1136,
+            'startLine' => 268,
+            'endLine' => 268,
             'startColumn' => 34,
             'endColumn' => 36,
             'parameterIndex' => 0,
@@ -1069,8 +1469,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 1136,
-        'endLine' => 1141,
+        'startLine' => 268,
+        'endLine' => 273,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -1078,317 +1478,6 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         'isGenerator' => false,
         'isVariadic' => false,
         'modifiers' => 1,
-        'namespace' => 'App\\Http\\Controllers\\HR_Department',
-        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'currentClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'aliasName' => NULL,
-      ),
-      'logEmployee' => 
-      array (
-        'name' => 'logEmployee',
-        'parameters' => 
-        array (
-          'employee' => 
-          array (
-            'name' => 'employee',
-            'default' => NULL,
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-              'data' => 
-              array (
-                'name' => 'App\\Models\\Employee',
-                'isIdentifier' => false,
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 1146,
-            'endLine' => 1146,
-            'startColumn' => 34,
-            'endColumn' => 51,
-            'parameterIndex' => 0,
-            'isOptional' => false,
-          ),
-          'action' => 
-          array (
-            'name' => 'action',
-            'default' => NULL,
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-              'data' => 
-              array (
-                'name' => 'string',
-                'isIdentifier' => true,
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 1146,
-            'endLine' => 1146,
-            'startColumn' => 54,
-            'endColumn' => 67,
-            'parameterIndex' => 1,
-            'isOptional' => false,
-          ),
-          'meta' => 
-          array (
-            'name' => 'meta',
-            'default' => 
-            array (
-              'code' => '[]',
-              'attributes' => 
-              array (
-                'startLine' => 1146,
-                'endLine' => 1146,
-                'startTokenPos' => 7996,
-                'startFilePos' => 44215,
-                'endTokenPos' => 7997,
-                'endFilePos' => 44216,
-              ),
-            ),
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-              'data' => 
-              array (
-                'name' => 'array',
-                'isIdentifier' => true,
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 1146,
-            'endLine' => 1146,
-            'startColumn' => 70,
-            'endColumn' => 85,
-            'parameterIndex' => 2,
-            'isOptional' => true,
-          ),
-        ),
-        'returnsReference' => false,
-        'returnType' => 
-        array (
-          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-          'data' => 
-          array (
-            'name' => 'void',
-            'isIdentifier' => true,
-          ),
-        ),
-        'attributes' => 
-        array (
-        ),
-        'docComment' => NULL,
-        'startLine' => 1146,
-        'endLine' => 1154,
-        'startColumn' => 5,
-        'endColumn' => 5,
-        'couldThrow' => false,
-        'isClosure' => false,
-        'isGenerator' => false,
-        'isVariadic' => false,
-        'modifiers' => 4,
-        'namespace' => 'App\\Http\\Controllers\\HR_Department',
-        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'currentClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'aliasName' => NULL,
-      ),
-      'diffChanges' => 
-      array (
-        'name' => 'diffChanges',
-        'parameters' => 
-        array (
-          'before' => 
-          array (
-            'name' => 'before',
-            'default' => NULL,
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-              'data' => 
-              array (
-                'name' => 'array',
-                'isIdentifier' => true,
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 1159,
-            'endLine' => 1159,
-            'startColumn' => 34,
-            'endColumn' => 46,
-            'parameterIndex' => 0,
-            'isOptional' => false,
-          ),
-          'after' => 
-          array (
-            'name' => 'after',
-            'default' => NULL,
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-              'data' => 
-              array (
-                'name' => 'array',
-                'isIdentifier' => true,
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 1159,
-            'endLine' => 1159,
-            'startColumn' => 49,
-            'endColumn' => 60,
-            'parameterIndex' => 1,
-            'isOptional' => false,
-          ),
-        ),
-        'returnsReference' => false,
-        'returnType' => 
-        array (
-          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-          'data' => 
-          array (
-            'name' => 'array',
-            'isIdentifier' => true,
-          ),
-        ),
-        'attributes' => 
-        array (
-        ),
-        'docComment' => NULL,
-        'startLine' => 1159,
-        'endLine' => 1179,
-        'startColumn' => 5,
-        'endColumn' => 5,
-        'couldThrow' => false,
-        'isClosure' => false,
-        'isGenerator' => false,
-        'isVariadic' => false,
-        'modifiers' => 4,
-        'namespace' => 'App\\Http\\Controllers\\HR_Department',
-        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'currentClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'aliasName' => NULL,
-      ),
-      'normalizeDate' => 
-      array (
-        'name' => 'normalizeDate',
-        'parameters' => 
-        array (
-          'value' => 
-          array (
-            'name' => 'value',
-            'default' => NULL,
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionUnionType',
-              'data' => 
-              array (
-                'types' => 
-                array (
-                  0 => 
-                  array (
-                    'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                    'data' => 
-                    array (
-                      'name' => 'string',
-                      'isIdentifier' => true,
-                    ),
-                  ),
-                  1 => 
-                  array (
-                    'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                    'data' => 
-                    array (
-                      'name' => 'null',
-                      'isIdentifier' => true,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 1184,
-            'endLine' => 1184,
-            'startColumn' => 36,
-            'endColumn' => 49,
-            'parameterIndex' => 0,
-            'isOptional' => false,
-          ),
-        ),
-        'returnsReference' => false,
-        'returnType' => 
-        array (
-          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionUnionType',
-          'data' => 
-          array (
-            'types' => 
-            array (
-              0 => 
-              array (
-                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                'data' => 
-                array (
-                  'name' => 'string',
-                  'isIdentifier' => true,
-                ),
-              ),
-              1 => 
-              array (
-                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                'data' => 
-                array (
-                  'name' => 'null',
-                  'isIdentifier' => true,
-                ),
-              ),
-            ),
-          ),
-        ),
-        'attributes' => 
-        array (
-        ),
-        'docComment' => NULL,
-        'startLine' => 1184,
-        'endLine' => 1194,
-        'startColumn' => 5,
-        'endColumn' => 5,
-        'couldThrow' => false,
-        'isClosure' => false,
-        'isGenerator' => false,
-        'isVariadic' => false,
-        'modifiers' => 4,
         'namespace' => 'App\\Http\\Controllers\\HR_Department',
         'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
         'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
@@ -1419,8 +1508,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 1199,
-            'endLine' => 1199,
+            'startLine' => 278,
+            'endLine' => 278,
             'startColumn' => 38,
             'endColumn' => 53,
             'parameterIndex' => 0,
@@ -1433,8 +1522,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 1199,
-        'endLine' => 1223,
+        'startLine' => 278,
+        'endLine' => 302,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -1442,182 +1531,6 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         'isGenerator' => false,
         'isVariadic' => false,
         'modifiers' => 1,
-        'namespace' => 'App\\Http\\Controllers\\HR_Department',
-        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'currentClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'aliasName' => NULL,
-      ),
-      'normalizeDisciplinaryActions' => 
-      array (
-        'name' => 'normalizeDisciplinaryActions',
-        'parameters' => 
-        array (
-          'actions' => 
-          array (
-            'name' => 'actions',
-            'default' => NULL,
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionUnionType',
-              'data' => 
-              array (
-                'types' => 
-                array (
-                  0 => 
-                  array (
-                    'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                    'data' => 
-                    array (
-                      'name' => 'array',
-                      'isIdentifier' => true,
-                    ),
-                  ),
-                  1 => 
-                  array (
-                    'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                    'data' => 
-                    array (
-                      'name' => 'string',
-                      'isIdentifier' => true,
-                    ),
-                  ),
-                  2 => 
-                  array (
-                    'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                    'data' => 
-                    array (
-                      'name' => 'null',
-                      'isIdentifier' => true,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 1228,
-            'endLine' => 1228,
-            'startColumn' => 51,
-            'endColumn' => 76,
-            'parameterIndex' => 0,
-            'isOptional' => false,
-          ),
-        ),
-        'returnsReference' => false,
-        'returnType' => 
-        array (
-          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-          'data' => 
-          array (
-            'name' => 'array',
-            'isIdentifier' => true,
-          ),
-        ),
-        'attributes' => 
-        array (
-        ),
-        'docComment' => NULL,
-        'startLine' => 1228,
-        'endLine' => 1255,
-        'startColumn' => 5,
-        'endColumn' => 5,
-        'couldThrow' => false,
-        'isClosure' => false,
-        'isGenerator' => false,
-        'isVariadic' => false,
-        'modifiers' => 4,
-        'namespace' => 'App\\Http\\Controllers\\HR_Department',
-        'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'currentClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
-        'aliasName' => NULL,
-      ),
-      'prepareDisciplinaryFields' => 
-      array (
-        'name' => 'prepareDisciplinaryFields',
-        'parameters' => 
-        array (
-          'validated' => 
-          array (
-            'name' => 'validated',
-            'default' => NULL,
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-              'data' => 
-              array (
-                'name' => 'array',
-                'isIdentifier' => true,
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 1257,
-            'endLine' => 1257,
-            'startColumn' => 48,
-            'endColumn' => 63,
-            'parameterIndex' => 0,
-            'isOptional' => false,
-          ),
-          'actions' => 
-          array (
-            'name' => 'actions',
-            'default' => NULL,
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-              'data' => 
-              array (
-                'name' => 'array',
-                'isIdentifier' => true,
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 1257,
-            'endLine' => 1257,
-            'startColumn' => 66,
-            'endColumn' => 79,
-            'parameterIndex' => 1,
-            'isOptional' => false,
-          ),
-        ),
-        'returnsReference' => false,
-        'returnType' => 
-        array (
-          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-          'data' => 
-          array (
-            'name' => 'array',
-            'isIdentifier' => true,
-          ),
-        ),
-        'attributes' => 
-        array (
-        ),
-        'docComment' => NULL,
-        'startLine' => 1257,
-        'endLine' => 1299,
-        'startColumn' => 5,
-        'endColumn' => 5,
-        'couldThrow' => true,
-        'isClosure' => false,
-        'isGenerator' => false,
-        'isVariadic' => false,
-        'modifiers' => 4,
         'namespace' => 'App\\Http\\Controllers\\HR_Department',
         'declaringClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',
         'implementingClassName' => 'App\\Http\\Controllers\\HR_Department\\EmployeeController',

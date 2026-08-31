@@ -8,7 +8,7 @@
 
 declare(strict_types=1);
 
-class Container_e2adf46dba extends _PHPStan_eca38da41\Nette\DI\Container
+class Container_10f3a0483d extends _PHPStan_eca38da41\Nette\DI\Container
 {
 	protected $tags = [
 		'phpstan.stubFilesExtension' => [
@@ -6224,7 +6224,7 @@ class Container_e2adf46dba extends _PHPStan_eca38da41\Nette\DI\Container
 			private $container;
 
 
-			public function __construct(Container_e2adf46dba $container)
+			public function __construct(Container_10f3a0483d $container)
 			{
 				$this->container = $container;
 			}
@@ -6272,7 +6272,7 @@ class Container_e2adf46dba extends _PHPStan_eca38da41\Nette\DI\Container
 			private $container;
 
 
-			public function __construct(Container_e2adf46dba $container)
+			public function __construct(Container_10f3a0483d $container)
 			{
 				$this->container = $container;
 			}
@@ -6332,7 +6332,7 @@ class Container_e2adf46dba extends _PHPStan_eca38da41\Nette\DI\Container
 			private $container;
 
 
-			public function __construct(Container_e2adf46dba $container)
+			public function __construct(Container_10f3a0483d $container)
 			{
 				$this->container = $container;
 			}
@@ -6401,7 +6401,7 @@ class Container_e2adf46dba extends _PHPStan_eca38da41\Nette\DI\Container
 			private $container;
 
 
-			public function __construct(Container_e2adf46dba $container)
+			public function __construct(Container_10f3a0483d $container)
 			{
 				$this->container = $container;
 			}
@@ -6426,7 +6426,7 @@ class Container_e2adf46dba extends _PHPStan_eca38da41\Nette\DI\Container
 			private $container;
 
 
-			public function __construct(Container_e2adf46dba $container)
+			public function __construct(Container_10f3a0483d $container)
 			{
 				$this->container = $container;
 			}
@@ -6446,7 +6446,7 @@ class Container_e2adf46dba extends _PHPStan_eca38da41\Nette\DI\Container
 			private $container;
 
 
-			public function __construct(Container_e2adf46dba $container)
+			public function __construct(Container_10f3a0483d $container)
 			{
 				$this->container = $container;
 			}
@@ -6466,7 +6466,7 @@ class Container_e2adf46dba extends _PHPStan_eca38da41\Nette\DI\Container
 			private $container;
 
 
-			public function __construct(Container_e2adf46dba $container)
+			public function __construct(Container_10f3a0483d $container)
 			{
 				$this->container = $container;
 			}
@@ -6507,7 +6507,7 @@ class Container_e2adf46dba extends _PHPStan_eca38da41\Nette\DI\Container
 			private $container;
 
 
-			public function __construct(Container_e2adf46dba $container)
+			public function __construct(Container_10f3a0483d $container)
 			{
 				$this->container = $container;
 			}
@@ -6550,7 +6550,7 @@ class Container_e2adf46dba extends _PHPStan_eca38da41\Nette\DI\Container
 			private $container;
 
 
-			public function __construct(Container_e2adf46dba $container)
+			public function __construct(Container_10f3a0483d $container)
 			{
 				$this->container = $container;
 			}
@@ -9998,7 +9998,7 @@ class Container_e2adf46dba extends _PHPStan_eca38da41\Nette\DI\Container
 	}
 
 
-	public function createServiceContainer(): Container_e2adf46dba
+	public function createServiceContainer(): Container_10f3a0483d
 	{
 		return $this;
 	}
@@ -11075,158 +11075,76 @@ class Container_e2adf46dba extends _PHPStan_eca38da41\Nette\DI\Container
 			'usedLevel' => '5',
 			'cliAutoloadFile' => null,
 			'env' => [
-				'GJS_DEBUG_TOPICS' => 'JS ERROR;JS LOG',
-				'LESSOPEN' => '| /usr/bin/lesspipe %s',
-				'LOG_STACK' => 'single',
-				'REDIS_PORT' => '6379',
-				'LANGUAGE' => 'en_PH:en',
-				'USER' => 'lenberd',
-				'LOG_LEVEL' => 'warning',
-				'DB_CONNECTION' => 'mysql',
-				'XDG_SEAT' => 'seat0',
-				'APP_DEBUG' => 'false',
-				'MAIL_USERNAME' => 'support@esgroup.com.ph',
-				'CROSSCHEX_SECOND_SECRET' => '04592c47b2f0085e8988bf9c5080f93b',
-				'JOB_ORDER_ATTACHMENT_MAX_KB' => '51200',
-				'XDG_SESSION_TYPE' => 'x11',
-				'GIT_ASKPASS' => '/usr/share/code/resources/app/extensions/git/dist/askpass.sh',
-				'APP_URL' => 'http://localhost',
-				'DB_PORT' => '3306',
-				'MAIL_FROM_ADDRESS' => 'support@esgroup.com.ph',
-				'SHLVL' => '1',
-				'DB_COLLATION' => 'utf8mb4_unicode_ci',
-				'AWS_USE_PATH_STYLE_ENDPOINT' => 'false',
-				'CROSSCHEX_GONZALES_NAME' => 'Gonzales Biometric',
-				'HOME' => '/home/lenberd',
-				'CHROME_DESKTOP' => 'code.desktop',
-				'DB_CHARSET' => 'utf8mb4',
-				'REDIS_CLIENT' => 'phpredis',
-				'TERM_PROGRAM_VERSION' => '1.135.0',
-				'DESKTOP_SESSION' => 'cinnamon',
-				'NVM_BIN' => '/home/lenberd/.nvm/versions/node/v24.19.0/bin',
-				'NVM_INC' => '/home/lenberd/.nvm/versions/node/v24.19.0/include/node',
-				'GIO_LAUNCHED_DESKTOP_FILE' => '/usr/share/applications/code.desktop',
-				'CROSSCHEX_MAIN_SECRET' => '573778df0160dac942d1f83e2f3a88b6',
-				'GTK_MODULES' => 'gail:atk-bridge',
-				'XDG_SEAT_PATH' => '/org/freedesktop/DisplayManager/Seat0',
-				'VSCODE_GIT_ASKPASS_MAIN' => '/usr/share/code/resources/app/extensions/git/dist/askpass-main.js',
-				'MAIL_FROM_NAME' => 'Jell Group Support',
-				'VSCODE_GIT_ASKPASS_NODE' => '/usr/share/code/code',
-				'DB_DATABASE' => 'esgroupsystemv2',
-				'SESSION_PATH' => '/',
-				'TURNSTILE_SECRET_KEY' => '0x4AAAAAADEzij4DRUJ0DaM9ACaUsMjgad8',
-				'CINNAMON_VERSION' => '6.6.9',
-				'VSCODE_PYTHON_AUTOACTIVATE_GUARD' => '1',
-				'DBUS_SESSION_BUS_ADDRESS' => 'unix:path=/run/user/1000/bus',
-				'APP_NAME' => 'Jell_Group',
+				'SHELL' => '/bin/bash',
+				'SESSION_MANAGER' => 'local/lenberd:@/tmp/.ICE-unix/1553,unix/lenberd:/tmp/.ICE-unix/1553',
+				'QT_ACCESSIBILITY' => '1',
 				'COLORTERM' => 'truecolor',
-				'GIO_LAUNCHED_DESKTOP_FILE_PID' => '5094',
-				'SEED_DEVELOPER_USERNAME' => 'developer',
-				'NVM_DIR' => '/home/lenberd/.nvm',
-				'SESSION_DRIVER' => 'database',
-				'VITE_APP_NAME' => 'Jell_Group',
-				'TRUSTED_PROXIES' => '',
-				'SHELL_VERBOSITY' => '0',
-				'LOG_CHANNEL' => 'stack',
-				'DB_USERNAME' => 'root',
-				'MEMCACHED_HOST' => '127.0.0.1',
-				'CROSSCHEX_GONZALES_SECRET' => '082599c902a3f9db83ede54571b5a6d1',
+				'XDG_CONFIG_DIRS' => '/etc/xdg/xdg-cinnamon:/etc/xdg',
+				'XDG_SESSION_PATH' => '/org/freedesktop/DisplayManager/Session0',
+				'NVM_INC' => '/home/lenberd/.nvm/versions/node/v24.19.0/include/node',
+				'TERM_PROGRAM_VERSION' => '1.135.0',
+				'GNOME_DESKTOP_SESSION_ID' => 'this-is-deprecated',
+				'COPILOT_DEBUG_NONCE' => 'bf3d689912a8cde17ad2c835844eef66',
 				'GTK_IM_MODULE' => 'ibus',
+				'QT_IM_MODULES' => 'wayland;ibus',
+				'LANGUAGE' => 'en_PH:en',
+				'SSH_AUTH_SOCK' => '/run/user/1000/keyring/ssh',
+				'CINNAMON_VERSION' => '6.6.9',
+				'XMODIFIERS' => '@@im=ibus',
+				'DESKTOP_SESSION' => 'cinnamon',
+				'GTK_MODULES' => 'gail:atk-bridge',
+				'XDG_SEAT' => 'seat0',
+				'PWD' => '/home/lenberd/Documents/esgroup.version.2',
+				'XDG_SESSION_DESKTOP' => 'cinnamon',
 				'LOGNAME' => 'lenberd',
-				'IGNITION_ENABLE_RULER' => 'false',
-				'SANCTUM_TOKEN_EXPIRATION' => '1440',
-				'_' => './vendor/bin/phpstan',
-				'AWS_DEFAULT_REGION' => 'us-east-1',
-				'CROSSCHEX_SECOND_KEY' => 'dfe0e13f06561ff27a2f4f819697985b',
+				'XDG_SESSION_TYPE' => 'x11',
+				'GPG_AGENT_INFO' => '/run/user/1000/gnupg/S.gpg-agent:0:1',
+				'XAUTHORITY' => '/home/lenberd/.Xauthority',
+				'VSCODE_GIT_ASKPASS_NODE' => '/usr/share/code/code',
+				'XDG_GREETER_DATA_DIR' => '/var/lib/lightdm-data/lenberd',
+				'GJS_DEBUG_TOPICS' => 'JS ERROR;JS LOG',
+				'GDM_LANG' => 'en_US',
+				'HOME' => '/home/lenberd',
+				'LANG' => 'en_PH.UTF-8',
+				'LS_COLORS' => 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:',
+				'XDG_CURRENT_DESKTOP' => 'X-Cinnamon',
+				'GIT_ASKPASS' => '/usr/share/code/resources/app/extensions/git/dist/askpass.sh',
+				'XDG_SEAT_PATH' => '/org/freedesktop/DisplayManager/Seat0',
+				'CHROME_DESKTOP' => 'code.desktop',
+				'CLUTTER_IM_MODULE' => 'ibus',
+				'GJS_DEBUG_OUTPUT' => 'stderr',
+				'NVM_DIR' => '/home/lenberd/.nvm',
+				'VSCODE_GIT_ASKPASS_EXTRA_ARGS' => '',
+				'VSCODE_PYTHON_AUTOACTIVATE_GUARD' => '1',
+				'LESSCLOSE' => '/usr/bin/lesspipe %s %s',
 				'XDG_SESSION_CLASS' => 'user',
 				'TERM' => 'xterm-256color',
-				'XDG_SESSION_ID' => 'c2',
-				'COLUMNS' => '168',
-				'MAIL_ENCRYPTION' => 'ssl',
-				'SANCTUM_TOKEN_PREFIX' => 'esg_',
-				'GNOME_DESKTOP_SESSION_ID' => 'this-is-deprecated',
-				'FC_FONTATIONS' => '1',
-				'PATH' => '/home/lenberd/.config/composer/vendor/bin:/home/lenberd/.config/Code/User/globalStorage/github.copilot-chat/debugCommand:/home/lenberd/.config/Code/User/globalStorage/github.copilot-chat/copilotCli:/home/lenberd/.config/composer/vendor/bin:/home/lenberd/.nvm/versions/node/v24.19.0/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin',
-				'SESSION_MANAGER' => 'local/lenberd:@/tmp/.ICE-unix/1617,unix/lenberd:/tmp/.ICE-unix/1617',
-				'GDM_LANG' => 'en_US',
-				'GTK3_MODULES' => 'xapp-gtk3-module',
-				'CROSSCHEX_MAIN_KEY' => '46332840a78485e57cbee93deae7a80d',
-				'TURNSTILE_SITE_KEY' => '0x4AAAAAADEzir3ArwFoI83d',
-				'XDG_SESSION_PATH' => '/org/freedesktop/DisplayManager/Session0',
-				'XDG_RUNTIME_DIR' => '/run/user/1000',
-				'GDK_BACKEND' => 'x11',
-				'MAIL_PASSWORD' => 'M@st3rk3ys123!',
-				'AWS_BUCKET' => '',
-				'DISPLAY' => ':0',
-				'IGNITION_SHOW_PRODUCTION_EXCEPTION' => 'false',
-				'LANG' => 'en_PH.UTF-8',
-				'XDG_CURRENT_DESKTOP' => 'X-Cinnamon',
-				'SESSION_ENCRYPT' => 'false',
-				'XMODIFIERS' => '@@im=ibus',
-				'XDG_SESSION_DESKTOP' => 'cinnamon',
-				'XAUTHORITY' => '/home/lenberd/.Xauthority',
-				'LS_COLORS' => 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=00:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.avif=01;35:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:*~=00;90:*#=00;90:*.bak=00;90:*.crdownload=00;90:*.dpkg-dist=00;90:*.dpkg-new=00;90:*.dpkg-old=00;90:*.dpkg-tmp=00;90:*.old=00;90:*.orig=00;90:*.part=00;90:*.rej=00;90:*.rpmnew=00;90:*.rpmorig=00;90:*.rpmsave=00;90:*.swp=00;90:*.tmp=00;90:*.ucf-dist=00;90:*.ucf-new=00;90:*.ucf-old=00;90:',
+				'LESSOPEN' => '| /usr/bin/lesspipe %s',
+				'USER' => 'lenberd',
 				'VSCODE_GIT_IPC_HANDLE' => '/run/user/1000/vscode-git-52c21d5268.sock',
-				'TERM_PROGRAM' => 'vscode',
-				'APP_FAKER_LOCALE' => 'en_US',
-				'FILESYSTEM_DISK' => 'local',
-				'MAIL_HOST' => 'esgroup.com.ph',
-				'CROSSCHEX_WEBHOOK_PASSWORD' => '',
-				'SSH_AUTH_SOCK' => '/run/user/1000/keyring/ssh',
-				'XDG_GREETER_DATA_DIR' => '/var/lib/lightdm-data/lenberd',
-				'IGNITION_EDITOR' => 'false',
-				'CROSSCHEX_SECOND_URL' => 'https://api.us.crosschexcloud.com/',
-				'SHELL' => '/bin/bash',
-				'APP_MAINTENANCE_DRIVER' => 'file',
-				'BCRYPT_ROUNDS' => '12',
-				'SESSION_LIFETIME' => '120',
-				'BROADCAST_CONNECTION' => 'log',
-				'CROSSCHEX_GONZALES_KEY' => 'd9448a240b0e1095729a9b4c207132ac',
-				'QT_ACCESSIBILITY' => '1',
-				'GDMSESSION' => 'cinnamon',
-				'AWS_ACCESS_KEY_ID' => '',
-				'LESSCLOSE' => '/usr/bin/lesspipe %s %s',
-				'APP_FALLBACK_LOCALE' => 'en',
-				'APP_TIMEZONE' => 'Asia/Manila',
-				'AWS_SECRET_ACCESS_KEY' => '',
-				'CROSSCHEX_SYNC_SESSION_MINUTES' => '120',
-				'REDIS_PASSWORD' => 'null',
-				'GPG_AGENT_INFO' => '/run/user/1000/gnupg/S.gpg-agent:0:1',
-				'GJS_DEBUG_OUTPUT' => 'stderr',
-				'LOG_DEPRECATIONS_CHANNEL' => 'null',
-				'CROSSCHEX_MAIN_URL' => 'https://api.us.crosschexcloud.com/',
-				'SEED_DEVELOPER_PASSWORD' => 'Use-A-Strong-Password-2026!',
-				'VSCODE_GIT_ASKPASS_EXTRA_ARGS' => '',
+				'DISPLAY' => ':0',
+				'SHLVL' => '1',
+				'NVM_CD_FLAGS' => '',
 				'QT_IM_MODULE' => 'ibus',
 				'XDG_VTNR' => '7',
-				'SESSION_DOMAIN' => 'null',
-				'CACHE_STORE' => 'database',
-				'MAIL_MAILER' => 'log',
-				'MAIL_PORT' => '465',
-				'EMPLOYEE_ATTACHMENT_MAX_KB' => '10240',
-				'PWD' => '/home/lenberd/Documents/esgroup.version.2',
-				'APP_ENV' => 'local',
-				'APP_KEY' => 'base64:IXuq/pOU7d0QpvaiM3+EAj/G38XnARjIgEPD5VVOSV8=',
-				'DB_PASSWORD' => '',
-				'REDIS_HOST' => '127.0.0.1',
-				'CROSSCHEX_SECOND_NAME' => 'Balintawak Biometric',
-				'CROSSCHEX_SYNC_PER_PAGE' => '200',
-				'XDG_CONFIG_DIRS' => '/etc/xdg/xdg-cinnamon:/etc/xdg',
-				'COPILOT_DEBUG_NONCE' => 'bf3d689912a8cde17ad2c835844eef66',
-				'CLUTTER_IM_MODULE' => 'ibus',
-				'NVM_CD_FLAGS' => '',
+				'XDG_SESSION_ID' => 'c2',
+				'FC_FONTATIONS' => '1',
+				'XDG_RUNTIME_DIR' => '/run/user/1000',
+				'VSCODE_GIT_ASKPASS_MAIN' => '/usr/share/code/resources/app/extensions/git/dist/askpass-main.js',
+				'GTK3_MODULES' => 'xapp-gtk3-module',
 				'XDG_DATA_DIRS' => '/usr/share/cinnamon:/home/lenberd/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share:/var/lib/snapd/desktop',
-				'LINES' => '49',
-				'SEED_DEVELOPER_USER' => 'true',
-				'DB_HOST' => '127.0.0.1',
-				'QUEUE_CONNECTION' => 'database',
-				'CROSSCHEX_SYNC_RATE_LIMIT_RETRY_SECONDS' => '31',
-				'QT_IM_MODULES' => 'wayland;ibus',
-				'APP_LOCALE' => 'en',
-				'CROSSCHEX_GONZALES_URL' => 'https://api.us.crosschexcloud.com/',
-				'SEED_DEVELOPER_EMAIL' => 'developer@esgroup.com.ph',
-				'SESSION_SECURE_COOKIE' => 'true',
-				'CROSSCHEX_MAIN_NAME' => 'Mirasol Biometric',
+				'GDK_BACKEND' => 'x11',
+				'PATH' => '/home/lenberd/.local/bin:/home/lenberd/.config/composer/vendor/bin:/home/lenberd/.config/Code/User/globalStorage/github.copilot-chat/debugCommand:/home/lenberd/.config/Code/User/globalStorage/github.copilot-chat/copilotCli:/home/lenberd/.local/bin:/home/lenberd/.local/bin:/home/lenberd/.config/composer/vendor/bin:/home/lenberd/.nvm/versions/node/v24.19.0/bin:/home/lenberd/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin',
+				'GDMSESSION' => 'cinnamon',
+				'DBUS_SESSION_BUS_ADDRESS' => 'unix:path=/run/user/1000/bus',
+				'NVM_BIN' => '/home/lenberd/.nvm/versions/node/v24.19.0/bin',
+				'GIO_LAUNCHED_DESKTOP_FILE_PID' => '6019',
+				'GIO_LAUNCHED_DESKTOP_FILE' => '/usr/share/applications/code.desktop',
+				'TERM_PROGRAM' => 'vscode',
+				'_' => './vendor/bin/phpstan',
+				'LINES' => '14',
+				'COLUMNS' => '168',
+				'SHELL_VERBOSITY' => '0',
 			],
 		];
 	}
