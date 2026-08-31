@@ -938,19 +938,20 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/IT/ItInventoryItemController.php' => 
     array (
-      0 => '8a57f6b06d467104b70cfe248ce2c0e5a99b74bffc62ba5b6eac7d7bfb9d0e5b',
+      0 => '7e54b730151bea65d6ab43ab65396b550db913946957b137178ac75b4a24d5d5',
       1 => 
       array (
         0 => 'app\\http\\controllers\\it\\itinventoryitemcontroller',
       ),
       2 => 
       array (
-        0 => 'app\\http\\controllers\\it\\index',
-        1 => 'app\\http\\controllers\\it\\create',
-        2 => 'app\\http\\controllers\\it\\store',
-        3 => 'app\\http\\controllers\\it\\edit',
-        4 => 'app\\http\\controllers\\it\\update',
-        5 => 'app\\http\\controllers\\it\\destroy',
+        0 => 'app\\http\\controllers\\it\\__construct',
+        1 => 'app\\http\\controllers\\it\\index',
+        2 => 'app\\http\\controllers\\it\\create',
+        3 => 'app\\http\\controllers\\it\\store',
+        4 => 'app\\http\\controllers\\it\\edit',
+        5 => 'app\\http\\controllers\\it\\update',
+        6 => 'app\\http\\controllers\\it\\destroy',
       ),
       3 => 
       array (
@@ -958,25 +959,26 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/IT_Department/CctvController.php' => 
     array (
-      0 => '800423e3c585406cad723c912d34d0c602e16e06782b99add0b54672b3739215',
+      0 => 'b87865e168f02ac6c389ff69daf52955de13c792cf86ae2ac8900ebec0c079d7',
       1 => 
       array (
         0 => 'app\\http\\controllers\\it_department\\cctvcontroller',
       ),
       2 => 
       array (
-        0 => 'app\\http\\controllers\\it_department\\index',
-        1 => 'app\\http\\controllers\\it_department\\store',
-        2 => 'app\\http\\controllers\\it_department\\update',
-        3 => 'app\\http\\controllers\\it_department\\destroy',
-        4 => 'app\\http\\controllers\\it_department\\view',
-        5 => 'app\\http\\controllers\\it_department\\accepttask',
-        6 => 'app\\http\\controllers\\it_department\\markasdone',
-        7 => 'app\\http\\controllers\\it_department\\addnote',
-        8 => 'app\\http\\controllers\\it_department\\addfiles',
-        9 => 'app\\http\\controllers\\it_department\\export',
-        10 => 'app\\http\\controllers\\it_department\\busstatus',
-        11 => 'app\\http\\controllers\\it_department\\busstatusshow',
+        0 => 'app\\http\\controllers\\it_department\\__construct',
+        1 => 'app\\http\\controllers\\it_department\\index',
+        2 => 'app\\http\\controllers\\it_department\\store',
+        3 => 'app\\http\\controllers\\it_department\\update',
+        4 => 'app\\http\\controllers\\it_department\\destroy',
+        5 => 'app\\http\\controllers\\it_department\\view',
+        6 => 'app\\http\\controllers\\it_department\\accepttask',
+        7 => 'app\\http\\controllers\\it_department\\markasdone',
+        8 => 'app\\http\\controllers\\it_department\\addnote',
+        9 => 'app\\http\\controllers\\it_department\\addfiles',
+        10 => 'app\\http\\controllers\\it_department\\export',
+        11 => 'app\\http\\controllers\\it_department\\busstatus',
+        12 => 'app\\http\\controllers\\it_department\\busstatusshow',
       ),
       3 => 
       array (
@@ -984,30 +986,30 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/IT_Department/TicketController.php' => 
     array (
-      0 => 'a5eb6866e8fe38db13c61377733f99892a6abfc280f9251e07b83808cdaf03dd',
+      0 => '778358f4efddf4a7a720ebb6f3781661242776c4c166a09548d395959959700e',
       1 => 
       array (
         0 => 'app\\http\\controllers\\it_department\\ticketcontroller',
       ),
       2 => 
       array (
-        0 => 'app\\http\\controllers\\it_department\\index',
-        1 => 'app\\http\\controllers\\it_department\\approve',
-        2 => 'app\\http\\controllers\\it_department\\disapprove',
-        3 => 'app\\http\\controllers\\it_department\\cctvindex',
-        4 => 'app\\http\\controllers\\it_department\\createjobordersindex',
-        5 => 'app\\http\\controllers\\it_department\\view',
-        6 => 'app\\http\\controllers\\it_department\\storejoborders',
-        7 => 'app\\http\\controllers\\it_department\\destroy',
-        8 => 'app\\http\\controllers\\it_department\\addnote',
-        9 => 'app\\http\\controllers\\it_department\\addfiles',
-        10 => 'app\\http\\controllers\\it_department\\downloadfile',
-        11 => 'app\\http\\controllers\\it_department\\export',
-        12 => 'app\\http\\controllers\\it_department\\accepttask',
-        13 => 'app\\http\\controllers\\it_department\\markasdone',
-        14 => 'app\\http\\controllers\\it_department\\update',
-        15 => 'app\\http\\controllers\\it_department\\print',
-        16 => 'app\\http\\controllers\\it_department\\normalizedate',
+        0 => 'app\\http\\controllers\\it_department\\__construct',
+        1 => 'app\\http\\controllers\\it_department\\index',
+        2 => 'app\\http\\controllers\\it_department\\approve',
+        3 => 'app\\http\\controllers\\it_department\\disapprove',
+        4 => 'app\\http\\controllers\\it_department\\cctvindex',
+        5 => 'app\\http\\controllers\\it_department\\createjobordersindex',
+        6 => 'app\\http\\controllers\\it_department\\view',
+        7 => 'app\\http\\controllers\\it_department\\storejoborders',
+        8 => 'app\\http\\controllers\\it_department\\destroy',
+        9 => 'app\\http\\controllers\\it_department\\addnote',
+        10 => 'app\\http\\controllers\\it_department\\addfiles',
+        11 => 'app\\http\\controllers\\it_department\\downloadfile',
+        12 => 'app\\http\\controllers\\it_department\\export',
+        13 => 'app\\http\\controllers\\it_department\\accepttask',
+        14 => 'app\\http\\controllers\\it_department\\markasdone',
+        15 => 'app\\http\\controllers\\it_department\\update',
+        16 => 'app\\http\\controllers\\it_department\\print',
       ),
       3 => 
       array (
@@ -2483,17 +2485,19 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Models/CctvConcern.php' => 
     array (
-      0 => '66c7f3a7ac5b3798e4a49bd16a4c4947d2095e49725d7a89d03942eef1705c20',
+      0 => '1c1e1438cf0f1b3476c7515a123a651766d513dd16c53dd581fb26dc158797ad',
       1 => 
       array (
         0 => 'app\\models\\cctvconcern',
       ),
       2 => 
       array (
-        0 => 'app\\models\\assignee',
-        1 => 'app\\models\\creator',
-        2 => 'app\\models\\useditems',
-        3 => 'app\\models\\bus',
+        0 => 'app\\models\\scopesearch',
+        1 => 'app\\models\\scopestatus',
+        2 => 'app\\models\\assignee',
+        3 => 'app\\models\\creator',
+        4 => 'app\\models\\useditems',
+        5 => 'app\\models\\bus',
       ),
       3 => 
       array (
@@ -2840,13 +2844,16 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     '/home/lenberd/Documents/esgroup.version.2/app/Models/ItInventoryItem.php' => 
     array (
-      0 => 'a83870153a82762cd325a1e9470726003cd26b9130a1357123a93625cd227fe5',
+      0 => 'eb70f960fa865c33880106160db41a7eaf802f6a8cc789de7464f14fafae5f22',
       1 => 
       array (
         0 => 'app\\models\\itinventoryitem',
       ),
       2 => 
       array (
+        0 => 'app\\models\\scopesearch',
+        1 => 'app\\models\\scopecategory',
+        2 => 'app\\models\\scopeactive',
       ),
       3 => 
       array (
@@ -5126,6 +5133,266 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         5 => 'app\\services\\hr_department\\delete',
         6 => 'app\\services\\hr_department\\diffchanges',
         7 => 'app\\services\\hr_department\\normalizedate',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Enums/CctvConcernStatus.php' => 
+    array (
+      0 => 'b09f4ffffa464fed2536c98c0ee4a56df947d2ec1264fdaf0a8563dc8dee0b39',
+      1 => 
+      array (
+        0 => 'app\\enums\\cctvconcernstatus',
+      ),
+      2 => 
+      array (
+        0 => 'app\\enums\\iscompleted',
+        1 => 'app\\enums\\values',
+        2 => 'app\\enums\\options',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Enums/ItTicketApprovalStatus.php' => 
+    array (
+      0 => '3d3c67345d6783f02ff35c627efa018fd09a462654505326374dcf2f3b747433',
+      1 => 
+      array (
+        0 => 'app\\enums\\itticketapprovalstatus',
+      ),
+      2 => 
+      array (
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Enums/ItTicketStatus.php' => 
+    array (
+      0 => '7a8fc48cf1b1c4876907c4630ef6213a83d295277c9322defd8c22b2674adc05',
+      1 => 
+      array (
+        0 => 'app\\enums\\itticketstatus',
+      ),
+      2 => 
+      array (
+        0 => 'app\\enums\\canbedeleted',
+        1 => 'app\\enums\\values',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/ITDepartment/AddJobOrderFilesRequest.php' => 
+    array (
+      0 => '759751b18e779a9347664be1b86e30aa7b7a21e3932603e4ad27efd5a1112fae',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\addjoborderfilesrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\authorize',
+        1 => 'app\\http\\requests\\itdepartment\\rules',
+        2 => 'app\\http\\requests\\itdepartment\\withvalidator',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/ITDepartment/AddJobOrderNoteRequest.php' => 
+    array (
+      0 => '20a2270c8acaae508dd7dacd0e53bf05113571539ce5b69d01389c79fe1293d4',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\addjobordernoterequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\authorize',
+        1 => 'app\\http\\requests\\itdepartment\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/ITDepartment/StoreCctvConcernRequest.php' => 
+    array (
+      0 => '42d124b889b9a0b53ce290d0abdd3443492404014af87fa707fe408c3c8f0405',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\storecctvconcernrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\authorize',
+        1 => 'app\\http\\requests\\itdepartment\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/ITDepartment/StoreItInventoryItemRequest.php' => 
+    array (
+      0 => 'b3330ae8483755fa25d3daa01273d401dc4853f63effdd522bb18b8d270f8bdb',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\storeitinventoryitemrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\authorize',
+        1 => 'app\\http\\requests\\itdepartment\\rules',
+        2 => 'app\\http\\requests\\itdepartment\\prepareforvalidation',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/ITDepartment/UpdateCctvConcernRequest.php' => 
+    array (
+      0 => 'c943b6ac9260eaea014bf7421ce13a76b6d484703f5d313aee6b124d16f15f19',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\updatecctvconcernrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\authorize',
+        1 => 'app\\http\\requests\\itdepartment\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/ITDepartment/UpdateItInventoryItemRequest.php' => 
+    array (
+      0 => 'bcb556e531e1d0de6cecb862975dc18a33995464ab1241af15a441a6729d1cde',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\updateitinventoryitemrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\authorize',
+        1 => 'app\\http\\requests\\itdepartment\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/ITDepartment/UpdateJobOrderRequest.php' => 
+    array (
+      0 => '3bb85720a48df2696d1a2552a11f7945b67c27d4e89149e98d9ea5d25ccc28c0',
+      1 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\updatejoborderrequest',
+      ),
+      2 => 
+      array (
+        0 => 'app\\http\\requests\\itdepartment\\authorize',
+        1 => 'app\\http\\requests\\itdepartment\\rules',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/IT/ItInventoryService.php' => 
+    array (
+      0 => '8f9d0d406591ba10e3b02e1f6cd764e5a80c953124835152d2f339ad5021d317',
+      1 => 
+      array (
+        0 => 'app\\services\\it\\itinventoryservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\it\\paginate',
+        1 => 'app\\services\\it\\categories',
+        2 => 'app\\services\\it\\create',
+        3 => 'app\\services\\it\\update',
+        4 => 'app\\services\\it\\delete',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/ITDepartment/CctvConcernDirectoryService.php' => 
+    array (
+      0 => '89d696288598a694eef4305cab44e5cd15a426bf2b9bfcb11cf63539a2330c94',
+      1 => 
+      array (
+        0 => 'app\\services\\itdepartment\\cctvconcerndirectoryservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\itdepartment\\indexdata',
+        1 => 'app\\services\\itdepartment\\query',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/ITDepartment/CctvConcernService.php' => 
+    array (
+      0 => '4f25dec4fb29ddad0367052891f757165c2136af751e1f9fbe0fa59e8b374093',
+      1 => 
+      array (
+        0 => 'app\\services\\itdepartment\\cctvconcernservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\itdepartment\\create',
+        1 => 'app\\services\\itdepartment\\update',
+        2 => 'app\\services\\itdepartment\\delete',
+        3 => 'app\\services\\itdepartment\\nextjobordernumber',
+        4 => 'app\\services\\itdepartment\\restoreexistingitems',
+        5 => 'app\\services\\itdepartment\\replaceitems',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/ITDepartment/ItJobOrderDirectoryService.php' => 
+    array (
+      0 => 'b3af0146c47be39b7dfc16ec89fdd636a89db0552b5258234d4ebeb9b6c95dd0',
+      1 => 
+      array (
+        0 => 'app\\services\\itdepartment\\itjoborderdirectoryservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\itdepartment\\paginatetab',
+        1 => 'app\\services\\itdepartment\\indexdata',
+        2 => 'app\\services\\itdepartment\\basequery',
+        3 => 'app\\services\\itdepartment\\applytab',
+      ),
+      3 => 
+      array (
+      ),
+    ),
+    '/home/lenberd/Documents/esgroup.version.2/app/Services/ITDepartment/ItJobOrderService.php' => 
+    array (
+      0 => 'd25ad94fe3f6ab225a32619a8f292a6cdc04ceb411b1e4a2694f1900692b7261',
+      1 => 
+      array (
+        0 => 'app\\services\\itdepartment\\itjoborderservice',
+      ),
+      2 => 
+      array (
+        0 => 'app\\services\\itdepartment\\create',
+        1 => 'app\\services\\itdepartment\\approve',
+        2 => 'app\\services\\itdepartment\\disapprove',
+        3 => 'app\\services\\itdepartment\\delete',
+        4 => 'app\\services\\itdepartment\\addnote',
+        5 => 'app\\services\\itdepartment\\addfiles',
+        6 => 'app\\services\\itdepartment\\accept',
+        7 => 'app\\services\\itdepartment\\complete',
+        8 => 'app\\services\\itdepartment\\update',
+        9 => 'app\\services\\itdepartment\\storefiles',
+        10 => 'app\\services\\itdepartment\\log',
+        11 => 'app\\services\\itdepartment\\dispatchcreatedreactions',
       ),
       3 => 
       array (

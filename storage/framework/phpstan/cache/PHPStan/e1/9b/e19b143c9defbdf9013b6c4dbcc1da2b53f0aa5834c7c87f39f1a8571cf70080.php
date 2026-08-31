@@ -2,7 +2,7 @@
 
 // odsl-/home/lenberd/Documents/esgroup.version.2/app/Models/ItInventoryItem.php-PHPStan\BetterReflection\Reflection\ReflectionClass-App\Models\ItInventoryItem
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-8.3.6-a83870153a82762cd325a1e9470726003cd26b9130a1357123a93625cd227fe5',
+   'variableKey' => 'v2-6.70.0.3-8.3.6-eb70f960fa865c33880106160db41a7eaf802f6a8cc789de7464f14fafae5f22',
    'data' => 
   array (
     'locatedSource' => 
@@ -38,8 +38,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     'attributes' => 
     array (
     ),
-    'startLine' => 22,
-    'endLine' => 41,
+    'startLine' => 23,
+    'endLine' => 72,
     'startColumn' => 1,
     'endColumn' => 1,
     'parentClassName' => 'Illuminate\\Database\\Eloquent\\Model',
@@ -66,20 +66,20 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           'code' => '[\'item_name\', \'category\', \'brand\', \'model\', \'part_number\', \'unit\', \'stock_qty\', \'minimum_stock\', \'description\', \'location\', \'is_active\']',
           'attributes' => 
           array (
-            'startLine' => 24,
-            'endLine' => 36,
-            'startTokenPos' => 38,
-            'startFilePos' => 556,
-            'endTokenPos' => 73,
-            'endFilePos' => 786,
+            'startLine' => 25,
+            'endLine' => 37,
+            'startTokenPos' => 43,
+            'startFilePos' => 598,
+            'endTokenPos' => 78,
+            'endFilePos' => 828,
           ),
         ),
         'docComment' => NULL,
         'attributes' => 
         array (
         ),
-        'startLine' => 24,
-        'endLine' => 36,
+        'startLine' => 25,
+        'endLine' => 37,
         'startColumn' => 5,
         'endColumn' => 6,
         'isPromoted' => false,
@@ -98,23 +98,23 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         'type' => NULL,
         'default' => 
         array (
-          'code' => '[\'is_active\' => \'boolean\']',
+          'code' => '[\'is_active\' => \'boolean\', \'stock_qty\' => \'integer\', \'minimum_stock\' => \'integer\']',
           'attributes' => 
           array (
-            'startLine' => 38,
-            'endLine' => 40,
-            'startTokenPos' => 82,
-            'startFilePos' => 813,
-            'endTokenPos' => 91,
-            'endFilePos' => 853,
+            'startLine' => 39,
+            'endLine' => 43,
+            'startTokenPos' => 87,
+            'startFilePos' => 855,
+            'endTokenPos' => 110,
+            'endFilePos' => 967,
           ),
         ),
         'docComment' => NULL,
         'attributes' => 
         array (
         ),
-        'startLine' => 38,
-        'endLine' => 40,
+        'startLine' => 39,
+        'endLine' => 43,
         'startColumn' => 5,
         'endColumn' => 6,
         'isPromoted' => false,
@@ -127,6 +127,241 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     'immediateMethods' => 
     array (
+      'scopeSearch' => 
+      array (
+        'name' => 'scopeSearch',
+        'parameters' => 
+        array (
+          'query' => 
+          array (
+            'name' => 'query',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'Illuminate\\Database\\Eloquent\\Builder',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => false,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 46,
+            'endLine' => 46,
+            'startColumn' => 33,
+            'endColumn' => 46,
+            'parameterIndex' => 0,
+            'isOptional' => false,
+          ),
+          'search' => 
+          array (
+            'name' => 'search',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'string',
+                'isIdentifier' => true,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => false,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 46,
+            'endLine' => 46,
+            'startColumn' => 49,
+            'endColumn' => 62,
+            'parameterIndex' => 1,
+            'isOptional' => false,
+          ),
+        ),
+        'returnsReference' => false,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Database\\Eloquent\\Builder',
+            'isIdentifier' => false,
+          ),
+        ),
+        'attributes' => 
+        array (
+        ),
+        'docComment' => '/** @param Builder<self> $query */',
+        'startLine' => 46,
+        'endLine' => 59,
+        'startColumn' => 5,
+        'endColumn' => 5,
+        'couldThrow' => false,
+        'isClosure' => false,
+        'isGenerator' => false,
+        'isVariadic' => false,
+        'modifiers' => 1,
+        'namespace' => 'App\\Models',
+        'declaringClassName' => 'App\\Models\\ItInventoryItem',
+        'implementingClassName' => 'App\\Models\\ItInventoryItem',
+        'currentClassName' => 'App\\Models\\ItInventoryItem',
+        'aliasName' => NULL,
+      ),
+      'scopeCategory' => 
+      array (
+        'name' => 'scopeCategory',
+        'parameters' => 
+        array (
+          'query' => 
+          array (
+            'name' => 'query',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'Illuminate\\Database\\Eloquent\\Builder',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => false,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 62,
+            'endLine' => 62,
+            'startColumn' => 35,
+            'endColumn' => 48,
+            'parameterIndex' => 0,
+            'isOptional' => false,
+          ),
+          'category' => 
+          array (
+            'name' => 'category',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'string',
+                'isIdentifier' => true,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => false,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 62,
+            'endLine' => 62,
+            'startColumn' => 51,
+            'endColumn' => 66,
+            'parameterIndex' => 1,
+            'isOptional' => false,
+          ),
+        ),
+        'returnsReference' => false,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Database\\Eloquent\\Builder',
+            'isIdentifier' => false,
+          ),
+        ),
+        'attributes' => 
+        array (
+        ),
+        'docComment' => '/** @param Builder<self> $query */',
+        'startLine' => 62,
+        'endLine' => 65,
+        'startColumn' => 5,
+        'endColumn' => 5,
+        'couldThrow' => false,
+        'isClosure' => false,
+        'isGenerator' => false,
+        'isVariadic' => false,
+        'modifiers' => 1,
+        'namespace' => 'App\\Models',
+        'declaringClassName' => 'App\\Models\\ItInventoryItem',
+        'implementingClassName' => 'App\\Models\\ItInventoryItem',
+        'currentClassName' => 'App\\Models\\ItInventoryItem',
+        'aliasName' => NULL,
+      ),
+      'scopeActive' => 
+      array (
+        'name' => 'scopeActive',
+        'parameters' => 
+        array (
+          'query' => 
+          array (
+            'name' => 'query',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'Illuminate\\Database\\Eloquent\\Builder',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => false,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 68,
+            'endLine' => 68,
+            'startColumn' => 33,
+            'endColumn' => 46,
+            'parameterIndex' => 0,
+            'isOptional' => false,
+          ),
+        ),
+        'returnsReference' => false,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Database\\Eloquent\\Builder',
+            'isIdentifier' => false,
+          ),
+        ),
+        'attributes' => 
+        array (
+        ),
+        'docComment' => '/** @param Builder<self> $query */',
+        'startLine' => 68,
+        'endLine' => 71,
+        'startColumn' => 5,
+        'endColumn' => 5,
+        'couldThrow' => false,
+        'isClosure' => false,
+        'isGenerator' => false,
+        'isVariadic' => false,
+        'modifiers' => 1,
+        'namespace' => 'App\\Models',
+        'declaringClassName' => 'App\\Models\\ItInventoryItem',
+        'implementingClassName' => 'App\\Models\\ItInventoryItem',
+        'currentClassName' => 'App\\Models\\ItInventoryItem',
+        'aliasName' => NULL,
+      ),
     ),
     'traitsData' => 
     array (

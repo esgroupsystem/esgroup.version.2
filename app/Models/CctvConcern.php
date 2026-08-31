@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -45,6 +46,33 @@ class CctvConcern extends Model
     protected $casts = [
         'fixed_at' => 'datetime',
     ];
+
+    /** @param Builder<self> $query */
+    public function scopeSearch(Builder $query, string $search): Builder
+    {
+        if ($search === '') {
+            return $query;
+        }
+
+        return $query->where(function (Builder $query) use ($search): void {
+            $query->where('jo_no', 'like', "%{$search}%")
+                ->orWhereHas('bus', function (Builder $bus) use ($search): void {
+                    $bus->where('body_number', 'like', "%{$search}%")
+                        ->orWhere('plate_number', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('garage', 'like', "%{$search}%");
+                })
+                ->orWhere('reported_by', 'like', "%{$search}%")
+                ->orWhere('issue_type', 'like', "%{$search}%")
+                ->orWhere('problem_details', 'like', "%{$search}%");
+        });
+    }
+
+    /** @param Builder<self> $query */
+    public function scopeStatus(Builder $query, string $status): Builder
+    {
+        return $status === '' ? $query : $query->where('status', $status);
+    }
 
     /** @return BelongsTo<User, $this> */
     public function assignee(): BelongsTo

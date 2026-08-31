@@ -2,7 +2,7 @@
 
 // odsl-/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/IT_Department/CctvController.php-PHPStan\BetterReflection\Reflection\ReflectionClass-App\Http\Controllers\IT_Department\CctvController
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-8.3.6-800423e3c585406cad723c912d34d0c602e16e06782b99add0b54672b3739215',
+   'variableKey' => 'v2-6.70.0.3-8.3.6-b87865e168f02ac6c389ff69daf52955de13c792cf86ae2ac8900ebec0c079d7',
    'data' => 
   array (
     'locatedSource' => 
@@ -21,13 +21,13 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     'isTrait' => false,
     'isEnum' => false,
     'isBackedEnum' => false,
-    'modifiers' => 0,
+    'modifiers' => 32,
     'docComment' => NULL,
     'attributes' => 
     array (
     ),
-    'startLine' => 16,
-    'endLine' => 663,
+    'startLine' => 21,
+    'endLine' => 394,
     'startColumn' => 1,
     'endColumn' => 1,
     'parentClassName' => 'App\\Http\\Controllers\\Controller',
@@ -42,9 +42,150 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     'immediateProperties' => 
     array (
+      'concernService' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\IT_Department\\CctvController',
+        'implementingClassName' => 'App\\Http\\Controllers\\IT_Department\\CctvController',
+        'name' => 'concernService',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\ITDepartment\\CctvConcernService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 24,
+        'endLine' => 24,
+        'startColumn' => 9,
+        'endColumn' => 59,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
+      'directoryService' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\IT_Department\\CctvController',
+        'implementingClassName' => 'App\\Http\\Controllers\\IT_Department\\CctvController',
+        'name' => 'directoryService',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\ITDepartment\\CctvConcernDirectoryService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 25,
+        'endLine' => 25,
+        'startColumn' => 9,
+        'endColumn' => 70,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
     ),
     'immediateMethods' => 
     array (
+      '__construct' => 
+      array (
+        'name' => '__construct',
+        'parameters' => 
+        array (
+          'concernService' => 
+          array (
+            'name' => 'concernService',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\ITDepartment\\CctvConcernService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 24,
+            'endLine' => 24,
+            'startColumn' => 9,
+            'endColumn' => 59,
+            'parameterIndex' => 0,
+            'isOptional' => false,
+          ),
+          'directoryService' => 
+          array (
+            'name' => 'directoryService',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\ITDepartment\\CctvConcernDirectoryService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 25,
+            'endLine' => 25,
+            'startColumn' => 9,
+            'endColumn' => 70,
+            'parameterIndex' => 1,
+            'isOptional' => false,
+          ),
+        ),
+        'returnsReference' => false,
+        'returnType' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'docComment' => NULL,
+        'startLine' => 23,
+        'endLine' => 26,
+        'startColumn' => 5,
+        'endColumn' => 8,
+        'couldThrow' => false,
+        'isClosure' => false,
+        'isGenerator' => false,
+        'isVariadic' => false,
+        'modifiers' => 1,
+        'namespace' => 'App\\Http\\Controllers\\IT_Department',
+        'declaringClassName' => 'App\\Http\\Controllers\\IT_Department\\CctvController',
+        'implementingClassName' => 'App\\Http\\Controllers\\IT_Department\\CctvController',
+        'currentClassName' => 'App\\Http\\Controllers\\IT_Department\\CctvController',
+        'aliasName' => NULL,
+      ),
       'index' => 
       array (
         'name' => 'index',
@@ -69,8 +210,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 18,
-            'endLine' => 18,
+            'startLine' => 28,
+            'endLine' => 28,
             'startColumn' => 27,
             'endColumn' => 42,
             'parameterIndex' => 0,
@@ -78,13 +219,21 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\View\\View',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 18,
-        'endLine' => 155,
+        'startLine' => 28,
+        'endLine' => 38,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -112,7 +261,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\ITDepartment\\StoreCctvConcernRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -122,25 +271,33 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 157,
-            'endLine' => 157,
+            'startLine' => 40,
+            'endLine' => 40,
             'startColumn' => 27,
-            'endColumn' => 42,
+            'endColumn' => 58,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 157,
-        'endLine' => 243,
+        'startLine' => 40,
+        'endLine' => 57,
         'startColumn' => 5,
         'endColumn' => 5,
-        'couldThrow' => true,
+        'couldThrow' => false,
         'isClosure' => false,
         'isGenerator' => false,
         'isVariadic' => false,
@@ -165,7 +322,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\ITDepartment\\UpdateCctvConcernRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -175,10 +332,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 245,
-            'endLine' => 245,
+            'startLine' => 59,
+            'endLine' => 59,
             'startColumn' => 28,
-            'endColumn' => 43,
+            'endColumn' => 60,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -201,25 +358,33 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 245,
-            'endLine' => 245,
-            'startColumn' => 46,
-            'endColumn' => 52,
+            'startLine' => 59,
+            'endLine' => 59,
+            'startColumn' => 63,
+            'endColumn' => 69,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 245,
-        'endLine' => 324,
+        'startLine' => 59,
+        'endLine' => 71,
         'startColumn' => 5,
         'endColumn' => 5,
-        'couldThrow' => true,
+        'couldThrow' => false,
         'isClosure' => false,
         'isGenerator' => false,
         'isVariadic' => false,
@@ -254,8 +419,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 326,
-            'endLine' => 326,
+            'startLine' => 73,
+            'endLine' => 73,
             'startColumn' => 29,
             'endColumn' => 35,
             'parameterIndex' => 0,
@@ -263,13 +428,21 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           ),
         ),
         'returnsReference' => false,
-        'returnType' => NULL,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'Illuminate\\Http\\RedirectResponse',
+            'isIdentifier' => false,
+          ),
+        ),
         'attributes' => 
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 326,
-        'endLine' => 355,
+        'startLine' => 73,
+        'endLine' => 86,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -307,8 +480,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 357,
-            'endLine' => 357,
+            'startLine' => 88,
+            'endLine' => 88,
             'startColumn' => 26,
             'endColumn' => 32,
             'parameterIndex' => 0,
@@ -321,8 +494,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 357,
-        'endLine' => 366,
+        'startLine' => 88,
+        'endLine' => 97,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -360,8 +533,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 368,
-            'endLine' => 368,
+            'startLine' => 99,
+            'endLine' => 99,
             'startColumn' => 32,
             'endColumn' => 38,
             'parameterIndex' => 0,
@@ -374,8 +547,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 368,
-        'endLine' => 371,
+        'startLine' => 99,
+        'endLine' => 102,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -413,8 +586,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 373,
-            'endLine' => 373,
+            'startLine' => 104,
+            'endLine' => 104,
             'startColumn' => 32,
             'endColumn' => 38,
             'parameterIndex' => 0,
@@ -427,8 +600,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 373,
-        'endLine' => 376,
+        'startLine' => 104,
+        'endLine' => 107,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -466,8 +639,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 378,
-            'endLine' => 378,
+            'startLine' => 109,
+            'endLine' => 109,
             'startColumn' => 29,
             'endColumn' => 44,
             'parameterIndex' => 0,
@@ -492,8 +665,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 378,
-            'endLine' => 378,
+            'startLine' => 109,
+            'endLine' => 109,
             'startColumn' => 47,
             'endColumn' => 53,
             'parameterIndex' => 1,
@@ -506,8 +679,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 378,
-        'endLine' => 381,
+        'startLine' => 109,
+        'endLine' => 112,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -545,8 +718,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 383,
-            'endLine' => 383,
+            'startLine' => 114,
+            'endLine' => 114,
             'startColumn' => 30,
             'endColumn' => 45,
             'parameterIndex' => 0,
@@ -571,8 +744,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 383,
-            'endLine' => 383,
+            'startLine' => 114,
+            'endLine' => 114,
             'startColumn' => 48,
             'endColumn' => 54,
             'parameterIndex' => 1,
@@ -585,8 +758,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 383,
-        'endLine' => 386,
+        'startLine' => 114,
+        'endLine' => 117,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -624,8 +797,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 388,
-            'endLine' => 388,
+            'startLine' => 119,
+            'endLine' => 119,
             'startColumn' => 28,
             'endColumn' => 43,
             'parameterIndex' => 0,
@@ -650,8 +823,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 388,
-            'endLine' => 388,
+            'startLine' => 119,
+            'endLine' => 119,
             'startColumn' => 46,
             'endColumn' => 57,
             'parameterIndex' => 1,
@@ -664,8 +837,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 388,
-        'endLine' => 490,
+        'startLine' => 119,
+        'endLine' => 221,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -703,8 +876,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 492,
-            'endLine' => 492,
+            'startLine' => 223,
+            'endLine' => 223,
             'startColumn' => 31,
             'endColumn' => 46,
             'parameterIndex' => 0,
@@ -717,8 +890,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 492,
-        'endLine' => 561,
+        'startLine' => 223,
+        'endLine' => 292,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -756,8 +929,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 563,
-            'endLine' => 563,
+            'startLine' => 294,
+            'endLine' => 294,
             'startColumn' => 35,
             'endColumn' => 50,
             'parameterIndex' => 0,
@@ -782,8 +955,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 563,
-            'endLine' => 563,
+            'startLine' => 294,
+            'endLine' => 294,
             'startColumn' => 53,
             'endColumn' => 70,
             'parameterIndex' => 1,
@@ -796,8 +969,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 563,
-        'endLine' => 662,
+        'startLine' => 294,
+        'endLine' => 393,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,

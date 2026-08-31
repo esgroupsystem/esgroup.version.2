@@ -4,353 +4,84 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\IT_Department;
 
+use App\Enums\CctvConcernStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ITDepartment\StoreCctvConcernRequest;
+use App\Http\Requests\ITDepartment\UpdateCctvConcernRequest;
 use App\Models\BusDetail;
 use App\Models\CctvConcern;
-use App\Models\CctvConcernItem;
-use App\Models\ItInventoryItem;
 use App\Models\User;
+use App\Services\ITDepartment\CctvConcernDirectoryService;
+use App\Services\ITDepartment\CctvConcernService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\View\View;
+use Throwable;
 
-class CctvController extends Controller
+final class CctvController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        private readonly CctvConcernService $concernService,
+        private readonly CctvConcernDirectoryService $directoryService,
+    ) {}
+
+    public function index(Request $request): View
     {
-        $q = trim((string) $request->input('q', ''));
-        $status = $request->input('status');
+        $search = trim((string) $request->input('q', ''));
+        $status = trim((string) $request->input('status', ''));
 
-        $statusOptions = [
-            '' => 'All',
-            'Open' => 'Open',
-            'In Progress' => 'In Progress',
-            'Fixed' => 'Fixed',
-            'Closed' => 'Closed',
-        ];
+        if ($status !== '' && ! in_array($status, CctvConcernStatus::values(), true)) {
+            $status = '';
+        }
 
-        $statusClasses = [
-            'Open' => 'badge-subtle-warning',
-            'In Progress' => 'badge-subtle-info',
-            'Fixed' => 'badge-subtle-success',
-            'Closed' => 'badge-subtle-secondary',
-        ];
-
-        $buses = BusDetail::query()
-            ->orderBy('body_number', 'asc')
-            ->get(['id', 'garage', 'name', 'body_number', 'plate_number'])
-            ->map(function (BusDetail $bus): BusDetail {
-                $bus->setAttribute('display_name', implode(' - ', array_filter([
-                    $bus->body_number,
-                    $bus->plate_number,
-                    $bus->name,
-                    $bus->garage,
-                ])));
-
-                return $bus;
-            });
-
-        $busDisplayMap = $buses->pluck('display_name', 'id');
-
-        $baseQuery = CctvConcern::query()
-            ->with([
-                'bus:id,garage,name,body_number,plate_number',
-                'assignee:id,full_name',
-                'usedItems.inventoryItem:id,item_name,unit',
-            ])
-            ->when($q !== '', function ($query) use ($q) {
-                $query->where(function ($x) use ($q) {
-                    $x->where('jo_no', 'like', "%{$q}%")
-                        ->orWhereHas('bus', function ($bus) use ($q) {
-                            $bus->where('body_number', 'like', "%{$q}%")
-                                ->orWhere('plate_number', 'like', "%{$q}%")
-                                ->orWhere('name', 'like', "%{$q}%")
-                                ->orWhere('garage', 'like', "%{$q}%");
-                        })
-                        ->orWhere('reported_by', 'like', "%{$q}%")
-                        ->orWhere('issue_type', 'like', "%{$q}%")
-                        ->orWhere('problem_details', 'like', "%{$q}%");
-                });
-            })
-            ->when(! empty($status), fn ($query) => $query->where('status', $status));
-
-        $jobOrders = (clone $baseQuery)
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
-
-        $allJobOrders = (clone $baseQuery)->get();
-
-        $statusCounts = $allJobOrders->groupBy('status')->map->count();
-
-        $totalOrders = $allJobOrders->count();
-        $openCount = $statusCounts['Open'] ?? 0;
-        $progressCount = $statusCounts['In Progress'] ?? 0;
-        $fixedCount = $statusCounts['Fixed'] ?? 0;
-        $closedCount = $statusCounts['Closed'] ?? 0;
-
-        $issueCounts = $allJobOrders->groupBy('issue_type')->map->count()->sortDesc();
-        $topIssue = $issueCounts->keys()->first();
-        $topIssueCount = $issueCounts->first() ?? 0;
-
-        $partCounts = $allJobOrders
-            ->flatMap(fn ($job) => $job->usedItems->map(fn ($used) => $used->inventoryItem->item_name ?? null))
-            ->filter()
-            ->groupBy(fn ($name) => $name)
-            ->map->count()
-            ->sortDesc();
-
-        $topPart = $partCounts->keys()->first();
-        $topPartCount = $partCounts->first() ?? 0;
-
-        $assigneeCounts = $allJobOrders
-            ->map(fn (CctvConcern $job): ?string => $job->assignee?->full_name)
-            ->filter()
-            ->groupBy(fn ($name) => $name)
-            ->map->count()
-            ->sortDesc();
-
-        $topAssignee = $assigneeCounts->keys()->first();
-        $topAssigneeCount = $assigneeCounts->first() ?? 0;
-
-        $agents = User::query()
-            ->where('role', '=', 'IT Officer', 'and')
-            ->orderBy('full_name', 'asc')
-            ->get();
-
-        $inventoryItems = ItInventoryItem::query()
-            ->where('is_active', '=', true, 'and')
-            ->orderBy('item_name', 'asc')
-            ->get([
-                'id',
-                'item_name',
-                'category',
-                'brand',
-                'model',
-                'unit',
-                'stock_qty',
-                'location',
-            ]);
-
-        return view('it_department.concern.index', compact(
-            'jobOrders',
-            'allJobOrders',
-            'agents',
-            'buses',
-            'busDisplayMap',
-            'inventoryItems',
-            'statusOptions',
-            'statusClasses',
-            'totalOrders',
-            'openCount',
-            'progressCount',
-            'fixedCount',
-            'closedCount',
-            'topIssue',
-            'topIssueCount',
-            'topPart',
-            'topPartCount',
-            'topAssignee',
-            'topAssigneeCount'
-        ));
+        return view('it_department.concern.index', $this->directoryService->indexData($search, $status));
     }
 
-    public function store(Request $request)
+    public function store(StoreCctvConcernRequest $request): RedirectResponse
     {
-        $data = $request->validate([
-            'bus_no' => 'required|exists:bus_details,id',
-            'issue_type' => 'required|string|max:80',
-            'problem_details' => 'required|string',
-            'status' => 'required|string|max:30',
-            'assigned_to' => 'nullable|exists:users,id',
-
-            'items' => 'nullable|array',
-            'items.*.it_inventory_item_id' => 'nullable|exists:it_inventory_items,id',
-            'items.*.qty_used' => 'nullable|integer|min:1',
-            'items.*.remarks' => 'nullable|string|max:255',
-        ]);
-
-        DB::beginTransaction();
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
 
         try {
-            $user = $request->user();
-
-            $data['reported_by'] = $user->full_name ?? 'System';
-            $data['created_by'] = $user?->id;
-
-            $year = now()->year;
-            $last = CctvConcern::query()
-                ->where('jo_no', 'like', "JO-$year-%", 'and')
-                ->latest('id')
-                ->first();
-            $next = $last ? intval(substr($last->jo_no, -5)) + 1 : 1;
-            $data['jo_no'] = "JO-$year-".str_pad((string) $next, 5, '0', STR_PAD_LEFT);
-
-            unset($data['items']);
-
-            $jobOrder = CctvConcern::create($data);
-
-            $items = $request->input('items', []);
-            $savedItems = [];
-            $usedItemNames = [];
-
-            foreach ($items as $row) {
-                $inventoryId = (int) ($row['it_inventory_item_id'] ?? 0);
-                $qtyUsed = (int) ($row['qty_used'] ?? 0);
-                $remarks = $row['remarks'] ?? null;
-
-                if (! $inventoryId || $qtyUsed <= 0) {
-                    continue;
-                }
-
-                $inventory = ItInventoryItem::lockForUpdate()->findOrFail($inventoryId);
-
-                if ((int) $inventory->stock_qty < $qtyUsed) {
-                    throw new \Exception("Not enough stock for item: {$inventory->item_name}");
-                }
-
-                $inventory->decrement('stock_qty', $qtyUsed);
-
-                $savedItems[] = new CctvConcernItem([
-                    'it_inventory_item_id' => $inventory->id,
-                    'qty_used' => $qtyUsed,
-                    'remarks' => $remarks,
-                ]);
-
-                $usedItemNames[] = $inventory->item_name.' x'.$qtyUsed;
-            }
-
-            if (! empty($savedItems)) {
-                $jobOrder->usedItems()->saveMany($savedItems);
-            }
-
-            $jobOrder->update([
-                'cctv_part' => ! empty($usedItemNames) ? implode(', ', $usedItemNames) : null,
-            ]);
-
-            DB::commit();
+            $this->concernService->create($request->validated(), $user);
 
             return redirect()
                 ->route('concern.cctv.index')
                 ->with('success', 'CCTV Job Order created successfully.');
-        } catch (\Throwable $e) {
-            DB::rollBack();
-
+        } catch (Throwable $exception) {
             return redirect()
                 ->route('concern.cctv.index')
                 ->withInput()
-                ->withErrors(['error' => $e->getMessage()]);
+                ->withErrors(['error' => $exception->getMessage()]);
         }
     }
 
-    public function update(Request $request, int $id)
+    public function update(UpdateCctvConcernRequest $request, int $id): RedirectResponse
     {
-        $jobOrder = CctvConcern::with('usedItems')->findOrFail($id);
-
-        $data = $request->validate([
-            'action_taken' => ['nullable', 'string'],
-            'status' => ['required', 'in:Open,In Progress,Fixed,Closed'],
-            'assigned_to' => ['nullable', 'exists:users,id'],
-
-            'items' => ['nullable', 'array'],
-            'items.*.it_inventory_item_id' => ['nullable', 'exists:it_inventory_items,id'],
-            'items.*.qty_used' => ['nullable', 'integer', 'min:1'],
-            'items.*.remarks' => ['nullable', 'string', 'max:255'],
-        ]);
-
         try {
-            DB::transaction(function () use ($request, $jobOrder, $data) {
-                foreach ($jobOrder->usedItems as $oldItem) {
-                    $inventory = ItInventoryItem::lockForUpdate()
-                        ->find($oldItem->it_inventory_item_id);
-
-                    if ($inventory) {
-                        $inventory->increment('stock_qty', (int) $oldItem->qty_used);
-                    }
-                }
-
-                $jobOrder->usedItems()->delete();
-
-                $data['fixed_at'] = in_array($data['status'], ['Fixed', 'Closed'], true)
-                    ? ($jobOrder->fixed_at ?: now())
-                    : null;
-
-                unset($data['items']);
-
-                $jobOrder->update($data);
-
-                $savedItems = [];
-                $usedItemNames = [];
-
-                foreach ($request->input('items', []) as $row) {
-                    $inventoryId = (int) ($row['it_inventory_item_id'] ?? 0);
-                    $qtyUsed = (int) ($row['qty_used'] ?? 0);
-
-                    if ($inventoryId <= 0 || $qtyUsed <= 0) {
-                        continue;
-                    }
-
-                    $inventory = ItInventoryItem::lockForUpdate()->findOrFail($inventoryId);
-
-                    if ((int) $inventory->stock_qty < $qtyUsed) {
-                        throw new \RuntimeException("Not enough stock for {$inventory->item_name}.");
-                    }
-
-                    $inventory->decrement('stock_qty', $qtyUsed);
-
-                    $savedItems[] = new CctvConcernItem([
-                        'it_inventory_item_id' => $inventory->id,
-                        'qty_used' => $qtyUsed,
-                        'remarks' => $row['remarks'] ?? null,
-                    ]);
-
-                    $usedItemNames[] = "{$inventory->item_name} x{$qtyUsed}";
-                }
-
-                if ($savedItems) {
-                    $jobOrder->usedItems()->saveMany($savedItems);
-                }
-
-                $jobOrder->update([
-                    'cctv_part' => $usedItemNames ? implode(', ', $usedItemNames) : null,
-                ]);
-            });
+            $jobOrder = CctvConcern::query()->findOrFail($id);
+            $this->concernService->update($jobOrder, $request->validated());
 
             return back()->with('success', 'Job Order updated.');
-        } catch (\Throwable $e) {
+        } catch (Throwable $exception) {
             return back()
                 ->withInput()
-                ->withErrors(['error' => $e->getMessage()]);
+                ->withErrors(['error' => $exception->getMessage()]);
         }
     }
 
-    public function destroy(int $id)
+    public function destroy(int $id): RedirectResponse
     {
-        DB::beginTransaction();
-
         try {
-            $jobOrder = CctvConcern::with('usedItems')->findOrFail($id);
-
-            foreach ($jobOrder->usedItems as $usedItem) {
-                $inventory = ItInventoryItem::lockForUpdate()->find($usedItem->it_inventory_item_id);
-
-                if ($inventory) {
-                    $inventory->increment('stock_qty', (int) $usedItem->qty_used);
-                }
-            }
-
-            CctvConcern::destroy($jobOrder->id);
-
-            DB::commit();
+            $this->concernService->delete(CctvConcern::query()->findOrFail($id));
 
             return redirect()
                 ->route('concern.cctv.index')
                 ->with('success', 'Job Order deleted.');
-        } catch (\Throwable $e) {
-            DB::rollBack();
-
+        } catch (Throwable $exception) {
             return redirect()
                 ->route('concern.cctv.index')
-                ->withErrors(['error' => $e->getMessage()]);
+                ->withErrors(['error' => $exception->getMessage()]);
         }
     }
 

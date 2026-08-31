@@ -11142,8 +11142,8 @@ class Container_10f3a0483d extends _PHPStan_eca38da41\Nette\DI\Container
 				'GIO_LAUNCHED_DESKTOP_FILE' => '/usr/share/applications/code.desktop',
 				'TERM_PROGRAM' => 'vscode',
 				'_' => './vendor/bin/phpstan',
-				'LINES' => '14',
-				'COLUMNS' => '168',
+				'LINES' => '54',
+				'COLUMNS' => '77',
 				'SHELL_VERBOSITY' => '0',
 			],
 		];

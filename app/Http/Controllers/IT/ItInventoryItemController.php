@@ -5,102 +5,67 @@ declare(strict_types=1);
 namespace App\Http\Controllers\IT;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ITDepartment\StoreItInventoryItemRequest;
+use App\Http\Requests\ITDepartment\UpdateItInventoryItemRequest;
 use App\Models\ItInventoryItem;
+use App\Services\IT\ItInventoryService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
-class ItInventoryItemController extends Controller
+final class ItInventoryItemController extends Controller
 {
-    public function index(Request $request)
+    public function __construct(
+        private readonly ItInventoryService $inventoryService,
+    ) {}
+
+    public function index(Request $request): View
     {
-        $search = trim((string) $request->search);
-        $category = trim((string) $request->category);
+        $search = trim((string) $request->input('search', ''));
+        $category = trim((string) $request->input('category', ''));
 
-        $items = ItInventoryItem::query()
-            ->when($search, function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('item_name', 'like', "%{$search}%")
-                        ->orWhere('brand', 'like', "%{$search}%")
-                        ->orWhere('model', 'like', "%{$search}%")
-                        ->orWhere('part_number', 'like', "%{$search}%")
-                        ->orWhere('location', 'like', "%{$search}%");
-                });
-            })
-            ->when($category, function ($query) use ($category) {
-                $query->where('category', $category);
-            })
-            ->orderBy('item_name')
-            ->paginate(10)
-            ->withQueryString();
-
-        $categories = ItInventoryItem::query()
-            ->whereNotNull('category')
-            ->where('category', '!=', '')
-            ->distinct()
-            ->orderBy('category')
-            ->pluck('category');
-
-        return view('it_department.inventory.index', compact('items', 'search', 'category', 'categories'));
+        return view('it_department.inventory.index', [
+            'items' => $this->inventoryService->paginate($search, $category),
+            'search' => $search,
+            'category' => $category,
+            'categories' => $this->inventoryService->categories(),
+        ]);
     }
 
-    public function create()
+    public function create(): View
     {
         return view('it_department.inventory.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreItInventoryItemRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'item_name' => ['required', 'string', 'max:255'],
-            'category' => ['nullable', 'string', 'max:100'],
-            'brand' => ['nullable', 'string', 'max:100'],
-            'model' => ['nullable', 'string', 'max:100'],
-            'part_number' => ['nullable', 'string', 'max:100'],
-            'unit' => ['required', 'string', 'max:50'],
-            'stock_qty' => ['required', 'integer', 'min:0'],
-            'minimum_stock' => ['nullable', 'integer', 'min:0'],
-            'description' => ['nullable', 'string'],
-            'location' => ['nullable', 'string', 'max:255'],
-            'is_active' => ['nullable', 'boolean'],
-        ]);
-
-        $validated['minimum_stock'] = $validated['minimum_stock'] ?? 0;
-        $validated['is_active'] = $request->boolean('is_active');
-
-        ItInventoryItem::create($validated);
+        $this->inventoryService->create($request->validated());
 
         return redirect()
             ->route('it-inventory.index')
             ->with('success', 'IT inventory item added successfully.');
     }
 
-    public function edit($id)
+    public function edit(int $id): View
     {
-        $item = ItInventoryItem::findOrFail($id);
-
-        return view('it_department.inventory.edit', compact('item'));
+        return view('it_department.inventory.edit', [
+            'item' => ItInventoryItem::query()->findOrFail($id),
+        ]);
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateItInventoryItemRequest $request, int $id): RedirectResponse
     {
-        $item = ItInventoryItem::findOrFail($id);
-
-        $validated = $request->validate([
-            'item_name' => 'required|string|max:255',
-            'unit' => 'required|string|max:50',
-            'stock_qty' => 'required|integer|min:0',
-        ]);
-
-        $item->update($validated);
+        $item = ItInventoryItem::query()->findOrFail($id);
+        $this->inventoryService->update($item, $request->validated());
 
         return redirect()
             ->route('it-inventory.index')
             ->with('success', 'Updated successfully.');
     }
 
-    public function destroy($id)
+    public function destroy(int $id): RedirectResponse
     {
-        $item = ItInventoryItem::findOrFail($id);
-        $item->delete();
+        $this->inventoryService->delete(ItInventoryItem::query()->findOrFail($id));
 
         return back()->with('success', 'Deleted successfully.');
     }

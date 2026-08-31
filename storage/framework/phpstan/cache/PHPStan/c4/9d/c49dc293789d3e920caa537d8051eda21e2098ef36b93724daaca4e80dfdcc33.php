@@ -2,7 +2,7 @@
 
 // odsl-/home/lenberd/Documents/esgroup.version.2/app/Http/Controllers/IT_Department/TicketController.php-PHPStan\BetterReflection\Reflection\ReflectionClass-App\Http\Controllers\IT_Department\TicketController
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-8.3.6-a5eb6866e8fe38db13c61377733f99892a6abfc280f9251e07b83808cdaf03dd',
+   'variableKey' => 'v2-6.70.0.3-8.3.6-778358f4efddf4a7a720ebb6f3781661242776c4c166a09548d395959959700e',
    'data' => 
   array (
     'locatedSource' => 
@@ -21,13 +21,13 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     'isTrait' => false,
     'isEnum' => false,
     'isBackedEnum' => false,
-    'modifiers' => 0,
+    'modifiers' => 32,
     'docComment' => NULL,
     'attributes' => 
     array (
     ),
-    'startLine' => 30,
-    'endLine' => 724,
+    'startLine' => 28,
+    'endLine' => 290,
     'startColumn' => 1,
     'endColumn' => 1,
     'parentClassName' => 'App\\Http\\Controllers\\Controller',
@@ -42,9 +42,150 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     ),
     'immediateProperties' => 
     array (
+      'jobOrderService' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\IT_Department\\TicketController',
+        'implementingClassName' => 'App\\Http\\Controllers\\IT_Department\\TicketController',
+        'name' => 'jobOrderService',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\ITDepartment\\ItJobOrderService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 31,
+        'endLine' => 31,
+        'startColumn' => 9,
+        'endColumn' => 59,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
+      'directoryService' => 
+      array (
+        'declaringClassName' => 'App\\Http\\Controllers\\IT_Department\\TicketController',
+        'implementingClassName' => 'App\\Http\\Controllers\\IT_Department\\TicketController',
+        'name' => 'directoryService',
+        'modifiers' => 132,
+        'type' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'App\\Services\\ITDepartment\\ItJobOrderDirectoryService',
+            'isIdentifier' => false,
+          ),
+        ),
+        'default' => NULL,
+        'docComment' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'startLine' => 32,
+        'endLine' => 32,
+        'startColumn' => 9,
+        'endColumn' => 69,
+        'isPromoted' => true,
+        'declaredAtCompileTime' => true,
+        'immediateVirtual' => false,
+        'immediateHooks' => 
+        array (
+        ),
+      ),
     ),
     'immediateMethods' => 
     array (
+      '__construct' => 
+      array (
+        'name' => '__construct',
+        'parameters' => 
+        array (
+          'jobOrderService' => 
+          array (
+            'name' => 'jobOrderService',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\ITDepartment\\ItJobOrderService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 31,
+            'endLine' => 31,
+            'startColumn' => 9,
+            'endColumn' => 59,
+            'parameterIndex' => 0,
+            'isOptional' => false,
+          ),
+          'directoryService' => 
+          array (
+            'name' => 'directoryService',
+            'default' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'App\\Services\\ITDepartment\\ItJobOrderDirectoryService',
+                'isIdentifier' => false,
+              ),
+            ),
+            'isVariadic' => false,
+            'byRef' => false,
+            'isPromoted' => true,
+            'attributes' => 
+            array (
+            ),
+            'startLine' => 32,
+            'endLine' => 32,
+            'startColumn' => 9,
+            'endColumn' => 69,
+            'parameterIndex' => 1,
+            'isOptional' => false,
+          ),
+        ),
+        'returnsReference' => false,
+        'returnType' => NULL,
+        'attributes' => 
+        array (
+        ),
+        'docComment' => NULL,
+        'startLine' => 30,
+        'endLine' => 33,
+        'startColumn' => 5,
+        'endColumn' => 8,
+        'couldThrow' => false,
+        'isClosure' => false,
+        'isGenerator' => false,
+        'isVariadic' => false,
+        'modifiers' => 1,
+        'namespace' => 'App\\Http\\Controllers\\IT_Department',
+        'declaringClassName' => 'App\\Http\\Controllers\\IT_Department\\TicketController',
+        'implementingClassName' => 'App\\Http\\Controllers\\IT_Department\\TicketController',
+        'currentClassName' => 'App\\Http\\Controllers\\IT_Department\\TicketController',
+        'aliasName' => NULL,
+      ),
       'index' => 
       array (
         'name' => 'index',
@@ -69,8 +210,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 32,
-            'endLine' => 32,
+            'startLine' => 35,
+            'endLine' => 35,
             'startColumn' => 27,
             'endColumn' => 42,
             'parameterIndex' => 0,
@@ -83,8 +224,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 32,
-        'endLine' => 129,
+        'startLine' => 35,
+        'endLine' => 50,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -107,17 +248,25 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'id',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 131,
-            'endLine' => 131,
+            'startLine' => 52,
+            'endLine' => 52,
             'startColumn' => 29,
-            'endColumn' => 31,
+            'endColumn' => 35,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -128,8 +277,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 131,
-        'endLine' => 174,
+        'startLine' => 52,
+        'endLine' => 67,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -152,17 +301,25 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'id',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 176,
-            'endLine' => 176,
+            'startLine' => 69,
+            'endLine' => 69,
             'startColumn' => 32,
-            'endColumn' => 34,
+            'endColumn' => 38,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -173,8 +330,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 176,
-        'endLine' => 212,
+        'startLine' => 69,
+        'endLine' => 84,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -200,8 +357,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 214,
-        'endLine' => 217,
+        'startLine' => 86,
+        'endLine' => 89,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -227,8 +384,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 219,
-        'endLine' => 237,
+        'startLine' => 91,
+        'endLine' => 109,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -258,8 +415,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 239,
-            'endLine' => 239,
+            'startLine' => 111,
+            'endLine' => 111,
             'startColumn' => 26,
             'endColumn' => 28,
             'parameterIndex' => 0,
@@ -272,8 +429,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 239,
-        'endLine' => 265,
+        'startLine' => 111,
+        'endLine' => 137,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -311,8 +468,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 267,
-            'endLine' => 267,
+            'startLine' => 139,
+            'endLine' => 139,
             'startColumn' => 36,
             'endColumn' => 64,
             'parameterIndex' => 0,
@@ -325,11 +482,11 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 267,
-        'endLine' => 437,
+        'startLine' => 139,
+        'endLine' => 173,
         'startColumn' => 5,
         'endColumn' => 5,
-        'couldThrow' => true,
+        'couldThrow' => false,
         'isClosure' => false,
         'isGenerator' => false,
         'isVariadic' => false,
@@ -349,17 +506,25 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'id',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 439,
-            'endLine' => 439,
+            'startLine' => 175,
+            'endLine' => 175,
             'startColumn' => 29,
-            'endColumn' => 31,
+            'endColumn' => 35,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -370,8 +535,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 439,
-        'endLine' => 471,
+        'startLine' => 175,
+        'endLine' => 190,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -399,7 +564,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\ITDepartment\\AddJobOrderNoteRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -409,10 +574,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 473,
-            'endLine' => 473,
+            'startLine' => 192,
+            'endLine' => 192,
             'startColumn' => 29,
-            'endColumn' => 44,
+            'endColumn' => 59,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -420,17 +585,25 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'id',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 473,
-            'endLine' => 473,
-            'startColumn' => 47,
-            'endColumn' => 49,
+            'startLine' => 192,
+            'endLine' => 192,
+            'startColumn' => 62,
+            'endColumn' => 68,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
@@ -441,8 +614,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 473,
-        'endLine' => 497,
+        'startLine' => 192,
+        'endLine' => 201,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -470,7 +643,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\ITDepartment\\AddJobOrderFilesRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -480,10 +653,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 499,
-            'endLine' => 499,
+            'startLine' => 203,
+            'endLine' => 203,
             'startColumn' => 30,
-            'endColumn' => 45,
+            'endColumn' => 61,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -491,17 +664,25 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'id',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 499,
-            'endLine' => 499,
-            'startColumn' => 48,
-            'endColumn' => 50,
+            'startLine' => 203,
+            'endLine' => 203,
+            'startColumn' => 64,
+            'endColumn' => 70,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
@@ -512,8 +693,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 499,
-        'endLine' => 562,
+        'startLine' => 203,
+        'endLine' => 214,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -551,8 +732,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 564,
-            'endLine' => 564,
+            'startLine' => 216,
+            'endLine' => 216,
             'startColumn' => 34,
             'endColumn' => 40,
             'parameterIndex' => 0,
@@ -577,8 +758,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 564,
-            'endLine' => 564,
+            'startLine' => 216,
+            'endLine' => 216,
             'startColumn' => 43,
             'endColumn' => 51,
             'parameterIndex' => 1,
@@ -599,8 +780,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 564,
-        'endLine' => 576,
+        'startLine' => 216,
+        'endLine' => 228,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -630,8 +811,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 578,
-            'endLine' => 578,
+            'startLine' => 230,
+            'endLine' => 230,
             'startColumn' => 28,
             'endColumn' => 32,
             'parameterIndex' => 0,
@@ -644,8 +825,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 578,
-        'endLine' => 597,
+        'startLine' => 230,
+        'endLine' => 249,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -668,17 +849,25 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'id',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 599,
-            'endLine' => 599,
+            'startLine' => 251,
+            'endLine' => 251,
             'startColumn' => 32,
-            'endColumn' => 34,
+            'endColumn' => 38,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -689,8 +878,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 599,
-        'endLine' => 620,
+        'startLine' => 251,
+        'endLine' => 259,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -713,17 +902,25 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'id',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 622,
-            'endLine' => 622,
+            'startLine' => 261,
+            'endLine' => 261,
             'startColumn' => 32,
-            'endColumn' => 34,
+            'endColumn' => 38,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -734,8 +931,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 622,
-        'endLine' => 642,
+        'startLine' => 261,
+        'endLine' => 269,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -763,7 +960,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
               'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
               'data' => 
               array (
-                'name' => 'Illuminate\\Http\\Request',
+                'name' => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
                 'isIdentifier' => false,
               ),
             ),
@@ -773,10 +970,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 644,
-            'endLine' => 644,
+            'startLine' => 271,
+            'endLine' => 271,
             'startColumn' => 28,
-            'endColumn' => 43,
+            'endColumn' => 57,
             'parameterIndex' => 0,
             'isOptional' => false,
           ),
@@ -784,17 +981,25 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'name' => 'id',
             'default' => NULL,
-            'type' => NULL,
+            'type' => 
+            array (
+              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+              'data' => 
+              array (
+                'name' => 'int',
+                'isIdentifier' => true,
+              ),
+            ),
             'isVariadic' => false,
             'byRef' => false,
             'isPromoted' => false,
             'attributes' => 
             array (
             ),
-            'startLine' => 644,
-            'endLine' => 644,
-            'startColumn' => 46,
-            'endColumn' => 48,
+            'startLine' => 271,
+            'endLine' => 271,
+            'startColumn' => 60,
+            'endColumn' => 66,
             'parameterIndex' => 1,
             'isOptional' => false,
           ),
@@ -805,8 +1010,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 644,
-        'endLine' => 707,
+        'startLine' => 271,
+        'endLine' => 282,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -836,8 +1041,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
             'attributes' => 
             array (
             ),
-            'startLine' => 709,
-            'endLine' => 709,
+            'startLine' => 284,
+            'endLine' => 284,
             'startColumn' => 27,
             'endColumn' => 29,
             'parameterIndex' => 0,
@@ -850,8 +1055,8 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         array (
         ),
         'docComment' => NULL,
-        'startLine' => 709,
-        'endLine' => 714,
+        'startLine' => 284,
+        'endLine' => 289,
         'startColumn' => 5,
         'endColumn' => 5,
         'couldThrow' => false,
@@ -859,67 +1064,6 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         'isGenerator' => false,
         'isVariadic' => false,
         'modifiers' => 1,
-        'namespace' => 'App\\Http\\Controllers\\IT_Department',
-        'declaringClassName' => 'App\\Http\\Controllers\\IT_Department\\TicketController',
-        'implementingClassName' => 'App\\Http\\Controllers\\IT_Department\\TicketController',
-        'currentClassName' => 'App\\Http\\Controllers\\IT_Department\\TicketController',
-        'aliasName' => NULL,
-      ),
-      'normalizeDate' => 
-      array (
-        'name' => 'normalizeDate',
-        'parameters' => 
-        array (
-          'date' => 
-          array (
-            'name' => 'date',
-            'default' => NULL,
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-              'data' => 
-              array (
-                'name' => 'string',
-                'isIdentifier' => true,
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 716,
-            'endLine' => 716,
-            'startColumn' => 36,
-            'endColumn' => 47,
-            'parameterIndex' => 0,
-            'isOptional' => false,
-          ),
-        ),
-        'returnsReference' => false,
-        'returnType' => 
-        array (
-          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-          'data' => 
-          array (
-            'name' => 'string',
-            'isIdentifier' => true,
-          ),
-        ),
-        'attributes' => 
-        array (
-        ),
-        'docComment' => NULL,
-        'startLine' => 716,
-        'endLine' => 723,
-        'startColumn' => 5,
-        'endColumn' => 5,
-        'couldThrow' => false,
-        'isClosure' => false,
-        'isGenerator' => false,
-        'isVariadic' => false,
-        'modifiers' => 4,
         'namespace' => 'App\\Http\\Controllers\\IT_Department',
         'declaringClassName' => 'App\\Http\\Controllers\\IT_Department\\TicketController',
         'implementingClassName' => 'App\\Http\\Controllers\\IT_Department\\TicketController',

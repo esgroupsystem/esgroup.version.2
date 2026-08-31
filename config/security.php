@@ -13,4 +13,11 @@ return [
         'max_upload_files_per_request' => (int) env('MAX_UPLOAD_FILES_PER_REQUEST', 10),
         'max_upload_total_kb' => (int) env('MAX_UPLOAD_TOTAL_KB', 102400),
     ],
+
+    'developer_seed' => [
+        'enabled' => (bool) env('SEED_DEVELOPER_USER', false),
+        'email' => env('SEED_DEVELOPER_EMAIL'),
+        'username' => env('SEED_DEVELOPER_USERNAME'),
+        'password' => env('SEED_DEVELOPER_PASSWORD'),
+    ],
 ];

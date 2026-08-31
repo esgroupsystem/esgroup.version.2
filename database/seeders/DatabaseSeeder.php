@@ -31,17 +31,17 @@ final class DatabaseSeeder extends Seeder
         $developerRole->syncPermissions(Permission::all());
 
         // Never create a privileged account automatically in production.
-        if (! filter_var(env('SEED_DEVELOPER_USER', false), FILTER_VALIDATE_BOOL)) {
+        if (!filter_var(config('security.developer_seed.enabled', false), FILTER_VALIDATE_BOOL)) {
             return;
         }
 
-        $password = (string) env('SEED_DEVELOPER_PASSWORD', '');
+        $password = (string) config('security.developer_seed.password', '');
         if (strlen($password) < 16) {
             throw new \RuntimeException('SEED_DEVELOPER_PASSWORD must contain at least 16 characters when SEED_DEVELOPER_USER=true.');
         }
 
-        $email = strtolower(trim((string) env('SEED_DEVELOPER_EMAIL', '')));
-        $username = trim((string) env('SEED_DEVELOPER_USERNAME', ''));
+        $email = strtolower(trim((string) config('security.developer_seed.email', '')));
+        $username = trim((string) config('security.developer_seed.username', ''));
 
         if ($email === '' || $username === '') {
             throw new \RuntimeException('SEED_DEVELOPER_EMAIL and SEED_DEVELOPER_USERNAME are required when SEED_DEVELOPER_USER=true.');

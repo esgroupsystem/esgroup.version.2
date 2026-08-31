@@ -2700,6 +2700,39 @@ return [
       ),
     ),
   ),
+  '../../../app/Enums/CctvConcernStatus.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Enums\\CctvConcernStatus',
+        1 => 'values',
+        2 => 'App\\Enums\\CctvConcernStatus',
+        3 => 
+        array (
+        ),
+      ),
+      1 => 
+      array (
+        0 => 'App\\Enums\\CctvConcernStatus',
+        1 => 'options',
+        2 => 'App\\Enums\\CctvConcernStatus',
+        3 => 
+        array (
+        ),
+      ),
+      2 => 
+      array (
+        0 => 'App\\Enums\\CctvConcernStatus',
+        1 => 'isCompleted',
+        2 => 'App\\Enums\\CctvConcernStatus',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
   '../../../app/Enums/EmployeeStatus.php' => 
   array (
     'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
@@ -2727,6 +2760,40 @@ return [
         0 => 'App\\Enums\\EmployeeStatus',
         1 => 'inactiveValues',
         2 => 'App\\Enums\\EmployeeStatus',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Enums/ItTicketStatus.php' => 
+  array (
+    'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
+        1 => NULL,
+        2 => 'in_array($this, [self::InProgress, self::Completed], true):17',
+        3 => NULL,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Enums\\ItTicketStatus',
+        1 => 'values',
+        2 => 'App\\Enums\\ItTicketStatus',
+        3 => 
+        array (
+        ),
+      ),
+      1 => 
+      array (
+        0 => 'App\\Enums\\ItTicketStatus',
+        1 => 'canBeDeleted',
+        2 => 'App\\Enums\\ItTicketStatus',
         3 => 
         array (
         ),
@@ -4230,6 +4297,16 @@ return [
       1 => 'it_department.inventory.create',
       2 => 'it_department.inventory.edit',
     ),
+    'PHPStan\\Rules\\DeadCode\\ConstructorWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Controllers\\IT\\ItInventoryItemController',
+        1 => 
+        array (
+        ),
+      ),
+    ),
     'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
     array (
       0 => 
@@ -4242,25 +4319,26 @@ return [
           0 => 'f' . "\0" . 'view',
         ),
       ),
-      1 => 
-      array (
-        0 => 'App\\Http\\Controllers\\IT\\ItInventoryItemController',
-        1 => 'edit',
-        2 => 'App\\Http\\Controllers\\IT\\ItInventoryItemController',
-        3 => 
-        array (
-          0 => 'm' . "\0" . 'illuminate\\database\\eloquent\\builder' . "\0" . 'findorfail',
-          1 => 'f' . "\0" . 'view',
-        ),
-      ),
     ),
-    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
     array (
       0 => 
       array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
+        0 => 
+        array (
+          0 => 'App\\Services\\IT\\ItInventoryService',
+        ),
         1 => 'create',
-        2 => 69,
+        2 => 42,
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          0 => 'App\\Services\\IT\\ItInventoryService',
+        ),
+        1 => 'update',
+        2 => 59,
       ),
     ),
   ),
@@ -4278,10 +4356,20 @@ return [
     array (
       0 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
         1 => NULL,
-        2 => 'in_array($data[\'status\'], [\'Fixed\', \'Closed\'], true):273',
+        2 => 'in_array($status, \\App\\Enums\\CctvConcernStatus::values(), true):33',
         3 => NULL,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\ConstructorWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Controllers\\IT_Department\\CctvController',
+        1 => 
+        array (
+        ),
       ),
     ),
     'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
@@ -4332,22 +4420,28 @@ return [
       0 => 
       array (
         0 => 'abort',
-        1 => 441,
+        1 => 172,
       ),
     ),
-    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
     array (
       0 => 
       array (
-        0 => 'Illuminate\\Database\\Connection',
-        1 => 'transaction',
-        2 => 261,
+        0 => 
+        array (
+          0 => 'App\\Services\\ITDepartment\\CctvConcernService',
+        ),
+        1 => 'create',
+        2 => 46,
       ),
       1 => 
       array (
-        0 => 'Illuminate\\Database\\Eloquent\\Model',
-        1 => 'destroy',
-        2 => 341,
+        0 => 
+        array (
+          0 => 'App\\Services\\ITDepartment\\CctvConcernService',
+        ),
+        1 => 'update',
+        2 => 63,
       ),
     ),
   ),
@@ -4368,78 +4462,67 @@ return [
       array (
         0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
         1 => NULL,
-        2 => '$request->ajax():56',
+        2 => '$request->ajax():40',
         3 => NULL,
       ),
       1 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
         1 => NULL,
-        2 => '$upload->isValid():323',
+        2 => '$user->hasAnyRole([\'IT Head\', \'Developer\']):55',
         3 => NULL,
       ),
       2 => 
       array (
         0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
         1 => NULL,
-        2 => '\\Illuminate\\Support\\Facades\\Storage::disk(\'local\')->exists($storedPath):334',
+        2 => '$this->jobOrderService->approve($job, $user):58',
         3 => NULL,
       ),
       3 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
         1 => NULL,
-        2 => 'app()->environment(\'local\'):392',
+        2 => '$user->hasAnyRole([\'IT Head\', \'Developer\']):72',
         3 => NULL,
       ),
       4 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
         1 => NULL,
-        2 => 'in_array($job->job_status, [\'In Progress\', \'Completed\']):445',
+        2 => '$this->jobOrderService->disapprove($job, $user):75',
         3 => NULL,
       ),
       5 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
+        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
         1 => NULL,
-        2 => '$upload->isValid():533',
+        2 => 'app()->environment(\'local\'):164',
         3 => NULL,
       ),
       6 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanAndConstantConditionRule',
         1 => NULL,
-        2 => '\\Illuminate\\Support\\Facades\\Storage::disk(\'local\')->exists($stored):539',
+        2 => '$user->hasAnyRole([\'IT Head\', \'Developer\']):178',
         3 => NULL,
       ),
       7 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
         1 => NULL,
-        2 => '$request->filled(\'job_datestart\'):648',
+        2 => '$this->jobOrderService->delete($job):181',
         3 => NULL,
       ),
-      8 => 
+    ),
+    'PHPStan\\Rules\\DeadCode\\ConstructorWithoutImpurePointsCollector' => 
+    array (
+      0 => 
       array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => '$request->filled(\'job_time_start\'):654',
-        3 => NULL,
-      ),
-      9 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => '$request->filled(\'job_time_end\'):660',
-        3 => NULL,
-      ),
-      10 => 
-      array (
-        0 => 'PHPStan\\Rules\\Comparison\\IfConstantConditionRule',
-        1 => NULL,
-        2 => 'preg_match(\'/^\\d{4}-\\d{2}-\\d{2}$/\', $date):718',
-        3 => NULL,
+        0 => 'App\\Http\\Controllers\\IT_Department\\TicketController',
+        1 => 
+        array (
+        ),
       ),
     ),
     'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
@@ -4455,12 +4538,25 @@ return [
         ),
       ),
     ),
-    'PHPStan\\Rules\\DeadCode\\PossiblyPureFuncCallCollector' => 
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
     array (
       0 => 
       array (
-        0 => 'event',
-        1 => 404,
+        0 => 
+        array (
+          0 => 'App\\Services\\ITDepartment\\ItJobOrderService',
+        ),
+        1 => 'accept',
+        2 => 256,
+      ),
+      1 => 
+      array (
+        0 => 
+        array (
+          0 => 'App\\Services\\ITDepartment\\ItJobOrderService',
+        ),
+        1 => 'complete',
+        2 => 266,
       ),
     ),
     'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
@@ -4468,86 +4564,8 @@ return [
       0 => 
       array (
         0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 160,
-      ),
-      1 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 198,
-      ),
-      2 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
         1 => 'updateOrCreate',
-        2 => 248,
-      ),
-      3 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 341,
-      ),
-      4 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 350,
-      ),
-      5 => 
-      array (
-        0 => 'App\\Helpers\\Notifier',
-        1 => 'notifyRoles',
-        2 => 414,
-      ),
-      6 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'findOrFail',
-        2 => 480,
-      ),
-      7 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 482,
-      ),
-      8 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 489,
-      ),
-      9 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 543,
-      ),
-      10 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 551,
-      ),
-      11 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 612,
-      ),
-      12 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 634,
-      ),
-      13 => 
-      array (
-        0 => 'Illuminate\\Database\\Eloquent\\Builder',
-        1 => 'create',
-        2 => 696,
+        2 => 120,
       ),
     ),
   ),
@@ -6894,6 +6912,68 @@ return [
       ),
     ),
   ),
+  '../../../app/Http/Requests/ITDepartment/AddJobOrderFilesRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\ITDepartment\\AddJobOrderFilesRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\ITDepartment\\AddJobOrderFilesRequest',
+        3 => 
+        array (
+          0 => 'f' . "\0" . 'config',
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/ITDepartment/AddJobOrderNoteRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\ITDepartment\\AddJobOrderNoteRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\ITDepartment\\AddJobOrderNoteRequest',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/ITDepartment/StoreCctvConcernRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\ITDepartment\\StoreCctvConcernRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\ITDepartment\\StoreCctvConcernRequest',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'illuminate\\validation\\rule' . "\0" . 'enum',
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/ITDepartment/StoreItInventoryItemRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\ITDepartment\\StoreItInventoryItemRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\ITDepartment\\StoreItInventoryItemRequest',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
   '../../../app/Http/Requests/ITDepartment/StoreJobOrderRequest.php' => 
   array (
     'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
@@ -6913,6 +6993,52 @@ return [
         0 => 'App\\Http\\Requests\\ITDepartment\\StoreJobOrderRequest',
         1 => 'messages',
         2 => 'App\\Http\\Requests\\ITDepartment\\StoreJobOrderRequest',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateCctvConcernRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\ITDepartment\\UpdateCctvConcernRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\ITDepartment\\UpdateCctvConcernRequest',
+        3 => 
+        array (
+          0 => 'm' . "\0" . 'illuminate\\validation\\rule' . "\0" . 'enum',
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateItInventoryItemRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\ITDepartment\\UpdateItInventoryItemRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\ITDepartment\\UpdateItInventoryItemRequest',
+        3 => 
+        array (
+        ),
+      ),
+    ),
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateJobOrderRequest.php' => 
+  array (
+    'PHPStan\\Rules\\DeadCode\\MethodWithoutImpurePointsCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
+        1 => 'rules',
+        2 => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
         3 => 
         array (
         ),
@@ -10171,6 +10297,142 @@ return [
       ),
     ),
   ),
+  '../../../app/Services/ITDepartment/CctvConcernService.php' => 
+  array (
+    'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
+        1 => NULL,
+        2 => 'is_array($items):29',
+        3 => NULL,
+      ),
+      1 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
+        1 => NULL,
+        2 => '$status->isCompleted():50',
+        3 => NULL,
+      ),
+      2 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
+        1 => NULL,
+        2 => 'is_array($items):55',
+        3 => NULL,
+      ),
+      3 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
+        1 => NULL,
+        2 => 'is_array($row):110',
+        3 => NULL,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'Illuminate\\Database\\Connection',
+        1 => 'transaction',
+        2 => 63,
+      ),
+    ),
+  ),
+  '../../../app/Services/ITDepartment/ItJobOrderService.php' => 
+  array (
+    'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
+        1 => NULL,
+        2 => '$status->canBeDeleted():131',
+        3 => NULL,
+      ),
+      1 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\TernaryOperatorConstantConditionRule',
+        1 => NULL,
+        2 => 'preg_match(\'/^\\d{4}-\\d{2}-\\d{2}$/\', $date):207',
+        3 => NULL,
+      ),
+      2 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
+        1 => NULL,
+        2 => '$upload->isValid():234',
+        3 => NULL,
+      ),
+      3 => 
+      array (
+        0 => 'PHPStan\\Rules\\Comparison\\BooleanNotConstantConditionRule',
+        1 => NULL,
+        2 => '\\Illuminate\\Support\\Facades\\Storage::disk(\'local\')->exists($storedPath):238',
+        3 => NULL,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureFuncCallCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'event',
+        1 => 268,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureMethodCallCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 
+        array (
+          0 => 'App\\Services\\ITDepartment\\ItJobOrderService',
+        ),
+        1 => 'storeFiles',
+        2 => 60,
+      ),
+    ),
+    'PHPStan\\Rules\\DeadCode\\PossiblyPureStaticCallCollector' => 
+    array (
+      0 => 
+      array (
+        0 => 'Illuminate\\Database\\Connection',
+        1 => 'transaction',
+        2 => 83,
+      ),
+      1 => 
+      array (
+        0 => 'Illuminate\\Database\\Connection',
+        1 => 'transaction',
+        2 => 110,
+      ),
+      2 => 
+      array (
+        0 => 'Illuminate\\Database\\Connection',
+        1 => 'transaction',
+        2 => 135,
+      ),
+      3 => 
+      array (
+        0 => 'Illuminate\\Database\\Connection',
+        1 => 'transaction',
+        2 => 155,
+      ),
+      4 => 
+      array (
+        0 => 'Illuminate\\Database\\Connection',
+        1 => 'transaction',
+        2 => 169,
+      ),
+      5 => 
+      array (
+        0 => 'App\\Helpers\\Notifier',
+        1 => 'notifyRoles',
+        2 => 278,
+      ),
+    ),
+  ),
   '../../../app/Services/LeaveNotificationService.php' => 
   array (
     'PHPStan\\Rules\\Comparison\\FunctionCallConstantConditionCollector' => 
@@ -13359,6 +13621,18 @@ return [
     array (
     ),
   ),
+  '../../../app/Enums/CctvConcernStatus.php' => 
+  array (
+    'fileHash' => 'b09f4ffffa464fed2536c98c0ee4a56df947d2ec1264fdaf0a8563dc8dee0b39',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT_Department/CctvController.php',
+      1 => '../../../app/Http/Requests/ITDepartment/StoreCctvConcernRequest.php',
+      2 => '../../../app/Http/Requests/ITDepartment/UpdateCctvConcernRequest.php',
+      3 => '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php',
+      4 => '../../../app/Services/ITDepartment/CctvConcernService.php',
+    ),
+  ),
   '../../../app/Enums/EmployeeStatus.php' => 
   array (
     'fileHash' => 'dfcf76fd0432e3633af00ae08df6d652651abf8dd35415e124d7d3b5c9273199',
@@ -13366,6 +13640,23 @@ return [
     array (
       0 => '../../../app/Http/Requests/HR_Department/UpdateEmployeeRequest.php',
       1 => '../../../app/Services/HR_Department/EmployeeDirectoryService.php',
+    ),
+  ),
+  '../../../app/Enums/ItTicketApprovalStatus.php' => 
+  array (
+    'fileHash' => '3d3c67345d6783f02ff35c627efa018fd09a462654505326374dcf2f3b747433',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
+    ),
+  ),
+  '../../../app/Enums/ItTicketStatus.php' => 
+  array (
+    'fileHash' => '7a8fc48cf1b1c4876907c4630ef6213a83d295277c9322defd8c22b2674adc05',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Services/ITDepartment/ItJobOrderDirectoryService.php',
+      1 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
     ),
   ),
   '../../../app/Enums/JobOrderRepairType.php' => 
@@ -13419,9 +13710,9 @@ return [
     'fileHash' => '75a4dc28b2869211b583ce728a44defd35064b7f20170ec9434a8463efbff1cd',
     'dependentFiles' => 
     array (
-      0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
-      1 => '../../../app/Listeners/SendJobOrderNotification.php',
-      2 => '../../../app/Providers/EventServiceProvider.php',
+      0 => '../../../app/Listeners/SendJobOrderNotification.php',
+      1 => '../../../app/Providers/EventServiceProvider.php',
+      2 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
     ),
   ),
   '../../../app/Events/POCreated.php' => 
@@ -13468,8 +13759,8 @@ return [
     'fileHash' => 'd578c0885170db9e0e0555fb2d7122ea3b99ebd16321a9dcc532c9dcd9490f6a',
     'dependentFiles' => 
     array (
-      0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
-      1 => '../../../app/Http/Controllers/Maintenance/RequestController.php',
+      0 => '../../../app/Http/Controllers/Maintenance/RequestController.php',
+      1 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
     ),
   ),
   '../../../app/Http/Controllers/Accounting/AccountingController.php' => 
@@ -13731,21 +14022,21 @@ return [
   ),
   '../../../app/Http/Controllers/IT/ItInventoryItemController.php' => 
   array (
-    'fileHash' => '8a57f6b06d467104b70cfe248ce2c0e5a99b74bffc62ba5b6eac7d7bfb9d0e5b',
+    'fileHash' => '7e54b730151bea65d6ab43ab65396b550db913946957b137178ac75b4a24d5d5',
     'dependentFiles' => 
     array (
     ),
   ),
   '../../../app/Http/Controllers/IT_Department/CctvController.php' => 
   array (
-    'fileHash' => '800423e3c585406cad723c912d34d0c602e16e06782b99add0b54672b3739215',
+    'fileHash' => 'b87865e168f02ac6c389ff69daf52955de13c792cf86ae2ac8900ebec0c079d7',
     'dependentFiles' => 
     array (
     ),
   ),
   '../../../app/Http/Controllers/IT_Department/TicketController.php' => 
   array (
-    'fileHash' => 'a5eb6866e8fe38db13c61377733f99892a6abfc280f9251e07b83808cdaf03dd',
+    'fileHash' => '778358f4efddf4a7a720ebb6f3781661242776c4c166a09548d395959959700e',
     'dependentFiles' => 
     array (
     ),
@@ -14228,9 +14519,65 @@ return [
       0 => '../../../app/Http/Controllers/HR_Department/EmployeeController.php',
     ),
   ),
+  '../../../app/Http/Requests/ITDepartment/AddJobOrderFilesRequest.php' => 
+  array (
+    'fileHash' => '759751b18e779a9347664be1b86e30aa7b7a21e3932603e4ad27efd5a1112fae',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/ITDepartment/AddJobOrderNoteRequest.php' => 
+  array (
+    'fileHash' => '20a2270c8acaae508dd7dacd0e53bf05113571539ce5b69d01389c79fe1293d4',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/ITDepartment/StoreCctvConcernRequest.php' => 
+  array (
+    'fileHash' => '42d124b889b9a0b53ce290d0abdd3443492404014af87fa707fe408c3c8f0405',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT_Department/CctvController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/ITDepartment/StoreItInventoryItemRequest.php' => 
+  array (
+    'fileHash' => 'b3330ae8483755fa25d3daa01273d401dc4853f63effdd522bb18b8d270f8bdb',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT/ItInventoryItemController.php',
+    ),
+  ),
   '../../../app/Http/Requests/ITDepartment/StoreJobOrderRequest.php' => 
   array (
     'fileHash' => 'dd7e5a349606232caa4e199c18bcbb26ae8b24bac5d9d6e33ddc803fec91cb5d',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateCctvConcernRequest.php' => 
+  array (
+    'fileHash' => 'c943b6ac9260eaea014bf7421ce13a76b6d484703f5d313aee6b124d16f15f19',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT_Department/CctvController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateItInventoryItemRequest.php' => 
+  array (
+    'fileHash' => 'bcb556e531e1d0de6cecb862975dc18a33995464ab1241af15a441a6729d1cde',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT/ItInventoryItemController.php',
+    ),
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateJobOrderRequest.php' => 
+  array (
+    'fileHash' => '3bb85720a48df2696d1a2552a11f7945b67c27d4e89149e98d9ea5d25ccc28c0',
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
@@ -14392,7 +14739,7 @@ return [
     'fileHash' => 'ce22daf90a6f188db6e5f36ee8f43ac53c29e49bf33bbde3eecf6886a0169547',
     'dependentFiles' => 
     array (
-      0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
+      0 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
     ),
   ),
   '../../../app/Mail/LeaveNoticeMail.php' => 
@@ -14487,6 +14834,8 @@ return [
       11 => '../../../app/Models/JobOrder.php',
       12 => '../../../app/Models/OdometerSubmission.php',
       13 => '../../../app/Models/PartsOut.php',
+      14 => '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php',
+      15 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
     ),
   ),
   '../../../app/Models/BusForSaleRecord.php' => 
@@ -14529,12 +14878,14 @@ return [
   ),
   '../../../app/Models/CctvConcern.php' => 
   array (
-    'fileHash' => '66c7f3a7ac5b3798e4a49bd16a4c4947d2095e49725d7a89d03942eef1705c20',
+    'fileHash' => '1c1e1438cf0f1b3476c7515a123a651766d513dd16c53dd581fb26dc158797ad',
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/IT_Department/CctvController.php',
       1 => '../../../app/Models/BusDetail.php',
       2 => '../../../app/Models/CctvConcernItem.php',
+      3 => '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php',
+      4 => '../../../app/Services/ITDepartment/CctvConcernService.php',
     ),
   ),
   '../../../app/Models/CctvConcernItem.php' => 
@@ -14544,6 +14895,8 @@ return [
     array (
       0 => '../../../app/Http/Controllers/IT_Department/CctvController.php',
       1 => '../../../app/Models/CctvConcern.php',
+      2 => '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php',
+      3 => '../../../app/Services/ITDepartment/CctvConcernService.php',
     ),
   ),
   '../../../app/Models/Claim.php' => 
@@ -14928,12 +15281,15 @@ return [
   ),
   '../../../app/Models/ItInventoryItem.php' => 
   array (
-    'fileHash' => 'a83870153a82762cd325a1e9470726003cd26b9130a1357123a93625cd227fe5',
+    'fileHash' => 'eb70f960fa865c33880106160db41a7eaf802f6a8cc789de7464f14fafae5f22',
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/IT/ItInventoryItemController.php',
       1 => '../../../app/Http/Controllers/IT_Department/CctvController.php',
       2 => '../../../app/Models/CctvConcernItem.php',
+      3 => '../../../app/Services/IT/ItInventoryService.php',
+      4 => '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php',
+      5 => '../../../app/Services/ITDepartment/CctvConcernService.php',
     ),
   ),
   '../../../app/Models/JobOrder.php' => 
@@ -14951,6 +15307,8 @@ return [
       7 => '../../../app/Models/JobOrderLog.php',
       8 => '../../../app/Models/JobOrderNote.php',
       9 => '../../../app/Models/User.php',
+      10 => '../../../app/Services/ITDepartment/ItJobOrderDirectoryService.php',
+      11 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
     ),
   ),
   '../../../app/Models/JobOrderFile.php' => 
@@ -14961,6 +15319,7 @@ return [
       0 => '../../../app/Console/Commands/MigrateSensitiveFiles.php',
       1 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
       2 => '../../../app/Models/JobOrder.php',
+      3 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
     ),
   ),
   '../../../app/Models/JobOrderLog.php' => 
@@ -14970,6 +15329,7 @@ return [
     array (
       0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
       1 => '../../../app/Models/JobOrder.php',
+      2 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
     ),
   ),
   '../../../app/Models/JobOrderMaintenance.php' => 
@@ -15015,8 +15375,8 @@ return [
     'fileHash' => '8edcd13ec2a72481571920cca4d067ad7938e2bdc0f9948a3ee333ad4dcc7344',
     'dependentFiles' => 
     array (
-      0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
-      1 => '../../../app/Models/JobOrder.php',
+      0 => '../../../app/Models/JobOrder.php',
+      1 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
     ),
   ),
   '../../../app/Models/Location.php' => 
@@ -15542,50 +15902,61 @@ return [
       40 => '../../../app/Http/Requests/HR_Department/UpdateEmployeeAssetsRequest.php',
       41 => '../../../app/Http/Requests/HR_Department/UpdateEmployeeRequest.php',
       42 => '../../../app/Http/Requests/HR_Department/UpdateEmployeeStatusDetailsRequest.php',
-      43 => '../../../app/Http/Requests/ITDepartment/StoreJobOrderRequest.php',
-      44 => '../../../app/Http/Requests/Maintenance/StoreJobOrderMaintenanceRequest.php',
-      45 => '../../../app/Http/Requests/Maintenance/UpdateJobOrderMaintenanceNumberRequest.php',
-      46 => '../../../app/Http/Requests/Maintenance/UpdateJobOrderMaintenanceStatusRequest.php',
-      47 => '../../../app/Http/Requests/Payroll/UpdatePayrollBenefitSettlementRequest.php',
-      48 => '../../../app/Http/Requests/UserManagement/StoreUserRequest.php',
-      49 => '../../../app/Http/Requests/UserManagement/UpdateUserRequest.php',
-      50 => '../../../app/Listeners/SendJobOrderNotification.php',
-      51 => '../../../app/Listeners/SendPOCreatedNotification.php',
-      52 => '../../../app/Mail/POCreatedMail.php',
-      53 => '../../../app/Models/BenefitContributionRecord.php',
-      54 => '../../../app/Models/CctvConcern.php',
-      55 => '../../../app/Models/Claim.php',
-      56 => '../../../app/Models/DieselStock.php',
-      57 => '../../../app/Models/EmployeeLog.php',
-      58 => '../../../app/Models/JobOrder.php',
-      59 => '../../../app/Models/JobOrderLog.php',
-      60 => '../../../app/Models/JobOrderMaintenance.php',
-      61 => '../../../app/Models/JobOrderMaintenanceHistory.php',
-      62 => '../../../app/Models/JobOrderMaintenanceStatusPeriod.php',
-      63 => '../../../app/Models/JobOrderNote.php',
-      64 => '../../../app/Models/PartsOut.php',
-      65 => '../../../app/Models/PaymentLog.php',
-      66 => '../../../app/Models/Payroll.php',
-      67 => '../../../app/Models/PayrollAttendanceAdjustment.php',
-      68 => '../../../app/Models/PayrollAuditLog.php',
-      69 => '../../../app/Models/PayrollBenefitSettlement.php',
-      70 => '../../../app/Models/PayrollItem.php',
-      71 => '../../../app/Models/PayrollReportLog.php',
-      72 => '../../../app/Models/PurchaseOrder.php',
-      73 => '../../../app/Models/PurchaseOrderItem.php',
-      74 => '../../../app/Models/PurchaseReceive.php',
-      75 => '../../../app/Models/Receiving.php',
-      76 => '../../../app/Models/StockTransfer.php',
-      77 => '../../../app/Models/StockTransferItem.php',
-      78 => '../../../app/Notifications/POCreatedNotification.php',
-      79 => '../../../app/Providers/AppServiceProvider.php',
-      80 => '../../../app/Services/LeaveNotificationService.php',
-      81 => '../../../app/Services/Payroll/BenefitContributionPostingService.php',
-      82 => '../../../app/Services/Payroll/MonthlyGovernmentReconciliationService.php',
-      83 => '../../../app/Services/Payroll/PaymentLogService.php',
-      84 => '../../../app/Services/Payroll/PayrollAuditService.php',
-      85 => '../../../app/Services/Payroll/PayrollComputationService.php',
-      86 => '../../../app/Services/Payroll/PayrollPayslipService.php',
+      43 => '../../../app/Http/Requests/ITDepartment/AddJobOrderFilesRequest.php',
+      44 => '../../../app/Http/Requests/ITDepartment/AddJobOrderNoteRequest.php',
+      45 => '../../../app/Http/Requests/ITDepartment/StoreCctvConcernRequest.php',
+      46 => '../../../app/Http/Requests/ITDepartment/StoreItInventoryItemRequest.php',
+      47 => '../../../app/Http/Requests/ITDepartment/StoreJobOrderRequest.php',
+      48 => '../../../app/Http/Requests/ITDepartment/UpdateCctvConcernRequest.php',
+      49 => '../../../app/Http/Requests/ITDepartment/UpdateItInventoryItemRequest.php',
+      50 => '../../../app/Http/Requests/ITDepartment/UpdateJobOrderRequest.php',
+      51 => '../../../app/Http/Requests/Maintenance/StoreJobOrderMaintenanceRequest.php',
+      52 => '../../../app/Http/Requests/Maintenance/UpdateJobOrderMaintenanceNumberRequest.php',
+      53 => '../../../app/Http/Requests/Maintenance/UpdateJobOrderMaintenanceStatusRequest.php',
+      54 => '../../../app/Http/Requests/Payroll/UpdatePayrollBenefitSettlementRequest.php',
+      55 => '../../../app/Http/Requests/UserManagement/StoreUserRequest.php',
+      56 => '../../../app/Http/Requests/UserManagement/UpdateUserRequest.php',
+      57 => '../../../app/Listeners/SendJobOrderNotification.php',
+      58 => '../../../app/Listeners/SendPOCreatedNotification.php',
+      59 => '../../../app/Mail/POCreatedMail.php',
+      60 => '../../../app/Models/BenefitContributionRecord.php',
+      61 => '../../../app/Models/CctvConcern.php',
+      62 => '../../../app/Models/Claim.php',
+      63 => '../../../app/Models/DieselStock.php',
+      64 => '../../../app/Models/EmployeeLog.php',
+      65 => '../../../app/Models/JobOrder.php',
+      66 => '../../../app/Models/JobOrderLog.php',
+      67 => '../../../app/Models/JobOrderMaintenance.php',
+      68 => '../../../app/Models/JobOrderMaintenanceHistory.php',
+      69 => '../../../app/Models/JobOrderMaintenanceStatusPeriod.php',
+      70 => '../../../app/Models/JobOrderNote.php',
+      71 => '../../../app/Models/PartsOut.php',
+      72 => '../../../app/Models/PaymentLog.php',
+      73 => '../../../app/Models/Payroll.php',
+      74 => '../../../app/Models/PayrollAttendanceAdjustment.php',
+      75 => '../../../app/Models/PayrollAuditLog.php',
+      76 => '../../../app/Models/PayrollBenefitSettlement.php',
+      77 => '../../../app/Models/PayrollItem.php',
+      78 => '../../../app/Models/PayrollReportLog.php',
+      79 => '../../../app/Models/PurchaseOrder.php',
+      80 => '../../../app/Models/PurchaseOrderItem.php',
+      81 => '../../../app/Models/PurchaseReceive.php',
+      82 => '../../../app/Models/Receiving.php',
+      83 => '../../../app/Models/StockTransfer.php',
+      84 => '../../../app/Models/StockTransferItem.php',
+      85 => '../../../app/Notifications/POCreatedNotification.php',
+      86 => '../../../app/Providers/AppServiceProvider.php',
+      87 => '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php',
+      88 => '../../../app/Services/ITDepartment/CctvConcernService.php',
+      89 => '../../../app/Services/ITDepartment/ItJobOrderDirectoryService.php',
+      90 => '../../../app/Services/ITDepartment/ItJobOrderService.php',
+      91 => '../../../app/Services/LeaveNotificationService.php',
+      92 => '../../../app/Services/Payroll/BenefitContributionPostingService.php',
+      93 => '../../../app/Services/Payroll/MonthlyGovernmentReconciliationService.php',
+      94 => '../../../app/Services/Payroll/PaymentLogService.php',
+      95 => '../../../app/Services/Payroll/PayrollAuditService.php',
+      96 => '../../../app/Services/Payroll/PayrollComputationService.php',
+      97 => '../../../app/Services/Payroll/PayrollPayslipService.php',
     ),
   ),
   '../../../app/Notifications/JobOrderCreatedNotification.php' => 
@@ -15811,6 +16182,46 @@ return [
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/HR_Department/EmployeeController.php',
+    ),
+  ),
+  '../../../app/Services/IT/ItInventoryService.php' => 
+  array (
+    'fileHash' => '8f9d0d406591ba10e3b02e1f6cd764e5a80c953124835152d2f339ad5021d317',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT/ItInventoryItemController.php',
+    ),
+  ),
+  '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php' => 
+  array (
+    'fileHash' => '89d696288598a694eef4305cab44e5cd15a426bf2b9bfcb11cf63539a2330c94',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT_Department/CctvController.php',
+    ),
+  ),
+  '../../../app/Services/ITDepartment/CctvConcernService.php' => 
+  array (
+    'fileHash' => '4f25dec4fb29ddad0367052891f757165c2136af751e1f9fbe0fa59e8b374093',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT_Department/CctvController.php',
+    ),
+  ),
+  '../../../app/Services/ITDepartment/ItJobOrderDirectoryService.php' => 
+  array (
+    'fileHash' => 'b3af0146c47be39b7dfc16ec89fdd636a89db0552b5258234d4ebeb9b6c95dd0',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
+    ),
+  ),
+  '../../../app/Services/ITDepartment/ItJobOrderService.php' => 
+  array (
+    'fileHash' => 'd25ad94fe3f6ab225a32619a8f292a6cdc04ceb411b1e4a2694f1900692b7261',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
     ),
   ),
   '../../../app/Services/LeaveNotificationService.php' => 
@@ -17185,13 +17596,13 @@ return [
     2 => 'nesbot/carbon',
     3 => 'laravel/sanctum',
     4 => 'spatie/laravel-permission',
-    5 => 'league/flysystem',
-    6 => 'psr/http-message',
-    7 => 'psr/log',
-    8 => 'monolog/monolog',
-    9 => 'laracasts/flash',
-    10 => 'symfony/http-kernel',
-    11 => 'psr/container',
+    5 => 'laracasts/flash',
+    6 => 'symfony/http-kernel',
+    7 => 'psr/container',
+    8 => 'psr/log',
+    9 => 'monolog/monolog',
+    10 => 'league/flysystem',
+    11 => 'psr/http-message',
     12 => 'maatwebsite/excel',
     13 => 'barryvdh/laravel-dompdf',
     14 => 'dompdf/dompdf',
@@ -17420,9 +17831,9 @@ return [
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'laravel/sanctum',
-    4 => 'spatie/laravel-permission',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
   ),
   '../../../app/Http/Middleware/PayrollGroupAccess.php' => 
   array (
@@ -17678,6 +18089,108 @@ return [
     2 => 'symfony/http-foundation',
     3 => 'league/flysystem',
     4 => 'psr/http-message',
+  ),
+  '../../../app/Enums/CctvConcernStatus.php' => 
+  array (
+  ),
+  '../../../app/Enums/ItTicketApprovalStatus.php' => 
+  array (
+  ),
+  '../../../app/Enums/ItTicketStatus.php' => 
+  array (
+  ),
+  '../../../app/Http/Requests/ITDepartment/AddJobOrderFilesRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/ITDepartment/AddJobOrderNoteRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/ITDepartment/StoreCctvConcernRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/ITDepartment/StoreItInventoryItemRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateCctvConcernRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateItInventoryItemRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateJobOrderRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/IT/ItInventoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Services/ITDepartment/CctvConcernService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'laravel/sanctum',
+    2 => 'spatie/laravel-permission',
+    3 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/ITDepartment/ItJobOrderDirectoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Services/ITDepartment/ItJobOrderService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+    5 => 'league/flysystem',
+    6 => 'psr/http-message',
+    7 => 'psr/log',
+    8 => 'monolog/monolog',
   ),
 ),
 	'exportedNodesCallback' => static function (): array { return array (
@@ -19512,6 +20025,122 @@ return [
       ),
     )),
   ),
+  '../../../app/Enums/CctvConcernStatus.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedEnumNode::__set_state(array(
+       'name' => 'App\\Enums\\CctvConcernStatus',
+       'scalarType' => 'string',
+       'phpDoc' => NULL,
+       'implements' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Open',
+           'value' => '\'Open\'',
+           'phpDoc' => NULL,
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'InProgress',
+           'value' => '\'In Progress\'',
+           'phpDoc' => NULL,
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Fixed',
+           'value' => '\'Fixed\'',
+           'phpDoc' => NULL,
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Closed',
+           'value' => '\'Closed\'',
+           'phpDoc' => NULL,
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'isCompleted',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'values',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return list<string> */',
+             'namespace' => 'App\\Enums',
+             'uses' => 
+            array (
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => true,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        6 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'options',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return array<string, string> */',
+             'namespace' => 'App\\Enums',
+             'uses' => 
+            array (
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => true,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
   '../../../app/Enums/EmployeeStatus.php' => 
   array (
     0 => 
@@ -19643,6 +20272,136 @@ return [
         12 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'inactiveValues',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return list<string> */',
+             'namespace' => 'App\\Enums',
+             'uses' => 
+            array (
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => true,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Enums/ItTicketApprovalStatus.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedEnumNode::__set_state(array(
+       'name' => 'App\\Enums\\ItTicketApprovalStatus',
+       'scalarType' => 'string',
+       'phpDoc' => NULL,
+       'implements' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Approval',
+           'value' => '\'Approval\'',
+           'phpDoc' => NULL,
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Approved',
+           'value' => '\'Approved\'',
+           'phpDoc' => NULL,
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Disapproved',
+           'value' => '\'Disapproved\'',
+           'phpDoc' => NULL,
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Enums/ItTicketStatus.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedEnumNode::__set_state(array(
+       'name' => 'App\\Enums\\ItTicketStatus',
+       'scalarType' => 'string',
+       'phpDoc' => NULL,
+       'implements' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Approval',
+           'value' => '\'Approval\'',
+           'phpDoc' => NULL,
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Pending',
+           'value' => '\'Pending\'',
+           'phpDoc' => NULL,
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'InProgress',
+           'value' => '\'In Progress\'',
+           'phpDoc' => NULL,
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Completed',
+           'value' => '\'Completed\'',
+           'phpDoc' => NULL,
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedEnumCaseNode::__set_state(array(
+           'name' => 'Disapproved',
+           'value' => '\'Disapproved\'',
+           'phpDoc' => NULL,
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'canBeDeleted',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        6 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'values',
            'phpDoc' => 
           \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
              'phpDocString' => '/** @return list<string> */',
@@ -25494,7 +26253,7 @@ return [
        'name' => 'App\\Http\\Controllers\\IT\\ItInventoryItemController',
        'phpDoc' => NULL,
        'abstract' => false,
-       'final' => false,
+       'final' => true,
        'extends' => 'App\\Http\\Controllers\\Controller',
        'implements' => 
       array (
@@ -25509,7 +26268,7 @@ return [
       array (
         0 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'index',
+           'name' => '__construct',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -25518,6 +26277,37 @@ return [
            'final' => false,
            'static' => false,
            'returnType' => NULL,
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'inventoryService',
+               'type' => 'App\\Services\\IT\\ItInventoryService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'index',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\View\\View',
            'parameters' => 
           array (
             0 => 
@@ -25538,7 +26328,7 @@ return [
           array (
           ),
         )),
-        1 => 
+        2 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'create',
            'phpDoc' => NULL,
@@ -25548,7 +26338,7 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\View\\View',
            'parameters' => 
           array (
           ),
@@ -25556,7 +26346,7 @@ return [
           array (
           ),
         )),
-        2 => 
+        3 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'store',
            'phpDoc' => NULL,
@@ -25566,44 +26356,13 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        3 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'edit',
-           'phpDoc' => NULL,
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => NULL,
-           'parameters' => 
-          array (
-            0 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'id',
-               'type' => NULL,
+               'type' => 'App\\Http\\Requests\\ITDepartment\\StoreItInventoryItemRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -25620,7 +26379,7 @@ return [
         )),
         4 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'update',
+           'name' => 'edit',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -25628,26 +26387,13 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\View\\View',
            'parameters' => 
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-            1 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'id',
-               'type' => NULL,
+               'type' => 'int',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -25664,6 +26410,50 @@ return [
         )),
         5 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'update',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'App\\Http\\Requests\\ITDepartment\\UpdateItInventoryItemRequest',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'id',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        6 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'destroy',
            'phpDoc' => NULL,
            'byRef' => false,
@@ -25672,13 +26462,13 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'id',
-               'type' => NULL,
+               'type' => 'int',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -25706,7 +26496,7 @@ return [
        'name' => 'App\\Http\\Controllers\\IT_Department\\CctvController',
        'phpDoc' => NULL,
        'abstract' => false,
-       'final' => false,
+       'final' => true,
        'extends' => 'App\\Http\\Controllers\\Controller',
        'implements' => 
       array (
@@ -25721,7 +26511,7 @@ return [
       array (
         0 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'index',
+           'name' => '__construct',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -25734,8 +26524,8 @@ return [
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'name' => 'concernService',
+               'type' => 'App\\Services\\ITDepartment\\CctvConcernService',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -25743,7 +26533,20 @@ return [
               array (
               ),
                'phpDoc' => NULL,
-               'flags' => 0,
+               'flags' => 68,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'directoryService',
+               'type' => 'App\\Services\\ITDepartment\\CctvConcernDirectoryService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
             )),
           ),
            'attributes' => 
@@ -25752,7 +26555,7 @@ return [
         )),
         1 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'store',
+           'name' => 'index',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -25760,7 +26563,7 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\View\\View',
            'parameters' => 
           array (
             0 => 
@@ -25783,6 +26586,37 @@ return [
         )),
         2 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'store',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'App\\Http\\Requests\\ITDepartment\\StoreCctvConcernRequest',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'update',
            'phpDoc' => NULL,
            'byRef' => false,
@@ -25791,13 +26625,13 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'App\\Http\\Requests\\ITDepartment\\UpdateCctvConcernRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -25825,7 +26659,7 @@ return [
           array (
           ),
         )),
-        3 => 
+        4 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'destroy',
            'phpDoc' => NULL,
@@ -25835,7 +26669,7 @@ return [
            'abstract' => false,
            'final' => false,
            'static' => false,
-           'returnType' => NULL,
+           'returnType' => 'Illuminate\\Http\\RedirectResponse',
            'parameters' => 
           array (
             0 => 
@@ -25856,7 +26690,7 @@ return [
           array (
           ),
         )),
-        4 => 
+        5 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'view',
            'phpDoc' => NULL,
@@ -25887,7 +26721,7 @@ return [
           array (
           ),
         )),
-        5 => 
+        6 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'acceptTask',
            'phpDoc' => NULL,
@@ -25918,7 +26752,7 @@ return [
           array (
           ),
         )),
-        6 => 
+        7 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'markAsDone',
            'phpDoc' => NULL,
@@ -25949,7 +26783,7 @@ return [
           array (
           ),
         )),
-        7 => 
+        8 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'addNote',
            'phpDoc' => NULL,
@@ -25993,7 +26827,7 @@ return [
           array (
           ),
         )),
-        8 => 
+        9 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'addFiles',
            'phpDoc' => NULL,
@@ -26037,7 +26871,7 @@ return [
           array (
           ),
         )),
-        9 => 
+        10 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'export',
            'phpDoc' => NULL,
@@ -26081,7 +26915,7 @@ return [
           array (
           ),
         )),
-        10 => 
+        11 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'busStatus',
            'phpDoc' => NULL,
@@ -26112,7 +26946,7 @@ return [
           array (
           ),
         )),
-        11 => 
+        12 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'busStatusShow',
            'phpDoc' => NULL,
@@ -26169,7 +27003,7 @@ return [
        'name' => 'App\\Http\\Controllers\\IT_Department\\TicketController',
        'phpDoc' => NULL,
        'abstract' => false,
-       'final' => false,
+       'final' => true,
        'extends' => 'App\\Http\\Controllers\\Controller',
        'implements' => 
       array (
@@ -26183,6 +27017,50 @@ return [
        'statements' => 
       array (
         0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => '__construct',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => NULL,
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'jobOrderService',
+               'type' => 'App\\Services\\ITDepartment\\ItJobOrderService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'directoryService',
+               'type' => 'App\\Services\\ITDepartment\\ItJobOrderDirectoryService',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 68,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'index',
            'phpDoc' => NULL,
@@ -26213,7 +27091,7 @@ return [
           array (
           ),
         )),
-        1 => 
+        2 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'approve',
            'phpDoc' => NULL,
@@ -26229,38 +27107,7 @@ return [
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'id',
-               'type' => NULL,
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        2 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'disapprove',
-           'phpDoc' => NULL,
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => NULL,
-           'parameters' => 
-          array (
-            0 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'id',
-               'type' => NULL,
+               'type' => 'int',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -26276,6 +27123,37 @@ return [
           ),
         )),
         3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'disapprove',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => NULL,
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'id',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'cctvindex',
            'phpDoc' => NULL,
@@ -26293,7 +27171,7 @@ return [
           array (
           ),
         )),
-        4 => 
+        5 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'createjobordersIndex',
            'phpDoc' => NULL,
@@ -26311,7 +27189,7 @@ return [
           array (
           ),
         )),
-        5 => 
+        6 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'view',
            'phpDoc' => NULL,
@@ -26342,7 +27220,7 @@ return [
           array (
           ),
         )),
-        6 => 
+        7 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'storeJoborders',
            'phpDoc' => NULL,
@@ -26373,7 +27251,7 @@ return [
           array (
           ),
         )),
-        7 => 
+        8 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'destroy',
            'phpDoc' => NULL,
@@ -26389,51 +27267,7 @@ return [
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'id',
-               'type' => NULL,
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        8 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'addNote',
-           'phpDoc' => NULL,
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => NULL,
-           'parameters' => 
-          array (
-            0 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-            1 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'id',
-               'type' => NULL,
+               'type' => 'int',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -26450,7 +27284,7 @@ return [
         )),
         9 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'addFiles',
+           'name' => 'addNote',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -26464,7 +27298,7 @@ return [
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
+               'type' => 'App\\Http\\Requests\\ITDepartment\\AddJobOrderNoteRequest',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -26477,7 +27311,7 @@ return [
             1 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'id',
-               'type' => NULL,
+               'type' => 'int',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -26493,6 +27327,50 @@ return [
           ),
         )),
         10 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'addFiles',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => NULL,
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'App\\Http\\Requests\\ITDepartment\\AddJobOrderFilesRequest',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'id',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        11 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'downloadFile',
            'phpDoc' => NULL,
@@ -26536,7 +27414,7 @@ return [
           array (
           ),
         )),
-        11 => 
+        12 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'export',
            'phpDoc' => NULL,
@@ -26567,7 +27445,7 @@ return [
           array (
           ),
         )),
-        12 => 
+        13 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'acceptTask',
            'phpDoc' => NULL,
@@ -26583,38 +27461,7 @@ return [
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'id',
-               'type' => NULL,
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        13 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'markAsDone',
-           'phpDoc' => NULL,
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => NULL,
-           'parameters' => 
-          array (
-            0 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'id',
-               'type' => NULL,
+               'type' => 'int',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -26631,7 +27478,7 @@ return [
         )),
         14 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'update',
+           'name' => 'markAsDone',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -26644,21 +27491,8 @@ return [
           array (
             0 => 
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'request',
-               'type' => 'Illuminate\\Http\\Request',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-            1 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'id',
-               'type' => NULL,
+               'type' => 'int',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,
@@ -26674,6 +27508,50 @@ return [
           ),
         )),
         15 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'update',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => NULL,
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'request',
+               'type' => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'id',
+               'type' => 'int',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        16 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'print',
            'phpDoc' => NULL,
@@ -34956,6 +35834,303 @@ return [
       ),
     )),
   ),
+  '../../../app/Http/Requests/ITDepartment/AddJobOrderFilesRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\ITDepartment\\AddJobOrderFilesRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'withValidator',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'validator',
+               'type' => 'Illuminate\\Contracts\\Validation\\Validator',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/ITDepartment/AddJobOrderNoteRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\ITDepartment\\AddJobOrderNoteRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/ITDepartment/StoreCctvConcernRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\ITDepartment\\StoreCctvConcernRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/ITDepartment/StoreItInventoryItemRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\ITDepartment\\StoreItInventoryItemRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'prepareForValidation',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => false,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
   '../../../app/Http/Requests/ITDepartment/StoreJobOrderRequest.php' => 
   array (
     0 => 
@@ -35046,6 +36221,192 @@ return [
         3 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'messages',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateCctvConcernRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\ITDepartment\\UpdateCctvConcernRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateItInventoryItemRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\ITDepartment\\UpdateItInventoryItemRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateJobOrderRequest.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => 'Illuminate\\Foundation\\Http\\FormRequest',
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'authorize',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'rules',
            'phpDoc' => NULL,
            'byRef' => false,
            'public' => true,
@@ -39105,6 +40466,7 @@ return [
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
           'hasfactory' => 'Illuminate\\Database\\Eloquent\\Factories\\HasFactory',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
           'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
@@ -39206,6 +40568,124 @@ return [
         )),
         3 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'scopeSearch',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param Builder<self> $query */',
+             'namespace' => 'App\\Models',
+             'uses' => 
+            array (
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'hasfactory' => 'Illuminate\\Database\\Eloquent\\Factories\\HasFactory',
+              'model' => 'Illuminate\\Database\\Eloquent\\Model',
+              'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
+              'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Database\\Eloquent\\Builder',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'query',
+               'type' => 'Illuminate\\Database\\Eloquent\\Builder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'scopeStatus',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param Builder<self> $query */',
+             'namespace' => 'App\\Models',
+             'uses' => 
+            array (
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'hasfactory' => 'Illuminate\\Database\\Eloquent\\Factories\\HasFactory',
+              'model' => 'Illuminate\\Database\\Eloquent\\Model',
+              'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
+              'hasmany' => 'Illuminate\\Database\\Eloquent\\Relations\\HasMany',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Database\\Eloquent\\Builder',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'query',
+               'type' => 'Illuminate\\Database\\Eloquent\\Builder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'status',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'assignee',
            'phpDoc' => 
           \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
@@ -39213,6 +40693,7 @@ return [
              'namespace' => 'App\\Models',
              'uses' => 
             array (
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
               'hasfactory' => 'Illuminate\\Database\\Eloquent\\Factories\\HasFactory',
               'model' => 'Illuminate\\Database\\Eloquent\\Model',
               'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
@@ -39236,7 +40717,7 @@ return [
           array (
           ),
         )),
-        4 => 
+        6 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'creator',
            'phpDoc' => 
@@ -39245,6 +40726,7 @@ return [
              'namespace' => 'App\\Models',
              'uses' => 
             array (
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
               'hasfactory' => 'Illuminate\\Database\\Eloquent\\Factories\\HasFactory',
               'model' => 'Illuminate\\Database\\Eloquent\\Model',
               'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
@@ -39268,7 +40750,7 @@ return [
           array (
           ),
         )),
-        5 => 
+        7 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'usedItems',
            'phpDoc' => 
@@ -39277,6 +40759,7 @@ return [
              'namespace' => 'App\\Models',
              'uses' => 
             array (
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
               'hasfactory' => 'Illuminate\\Database\\Eloquent\\Factories\\HasFactory',
               'model' => 'Illuminate\\Database\\Eloquent\\Model',
               'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
@@ -39300,7 +40783,7 @@ return [
           array (
           ),
         )),
-        6 => 
+        8 => 
         \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
            'name' => 'bus',
            'phpDoc' => 
@@ -39309,6 +40792,7 @@ return [
              'namespace' => 'App\\Models',
              'uses' => 
             array (
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
               'hasfactory' => 'Illuminate\\Database\\Eloquent\\Factories\\HasFactory',
               'model' => 'Illuminate\\Database\\Eloquent\\Model',
               'belongsto' => 'Illuminate\\Database\\Eloquent\\Relations\\BelongsTo',
@@ -43712,6 +45196,7 @@ return [
          'namespace' => 'App\\Models',
          'uses' => 
         array (
+          'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
           'model' => 'Illuminate\\Database\\Eloquent\\Model',
         ),
          'constUses' => 
@@ -43779,6 +45264,161 @@ return [
           array (
           ),
            'hooks' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'scopeSearch',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param Builder<self> $query */',
+             'namespace' => 'App\\Models',
+             'uses' => 
+            array (
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'model' => 'Illuminate\\Database\\Eloquent\\Model',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Database\\Eloquent\\Builder',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'query',
+               'type' => 'Illuminate\\Database\\Eloquent\\Builder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'scopeCategory',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param Builder<self> $query */',
+             'namespace' => 'App\\Models',
+             'uses' => 
+            array (
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'model' => 'Illuminate\\Database\\Eloquent\\Model',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Database\\Eloquent\\Builder',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'query',
+               'type' => 'Illuminate\\Database\\Eloquent\\Builder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'category',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'scopeActive',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param Builder<self> $query */',
+             'namespace' => 'App\\Models',
+             'uses' => 
+            array (
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+              'model' => 'Illuminate\\Database\\Eloquent\\Model',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Database\\Eloquent\\Builder',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'query',
+               'type' => 'Illuminate\\Database\\Eloquent\\Builder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
           array (
           ),
         )),
@@ -56331,6 +57971,1297 @@ return [
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'employee',
                'type' => 'App\\Models\\Employee',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/IT/ItInventoryService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\IT\\ItInventoryService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'paginate',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return LengthAwarePaginator<int, ItInventoryItem> */',
+             'namespace' => 'App\\Services\\IT',
+             'uses' => 
+            array (
+              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
+              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'category',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'categories',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return Collection<int, string> */',
+             'namespace' => 'App\\Services\\IT',
+             'uses' => 
+            array (
+              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
+              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Support\\Collection',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'create',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array<string, mixed> $data */',
+             'namespace' => 'App\\Services\\IT',
+             'uses' => 
+            array (
+              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
+              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\ItInventoryItem',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'update',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array<string, mixed> $data */',
+             'namespace' => 'App\\Services\\IT',
+             'uses' => 
+            array (
+              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
+              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\ItInventoryItem',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'item',
+               'type' => 'App\\Models\\ItInventoryItem',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'delete',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'item',
+               'type' => 'App\\Models\\ItInventoryItem',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\ITDepartment\\CctvConcernDirectoryService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'indexData',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return array<string, mixed> */',
+             'namespace' => 'App\\Services\\ITDepartment',
+             'uses' => 
+            array (
+              'cctvconcernstatus' => 'App\\Enums\\CctvConcernStatus',
+              'busdetail' => 'App\\Models\\BusDetail',
+              'cctvconcern' => 'App\\Models\\CctvConcern',
+              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
+              'user' => 'App\\Models\\User',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'status',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'query',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return Builder<CctvConcern> */',
+             'namespace' => 'App\\Services\\ITDepartment',
+             'uses' => 
+            array (
+              'cctvconcernstatus' => 'App\\Enums\\CctvConcernStatus',
+              'busdetail' => 'App\\Models\\BusDetail',
+              'cctvconcern' => 'App\\Models\\CctvConcern',
+              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
+              'user' => 'App\\Models\\User',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Database\\Eloquent\\Builder',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'status',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/ITDepartment/CctvConcernService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\ITDepartment\\CctvConcernService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'create',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array<string, mixed> $data */',
+             'namespace' => 'App\\Services\\ITDepartment',
+             'uses' => 
+            array (
+              'cctvconcernstatus' => 'App\\Enums\\CctvConcernStatus',
+              'cctvconcern' => 'App\\Models\\CctvConcern',
+              'cctvconcernitem' => 'App\\Models\\CctvConcernItem',
+              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
+              'user' => 'App\\Models\\User',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+              'runtimeexception' => 'RuntimeException',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\CctvConcern',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'actor',
+               'type' => 'App\\Models\\User',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'update',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array<string, mixed> $data */',
+             'namespace' => 'App\\Services\\ITDepartment',
+             'uses' => 
+            array (
+              'cctvconcernstatus' => 'App\\Enums\\CctvConcernStatus',
+              'cctvconcern' => 'App\\Models\\CctvConcern',
+              'cctvconcernitem' => 'App\\Models\\CctvConcernItem',
+              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
+              'user' => 'App\\Models\\User',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+              'runtimeexception' => 'RuntimeException',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\CctvConcern',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'jobOrder',
+               'type' => 'App\\Models\\CctvConcern',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'delete',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'jobOrder',
+               'type' => 'App\\Models\\CctvConcern',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/ITDepartment/ItJobOrderDirectoryService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\ITDepartment\\ItJobOrderDirectoryService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'paginateTab',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return LengthAwarePaginator<int, JobOrder> */',
+             'namespace' => 'App\\Services\\ITDepartment',
+             'uses' => 
+            array (
+              'itticketstatus' => 'App\\Enums\\ItTicketStatus',
+              'joborder' => 'App\\Models\\JobOrder',
+              'user' => 'App\\Models\\User',
+              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'tab',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'pageName',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'indexData',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return array<string, mixed> */',
+             'namespace' => 'App\\Services\\ITDepartment',
+             'uses' => 
+            array (
+              'itticketstatus' => 'App\\Enums\\ItTicketStatus',
+              'joborder' => 'App\\Models\\JobOrder',
+              'user' => 'App\\Models\\User',
+              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+              'builder' => 'Illuminate\\Database\\Eloquent\\Builder',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'array',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/ITDepartment/ItJobOrderService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\ITDepartment\\ItJobOrderService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'create',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/**
+     * @param  array<string, mixed>  $data
+     * @param  array<int, UploadedFile>  $files
+     */',
+             'namespace' => 'App\\Services\\ITDepartment',
+             'uses' => 
+            array (
+              'itticketapprovalstatus' => 'App\\Enums\\ItTicketApprovalStatus',
+              'itticketstatus' => 'App\\Enums\\ItTicketStatus',
+              'jobordercreated' => 'App\\Events\\JobOrderCreated',
+              'notifier' => 'App\\Helpers\\Notifier',
+              'jobordercreatedmail' => 'App\\Mail\\JobOrderCreatedMail',
+              'busdetail' => 'App\\Models\\BusDetail',
+              'joborder' => 'App\\Models\\JobOrder',
+              'joborderfile' => 'App\\Models\\JobOrderFile',
+              'joborderlog' => 'App\\Models\\JobOrderLog',
+              'jobordernote' => 'App\\Models\\JobOrderNote',
+              'user' => 'App\\Models\\User',
+              'carbon' => 'Carbon\\Carbon',
+              'uploadedfile' => 'Illuminate\\Http\\UploadedFile',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+              'log' => 'Illuminate\\Support\\Facades\\Log',
+              'storage' => 'Illuminate\\Support\\Facades\\Storage',
+              'runtimeexception' => 'RuntimeException',
+              'throwable' => 'Throwable',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\JobOrder',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'files',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'actor',
+               'type' => 'App\\Models\\User',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'approve',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'job',
+               'type' => 'App\\Models\\JobOrder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'actor',
+               'type' => 'App\\Models\\User',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'disapprove',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'job',
+               'type' => 'App\\Models\\JobOrder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'actor',
+               'type' => 'App\\Models\\User',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'delete',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'job',
+               'type' => 'App\\Models\\JobOrder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'addNote',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array<string, mixed> $data */',
+             'namespace' => 'App\\Services\\ITDepartment',
+             'uses' => 
+            array (
+              'itticketapprovalstatus' => 'App\\Enums\\ItTicketApprovalStatus',
+              'itticketstatus' => 'App\\Enums\\ItTicketStatus',
+              'jobordercreated' => 'App\\Events\\JobOrderCreated',
+              'notifier' => 'App\\Helpers\\Notifier',
+              'jobordercreatedmail' => 'App\\Mail\\JobOrderCreatedMail',
+              'busdetail' => 'App\\Models\\BusDetail',
+              'joborder' => 'App\\Models\\JobOrder',
+              'joborderfile' => 'App\\Models\\JobOrderFile',
+              'joborderlog' => 'App\\Models\\JobOrderLog',
+              'jobordernote' => 'App\\Models\\JobOrderNote',
+              'user' => 'App\\Models\\User',
+              'carbon' => 'Carbon\\Carbon',
+              'uploadedfile' => 'Illuminate\\Http\\UploadedFile',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+              'log' => 'Illuminate\\Support\\Facades\\Log',
+              'storage' => 'Illuminate\\Support\\Facades\\Storage',
+              'runtimeexception' => 'RuntimeException',
+              'throwable' => 'Throwable',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'job',
+               'type' => 'App\\Models\\JobOrder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'actor',
+               'type' => 'App\\Models\\User',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        5 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'addFiles',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array<int, UploadedFile> $files */',
+             'namespace' => 'App\\Services\\ITDepartment',
+             'uses' => 
+            array (
+              'itticketapprovalstatus' => 'App\\Enums\\ItTicketApprovalStatus',
+              'itticketstatus' => 'App\\Enums\\ItTicketStatus',
+              'jobordercreated' => 'App\\Events\\JobOrderCreated',
+              'notifier' => 'App\\Helpers\\Notifier',
+              'jobordercreatedmail' => 'App\\Mail\\JobOrderCreatedMail',
+              'busdetail' => 'App\\Models\\BusDetail',
+              'joborder' => 'App\\Models\\JobOrder',
+              'joborderfile' => 'App\\Models\\JobOrderFile',
+              'joborderlog' => 'App\\Models\\JobOrderLog',
+              'jobordernote' => 'App\\Models\\JobOrderNote',
+              'user' => 'App\\Models\\User',
+              'carbon' => 'Carbon\\Carbon',
+              'uploadedfile' => 'Illuminate\\Http\\UploadedFile',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+              'log' => 'Illuminate\\Support\\Facades\\Log',
+              'storage' => 'Illuminate\\Support\\Facades\\Storage',
+              'runtimeexception' => 'RuntimeException',
+              'throwable' => 'Throwable',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'job',
+               'type' => 'App\\Models\\JobOrder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'files',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'actor',
+               'type' => 'App\\Models\\User',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        6 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'accept',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'job',
+               'type' => 'App\\Models\\JobOrder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'actor',
+               'type' => 'App\\Models\\User',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        7 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'complete',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'bool',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'job',
+               'type' => 'App\\Models\\JobOrder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'actor',
+               'type' => 'App\\Models\\User',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        8 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'update',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array<string, mixed> $data */',
+             'namespace' => 'App\\Services\\ITDepartment',
+             'uses' => 
+            array (
+              'itticketapprovalstatus' => 'App\\Enums\\ItTicketApprovalStatus',
+              'itticketstatus' => 'App\\Enums\\ItTicketStatus',
+              'jobordercreated' => 'App\\Events\\JobOrderCreated',
+              'notifier' => 'App\\Helpers\\Notifier',
+              'jobordercreatedmail' => 'App\\Mail\\JobOrderCreatedMail',
+              'busdetail' => 'App\\Models\\BusDetail',
+              'joborder' => 'App\\Models\\JobOrder',
+              'joborderfile' => 'App\\Models\\JobOrderFile',
+              'joborderlog' => 'App\\Models\\JobOrderLog',
+              'jobordernote' => 'App\\Models\\JobOrderNote',
+              'user' => 'App\\Models\\User',
+              'carbon' => 'Carbon\\Carbon',
+              'uploadedfile' => 'Illuminate\\Http\\UploadedFile',
+              'db' => 'Illuminate\\Support\\Facades\\DB',
+              'log' => 'Illuminate\\Support\\Facades\\Log',
+              'storage' => 'Illuminate\\Support\\Facades\\Storage',
+              'runtimeexception' => 'RuntimeException',
+              'throwable' => 'Throwable',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'job',
+               'type' => 'App\\Models\\JobOrder',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            2 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'actor',
+               'type' => 'App\\Models\\User',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,

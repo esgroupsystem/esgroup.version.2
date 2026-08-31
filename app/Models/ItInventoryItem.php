@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -37,5 +38,35 @@ class ItInventoryItem extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
+        'stock_qty' => 'integer',
+        'minimum_stock' => 'integer',
     ];
+
+    /** @param Builder<self> $query */
+    public function scopeSearch(Builder $query, string $search): Builder
+    {
+        if ($search === '') {
+            return $query;
+        }
+
+        return $query->where(function (Builder $query) use ($search): void {
+            $query->where('item_name', 'like', "%{$search}%")
+                ->orWhere('brand', 'like', "%{$search}%")
+                ->orWhere('model', 'like', "%{$search}%")
+                ->orWhere('part_number', 'like', "%{$search}%")
+                ->orWhere('location', 'like', "%{$search}%");
+        });
+    }
+
+    /** @param Builder<self> $query */
+    public function scopeCategory(Builder $query, string $category): Builder
+    {
+        return $category === '' ? $query : $query->where('category', $category);
+    }
+
+    /** @param Builder<self> $query */
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('is_active', true);
+    }
 }

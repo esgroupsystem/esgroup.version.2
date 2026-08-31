@@ -1,0 +1,135 @@
+<?php declare(strict_types = 1);
+
+// odsl-/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/ITDepartment/UpdateJobOrderRequest.php-PHPStan\BetterReflection\Reflection\ReflectionClass-App\Http\Requests\ITDepartment\UpdateJobOrderRequest
+return \PHPStan\Cache\CacheItem::__set_state(array(
+   'variableKey' => 'v2-6.70.0.3-8.3.6-3bb85720a48df2696d1a2552a11f7945b67c27d4e89149e98d9ea5d25ccc28c0',
+   'data' => 
+  array (
+    'locatedSource' => 
+    array (
+      'class' => 'PHPStan\\BetterReflection\\SourceLocator\\Located\\LocatedSource',
+      'data' => 
+      array (
+        'name' => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
+        'filename' => '/home/lenberd/Documents/esgroup.version.2/app/Http/Requests/ITDepartment/UpdateJobOrderRequest.php',
+      ),
+    ),
+    'namespace' => 'App\\Http\\Requests\\ITDepartment',
+    'name' => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
+    'shortName' => 'UpdateJobOrderRequest',
+    'isInterface' => false,
+    'isTrait' => false,
+    'isEnum' => false,
+    'isBackedEnum' => false,
+    'modifiers' => 32,
+    'docComment' => NULL,
+    'attributes' => 
+    array (
+    ),
+    'startLine' => 9,
+    'endLine' => 30,
+    'startColumn' => 1,
+    'endColumn' => 1,
+    'parentClassName' => 'Illuminate\\Foundation\\Http\\FormRequest',
+    'implementsClassNames' => 
+    array (
+    ),
+    'traitClassNames' => 
+    array (
+    ),
+    'immediateConstants' => 
+    array (
+    ),
+    'immediateProperties' => 
+    array (
+    ),
+    'immediateMethods' => 
+    array (
+      'authorize' => 
+      array (
+        'name' => 'authorize',
+        'parameters' => 
+        array (
+        ),
+        'returnsReference' => false,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'bool',
+            'isIdentifier' => true,
+          ),
+        ),
+        'attributes' => 
+        array (
+        ),
+        'docComment' => NULL,
+        'startLine' => 11,
+        'endLine' => 14,
+        'startColumn' => 5,
+        'endColumn' => 5,
+        'couldThrow' => false,
+        'isClosure' => false,
+        'isGenerator' => false,
+        'isVariadic' => false,
+        'modifiers' => 1,
+        'namespace' => 'App\\Http\\Requests\\ITDepartment',
+        'declaringClassName' => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
+        'implementingClassName' => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
+        'currentClassName' => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
+        'aliasName' => NULL,
+      ),
+      'rules' => 
+      array (
+        'name' => 'rules',
+        'parameters' => 
+        array (
+        ),
+        'returnsReference' => false,
+        'returnType' => 
+        array (
+          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
+          'data' => 
+          array (
+            'name' => 'array',
+            'isIdentifier' => true,
+          ),
+        ),
+        'attributes' => 
+        array (
+        ),
+        'docComment' => NULL,
+        'startLine' => 16,
+        'endLine' => 29,
+        'startColumn' => 5,
+        'endColumn' => 5,
+        'couldThrow' => false,
+        'isClosure' => false,
+        'isGenerator' => false,
+        'isVariadic' => false,
+        'modifiers' => 1,
+        'namespace' => 'App\\Http\\Requests\\ITDepartment',
+        'declaringClassName' => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
+        'implementingClassName' => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
+        'currentClassName' => 'App\\Http\\Requests\\ITDepartment\\UpdateJobOrderRequest',
+        'aliasName' => NULL,
+      ),
+    ),
+    'traitsData' => 
+    array (
+      'aliases' => 
+      array (
+      ),
+      'modifiers' => 
+      array (
+      ),
+      'precedences' => 
+      array (
+      ),
+      'hashes' => 
+      array (
+      ),
+    ),
+  ),
+));
