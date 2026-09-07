@@ -1,7 +1,7 @@
 <?php declare(strict_types = 1);
 
 return [
-	'lastFullAnalysisTime' => 1787978279,
+	'lastFullAnalysisTime' => 1788579035,
 	'meta' => array (
   'cacheVersion' => 'v14-relativePaths',
   'phpstanVersion' => '2.2.9',
@@ -9,7 +9,7 @@ return [
   'metaExtensions' => 
   array (
   ),
-  'phpVersion' => 80306,
+  'phpVersion' => 80212,
   'projectConfig' => '{conditionalTags: {Larastan\\Larastan\\Rules\\NoEnvCallsOutsideOfConfigRule: {phpstan.rules.rule: %noEnvCallsOutsideOfConfig%}, Larastan\\Larastan\\Rules\\NoModelMakeRule: {phpstan.rules.rule: %noModelMake%}, Larastan\\Larastan\\Rules\\NoUnnecessaryCollectionCallRule: {phpstan.rules.rule: %noUnnecessaryCollectionCall%}, Larastan\\Larastan\\Rules\\NoUnnecessaryEnumerableToArrayCallsRule: {phpstan.rules.rule: %noUnnecessaryEnumerableToArrayCalls%}, Larastan\\Larastan\\Rules\\OctaneCompatibilityRule: {phpstan.rules.rule: %checkOctaneCompatibility%}, Larastan\\Larastan\\Rules\\UnusedViewsRule: {phpstan.rules.rule: %checkUnusedViews%}, Larastan\\Larastan\\Rules\\NoMissingTranslationsRule: {phpstan.rules.rule: %checkMissingTranslations%}, Larastan\\Larastan\\Rules\\ModelAppendsRule: {phpstan.rules.rule: %checkModelAppends%}, Larastan\\Larastan\\Rules\\NoPublicModelScopeAndAccessorRule: {phpstan.rules.rule: %checkModelMethodVisibility%}, Larastan\\Larastan\\Rules\\NoAuthFacadeInRequestScopeRule: {phpstan.rules.rule: %checkAuthCallsWhenInRequestScope%}, Larastan\\Larastan\\Rules\\NoAuthHelperInRequestScopeRule: {phpstan.rules.rule: %checkAuthCallsWhenInRequestScope%}, Larastan\\Larastan\\ReturnTypes\\Helpers\\EnvFunctionDynamicFunctionReturnTypeExtension: {phpstan.broker.dynamicFunctionReturnTypeExtension: %generalizeEnvReturnType%}, Larastan\\Larastan\\ReturnTypes\\Helpers\\ConfigFunctionDynamicFunctionReturnTypeExtension: {phpstan.broker.dynamicFunctionReturnTypeExtension: %checkConfigTypes%}, Larastan\\Larastan\\ReturnTypes\\ConfigRepositoryDynamicMethodReturnTypeExtension: {phpstan.broker.dynamicMethodReturnTypeExtension: %checkConfigTypes%}, Larastan\\Larastan\\ReturnTypes\\ConfigFacadeCollectionDynamicStaticMethodReturnTypeExtension: {phpstan.broker.dynamicStaticMethodReturnTypeExtension: %checkConfigTypes%}, Larastan\\Larastan\\Rules\\ConfigCollectionRule: {phpstan.rules.rule: %checkConfigTypes%}}, parameters: {universalObjectCratesClasses: [Illuminate\\Http\\Request, Illuminate\\Support\\Optional], earlyTerminatingFunctionCalls: [abort, dd], mixinExcludeClasses: [Eloquent], bootstrapFiles: [bootstrap.php], checkOctaneCompatibility: false, noEnvCallsOutsideOfConfig: true, noModelMake: true, noUnnecessaryCollectionCall: true, noUnnecessaryCollectionCallOnly: [], noUnnecessaryCollectionCallExcept: [], noUnnecessaryEnumerableToArrayCalls: false, squashedMigrationsPath: [], databaseMigrationsPath: [], disableMigrationScan: false, disableSchemaScan: false, configDirectories: [], viewDirectories: [], translationDirectories: [], checkModelProperties: false, checkUnusedViews: false, checkMissingTranslations: false, checkModelAppends: true, checkModelMethodVisibility: false, generalizeEnvReturnType: false, checkConfigTypes: false, checkAuthCallsWhenInRequestScope: false, parseModelCastsMethod: false, enableMigrationCache: false, level: 5, paths: [../../../app], tmpDir: ../../../storage/framework/phpstan, excludePaths: {analyseAndScan: [storage/framework/views/*], analyse: []}}, rules: [Larastan\\Larastan\\Rules\\UselessConstructs\\NoUselessWithFunctionCallsRule, Larastan\\Larastan\\Rules\\UselessConstructs\\NoUselessValueFunctionCallsRule, Larastan\\Larastan\\Rules\\DeferrableServiceProviderMissingProvidesRule, Larastan\\Larastan\\Rules\\ConsoleCommand\\UndefinedArgumentOrOptionRule], services: {{class: Larastan\\Larastan\\Methods\\RelationForwardsCallsExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\ModelForwardsCallsExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\EloquentBuilderForwardsCallsExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\HigherOrderTapProxyExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\HigherOrderCollectionProxyExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\StorageMethodsClassReflectionExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\ContractsMethodsExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\FacadesMethodsExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\ManagersMethodsExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\AuthsMethodsExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\ModelFactoryMethodsClassReflectionExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\RedirectResponseMethodsClassReflectionExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\MacroMethodsClassReflectionExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Methods\\ViewWithMethodsClassReflectionExtension, tags: [phpstan.broker.methodsClassReflectionExtension]}, {class: Larastan\\Larastan\\Properties\\ModelAccessorExtension, tags: [phpstan.broker.propertiesClassReflectionExtension]}, {class: Larastan\\Larastan\\Properties\\ModelPropertyExtension, tags: [phpstan.broker.propertiesClassReflectionExtension]}, {class: Larastan\\Larastan\\Properties\\HigherOrderCollectionProxyPropertyExtension, tags: [phpstan.broker.propertiesClassReflectionExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\HigherOrderTapProxyExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\ContainerArrayAccessDynamicMethodReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension], arguments: {className: Illuminate\\Contracts\\Container\\Container}}, {class: Larastan\\Larastan\\ReturnTypes\\ContainerArrayAccessDynamicMethodReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension], arguments: {className: Illuminate\\Container\\Container}}, {class: Larastan\\Larastan\\ReturnTypes\\ContainerArrayAccessDynamicMethodReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension], arguments: {className: Illuminate\\Foundation\\Application}}, {class: Larastan\\Larastan\\ReturnTypes\\ContainerArrayAccessDynamicMethodReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension], arguments: {className: Illuminate\\Contracts\\Foundation\\Application}}, {class: Larastan\\Larastan\\Properties\\ModelRelationsExtension, tags: [phpstan.broker.propertiesClassReflectionExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\ModelOnlyDynamicMethodReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\ModelFactoryDynamicStaticMethodReturnTypeExtension, tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\ModelDynamicStaticMethodReturnTypeExtension, tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\AppMakeDynamicReturnTypeExtension, tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\AuthExtension, tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\GuardDynamicStaticMethodReturnTypeExtension, tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\AuthManagerExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\DateExtension, tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\GuardExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\RequestFileExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\RequestRouteExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\RequestUserExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\EloquentBuilderExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\RelationCollectionExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\TestCaseExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\Support\\CollectionHelper}, {class: Larastan\\Larastan\\ReturnTypes\\Helpers\\AuthExtension, tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\Helpers\\CollectExtension, tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\Helpers\\NowAndTodayExtension, tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\Helpers\\ResponseExtension, tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\Helpers\\ValidatorExtension, tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\Helpers\\LiteralExtension, tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\CollectionFilterRejectDynamicReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\CollectionWhereNotNullDynamicReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\NewModelQueryDynamicMethodReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\FactoryDynamicMethodReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\Types\\AbortIfFunctionTypeSpecifyingExtension, tags: [phpstan.typeSpecifier.functionTypeSpecifyingExtension], arguments: {methodName: abort, negate: false}}, {class: Larastan\\Larastan\\Types\\AbortIfFunctionTypeSpecifyingExtension, tags: [phpstan.typeSpecifier.functionTypeSpecifyingExtension], arguments: {methodName: abort, negate: true}}, {class: Larastan\\Larastan\\Types\\AbortIfFunctionTypeSpecifyingExtension, tags: [phpstan.typeSpecifier.functionTypeSpecifyingExtension], arguments: {methodName: throw, negate: false}}, {class: Larastan\\Larastan\\Types\\AbortIfFunctionTypeSpecifyingExtension, tags: [phpstan.typeSpecifier.functionTypeSpecifyingExtension], arguments: {methodName: throw, negate: true}}, {class: Larastan\\Larastan\\ReturnTypes\\Helpers\\AppExtension, tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\Helpers\\ValueExtension, tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\Helpers\\StrExtension, tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\Helpers\\TapExtension, tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\StorageDynamicStaticMethodReturnTypeExtension, tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\Types\\GenericEloquentCollectionTypeNodeResolverExtension, tags: [phpstan.phpDoc.typeNodeResolverExtension]}, {class: Larastan\\Larastan\\Types\\ViewStringTypeNodeResolverExtension, tags: [phpstan.phpDoc.typeNodeResolverExtension]}, {class: Larastan\\Larastan\\Rules\\OctaneCompatibilityRule}, {class: Larastan\\Larastan\\Rules\\NoEnvCallsOutsideOfConfigRule, arguments: {configDirectories: %configDirectories%}}, {class: Larastan\\Larastan\\Rules\\NoModelMakeRule}, {class: Larastan\\Larastan\\Rules\\NoUnnecessaryCollectionCallRule, arguments: {onlyMethods: %noUnnecessaryCollectionCallOnly%, excludeMethods: %noUnnecessaryCollectionCallExcept%}}, {class: Larastan\\Larastan\\Rules\\NoUnnecessaryEnumerableToArrayCallsRule}, {class: Larastan\\Larastan\\Rules\\ModelAppendsRule}, {class: Larastan\\Larastan\\Rules\\NoPublicModelScopeAndAccessorRule}, {class: Larastan\\Larastan\\Types\\GenericEloquentBuilderTypeNodeResolverExtension, tags: [phpstan.phpDoc.typeNodeResolverExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\AppEnvironmentReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension], arguments: {class: Illuminate\\Foundation\\Application}}, {class: Larastan\\Larastan\\ReturnTypes\\AppEnvironmentReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension], arguments: {class: Illuminate\\Contracts\\Foundation\\Application}}, {class: Larastan\\Larastan\\ReturnTypes\\AppFacadeEnvironmentReturnTypeExtension, tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\Types\\ModelProperty\\ModelPropertyTypeNodeResolverExtension, tags: [phpstan.phpDoc.typeNodeResolverExtension], arguments: {active: %checkModelProperties%}}, {class: Larastan\\Larastan\\Types\\CollectionOf\\CollectionOfTypeNodeResolverExtension, tags: [phpstan.phpDoc.typeNodeResolverExtension]}, {class: Larastan\\Larastan\\Properties\\MigrationHelper, arguments: {databaseMigrationPath: %databaseMigrationsPath%, disableMigrationScan: %disableMigrationScan%, parser: @migrationsParser, reflectionProvider: @reflectionProvider}}, iamcalSqlParser: {class: Larastan\\Larastan\\SQL\\IamcalSqlParser, autowired: false}, sqlParserFactory: {class: Larastan\\Larastan\\SQL\\SqlParserFactory, arguments: {iamcalSqlParser: @iamcalSqlParser}}, sqlParser: {type: Larastan\\Larastan\\SQL\\SqlParser, factory: [@sqlParserFactory, create]}, {class: Larastan\\Larastan\\Properties\\SquashedMigrationHelper, arguments: {schemaPaths: %squashedMigrationsPath%, disableSchemaScan: %disableSchemaScan%}}, {class: Larastan\\Larastan\\Properties\\ModelCastHelper, arguments: {parser: @currentPhpVersionSimpleDirectParser, parseModelCastsMethod: %parseModelCastsMethod%}}, {class: Larastan\\Larastan\\Properties\\MigrationCache, arguments: {cacheDirectory: %tmpDir%, enabled: %enableMigrationCache%}}, {class: Larastan\\Larastan\\Properties\\ModelPropertyHelper}, {class: Larastan\\Larastan\\Rules\\ModelRuleHelper}, {class: Larastan\\Larastan\\Methods\\BuilderHelper, arguments: {checkProperties: %checkModelProperties%}}, {class: Larastan\\Larastan\\Rules\\RelationExistenceRule, tags: [phpstan.rules.rule]}, {class: Larastan\\Larastan\\Rules\\CheckDispatchArgumentTypesCompatibleWithClassConstructorRule, arguments: {dispatchableClass: Illuminate\\Foundation\\Bus\\Dispatchable}, tags: [phpstan.rules.rule]}, {class: Larastan\\Larastan\\Rules\\CheckDispatchArgumentTypesCompatibleWithClassConstructorRule, arguments: {dispatchableClass: Illuminate\\Foundation\\Events\\Dispatchable}, tags: [phpstan.rules.rule]}, {class: Larastan\\Larastan\\Properties\\Schema\\MySqlDataTypeToPhpTypeConverter}, {class: Larastan\\Larastan\\LarastanStubFilesExtension, tags: [phpstan.stubFilesExtension]}, {class: Larastan\\Larastan\\Rules\\UnusedViewsRule}, {class: Larastan\\Larastan\\Collectors\\UsedViewFunctionCollector, tags: [phpstan.collector]}, {class: Larastan\\Larastan\\Collectors\\UsedEmailViewCollector, tags: [phpstan.collector]}, {class: Larastan\\Larastan\\Collectors\\UsedViewMakeCollector, tags: [phpstan.collector]}, {class: Larastan\\Larastan\\Collectors\\UsedViewFacadeMakeCollector, tags: [phpstan.collector]}, {class: Larastan\\Larastan\\Collectors\\UsedRouteFacadeViewCollector, tags: [phpstan.collector]}, {class: Larastan\\Larastan\\Collectors\\UsedViewInAnotherViewCollector}, {class: Larastan\\Larastan\\Support\\ViewFileHelper, arguments: {viewDirectories: %viewDirectories%}}, {class: Larastan\\Larastan\\Support\\ViewParser, arguments: {parser: @currentPhpVersionSimpleDirectParser}}, {class: Larastan\\Larastan\\Rules\\NoMissingTranslationsRule, arguments: {translationDirectories: %translationDirectories%}}, {class: Larastan\\Larastan\\Collectors\\UsedTranslationFunctionCollector, tags: [phpstan.collector]}, {class: Larastan\\Larastan\\Collectors\\UsedTranslationTranslatorCollector, tags: [phpstan.collector]}, {class: Larastan\\Larastan\\Collectors\\UsedTranslationFacadeCollector, tags: [phpstan.collector]}, {class: Larastan\\Larastan\\Collectors\\UsedTranslationViewCollector}, {class: Larastan\\Larastan\\ReturnTypes\\ApplicationMakeDynamicReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\ContainerMakeDynamicReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\ConsoleCommand\\ArgumentDynamicReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\ConsoleCommand\\HasArgumentDynamicReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\ConsoleCommand\\OptionDynamicReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\ConsoleCommand\\HasOptionDynamicReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\TranslatorGetReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\LangGetReturnTypeExtension, tags: [phpstan.broker.dynamicStaticMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\TransHelperReturnTypeExtension, tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\DoubleUnderscoreHelperReturnTypeExtension, tags: [phpstan.broker.dynamicFunctionReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\AppMakeHelper}, {class: Larastan\\Larastan\\Internal\\ConsoleApplicationResolver}, {class: Larastan\\Larastan\\Internal\\ConsoleApplicationHelper}, {class: Larastan\\Larastan\\Support\\HigherOrderCollectionProxyHelper}, {class: Larastan\\Larastan\\ReturnTypes\\Helpers\\ConfigFunctionDynamicFunctionReturnTypeExtension}, {class: Larastan\\Larastan\\ReturnTypes\\ConfigRepositoryDynamicMethodReturnTypeExtension}, {class: Larastan\\Larastan\\ReturnTypes\\ConfigFacadeCollectionDynamicStaticMethodReturnTypeExtension}, {class: Larastan\\Larastan\\Support\\ConfigParser, arguments: {parser: @currentPhpVersionSimpleDirectParser, configPaths: %configDirectories%, treatPhpDocTypesAsCertain: %treatPhpDocTypesAsCertain%}}, {class: Larastan\\Larastan\\Internal\\ConfigHelper}, {class: Larastan\\Larastan\\ReturnTypes\\Helpers\\EnvFunctionDynamicFunctionReturnTypeExtension}, {class: Larastan\\Larastan\\ReturnTypes\\FormRequestSafeDynamicMethodReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\ReturnTypes\\EloquentCollectionMapDynamicReturnTypeExtension, tags: [phpstan.broker.dynamicMethodReturnTypeExtension]}, {class: Larastan\\Larastan\\Rules\\NoAuthFacadeInRequestScopeRule}, {class: Larastan\\Larastan\\Rules\\NoAuthHelperInRequestScopeRule}, {class: Larastan\\Larastan\\Rules\\ConfigCollectionRule}, {class: Illuminate\\Filesystem\\Filesystem, autowired: self}, migrationsParser: {class: PHPStan\\Parser\\CachedParser, arguments: {originalParser: @currentPhpVersionSimpleDirectParser, cachedNodesByStringCountMax: %cache.nodesByStringCountMax%}, autowired: false}}}',
   'analysedPaths' => 
   array (
@@ -20,7 +20,7 @@ return [
   ),
   'composerLocks' => 
   array (
-    '../../../composer.lock' => '1a0348f4599c37c653bb597944624d5ed80474beb28242bc215fb11eaab0730c',
+    '../../../composer.lock' => '7bf1e041c8e80ab09b2db007740b542d0378e8d2216e62f520fef2dfd219e439',
   ),
   'composerInstalled' => 
   array (
@@ -882,9 +882,9 @@ return [
         ),
         'maennchen/zipstream-php' => 
         array (
-          'pretty_version' => '3.2.2',
-          'version' => '3.2.2.0',
-          'reference' => '77bebeb4c6c340bb3c11c843b2cffd8bbfde4d5e',
+          'pretty_version' => '2.4.0',
+          'version' => '2.4.0.0',
+          'reference' => '3fa72e4c71a43f9e9118752a5c90e476a8dc9eb3',
           'type' => 'library',
           'install_path' => '../../composer/../maennchen/zipstream-php',
           'aliases' => 
@@ -971,6 +971,18 @@ return [
           array (
           ),
           'dev_requirement' => true,
+        ),
+        'myclabs/php-enum' => 
+        array (
+          'pretty_version' => '1.8.5',
+          'version' => '1.8.5.0',
+          'reference' => 'e7be26966b7398204a234f8673fdad5ac6277802',
+          'type' => 'library',
+          'install_path' => '../../composer/../myclabs/php-enum',
+          'aliases' => 
+          array (
+          ),
+          'dev_requirement' => false,
         ),
         'nesbot/carbon' => 
         array (
@@ -1278,9 +1290,9 @@ return [
         ),
         'psr/http-message' => 
         array (
-          'pretty_version' => '2.0',
-          'version' => '2.0.0.0',
-          'reference' => '402d35bcb92c70c026d1a6a9883f06b2ead23d71',
+          'pretty_version' => '1.1',
+          'version' => '1.1.0.0',
+          'reference' => 'cb6ce4845ce34a8ad9e68117c10ee90a29919eba',
           'type' => 'library',
           'install_path' => '../../composer/../psr/http-message',
           'aliases' => 
@@ -1655,9 +1667,9 @@ return [
         ),
         'symfony/console' => 
         array (
-          'pretty_version' => 'v7.4.17',
-          'version' => '7.4.17.0',
-          'reference' => '962e18f09ebe68a49039b4c82fc0ea4871824fca',
+          'pretty_version' => 'v7.4.18',
+          'version' => '7.4.18.0',
+          'reference' => '23d6f88a29f6d0eac45bd77d70307adf83ba7ab0',
           'type' => 'library',
           'install_path' => '../../composer/../symfony/console',
           'aliases' => 
@@ -1939,9 +1951,9 @@ return [
         ),
         'symfony/service-contracts' => 
         array (
-          'pretty_version' => 'v3.7.1',
-          'version' => '3.7.1.0',
-          'reference' => 'c0a284bab1ed8aa0417e3d69250ab437739563a0',
+          'pretty_version' => 'v3.7.3',
+          'version' => '3.7.3.0',
+          'reference' => '15e6a07ec2a2c75ceb1b21dd98105ee8456d2257',
           'type' => 'library',
           'install_path' => '../../composer/../symfony/service-contracts',
           'aliases' => 
@@ -2103,13 +2115,13 @@ return [
   'phpExtensions' => 
   array (
     0 => 'Core',
-    1 => 'FFI',
-    2 => 'PDO',
-    3 => 'Phar',
-    4 => 'Reflection',
-    5 => 'SPL',
-    6 => 'SimpleXML',
-    7 => 'Zend OPcache',
+    1 => 'PDO',
+    2 => 'Phar',
+    3 => 'Reflection',
+    4 => 'SPL',
+    5 => 'SimpleXML',
+    6 => 'bcmath',
+    7 => 'bz2',
     8 => 'calendar',
     9 => 'ctype',
     10 => 'curl',
@@ -2123,36 +2135,25 @@ return [
     18 => 'gettext',
     19 => 'hash',
     20 => 'iconv',
-    21 => 'intl',
-    22 => 'json',
-    23 => 'libxml',
-    24 => 'mbstring',
-    25 => 'mysqli',
-    26 => 'mysqlnd',
-    27 => 'openssl',
-    28 => 'pcntl',
-    29 => 'pcre',
-    30 => 'pdo_mysql',
-    31 => 'pdo_sqlite',
-    32 => 'posix',
-    33 => 'random',
-    34 => 'readline',
-    35 => 'session',
-    36 => 'shmop',
-    37 => 'sockets',
-    38 => 'sodium',
-    39 => 'sqlite3',
-    40 => 'standard',
-    41 => 'sysvmsg',
-    42 => 'sysvsem',
-    43 => 'sysvshm',
-    44 => 'tokenizer',
-    45 => 'xml',
-    46 => 'xmlreader',
-    47 => 'xmlwriter',
-    48 => 'xsl',
-    49 => 'zip',
-    50 => 'zlib',
+    21 => 'json',
+    22 => 'libxml',
+    23 => 'mbstring',
+    24 => 'mysqli',
+    25 => 'mysqlnd',
+    26 => 'openssl',
+    27 => 'pcre',
+    28 => 'pdo_mysql',
+    29 => 'pdo_sqlite',
+    30 => 'random',
+    31 => 'readline',
+    32 => 'session',
+    33 => 'standard',
+    34 => 'tokenizer',
+    35 => 'xml',
+    36 => 'xmlreader',
+    37 => 'xmlwriter',
+    38 => 'zip',
+    39 => 'zlib',
   ),
   'stubFiles' => 
   array (
@@ -15983,9 +15984,9 @@ return [
       0 => '../../../app/Http/Controllers/IT/ItInventoryItemController.php',
       1 => '../../../app/Http/Controllers/IT_Department/CctvController.php',
       2 => '../../../app/Models/CctvConcernItem.php',
-      3 => '../../../app/Services/IT/ItInventoryService.php',
-      4 => '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php',
-      5 => '../../../app/Services/ITDepartment/CctvConcernService.php',
+      3 => '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php',
+      4 => '../../../app/Services/ITDepartment/CctvConcernService.php',
+      5 => '../../../app/Services/IT/ItInventoryService.php',
     ),
   ),
   '../../../app/Models/JobOrder.php' => 
@@ -16939,14 +16940,6 @@ return [
       2 => '../../../app/Http/Controllers/HR_Department/EmployeeLeaveController.php',
     ),
   ),
-  '../../../app/Services/IT/ItInventoryService.php' => 
-  array (
-    'fileHash' => '8f9d0d406591ba10e3b02e1f6cd764e5a80c953124835152d2f339ad5021d317',
-    'dependentFiles' => 
-    array (
-      0 => '../../../app/Http/Controllers/IT/ItInventoryItemController.php',
-    ),
-  ),
   '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php' => 
   array (
     'fileHash' => '89d696288598a694eef4305cab44e5cd15a426bf2b9bfcb11cf63539a2330c94',
@@ -16977,6 +16970,14 @@ return [
     'dependentFiles' => 
     array (
       0 => '../../../app/Http/Controllers/IT_Department/TicketController.php',
+    ),
+  ),
+  '../../../app/Services/IT/ItInventoryService.php' => 
+  array (
+    'fileHash' => '8f9d0d406591ba10e3b02e1f6cd764e5a80c953124835152d2f339ad5021d317',
+    'dependentFiles' => 
+    array (
+      0 => '../../../app/Http/Controllers/IT/ItInventoryItemController.php',
     ),
   ),
   '../../../app/Services/LeaveNotificationService.php' => 
@@ -17283,117 +17284,7 @@ return [
   ),
 ),
 	'packageDependencies' => array (
-  '../../../app/Console/Commands/RepairMonthlyGovernmentContributions.php' => 
-  array (
-    0 => 'symfony/console',
-    1 => 'laravel/framework',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Enums/JobOrderRepairType.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
   '../../../app/Enums/JobOrderStatus.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Http/Controllers/Auth/ForgotPasswordController.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Http/Controllers/DashboardController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/IT/ItInventoryItemController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Controllers/Maintenance/CategoryController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laracasts/flash',
-  ),
-  '../../../app/Http/Controllers/Maintenance/OdometerReportController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'laravel/sanctum',
-    4 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Http/Middleware/InactivityLogout.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'laravel/sanctum',
-    4 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Http/Middleware/PreventRequestsDuringMaintenance.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Http/Middleware/RedirectIfAuthenticated.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Requests/Payroll/SaveEmployeePlottingScheduleRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Mail/JobOrderCreatedMail.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/AttendanceDailySummary.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/JobOrderMaintenance.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/PartsOutItem.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Notifications/JobOrderCreatedNotification.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Services/Biometrics/EmployeeBiometricIdentityService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/Payroll/MonthlyGovernmentReconciliationService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Console/Commands/MigrateSensitiveFiles.php' => 
-  array (
-    0 => 'symfony/console',
-    1 => 'laravel/framework',
-    2 => 'nesbot/carbon',
-    3 => 'league/flysystem',
-    4 => 'psr/http-message',
-    5 => 'symfony/http-foundation',
-  ),
-  '../../../app/Enums/WorkdayType.php' => 
   array (
     0 => 'laravel/framework',
   ),
@@ -17407,107 +17298,19 @@ return [
     0 => 'maatwebsite/excel',
     1 => 'laravel/framework',
   ),
-  '../../../app/Http/Controllers/Api/FareController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Controllers/Auth/LoginController.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Http/Controllers/Fleet/ForSaleUnitController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/HR_Department/HrOffenseController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Controllers/Maintenance/ItemsController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laracasts/flash',
-    3 => 'laravel/sanctum',
-    4 => 'spatie/laravel-permission',
-    5 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/Payroll/PayrollAuditLogController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'laravel/sanctum',
-    4 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Http/Middleware/TrimStrings.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Http/Requests/Fleet/StoreBusRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/ConductorLeave.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/EmployeeBiometric.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/ReceivingItem.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/StockTransferItem.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Services/Fleet/BusService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/Payroll/PayrollAuditService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'symfony/http-kernel',
-    3 => 'psr/container',
-    4 => 'symfony/http-foundation',
-    5 => 'ramsey/uuid',
-  ),
-  '../../../app/Services/Reports/HrDataReportService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Console/Commands/ImportBuses.php' => 
-  array (
-    0 => 'symfony/console',
-    1 => 'laravel/framework',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/Maintenance/PartsOutController.php' => 
+  '../../../app/Http/Controllers/Api/CashierRemittanceController.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
     2 => 'laravel/sanctum',
     3 => 'spatie/laravel-permission',
     4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Maintenance/RequestController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laracasts/flash',
   ),
   '../../../app/Http/Controllers/Payroll/PayrollAttendanceAdjustmentController.php' => 
   array (
@@ -17515,7 +17318,52 @@ return [
     1 => 'symfony/http-foundation',
     2 => 'nesbot/carbon',
   ),
-  '../../../app/Http/Controllers/SecureFileController.php' => 
+  '../../../app/Http/Requests/HR_Department/EmployeeLeaveActionRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/Payroll/GeneratePayrollRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Listeners/LogSuccessfulLogin.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'psr/log',
+    4 => 'monolog/monolog',
+  ),
+  '../../../app/Models/AttendanceDailySummary.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/BusForSaleRecord.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/Role.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/Biometrics/BiometricCompanyService.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/Fleet/ForSaleUnitService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/HR_Department/DepartmentService.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/HR_Department/EmployeeAttachmentService.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'nesbot/carbon',
@@ -17523,24 +17371,72 @@ return [
     3 => 'league/flysystem',
     4 => 'psr/http-message',
   ),
-  '../../../app/Http/Controllers/UserManagementController.php' => 
+  '../../../app/Services/HR_Department/EmployeeLeaveActionService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'symfony/http-foundation',
+    3 => 'league/flysystem',
+    4 => 'psr/http-message',
+  ),
+  '../../../app/Services/ITDepartment/ItJobOrderDirectoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Services/Maintenance/ReceivingService.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-    5 => 'symfony/http-kernel',
+    2 => 'nesbot/carbon',
+    3 => 'ramsey/uuid',
+    4 => 'league/flysystem',
+    5 => 'psr/http-message',
   ),
-  '../../../app/Http/Middleware/ForcePasswordChange.php' => 
+  '../../../app/Services/Payroll/PayrollDeductionService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Enums/ItTicketApprovalStatus.php' => 
+  array (
+  ),
+  '../../../app/Events/POCreated.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Helpers/Notifier.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'laravel/sanctum',
+    2 => 'spatie/laravel-permission',
+    3 => 'nesbot/carbon',
+    4 => 'psr/log',
+    5 => 'monolog/monolog',
+    6 => 'symfony/mailer',
+  ),
+  '../../../app/Http/Controllers/Api/FareController.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
   ),
-  '../../../app/Http/Middleware/RoleMiddleware.php' => 
+  '../../../app/Http/Controllers/Maintenance/OdometerReportController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'laravel/sanctum',
+    4 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Http/Controllers/Payroll/HolidayController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Middleware/PayrollGroupAccess.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
@@ -17558,85 +17454,157 @@ return [
     5 => 'spatie/laravel-permission',
     6 => 'nesbot/carbon',
   ),
-  '../../../app/Http/Middleware/TrustProxies.php' => 
+  '../../../app/Http/Requests/Auth/ChangePasswordRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Biometrics/StartBiometricsSyncRequest.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
   ),
-  '../../../app/Models/Fare.php' => 
+  '../../../app/Http/Requests/HR_Department/DriverLeaveActionRequest.php' => 
   array (
     0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
   ),
-  '../../../app/Models/JobOrderFile.php' => 
+  '../../../app/Http/Requests/ITDepartment/UpdateJobOrderRequest.php' => 
   array (
     0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
   ),
-  '../../../app/Models/Location.php' => 
+  '../../../app/Listeners/SendJobOrderNotification.php' => 
   array (
     0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
+    1 => 'laravel/sanctum',
+    2 => 'spatie/laravel-permission',
+    3 => 'nesbot/carbon',
   ),
-  '../../../app/Models/OdometerSubmission.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Models/PayrollReportLog.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/Product.php' => 
+  '../../../app/Models/EmployeeBiometric.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'nesbot/carbon',
   ),
-  '../../../app/Services/Maintenance/PartsOutRollbackService.php' => 
+  '../../../app/Models/JobOrder.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Services/Biometrics/CrossChexSyncCoordinator.php' => 
+  array (
+    0 => 'nesbot/carbon',
+    1 => 'laravel/framework',
+    2 => 'ramsey/uuid',
+    3 => 'psr/log',
+    4 => 'monolog/monolog',
+    5 => 'psr/simple-cache',
+  ),
+  '../../../app/Services/HR_Department/DriverLeaveActionService.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'nesbot/carbon',
     2 => 'symfony/http-foundation',
+    3 => 'league/flysystem',
+    4 => 'psr/http-message',
   ),
-  '../../../app/Services/Payroll/BenefitContributionPostingService.php' => 
+  '../../../app/Services/HR_Department/EmployeeAuditService.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'nesbot/carbon',
   ),
-  '../../../app/Services/Payroll/PaymentLogService.php' => 
+  '../../../app/Services/HR_Department/EmployeeHistoryService.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'nesbot/carbon',
   ),
-  '../../../app/Support/PayrollEmployeeNameFormatter.php' => 
+  '../../../app/Services/Maintenance/VehicleHistoryService.php' => 
   array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
   ),
-  '../../../app/Console/Commands/ProcessDriverLeaveReadyForDuty.php' => 
+  '../../../app/Console/Commands/ProcessConductorLeaveReadyForDuty.php' => 
   array (
     0 => 'symfony/console',
     1 => 'laravel/framework',
     2 => 'nesbot/carbon',
   ),
-  '../../../app/Http/Controllers/Maintenance/PurchaseReceiveController.php' => 
+  '../../../app/Enums/LeaveActionType.php' => 
+  array (
+  ),
+  '../../../app/Http/Controllers/Auth/ForgotPasswordController.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Http/Controllers/Biometrics/BiometricCompanyController.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
   ),
-  '../../../app/Http/Controllers/Maintenance/RequestController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laracasts/flash',
-  ),
-  '../../../app/Http/Controllers/Payroll/PayrollController.php' => 
+  '../../../app/Http/Controllers/HR_Department/MirasolBiometricsLogController.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
     2 => 'nesbot/carbon',
     3 => 'psr/log',
     4 => 'monolog/monolog',
-    5 => 'maatwebsite/excel',
-    6 => 'barryvdh/laravel-dompdf',
-    7 => 'dompdf/dompdf',
+  ),
+  '../../../app/Http/Controllers/IT_Department/CctvController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Maintenance/StockTransferController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/SecureFileController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'symfony/http-foundation',
+    3 => 'league/flysystem',
+    4 => 'psr/http-message',
+  ),
+  '../../../app/Http/Kernel.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Http/Requests/Api/StoreOdometerSubmissionRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/ClaimRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/ITDepartment/StoreCctvConcernRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
   ),
   '../../../app/Http/Requests/Maintenance/UpdateJobOrderMaintenanceNumberRequest.php' => 
   array (
@@ -17646,12 +17614,7 @@ return [
     3 => 'spatie/laravel-permission',
     4 => 'nesbot/carbon',
   ),
-  '../../../app/Http/Requests/Payroll/GeneratePayrollRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Listeners/LogLogout.php' => 
+  '../../../app/Listeners/LogFailedLogin.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
@@ -17659,13 +17622,10 @@ return [
     3 => 'psr/log',
     4 => 'monolog/monolog',
   ),
-  '../../../app/Models/CashierRemittance.php' => 
+  '../../../app/Models/ConductorLeave.php' => 
   array (
     0 => 'laravel/framework',
-  ),
-  '../../../app/Models/ItInventoryItem.php' => 
-  array (
-    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
   ),
   '../../../app/Models/JobOrderMaintenanceHistory.php' => 
   array (
@@ -17674,75 +17634,32 @@ return [
     2 => 'spatie/laravel-permission',
     3 => 'nesbot/carbon',
   ),
-  '../../../app/Models/PayrollAttendanceAdjustment.php' => 
+  '../../../app/Models/PurchaseOrderItem.php' => 
   array (
     0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/PayrollBenefitSettlement.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/StockTransfer.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
   ),
   '../../../app/Models/Ticket.php' => 
   array (
     0 => 'laravel/framework',
   ),
-  '../../../app/Providers/EventServiceProvider.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Services/CrossChexService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'ramsey/uuid',
-    3 => 'psr/simple-cache',
-  ),
-  '../../../app/Services/Fleet/BusForSaleSyncService.php' => 
+  '../../../app/Services/Biometrics/EmployeeBiometricService.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'nesbot/carbon',
   ),
-  '../../../app/Services/Fleet/FleetFolderDashboardService.php' => 
+  '../../../app/Services/Payroll/PayrollPremiumService.php' => 
   array (
     0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
+    1 => 'nesbot/carbon',
   ),
-  '../../../app/Services/Payroll/DailyAttendanceSummaryService.php' => 
+  '../../../app/Enums/LeaveStatus.php' => 
   array (
-    0 => 'nesbot/carbon',
-    1 => 'laravel/framework',
   ),
-  '../../../app/Console/Commands/ProcessEmployeeLeaveReadyForDuty.php' => 
-  array (
-    0 => 'symfony/console',
-    1 => 'laravel/framework',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Exports/JobOrdersExport.php' => 
-  array (
-    0 => 'maatwebsite/excel',
-    1 => 'laravel/framework',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/Api/BusController.php' => 
+  '../../../app/Http/Controllers/Auth/LoginController.php' => 
   array (
     0 => 'laravel/framework',
   ),
-  '../../../app/Http/Controllers/Chairman/HrDataController.php' => 
+  '../../../app/Http/Controllers/Biometrics/EmployeeBiometricController.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
@@ -17761,656 +17678,6 @@ return [
     8 => 'barryvdh/laravel-dompdf',
     9 => 'dompdf/dompdf',
   ),
-  '../../../app/Http/Controllers/Payroll/PayrollBenefitSettlementController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Maintenance/StoreJobOrderMaintenanceRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/Category.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Models/EmployeeHistory.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/Holiday.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/PayrollEmployeeSalaryOtherDeduction.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/PurchaseOrder.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'laravel/sanctum',
-    2 => 'spatie/laravel-permission',
-    3 => 'nesbot/carbon',
-  ),
-  '../../../app/Providers/AppServiceProvider.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-kernel',
-    2 => 'psr/container',
-    3 => 'symfony/http-foundation',
-    4 => 'laravel/sanctum',
-    5 => 'spatie/laravel-permission',
-    6 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/Biometrics/CrossChexSyncCoordinator.php' => 
-  array (
-    0 => 'nesbot/carbon',
-    1 => 'laravel/framework',
-    2 => 'ramsey/uuid',
-    3 => 'psr/log',
-    4 => 'monolog/monolog',
-    5 => 'psr/simple-cache',
-  ),
-  '../../../app/Services/CrossChexServiceFactory.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Services/Payroll/BenefitRecordsService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/Payroll/GovernmentDeductionSettlementService.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Services/Payroll/PayrollEmployeeRosterService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/StockTransferService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'symfony/http-foundation',
-  ),
-  '../../../app/Console/Commands/CrossChexSyncAttendance.php' => 
-  array (
-    0 => 'symfony/console',
-    1 => 'laravel/framework',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Console/Commands/SyncMissingProductStocks.php' => 
-  array (
-    0 => 'symfony/console',
-    1 => 'laravel/framework',
-  ),
-  '../../../app/Http/Controllers/AllBusController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Controllers/Api/TicketController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/HR_Department/MirasolBiometricsLogController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'psr/log',
-    4 => 'monolog/monolog',
-  ),
-  '../../../app/Http/Controllers/Maintenance/StockTransferController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Auth/UnlockRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Requests/Biometrics/StartBiometricsSyncRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Requests/Biometrics/StepBiometricsSyncRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Requests/ClaimRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Requests/Payroll/BenefitsRecordIndexRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Payroll/PayrollAttendanceAdjustmentRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Jobs/CrossChexSyncLogsJob.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'psr/simple-cache',
-  ),
-  '../../../app/Models/DriverLeave.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/MirasolBiometricsLog.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/PayrollAuditLog.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/PurchaseOrderItem.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Models/Role.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Services/Payroll/BiometricsProofService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Console/Commands/ImportForSaleUnits.php' => 
-  array (
-    0 => 'symfony/console',
-    1 => 'laravel/framework',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Exceptions/Handler.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'symfony/http-kernel',
-  ),
-  '../../../app/Http/Controllers/Fleet/BusController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/Payroll/BenefitsRecordController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Controllers/Payroll/EmployeePlottingScheduleController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/Payroll/ManualBiometricsEncodingController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/ITDepartment/StoreJobOrderRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Listeners/LogSuccessfulLogin.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'psr/log',
-    4 => 'monolog/monolog',
-  ),
-  '../../../app/Mail/POCreatedMail.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Models/CctvConcern.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/CctvConcernItem.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/EmployeeAsset.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/EmployeeLeave.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/EmployeeLog.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/PayrollEmployeeSalary.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/Position.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Services/Payroll/PayrollPayslipService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/Payroll/SssContributionService.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Console/Commands/NormalizeTextCase.php' => 
-  array (
-    0 => 'symfony/console',
-    1 => 'laravel/framework',
-  ),
-  '../../../app/Http/Controllers/Api/AuthController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/Api/TripController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/HR_Department/HRDashboardController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/Payroll/PayrollEmployeeSalaryController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'psr/log',
-    4 => 'monolog/monolog',
-  ),
-  '../../../app/Http/Middleware/VerifyCsrfToken.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Http/Requests/Biometrics/StoreBiometricCompanyRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Models/BusForSaleRecord.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/DieselStock.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/PartsOut.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/Payroll.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/PayrollAdjustment.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Models/PayrollEntry.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/Biometrics/BiometricCompanyService.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Services/Maintenance/JobOrderMaintenanceService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/Payroll/GovernmentDeductionService.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Services/Payroll/PayrollPeriodService.php' => 
-  array (
-    0 => 'nesbot/carbon',
-    1 => 'laravel/framework',
-  ),
-  '../../../app/Services/Permissions/RoutePermissionSyncService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Exports/PayrollItemsExport.php' => 
-  array (
-    0 => 'maatwebsite/excel',
-    1 => 'laravel/framework',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Helpers/Notifier.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'laravel/sanctum',
-    2 => 'spatie/laravel-permission',
-    3 => 'nesbot/carbon',
-    4 => 'psr/log',
-    5 => 'monolog/monolog',
-    6 => 'symfony/mailer',
-  ),
-  '../../../app/Http/Controllers/Biometrics/EmployeeBiometricController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/Maintenance/ReceivingController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-    5 => 'league/flysystem',
-    6 => 'psr/http-message',
-  ),
-  '../../../app/Http/Kernel.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Http/Requests/Auth/ChangePasswordRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Biometrics/UpdateEmployeeBiometricRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/HR_Department/DriverLeaveActionRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Listeners/LogLockout.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'psr/log',
-    4 => 'monolog/monolog',
-  ),
-  '../../../app/Listeners/SendJobOrderNotification.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'laravel/sanctum',
-    2 => 'spatie/laravel-permission',
-    3 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/Claim.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/DailyAttendanceSummary.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/HrOffense.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/ProductStock.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Models/Trip.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Services/Biometrics/EmployeeBiometricSyncService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/Maintenance/StockTransferRollbackService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/Payroll/PayrollComputationService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/Payroll/PayrollPremiumService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Console/Commands/SyncRoutePermissions.php' => 
-  array (
-    0 => 'symfony/console',
-    1 => 'laravel/framework',
-  ),
-  '../../../app/Http/Controllers/Api/OdometerController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/Auth/AuthController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-    5 => 'laracasts/flash',
-    6 => 'psr/log',
-    7 => 'monolog/monolog',
-  ),
-  '../../../app/Http/Controllers/Controller.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Http/Controllers/HR_Department/DepartmentController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laracasts/flash',
-    3 => 'psr/log',
-    4 => 'monolog/monolog',
-  ),
-  '../../../app/Http/Controllers/HR_Department/EmployeeLeaveController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'laracasts/flash',
-    4 => 'psr/log',
-    5 => 'monolog/monolog',
-  ),
-  '../../../app/Http/Controllers/Payroll/AttendanceSummaryController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'psr/log',
-    3 => 'monolog/monolog',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/Payroll/HolidayController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Maintenance/UpdateJobOrderMaintenanceStatusRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Listeners/SendPOCreatedNotification.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'laravel/sanctum',
-    2 => 'spatie/laravel-permission',
-    3 => 'nesbot/carbon',
-  ),
-  '../../../app/Mail/LeaveNoticeMail.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Models/Employee.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/JobOrderLog.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/JobOrderMaintenanceStatusPeriod.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/PayrollItem.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/PayrollPeriod.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Notifications/POCreatedNotification.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'laravel/sanctum',
-    2 => 'spatie/laravel-permission',
-    3 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/Biometrics/CrossChexAttendanceSyncService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Console/Commands/BackfillBenefitContributionRecords.php' => 
-  array (
-    0 => 'symfony/console',
-    1 => 'laravel/framework',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/BusDetailController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Controllers/HR_Department/ConductorLeaveController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'laracasts/flash',
-    4 => 'psr/log',
-    5 => 'monolog/monolog',
-  ),
   '../../../app/Http/Controllers/IT_Department/TicketController.php' => 
   array (
     0 => 'laravel/framework',
@@ -18428,405 +17695,6 @@ return [
     12 => 'maatwebsite/excel',
     13 => 'barryvdh/laravel-dompdf',
     14 => 'dompdf/dompdf',
-  ),
-  '../../../app/Http/Controllers/RoleController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'spatie/laravel-permission',
-    3 => 'laravel/sanctum',
-    4 => 'nesbot/carbon',
-    5 => 'psr/log',
-    6 => 'monolog/monolog',
-  ),
-  '../../../app/Http/Controllers/Stock/StockController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Middleware/EncryptCookies.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Http/Middleware/ForceLockscreen.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Requests/Auth/LoginRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Requests/UserManagement/UpdateUserRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Listeners/LogFailedLogin.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'psr/log',
-    4 => 'monolog/monolog',
-  ),
-  '../../../app/Models/BenefitContributionRecord.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/BiometricCompany.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/PaymentLog.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/StockMovement.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Models/User.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'laravel/sanctum',
-    2 => 'spatie/laravel-permission',
-    3 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/HR_Department/ConductorLeaveActionService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'symfony/http-foundation',
-    3 => 'league/flysystem',
-    4 => 'psr/http-message',
-  ),
-  '../../../app/Services/Payroll/MonthlyGovernmentContributionService.php' => 
-  array (
-  ),
-  '../../../app/Console/Commands/BuildDailyAttendanceSummary.php' => 
-  array (
-    0 => 'symfony/console',
-    1 => 'laravel/framework',
-  ),
-  '../../../app/Events/POCreated.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Http/Controllers/Biometrics/BiometricCompanyController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Controllers/ClaimController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/HR_Department/DriverLeaveController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'laracasts/flash',
-    4 => 'psr/log',
-    5 => 'monolog/monolog',
-  ),
-  '../../../app/Http/Controllers/Maintenance/JobOrderMaintenanceController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-    3 => 'laravel/sanctum',
-    4 => 'spatie/laravel-permission',
-    5 => 'psr/log',
-    6 => 'monolog/monolog',
-  ),
-  '../../../app/Http/Middleware/Authenticate.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Requests/Fleet/ForSaleUnitRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/HR_Department/EmployeeLeaveActionRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Requests/Payroll/UpdatePayrollBenefitSettlementRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/UserManagement/StoreUserRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/EmployeePlottingSchedule.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/JobOrder.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Models/JobOrderNote.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'laravel/sanctum',
-    2 => 'spatie/laravel-permission',
-    3 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/Receiving.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Services/Biometrics/EmployeeBiometricService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/HR_Department/DriverLeaveActionService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'symfony/http-foundation',
-    3 => 'league/flysystem',
-    4 => 'psr/http-message',
-  ),
-  '../../../app/Services/Payroll/EmployeePlottingScheduleService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Console/Commands/ProcessConductorLeaveReadyForDuty.php' => 
-  array (
-    0 => 'symfony/console',
-    1 => 'laravel/framework',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/Accounting/AccountingController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'psr/log',
-    3 => 'monolog/monolog',
-  ),
-  '../../../app/Http/Controllers/Api/CashierRemittanceController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Controllers/IT_Department/CctvController.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Middleware/PayrollGroupAccess.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Fleet/UpdateBusRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/HR_Department/ConductorLeaveActionRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Models/Bus.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/BusDetail.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/Department.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/EmployeeAttachment.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/PayrollEmployee.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Models/PurchaseReceive.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'laravel/sanctum',
-    2 => 'spatie/laravel-permission',
-    3 => 'nesbot/carbon',
-  ),
-  '../../../app/Observers/PayrollAuditObserver.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/Fleet/ForSaleUnitService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/HR_Department/EmployeeLeaveActionService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'symfony/http-foundation',
-    3 => 'league/flysystem',
-    4 => 'psr/http-message',
-  ),
-  '../../../app/Services/LeaveNotificationService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'laravel/sanctum',
-    2 => 'spatie/laravel-permission',
-    3 => 'nesbot/carbon',
-    4 => 'symfony/mailer',
-  ),
-  '../../../app/Services/Payroll/PayrollDeductionService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Actions/Api/AuthenticateApiUserAction.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Actions/Api/CreateCashierRemittanceAction.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Actions/Api/CreateFareAction.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Actions/Api/CreateOdometerSubmissionAction.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Actions/Api/CreateTicketAction.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Actions/Api/CreateTripAction.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Api/LoginRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Requests/Api/StoreCashierRemittanceRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Api/StoreFareRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Api/StoreOdometerSubmissionRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Api/StoreTicketRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Api/StoreTripRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Resources/Api/BusResource.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Resources/Api/OdometerSubmissionResource.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Enums/EmployeeStatus.php' => 
-  array (
   ),
   '../../../app/Http/Requests/HR_Department/EmployeeHistoryRequest.php' => 
   array (
@@ -18852,100 +17720,7 @@ return [
     3 => 'spatie/laravel-permission',
     4 => 'nesbot/carbon',
   ),
-  '../../../app/Http/Requests/HR_Department/UpdateEmployeeAssetsRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
   '../../../app/Http/Requests/HR_Department/UpdateEmployeeRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/HR_Department/UpdateEmployeeStatusDetailsRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/HR_Department/EmployeeAttachmentService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'symfony/http-foundation',
-    3 => 'league/flysystem',
-    4 => 'psr/http-message',
-  ),
-  '../../../app/Services/HR_Department/EmployeeAuditService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/HR_Department/EmployeeDirectoryService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/HR_Department/EmployeeHistoryService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/HR_Department/EmployeeProfileService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/HR_Department/EmployeeService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'symfony/http-foundation',
-    3 => 'league/flysystem',
-    4 => 'psr/http-message',
-  ),
-  '../../../app/Enums/CctvConcernStatus.php' => 
-  array (
-  ),
-  '../../../app/Enums/ItTicketApprovalStatus.php' => 
-  array (
-  ),
-  '../../../app/Enums/ItTicketStatus.php' => 
-  array (
-  ),
-  '../../../app/Http/Requests/ITDepartment/AddJobOrderFilesRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/ITDepartment/AddJobOrderNoteRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/ITDepartment/StoreCctvConcernRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/ITDepartment/StoreItInventoryItemRequest.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
@@ -18961,148 +17736,7 @@ return [
     3 => 'spatie/laravel-permission',
     4 => 'nesbot/carbon',
   ),
-  '../../../app/Http/Requests/ITDepartment/UpdateItInventoryItemRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/ITDepartment/UpdateJobOrderRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/IT/ItInventoryService.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Services/ITDepartment/CctvConcernService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'laravel/sanctum',
-    2 => 'spatie/laravel-permission',
-    3 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/ITDepartment/ItJobOrderDirectoryService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-  ),
-  '../../../app/Services/ITDepartment/ItJobOrderService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-    5 => 'league/flysystem',
-    6 => 'psr/http-message',
-    7 => 'psr/log',
-    8 => 'monolog/monolog',
-  ),
-  '../../../app/Enums/BenefitProgram.php' => 
-  array (
-  ),
-  '../../../app/Enums/HrPositionType.php' => 
-  array (
-  ),
-  '../../../app/Enums/LeaveActionType.php' => 
-  array (
-  ),
-  '../../../app/Enums/LeaveStatus.php' => 
-  array (
-  ),
-  '../../../app/Http/Requests/HR_Department/LeaveRecordRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Requests/HR_Department/StoreDepartmentRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Http/Requests/HR_Department/StorePositionRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-  ),
-  '../../../app/Services/HR_Department/DepartmentService.php' => 
-  array (
-    0 => 'laravel/framework',
-  ),
-  '../../../app/Services/HR_Department/LeaveDirectoryService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'nesbot/carbon',
-  ),
-  '../../../app/Services/HR_Department/LeaveRecordService.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'nesbot/carbon',
-  ),
-  '../../../app/Enums/InventoryTransactionStatus.php' => 
-  array (
-  ),
-  '../../../app/Enums/StockLevelStatus.php' => 
-  array (
-  ),
-  '../../../app/Http/Requests/Maintenance/ProductRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Maintenance/RollbackInventoryRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Maintenance/RollbackReceivingItemRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
   '../../../app/Http/Requests/Maintenance/StoreCategoryRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Maintenance/StorePartsOutRequest.php' => 
-  array (
-    0 => 'laravel/framework',
-    1 => 'symfony/http-foundation',
-    2 => 'laravel/sanctum',
-    3 => 'spatie/laravel-permission',
-    4 => 'nesbot/carbon',
-  ),
-  '../../../app/Http/Requests/Maintenance/StoreReceivingRequest.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
@@ -19126,11 +17760,605 @@ return [
     3 => 'spatie/laravel-permission',
     4 => 'nesbot/carbon',
   ),
-  '../../../app/Services/Maintenance/CategoryService.php' => 
+  '../../../app/Models/BusDetail.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/CashierRemittance.php' => 
   array (
     0 => 'laravel/framework',
   ),
-  '../../../app/Services/Maintenance/InventoryDirectoryService.php' => 
+  '../../../app/Models/DriverLeave.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Fleet/BusService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Maintenance/StockTransferCreationService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Maintenance/StockTransferRollbackService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Payroll/GovernmentDeductionSettlementService.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Console/Commands/BackfillBenefitContributionRecords.php' => 
+  array (
+    0 => 'symfony/console',
+    1 => 'laravel/framework',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Console/Commands/ProcessEmployeeLeaveReadyForDuty.php' => 
+  array (
+    0 => 'symfony/console',
+    1 => 'laravel/framework',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Console/Commands/SyncRoutePermissions.php' => 
+  array (
+    0 => 'symfony/console',
+    1 => 'laravel/framework',
+  ),
+  '../../../app/Exports/JobOrdersExport.php' => 
+  array (
+    0 => 'maatwebsite/excel',
+    1 => 'laravel/framework',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Chairman/HrDataController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Maintenance/CategoryController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laracasts/flash',
+  ),
+  '../../../app/Http/Controllers/Payroll/PayrollEmployeeSalaryController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'psr/log',
+    4 => 'monolog/monolog',
+  ),
+  '../../../app/Http/Controllers/Stock/StockController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Controllers/UserManagementController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+    5 => 'symfony/http-kernel',
+  ),
+  '../../../app/Http/Middleware/PreventRequestsDuringMaintenance.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Http/Requests/Fleet/StoreBusRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Resources/Api/OdometerSubmissionResource.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/DailyAttendanceSummary.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/EmployeeHistory.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/EmployeeLog.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/StockTransfer.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/StockTransferItem.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Services/Fleet/FleetFolderDashboardService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Maintenance/PartsOutService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Console/Commands/NormalizeTextCase.php' => 
+  array (
+    0 => 'symfony/console',
+    1 => 'laravel/framework',
+  ),
+  '../../../app/Console/Commands/ProcessDriverLeaveReadyForDuty.php' => 
+  array (
+    0 => 'symfony/console',
+    1 => 'laravel/framework',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Enums/BenefitProgram.php' => 
+  array (
+  ),
+  '../../../app/Enums/CctvConcernStatus.php' => 
+  array (
+  ),
+  '../../../app/Enums/HrPositionType.php' => 
+  array (
+  ),
+  '../../../app/Http/Controllers/DashboardController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/HR_Department/EmployeeLeaveController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'laracasts/flash',
+    4 => 'psr/log',
+    5 => 'monolog/monolog',
+  ),
+  '../../../app/Http/Requests/Api/LoginRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/Api/StoreTicketRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/HR_Department/StoreDepartmentRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/HR_Department/UpdateEmployeeAssetsRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/UpdateJobOrderMaintenanceStatusRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/Claim.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/EmployeeLeave.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/StockMovement.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/Biometrics/EmployeeBiometricIdentityService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/CrossChexService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'ramsey/uuid',
+    3 => 'psr/simple-cache',
+  ),
+  '../../../app/Services/CrossChexServiceFactory.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/HR_Department/EmployeeService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'symfony/http-foundation',
+    3 => 'league/flysystem',
+    4 => 'psr/http-message',
+  ),
+  '../../../app/Services/Payroll/PayrollPayslipService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Actions/Api/CreateFareAction.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Console/Commands/MigrateSensitiveFiles.php' => 
+  array (
+    0 => 'symfony/console',
+    1 => 'laravel/framework',
+    2 => 'nesbot/carbon',
+    3 => 'league/flysystem',
+    4 => 'psr/http-message',
+    5 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Controllers/Api/TripController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/RoleController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'spatie/laravel-permission',
+    3 => 'laravel/sanctum',
+    4 => 'nesbot/carbon',
+    5 => 'psr/log',
+    6 => 'monolog/monolog',
+  ),
+  '../../../app/Http/Requests/HR_Department/ConductorLeaveActionRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/Maintenance/RollbackInventoryRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Payroll/BenefitsRecordIndexRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Jobs/CrossChexSyncLogsJob.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'psr/simple-cache',
+  ),
+  '../../../app/Mail/LeaveNoticeMail.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Models/Bus.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/CctvConcern.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/ItInventoryItem.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Models/PayrollEntry.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/PurchaseOrder.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'laravel/sanctum',
+    2 => 'spatie/laravel-permission',
+    3 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/PurchaseReceive.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'laravel/sanctum',
+    2 => 'spatie/laravel-permission',
+    3 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/Trip.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/HR_Department/ConductorLeaveActionService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'symfony/http-foundation',
+    3 => 'league/flysystem',
+    4 => 'psr/http-message',
+  ),
+  '../../../app/Services/Payroll/DailyAttendanceSummaryService.php' => 
+  array (
+    0 => 'nesbot/carbon',
+    1 => 'laravel/framework',
+  ),
+  '../../../app/Services/Payroll/GovernmentDeductionService.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/Payroll/PayrollEmployeeRosterService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Api/AuthController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/BusDetailController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Controllers/Fleet/BusController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/HR_Department/ConductorLeaveController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'laracasts/flash',
+    4 => 'psr/log',
+    5 => 'monolog/monolog',
+  ),
+  '../../../app/Http/Requests/Api/StoreFareRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Biometrics/StepBiometricsSyncRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/ITDepartment/AddJobOrderNoteRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreReceivingRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Payroll/SaveEmployeePlottingScheduleRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Mail/POCreatedMail.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Models/BenefitContributionRecord.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/Holiday.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/OdometerSubmission.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Models/Payroll.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/ProductStock.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Models/Receiving.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/User.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'laravel/sanctum',
+    2 => 'spatie/laravel-permission',
+    3 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Biometrics/EmployeeBiometricSyncService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/ITDepartment/ItJobOrderService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+    5 => 'league/flysystem',
+    6 => 'psr/http-message',
+    7 => 'psr/log',
+    8 => 'monolog/monolog',
+  ),
+  '../../../app/Actions/Api/CreateCashierRemittanceAction.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Console/Commands/ImportBuses.php' => 
+  array (
+    0 => 'symfony/console',
+    1 => 'laravel/framework',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Enums/ItTicketStatus.php' => 
+  array (
+  ),
+  '../../../app/Http/Controllers/AllBusController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Controllers/Payroll/AttendanceSummaryController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'psr/log',
+    3 => 'monolog/monolog',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Payroll/PayrollBenefitSettlementController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Middleware/ForceLockscreen.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Middleware/ForcePasswordChange.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Middleware/RoleMiddleware.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Middleware/TrimStrings.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Http/Requests/ITDepartment/StoreJobOrderRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/ProductRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/Employee.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/JobOrderLog.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/PayrollEmployee.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/HR_Department/LeaveRecordService.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'nesbot/carbon',
@@ -19140,33 +18368,806 @@ return [
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
   ),
-  '../../../app/Services/Maintenance/PartsOutService.php' => 
+  '../../../app/Services/Payroll/PayrollAuditService.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'nesbot/carbon',
+    2 => 'symfony/http-kernel',
+    3 => 'psr/container',
+    4 => 'symfony/http-foundation',
+    5 => 'ramsey/uuid',
+  ),
+  '../../../app/Support/PayrollEmployeeNameFormatter.php' => 
+  array (
+  ),
+  '../../../app/Console/Commands/CrossChexSyncAttendance.php' => 
+  array (
+    0 => 'symfony/console',
+    1 => 'laravel/framework',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Enums/StockLevelStatus.php' => 
+  array (
+  ),
+  '../../../app/Enums/WorkdayType.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Exceptions/Handler.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'symfony/http-kernel',
+  ),
+  '../../../app/Exports/PayrollItemsExport.php' => 
+  array (
+    0 => 'maatwebsite/excel',
+    1 => 'laravel/framework',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Accounting/AccountingController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'psr/log',
+    3 => 'monolog/monolog',
+  ),
+  '../../../app/Http/Controllers/Api/BusController.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Http/Controllers/Api/TicketController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Maintenance/JobOrderMaintenanceController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'laravel/sanctum',
+    4 => 'spatie/laravel-permission',
+    5 => 'psr/log',
+    6 => 'monolog/monolog',
+  ),
+  '../../../app/Http/Controllers/Maintenance/PartsOutController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/ITDepartment/AddJobOrderFilesRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/ITDepartment/StoreItInventoryItemRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Payroll/PayrollAttendanceAdjustmentRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/UserManagement/StoreUserRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/Fare.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Notifications/JobOrderCreatedNotification.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Notifications/POCreatedNotification.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'laravel/sanctum',
+    2 => 'spatie/laravel-permission',
+    3 => 'nesbot/carbon',
   ),
   '../../../app/Services/Maintenance/ProductCatalogService.php' => 
   array (
     0 => 'laravel/framework',
   ),
-  '../../../app/Services/Maintenance/ReceivingService.php' => 
+  '../../../app/Services/Payroll/EmployeePlottingScheduleService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Actions/Api/CreateOdometerSubmissionAction.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Console/Commands/RepairMonthlyGovernmentContributions.php' => 
+  array (
+    0 => 'symfony/console',
+    1 => 'laravel/framework',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Enums/JobOrderRepairType.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Http/Controllers/Fleet/ForSaleUnitController.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'symfony/http-foundation',
     2 => 'nesbot/carbon',
-    3 => 'ramsey/uuid',
-    4 => 'league/flysystem',
-    5 => 'psr/http-message',
   ),
-  '../../../app/Services/Maintenance/StockTransferCreationService.php' => 
+  '../../../app/Http/Middleware/TrustProxies.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Middleware/VerifyCsrfToken.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Http/Requests/Api/StoreTripRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/HR_Department/StorePositionRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/HR_Department/UpdateEmployeeStatusDetailsRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/EmployeeAsset.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'nesbot/carbon',
   ),
-  '../../../app/Services/Maintenance/VehicleHistoryService.php' => 
+  '../../../app/Models/EmployeePlottingSchedule.php' => 
   array (
     0 => 'laravel/framework',
     1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/PartsOut.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/PartsOutItem.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/PayrollAuditLog.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/PayrollEmployeeSalaryOtherDeduction.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/PayrollItem.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Maintenance/PartsOutRollbackService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'symfony/http-foundation',
+  ),
+  '../../../app/Services/Payroll/BenefitRecordsService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Payroll/BiometricsProofService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Console/Commands/SyncMissingProductStocks.php' => 
+  array (
+    0 => 'symfony/console',
+    1 => 'laravel/framework',
+  ),
+  '../../../app/Enums/EmployeeStatus.php' => 
+  array (
+  ),
+  '../../../app/Http/Controllers/ClaimController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Payroll/EmployeePlottingScheduleController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Middleware/EncryptCookies.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Http/Requests/Api/StoreCashierRemittanceRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Fleet/UpdateBusRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/RollbackReceivingItemRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Listeners/LogLogout.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'psr/log',
+    4 => 'monolog/monolog',
+  ),
+  '../../../app/Models/Department.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/PayrollPeriod.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/Product.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/ReceivingItem.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Observers/PayrollAuditObserver.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Fleet/BusForSaleSyncService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/ITDepartment/CctvConcernService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'laravel/sanctum',
+    2 => 'spatie/laravel-permission',
+    3 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Maintenance/JobOrderMaintenanceService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Payroll/BenefitContributionPostingService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Payroll/SssContributionService.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Actions/Api/AuthenticateApiUserAction.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Console/Commands/ImportForSaleUnits.php' => 
+  array (
+    0 => 'symfony/console',
+    1 => 'laravel/framework',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/HR_Department/DriverLeaveController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'laracasts/flash',
+    4 => 'psr/log',
+    5 => 'monolog/monolog',
+  ),
+  '../../../app/Http/Controllers/IT/ItInventoryItemController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Controllers/Maintenance/ItemsController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laracasts/flash',
+    3 => 'laravel/sanctum',
+    4 => 'spatie/laravel-permission',
+    5 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Maintenance/ReceivingController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+    5 => 'league/flysystem',
+    6 => 'psr/http-message',
+  ),
+  '../../../app/Http/Controllers/Payroll/PayrollController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'psr/log',
+    4 => 'monolog/monolog',
+    5 => 'maatwebsite/excel',
+    6 => 'barryvdh/laravel-dompdf',
+    7 => 'dompdf/dompdf',
+  ),
+  '../../../app/Http/Middleware/Authenticate.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Middleware/InactivityLogout.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'laravel/sanctum',
+    4 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Http/Middleware/RedirectIfAuthenticated.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Listeners/LogLockout.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'psr/log',
+    4 => 'monolog/monolog',
+  ),
+  '../../../app/Listeners/SendPOCreatedNotification.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'laravel/sanctum',
+    2 => 'spatie/laravel-permission',
+    3 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/CctvConcernItem.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/JobOrderMaintenanceStatusPeriod.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/PayrollAdjustment.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Models/PayrollBenefitSettlement.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Providers/EventServiceProvider.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/Payroll/PaymentLogService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Reports/HrDataReportService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Actions/Api/CreateTripAction.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Api/OdometerController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Controller.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Http/Controllers/HR_Department/HRDashboardController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Controllers/Maintenance/PurchaseReceiveController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Controllers/Payroll/BenefitsRecordController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/HR_Department/LeaveRecordRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/ITDepartment/UpdateItInventoryItemRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/StoreJobOrderMaintenanceRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/BiometricCompany.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/HrOffense.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/JobOrderFile.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/JobOrderMaintenance.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/PayrollEmployeeSalary.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/PayrollReportLog.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/Position.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Providers/AppServiceProvider.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-kernel',
+    2 => 'psr/container',
+    3 => 'symfony/http-foundation',
+    4 => 'laravel/sanctum',
+    5 => 'spatie/laravel-permission',
+    6 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Maintenance/InventoryDirectoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Payroll/MonthlyGovernmentReconciliationService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Actions/Api/CreateTicketAction.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Enums/InventoryTransactionStatus.php' => 
+  array (
+  ),
+  '../../../app/Http/Controllers/Auth/AuthController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+    5 => 'laracasts/flash',
+    6 => 'psr/log',
+    7 => 'monolog/monolog',
+  ),
+  '../../../app/Http/Controllers/HR_Department/DepartmentController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laracasts/flash',
+    3 => 'psr/log',
+    4 => 'monolog/monolog',
+  ),
+  '../../../app/Http/Controllers/HR_Department/HrOffenseController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Controllers/Payroll/ManualBiometricsEncodingController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Auth/LoginRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/Biometrics/StoreBiometricCompanyRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/Payroll/UpdatePayrollBenefitSettlementRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/EmployeeAttachment.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/Location.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/PaymentLog.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/HR_Department/LeaveDirectoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Services/IT/ItInventoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/Maintenance/CategoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Services/Payroll/MonthlyGovernmentContributionService.php' => 
+  array (
+  ),
+  '../../../app/Services/Payroll/PayrollComputationService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/Permissions/RoutePermissionSyncService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Services/StockTransferService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'symfony/http-foundation',
+  ),
+  '../../../app/Console/Commands/BuildDailyAttendanceSummary.php' => 
+  array (
+    0 => 'symfony/console',
+    1 => 'laravel/framework',
+  ),
+  '../../../app/Http/Controllers/Payroll/PayrollAuditLogController.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+    3 => 'laravel/sanctum',
+    4 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Http/Requests/Auth/UnlockRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Http/Requests/Biometrics/UpdateEmployeeBiometricRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Fleet/ForSaleUnitRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/Maintenance/StorePartsOutRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Requests/UserManagement/UpdateUserRequest.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+    4 => 'nesbot/carbon',
+  ),
+  '../../../app/Http/Resources/Api/BusResource.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'symfony/http-foundation',
+  ),
+  '../../../app/Mail/JobOrderCreatedMail.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/Category.php' => 
+  array (
+    0 => 'laravel/framework',
+  ),
+  '../../../app/Models/DieselStock.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Models/JobOrderNote.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'laravel/sanctum',
+    2 => 'spatie/laravel-permission',
+    3 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/MirasolBiometricsLog.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Models/PayrollAttendanceAdjustment.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+    2 => 'laravel/sanctum',
+    3 => 'spatie/laravel-permission',
+  ),
+  '../../../app/Services/Biometrics/CrossChexAttendanceSyncService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/HR_Department/EmployeeDirectoryService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/HR_Department/EmployeeProfileService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'nesbot/carbon',
+  ),
+  '../../../app/Services/LeaveNotificationService.php' => 
+  array (
+    0 => 'laravel/framework',
+    1 => 'laravel/sanctum',
+    2 => 'spatie/laravel-permission',
+    3 => 'nesbot/carbon',
+    4 => 'symfony/mailer',
+  ),
+  '../../../app/Services/Payroll/PayrollPeriodService.php' => 
+  array (
+    0 => 'nesbot/carbon',
+    1 => 'laravel/framework',
   ),
 ),
 	'exportedNodesCallback' => static function (): array { return array (
@@ -61530,252 +61531,6 @@ return [
       ),
     )),
   ),
-  '../../../app/Services/IT/ItInventoryService.php' => 
-  array (
-    0 => 
-    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
-       'name' => 'App\\Services\\IT\\ItInventoryService',
-       'phpDoc' => NULL,
-       'abstract' => false,
-       'final' => true,
-       'extends' => NULL,
-       'implements' => 
-      array (
-      ),
-       'usedTraits' => 
-      array (
-      ),
-       'traitUseAdaptations' => 
-      array (
-      ),
-       'statements' => 
-      array (
-        0 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'paginate',
-           'phpDoc' => 
-          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
-             'phpDocString' => '/** @return LengthAwarePaginator<int, ItInventoryItem> */',
-             'namespace' => 'App\\Services\\IT',
-             'uses' => 
-            array (
-              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
-              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
-              'collection' => 'Illuminate\\Support\\Collection',
-            ),
-             'constUses' => 
-            array (
-            ),
-          )),
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
-           'parameters' => 
-          array (
-            0 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'search',
-               'type' => 'string',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => true,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-            1 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'category',
-               'type' => 'string',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => true,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        1 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'categories',
-           'phpDoc' => 
-          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
-             'phpDocString' => '/** @return Collection<int, string> */',
-             'namespace' => 'App\\Services\\IT',
-             'uses' => 
-            array (
-              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
-              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
-              'collection' => 'Illuminate\\Support\\Collection',
-            ),
-             'constUses' => 
-            array (
-            ),
-          )),
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => 'Illuminate\\Support\\Collection',
-           'parameters' => 
-          array (
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        2 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'create',
-           'phpDoc' => 
-          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
-             'phpDocString' => '/** @param array<string, mixed> $data */',
-             'namespace' => 'App\\Services\\IT',
-             'uses' => 
-            array (
-              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
-              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
-              'collection' => 'Illuminate\\Support\\Collection',
-            ),
-             'constUses' => 
-            array (
-            ),
-          )),
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => 'App\\Models\\ItInventoryItem',
-           'parameters' => 
-          array (
-            0 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'data',
-               'type' => 'array',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        3 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'update',
-           'phpDoc' => 
-          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
-             'phpDocString' => '/** @param array<string, mixed> $data */',
-             'namespace' => 'App\\Services\\IT',
-             'uses' => 
-            array (
-              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
-              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
-              'collection' => 'Illuminate\\Support\\Collection',
-            ),
-             'constUses' => 
-            array (
-            ),
-          )),
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => 'App\\Models\\ItInventoryItem',
-           'parameters' => 
-          array (
-            0 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'item',
-               'type' => 'App\\Models\\ItInventoryItem',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-            1 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'data',
-               'type' => 'array',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-        4 => 
-        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
-           'name' => 'delete',
-           'phpDoc' => NULL,
-           'byRef' => false,
-           'public' => true,
-           'private' => false,
-           'abstract' => false,
-           'final' => false,
-           'static' => false,
-           'returnType' => 'void',
-           'parameters' => 
-          array (
-            0 => 
-            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
-               'name' => 'item',
-               'type' => 'App\\Models\\ItInventoryItem',
-               'byRef' => false,
-               'variadic' => false,
-               'hasDefault' => false,
-               'attributes' => 
-              array (
-              ),
-               'phpDoc' => NULL,
-               'flags' => 0,
-            )),
-          ),
-           'attributes' => 
-          array (
-          ),
-        )),
-      ),
-       'attributes' => 
-      array (
-      ),
-    )),
-  ),
   '../../../app/Services/ITDepartment/CctvConcernDirectoryService.php' => 
   array (
     0 => 
@@ -62801,6 +62556,252 @@ return [
             \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
                'name' => 'actor',
                'type' => 'App\\Models\\User',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+      ),
+       'attributes' => 
+      array (
+      ),
+    )),
+  ),
+  '../../../app/Services/IT/ItInventoryService.php' => 
+  array (
+    0 => 
+    \PHPStan\Dependency\ExportedNode\ExportedClassNode::__set_state(array(
+       'name' => 'App\\Services\\IT\\ItInventoryService',
+       'phpDoc' => NULL,
+       'abstract' => false,
+       'final' => true,
+       'extends' => NULL,
+       'implements' => 
+      array (
+      ),
+       'usedTraits' => 
+      array (
+      ),
+       'traitUseAdaptations' => 
+      array (
+      ),
+       'statements' => 
+      array (
+        0 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'paginate',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return LengthAwarePaginator<int, ItInventoryItem> */',
+             'namespace' => 'App\\Services\\IT',
+             'uses' => 
+            array (
+              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
+              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'search',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'category',
+               'type' => 'string',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => true,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        1 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'categories',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @return Collection<int, string> */',
+             'namespace' => 'App\\Services\\IT',
+             'uses' => 
+            array (
+              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
+              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'Illuminate\\Support\\Collection',
+           'parameters' => 
+          array (
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        2 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'create',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array<string, mixed> $data */',
+             'namespace' => 'App\\Services\\IT',
+             'uses' => 
+            array (
+              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
+              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\ItInventoryItem',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        3 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'update',
+           'phpDoc' => 
+          \PHPStan\Dependency\ExportedNode\ExportedPhpDocNode::__set_state(array(
+             'phpDocString' => '/** @param array<string, mixed> $data */',
+             'namespace' => 'App\\Services\\IT',
+             'uses' => 
+            array (
+              'itinventoryitem' => 'App\\Models\\ItInventoryItem',
+              'lengthawarepaginator' => 'Illuminate\\Contracts\\Pagination\\LengthAwarePaginator',
+              'collection' => 'Illuminate\\Support\\Collection',
+            ),
+             'constUses' => 
+            array (
+            ),
+          )),
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'App\\Models\\ItInventoryItem',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'item',
+               'type' => 'App\\Models\\ItInventoryItem',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+            1 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'data',
+               'type' => 'array',
+               'byRef' => false,
+               'variadic' => false,
+               'hasDefault' => false,
+               'attributes' => 
+              array (
+              ),
+               'phpDoc' => NULL,
+               'flags' => 0,
+            )),
+          ),
+           'attributes' => 
+          array (
+          ),
+        )),
+        4 => 
+        \PHPStan\Dependency\ExportedNode\ExportedMethodNode::__set_state(array(
+           'name' => 'delete',
+           'phpDoc' => NULL,
+           'byRef' => false,
+           'public' => true,
+           'private' => false,
+           'abstract' => false,
+           'final' => false,
+           'static' => false,
+           'returnType' => 'void',
+           'parameters' => 
+          array (
+            0 => 
+            \PHPStan\Dependency\ExportedNode\ExportedParameterNode::__set_state(array(
+               'name' => 'item',
+               'type' => 'App\\Models\\ItInventoryItem',
                'byRef' => false,
                'variadic' => false,
                'hasDefault' => false,

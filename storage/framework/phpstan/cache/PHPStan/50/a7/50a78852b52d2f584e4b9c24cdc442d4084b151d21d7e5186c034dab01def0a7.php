@@ -2,7 +2,7 @@
 
 // phpinternal-PHPStan\BetterReflection\Reflection\ReflectionClass-dateperiod
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-dev-master@709e512-8.3.6',
+   'variableKey' => 'v2-6.70.0.3-dev-master@709e512-8.2.12',
    'data' => 
   array (
     'locatedSource' => 
@@ -35,7 +35,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     array (
     ),
     'startLine' => 11,
-    'endLine' => 174,
+    'endLine' => 168,
     'startColumn' => 5,
     'endColumn' => 5,
     'parentClassName' => NULL,
@@ -1380,107 +1380,6 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         'isGenerator' => false,
         'isVariadic' => false,
         'modifiers' => 1,
-        'namespace' => NULL,
-        'declaringClassName' => 'DatePeriod',
-        'implementingClassName' => 'DatePeriod',
-        'currentClassName' => 'DatePeriod',
-        'aliasName' => NULL,
-      ),
-      'createFromISO8601String' => 
-      array (
-        'name' => 'createFromISO8601String',
-        'parameters' => 
-        array (
-          'specification' => 
-          array (
-            'name' => 'specification',
-            'default' => NULL,
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-              'data' => 
-              array (
-                'name' => 'string',
-                'isIdentifier' => true,
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 171,
-            'endLine' => 171,
-            'startColumn' => 56,
-            'endColumn' => 76,
-            'parameterIndex' => 0,
-            'isOptional' => false,
-          ),
-          'options' => 
-          array (
-            'name' => 'options',
-            'default' => 
-            array (
-              'code' => '0',
-              'attributes' => 
-              array (
-                'startLine' => 171,
-                'endLine' => 171,
-                'startTokenPos' => 585,
-                'startFilePos' => 6006,
-                'endTokenPos' => 585,
-                'endFilePos' => 6006,
-              ),
-            ),
-            'type' => 
-            array (
-              'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-              'data' => 
-              array (
-                'name' => 'int',
-                'isIdentifier' => true,
-              ),
-            ),
-            'isVariadic' => false,
-            'byRef' => false,
-            'isPromoted' => false,
-            'attributes' => 
-            array (
-            ),
-            'startLine' => 171,
-            'endLine' => 171,
-            'startColumn' => 79,
-            'endColumn' => 94,
-            'parameterIndex' => 1,
-            'isOptional' => true,
-          ),
-        ),
-        'returnsReference' => false,
-        'returnType' => 
-        array (
-          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-          'data' => 
-          array (
-            'name' => 'static',
-            'isIdentifier' => false,
-          ),
-        ),
-        'attributes' => 
-        array (
-        ),
-        'docComment' => '/**
- * @since 8.3
- */',
-        'startLine' => 171,
-        'endLine' => 173,
-        'startColumn' => 9,
-        'endColumn' => 9,
-        'couldThrow' => false,
-        'isClosure' => false,
-        'isGenerator' => false,
-        'isVariadic' => false,
-        'modifiers' => 17,
         'namespace' => NULL,
         'declaringClassName' => 'DatePeriod',
         'implementingClassName' => 'DatePeriod',

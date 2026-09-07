@@ -2,7 +2,7 @@
 
 // phpinternal-PHPStan\BetterReflection\Reflection\ReflectionConstant-PHP_EOL
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-dev-master@709e512-8.3.6',
+   'variableKey' => 'v2-6.70.0.3-dev-master@709e512-8.2.12',
    'data' => 
   array (
     'locatedSource' => 
@@ -29,7 +29,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         'startTokenPos' => 7,
         'startFilePos' => 25,
         'endTokenPos' => 7,
-        'endFilePos' => 27,
+        'endFilePos' => 28,
       ),
     ),
     'docComment' => NULL,

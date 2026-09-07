@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
 /**
- * @property \App\Enums\JobOrderStatus $status
+ * @property JobOrderStatus $status
  * @property array<int, string>|null $mechanic_names
  * @property array<int, string>|null $repair_types
  * @property-read string $status_label
@@ -137,22 +137,22 @@ class JobOrderMaintenance extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return JobOrderStatus::tryFrom((string) $this->getAttribute('status'))?->label() ?? 'Unknown';
+        return $this->status?->label() ?? 'Unknown';
     }
 
     public function getStatusBadgeClassAttribute(): string
     {
-        return JobOrderStatus::tryFrom((string) $this->getAttribute('status'))?->badgeClass() ?? 'badge-subtle-secondary text-secondary';
+        return $this->status?->badgeClass() ?? 'badge-subtle-secondary text-secondary';
     }
 
     public function getStatusIconAttribute(): string
     {
-        return JobOrderStatus::tryFrom((string) $this->getAttribute('status'))?->icon() ?? 'fas fa-circle-question';
+        return $this->status?->icon() ?? 'fas fa-circle-question';
     }
 
     public function getStatusDescriptionAttribute(): string
     {
-        return JobOrderStatus::tryFrom((string) $this->getAttribute('status'))?->description() ?? 'No status information available.';
+        return $this->status?->description() ?? 'No status information available.';
     }
 
     public function getOdometerDifferenceAttribute(): ?int
@@ -183,15 +183,15 @@ class JobOrderMaintenance extends Model
             return 'Current reading is lower than the previous reading.';
         }
 
-        return number_format($this->odometer_difference).' km since the previous maintenance reading.';
+        return number_format($this->odometer_difference) . ' km since the previous maintenance reading.';
     }
 
     public function getMechanicNamesListAttribute(): array
     {
         return collect($this->mechanic_names ?? [])
-            ->map(fn ($name): string => trim((string) $name))
+            ->map(fn($name): string => trim((string) $name))
             ->filter()
-            ->unique(fn (string $name): string => mb_strtolower($name))
+            ->unique(fn(string $name): string => mb_strtolower($name))
             ->values()
             ->all();
     }
@@ -206,7 +206,7 @@ class JobOrderMaintenance extends Model
     public function getRepairTypeEnumsAttribute(): Collection
     {
         return collect($this->repair_types ?? [])
-            ->map(fn ($value): ?JobOrderRepairType => JobOrderRepairType::tryFrom((string) $value))
+            ->map(fn($value): ?JobOrderRepairType => JobOrderRepairType::tryFrom((string) $value))
             ->filter()
             ->values();
     }
@@ -214,7 +214,7 @@ class JobOrderMaintenance extends Model
     public function getRepairTypesLabelAttribute(): string
     {
         $labels = $this->repair_type_enums
-            ->map(fn (JobOrderRepairType $type): string => $type->label())
+            ->map(fn(JobOrderRepairType $type): string => $type->label())
             ->all();
 
         return $labels === [] ? 'Not encoded' : implode(', ', $labels);
@@ -228,13 +228,13 @@ class JobOrderMaintenance extends Model
 
         return $periods
             ->filter(function (JobOrderMaintenanceStatusPeriod $period) use ($status): bool {
-                if (! $period->status->countsAsDowntime()) {
+                if (!$period->status->countsAsDowntime()) {
                     return false;
                 }
 
                 return $status === null || $period->status === $status;
             })
-            ->sum(fn (JobOrderMaintenanceStatusPeriod $period): int => $period->duration_minutes);
+            ->sum(fn(JobOrderMaintenanceStatusPeriod $period): int => $period->duration_minutes);
     }
 
     public function getTotalDowntimeMinutesAttribute(): int
@@ -279,15 +279,15 @@ class JobOrderMaintenance extends Model
         $parts = [];
 
         if ($days > 0) {
-            $parts[] = $days.' '.str('day')->plural($days);
+            $parts[] = $days . ' ' . str('day')->plural($days);
         }
 
         if ($hours > 0) {
-            $parts[] = $hours.' '.str('hour')->plural($hours);
+            $parts[] = $hours . ' ' . str('hour')->plural($hours);
         }
 
         if ($remainingMinutes > 0 || $parts === []) {
-            $parts[] = $remainingMinutes.' '.str('minute')->plural($remainingMinutes);
+            $parts[] = $remainingMinutes . ' ' . str('minute')->plural($remainingMinutes);
         }
 
         return implode(' ', $parts);

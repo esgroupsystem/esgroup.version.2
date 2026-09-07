@@ -2,7 +2,7 @@
 
 // phpinternal-PHPStan\BetterReflection\Reflection\ReflectionFunction-range
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-dev-master@709e512-8.3.6',
+   'variableKey' => 'v2-6.70.0.3-dev-master@709e512-8.2.12',
    'data' => 
   array (
     'name' => 'range',
@@ -12,43 +12,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
       array (
         'name' => 'start',
         'default' => NULL,
-        'type' => 
-        array (
-          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionUnionType',
-          'data' => 
-          array (
-            'types' => 
-            array (
-              0 => 
-              array (
-                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                'data' => 
-                array (
-                  'name' => 'string',
-                  'isIdentifier' => true,
-                ),
-              ),
-              1 => 
-              array (
-                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                'data' => 
-                array (
-                  'name' => 'int',
-                  'isIdentifier' => true,
-                ),
-              ),
-              2 => 
-              array (
-                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                'data' => 
-                array (
-                  'name' => 'float',
-                  'isIdentifier' => true,
-                ),
-              ),
-            ),
-          ),
-        ),
+        'type' => NULL,
         'isVariadic' => false,
         'byRef' => false,
         'isPromoted' => false,
@@ -92,7 +56,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         'startLine' => 24,
         'endLine' => 25,
         'startColumn' => 9,
-        'endColumn' => 31,
+        'endColumn' => 14,
         'parameterIndex' => 0,
         'isOptional' => false,
       ),
@@ -100,43 +64,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
       array (
         'name' => 'end',
         'default' => NULL,
-        'type' => 
-        array (
-          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionUnionType',
-          'data' => 
-          array (
-            'types' => 
-            array (
-              0 => 
-              array (
-                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                'data' => 
-                array (
-                  'name' => 'string',
-                  'isIdentifier' => true,
-                ),
-              ),
-              1 => 
-              array (
-                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                'data' => 
-                array (
-                  'name' => 'int',
-                  'isIdentifier' => true,
-                ),
-              ),
-              2 => 
-              array (
-                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                'data' => 
-                array (
-                  'name' => 'float',
-                  'isIdentifier' => true,
-                ),
-              ),
-            ),
-          ),
-        ),
+        'type' => NULL,
         'isVariadic' => false,
         'byRef' => false,
         'isPromoted' => false,
@@ -155,10 +83,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
                 array (
                   'startLine' => 26,
                   'endLine' => 26,
-                  'startTokenPos' => 48,
-                  'startFilePos' => 930,
-                  'endTokenPos' => 54,
-                  'endFilePos' => 958,
+                  'startTokenPos' => 42,
+                  'startFilePos' => 913,
+                  'endTokenPos' => 48,
+                  'endFilePos' => 941,
                 ),
               ),
               'default' => 
@@ -168,10 +96,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
                 array (
                   'startLine' => 26,
                   'endLine' => 26,
-                  'startTokenPos' => 60,
-                  'startFilePos' => 970,
-                  'endTokenPos' => 60,
-                  'endFilePos' => 971,
+                  'startTokenPos' => 54,
+                  'startFilePos' => 953,
+                  'endTokenPos' => 54,
+                  'endFilePos' => 954,
                 ),
               ),
             ),
@@ -180,7 +108,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
         'startLine' => 26,
         'endLine' => 27,
         'startColumn' => 9,
-        'endColumn' => 29,
+        'endColumn' => 12,
         'parameterIndex' => 1,
         'isOptional' => false,
       ),
@@ -194,10 +122,10 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
           array (
             'startLine' => 28,
             'endLine' => 28,
-            'startTokenPos' => 81,
-            'startFilePos' => 1032,
-            'endTokenPos' => 81,
-            'endFilePos' => 1032,
+            'startTokenPos' => 69,
+            'startFilePos' => 998,
+            'endTokenPos' => 69,
+            'endFilePos' => 998,
           ),
         ),
         'type' => 

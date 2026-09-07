@@ -2,7 +2,7 @@
 
 // phpinternal-PHPStan\BetterReflection\Reflection\ReflectionClass-simplexmlelement
 return \PHPStan\Cache\CacheItem::__set_state(array(
-   'variableKey' => 'v2-6.70.0.3-dev-master@709e512-8.3.6',
+   'variableKey' => 'v2-6.70.0.3-dev-master@709e512-8.2.12',
    'data' => 
   array (
     'locatedSource' => 
@@ -32,7 +32,7 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
     array (
     ),
     'startLine' => 8,
-    'endLine' => 435,
+    'endLine' => 429,
     'startColumn' => 5,
     'endColumn' => 5,
     'parentClassName' => NULL,
@@ -3399,62 +3399,6 @@ return \PHPStan\Cache\CacheItem::__set_state(array(
  */',
         'startLine' => 424,
         'endLine' => 428,
-        'startColumn' => 9,
-        'endColumn' => 9,
-        'couldThrow' => false,
-        'isClosure' => false,
-        'isGenerator' => false,
-        'isVariadic' => false,
-        'modifiers' => 1,
-        'namespace' => NULL,
-        'declaringClassName' => 'SimpleXMLElement',
-        'implementingClassName' => 'SimpleXMLElement',
-        'currentClassName' => 'SimpleXMLElement',
-        'aliasName' => NULL,
-      ),
-      '__debugInfo' => 
-      array (
-        'name' => '__debugInfo',
-        'parameters' => 
-        array (
-        ),
-        'returnsReference' => false,
-        'returnType' => 
-        array (
-          'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionUnionType',
-          'data' => 
-          array (
-            'types' => 
-            array (
-              0 => 
-              array (
-                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                'data' => 
-                array (
-                  'name' => 'array',
-                  'isIdentifier' => true,
-                ),
-              ),
-              1 => 
-              array (
-                'class' => 'PHPStan\\BetterReflection\\Reflection\\ReflectionNamedType',
-                'data' => 
-                array (
-                  'name' => 'null',
-                  'isIdentifier' => true,
-                ),
-              ),
-            ),
-          ),
-        ),
-        'attributes' => 
-        array (
-        ),
-        'docComment' => '/**
- * @since 8.3
- */',
-        'startLine' => 432,
-        'endLine' => 434,
         'startColumn' => 9,
         'endColumn' => 9,
         'couldThrow' => false,
