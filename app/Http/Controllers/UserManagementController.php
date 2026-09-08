@@ -12,7 +12,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
@@ -24,7 +23,8 @@ final class UserManagementController extends Controller
         $actor = $request->user();
 
         $users = User::query()
-            ->when(! $actor->isDeveloper(), function ($query): void {
+            ->with('roles')
+            ->when(!$actor->isDeveloper(), function ($query): void {
                 $query->whereDoesntHave('roles', function ($roleQuery): void {
                     $roleQuery->where('name', 'Developer');
                 });
@@ -44,7 +44,7 @@ final class UserManagementController extends Controller
             ->withQueryString();
 
         $roles = collect(User::availableAssignableRoles($actor))
-            ->map(fn (string $name) => \Spatie\Permission\Models\Role::findByName($name, 'web'))
+            ->map(fn(string $name) => \Spatie\Permission\Models\Role::findByName($name, 'web'))
             ->filter()
             ->sortBy('name')
             ->values();
@@ -60,7 +60,9 @@ final class UserManagementController extends Controller
     {
         $this->assertRoleAssignmentAllowed($request->user(), (string) $request->string('role'));
 
-        $temporaryPassword = $this->generateTemporaryPassword();
+        $temporaryPassword = $this->generateTemporaryPassword(
+            $request->string('full_name')->toString()
+        );
 
         $user = DB::transaction(function () use ($request, $temporaryPassword): User {
             $user = User::create([
@@ -123,7 +125,9 @@ final class UserManagementController extends Controller
         $user = User::findOrFail($id);
         $this->assertTargetManageable($request->user(), $user);
 
-        $temporaryPassword = $this->generateTemporaryPassword();
+        $temporaryPassword = $this->generateTemporaryPassword(
+            $user->full_name
+        );
 
         $user->update([
             'password' => Hash::make($temporaryPassword),
@@ -158,21 +162,26 @@ final class UserManagementController extends Controller
             ->with('success', 'Account status updated!');
     }
 
-    private function generateTemporaryPassword(): string
+    private function generateTemporaryPassword(string $fullName): string
     {
-        return Str::random(24);
+        $initials = collect(explode(' ', strtolower(trim($fullName))))
+            ->filter()
+            ->map(fn(string $name): string => $name[0])
+            ->implode('');
+
+        return $initials . '123456';
     }
 
     private function assertRoleAssignmentAllowed(User $actor, string $role): void
     {
-        if ($role === 'Developer' && ! $actor->isDeveloper()) {
+        if ($role === 'Developer' && !$actor->isDeveloper()) {
             throw new AccessDeniedHttpException('Only a Developer may assign the Developer role.');
         }
     }
 
     private function assertTargetManageable(User $actor, User $target): void
     {
-        if ($target->isDeveloper() && ! $actor->isDeveloper()) {
+        if ($target->isDeveloper() && !$actor->isDeveloper()) {
             throw new AccessDeniedHttpException('The Developer account may only be managed by a Developer.');
         }
     }

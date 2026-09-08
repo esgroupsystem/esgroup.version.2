@@ -42,7 +42,6 @@
                 <div class="alert alert-warning border mb-4">
                     <div class="fw-bold mb-1">Temporary password for {{ session('temporary_password_user') }}</div>
                     <div class="small mb-2">Give this password to the user through a secure channel. It will not be shown again after this request.</div>
-                    <code class="fs-8 user-select-all">{{ session('temporary_password') }}</code>
                 </div>
             @endif
 
