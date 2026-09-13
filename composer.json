@@ -14,7 +14,7 @@
         "laracasts/flash": "^3.2",
         "laravel/framework": "^12.61.1",
         "laravel/sanctum": "^4.3.3",
-        "laravel/tinker": "^2.10.1",
+        "laravel/tinker": "^3.0.2",
         "maatwebsite/excel": "^3.1.69",
         "maennchen/zipstream-php": "2.4",
         "phpoffice/phpspreadsheet": "^1.30.6",
