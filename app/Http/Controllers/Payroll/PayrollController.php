@@ -41,6 +41,8 @@ class PayrollController extends Controller
 
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Payroll::class);
+
         $search = trim((string) $request->search);
         $status = trim((string) $request->status);
         $cutoffType = trim((string) $request->cutoff_type);
@@ -77,6 +79,8 @@ class PayrollController extends Controller
 
     public function create()
     {
+        $this->authorize('create', Payroll::class);
+
         [
             $defaultCutoffMonth,
             $defaultCutoffYear,
@@ -108,6 +112,8 @@ class PayrollController extends Controller
 
     public function store(GeneratePayrollRequest $request): RedirectResponse
     {
+        $this->authorize('create', Payroll::class);
+
         $validated = $request->validated();
 
         [$startDate, $endDate] = $this->periodService->resolveCutoffRange(
@@ -155,6 +161,8 @@ class PayrollController extends Controller
 
     public function show(Payroll $payroll)
     {
+        $this->authorize('view', $payroll);
+
         $payroll->load(['items.employeeBiometric.company', 'items.paymentLogs', 'generator', 'finalizer']);
 
         $payroll->setRelation(
@@ -177,6 +185,8 @@ class PayrollController extends Controller
 
     public function showItem(Payroll $payroll, PayrollItem $item)
     {
+        $this->authorize('view', $payroll);
+
         abort_if((int) $item->payroll_id !== (int) $payroll->id, 404);
 
         $item->load(['employeeBiometric.company', 'paymentLogs', 'benefitSettlement']);
@@ -214,6 +224,8 @@ class PayrollController extends Controller
 
     public function finalize(Payroll $payroll): RedirectResponse
     {
+        $this->authorize('finalize', $payroll);
+
         if ($payroll->status === 'finalized') {
             return back()->with('success', 'Payroll is already finalized.');
         }
@@ -400,6 +412,8 @@ class PayrollController extends Controller
 
     public function destroy(Payroll $payroll): RedirectResponse
     {
+        $this->authorize('delete', $payroll);
+
         if ($payroll->status === 'finalized') {
             return back()->withErrors([
                 'payroll' => 'Finalized payroll cannot be deleted.',
@@ -416,6 +430,8 @@ class PayrollController extends Controller
 
     public function exportExcel(Payroll $payroll): BinaryFileResponse
     {
+        $this->authorize('export', $payroll);
+
         return Excel::download(
             new PayrollItemsExport($payroll->load('items.employeeBiometric')),
             $payroll->payroll_number.'.xlsx'
@@ -424,6 +440,8 @@ class PayrollController extends Controller
 
     public function exportPdf(Payroll $payroll)
     {
+        $this->authorize('export', $payroll);
+
         $data = $this->payrollPayslipService->build($payroll);
 
         $pdf = Pdf::loadView('payroll.payrolls.payslip-pdf', $data)

@@ -8,6 +8,7 @@ use App\Support\PayrollEmployeeNameFormatter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * @property int|null $employee_biometric_id
@@ -55,6 +56,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class PayrollAttendanceAdjustment extends Model
 {
+    use SoftDeletes;
+
     public const TYPE_SICK_LEAVE = 'sick_leave';
 
     public const TYPE_MEDICAL_LEAVE = 'medical_leave';

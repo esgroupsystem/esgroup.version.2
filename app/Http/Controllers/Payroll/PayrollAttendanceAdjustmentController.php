@@ -34,6 +34,8 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     public function index(Request $request): View
     {
+        $this->authorize('viewAny', PayrollAttendanceAdjustment::class);
+
         $search = trim((string) $request->search);
         $type = $request->type;
         $dateFrom = $request->date_from;
@@ -105,6 +107,8 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', PayrollAttendanceAdjustment::class);
+
         return view('payroll.attendance_adjustments.create', [
             'people' => $this->getBiometricsPeople(),
             'types' => PayrollAttendanceAdjustment::TYPES,
@@ -114,6 +118,8 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     public function store(PayrollAttendanceAdjustmentRequest $request): RedirectResponse
     {
+        $this->authorize('create', PayrollAttendanceAdjustment::class);
+
         $validated = $request->validated();
 
         if ($this->hasDuplicateAdjustment($validated)) {
@@ -146,6 +152,8 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     public function edit(PayrollAttendanceAdjustment $payrollAttendanceAdjustment): View
     {
+        $this->authorize('update', $payrollAttendanceAdjustment);
+
         return view('payroll.attendance_adjustments.edit', [
             'payrollAttendanceAdjustment' => $payrollAttendanceAdjustment->load('employeeBiometric'),
             'people' => $this->getBiometricsPeople(),
@@ -158,6 +166,8 @@ class PayrollAttendanceAdjustmentController extends Controller
         PayrollAttendanceAdjustmentRequest $request,
         PayrollAttendanceAdjustment $payrollAttendanceAdjustment
     ): RedirectResponse {
+        $this->authorize('update', $payrollAttendanceAdjustment);
+
         if ($payrollAttendanceAdjustment->paid_payroll_id) {
             return back()->withErrors([
                 'adjustment_type' => 'This adjustment is already linked to a generated payroll and can no longer be edited. Delete/regenerate the affected draft payroll first if a correction is required.',
@@ -201,6 +211,8 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     public function approve(PayrollAttendanceAdjustment $payrollAttendanceAdjustment): RedirectResponse
     {
+        $this->authorize('approve', $payrollAttendanceAdjustment);
+
         if (! $payrollAttendanceAdjustment->isApprovalRequired()) {
             return back()->with('success', 'This adjustment type does not require separate manager approval.');
         }
@@ -237,6 +249,8 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     public function reject(Request $request, PayrollAttendanceAdjustment $payrollAttendanceAdjustment): RedirectResponse
     {
+        $this->authorize('reject', $payrollAttendanceAdjustment);
+
         if (! $payrollAttendanceAdjustment->isApprovalRequired()) {
             return back()->withErrors([
                 'approval' => 'Only adjustment types that require manager approval can be rejected through this workflow.',
@@ -273,6 +287,8 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     public function destroy(PayrollAttendanceAdjustment $payrollAttendanceAdjustment): RedirectResponse
     {
+        $this->authorize('delete', $payrollAttendanceAdjustment);
+
         if ($payrollAttendanceAdjustment->paid_payroll_id) {
             return back()->withErrors([
                 'adjustment' => 'This adjustment is already linked to a generated payroll and cannot be deleted until the affected draft payroll is deleted/regenerated.',
@@ -290,6 +306,8 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     public function offsetProof(Request $request): JsonResponse
     {
+        $this->authorize('offsetProof', PayrollAttendanceAdjustment::class);
+
         $validated = $request->validate([
             'employee_biometric_id' => ['required', 'integer', 'exists:employee_biometrics,id'],
             'biometric_employee_id' => ['nullable', 'string'],
