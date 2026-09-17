@@ -9,10 +9,13 @@ use App\Http\Requests\Payroll\PayrollAttendanceAdjustmentRequest;
 use App\Models\DailyAttendanceSummary;
 use App\Models\EmployeeBiometric;
 use App\Models\EmployeePlottingSchedule;
+use App\Models\Payroll;
 use App\Models\PayrollAttendanceAdjustment;
+use App\Models\PayrollItem;
 use App\Services\Biometrics\EmployeeBiometricIdentityService;
 use App\Services\Payroll\BiometricsProofService;
 use App\Services\Payroll\DailyAttendanceSummaryService;
+use App\Services\Payroll\PayrollComputationService;
 use App\Services\Payroll\PayrollPremiumService;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -30,6 +33,7 @@ class PayrollAttendanceAdjustmentController extends Controller
         private readonly DailyAttendanceSummaryService $dailyAttendanceSummaryService,
         private readonly EmployeeBiometricIdentityService $identityService,
         private readonly PayrollPremiumService $premiumService,
+        private readonly PayrollComputationService $payrollComputationService,
     ) {}
 
     public function index(Request $request): View
@@ -130,6 +134,22 @@ class PayrollAttendanceAdjustmentController extends Controller
             ]);
         }
 
+        $recomputePayrollItemId = (int) $request->input('recompute_payroll_item_id', 0);
+
+        /*
+         * The "File Adjustment" modal on a payroll item page locks the date
+         * pickers to that draft's cutoff via HTML min/max, but that is only
+         * a UI hint. Enforce it here too so a submitted date cannot land
+         * outside the payroll the user was actually looking at.
+         */
+        if ($recomputePayrollItemId > 0) {
+            $dateRangeError = $this->validateDateWithinPayrollPeriod($validated, $recomputePayrollItemId);
+
+            if ($dateRangeError) {
+                return back()->withInput()->withErrors(['work_date' => $dateRangeError]);
+            }
+        }
+
         $payload = $this->buildPayload($validated, $request);
 
         if ($validated['adjustment_type'] === PayrollAttendanceAdjustment::TYPE_OFFSET) {
@@ -145,9 +165,101 @@ class PayrollAttendanceAdjustmentController extends Controller
         $adjustment = DB::transaction(fn () => PayrollAttendanceAdjustment::create($payload));
         $this->rebuildAffectedSummary($adjustment);
 
+        $message = $this->successMessage($adjustment, 'saved');
+
+        /*
+         * "File adjustment" modal on the payroll item detail page submits
+         * here with this hidden field set, so the user can save an
+         * adjustment for that one employee and see it reflected immediately
+         * without regenerating the whole draft payroll. Only that single
+         * PayrollItem is recomputed; every other employee's item is left
+         * untouched.
+         */
+        $recomputeItem = $this->recomputeLinkedPayrollItem($recomputePayrollItemId, $adjustment);
+
+        if ($recomputeItem) {
+            [$item, $recomputeError] = $recomputeItem;
+
+            $message .= $recomputeError
+                ? ' However, automatic payroll recompute failed: '.$recomputeError.' You can retry from the payroll item page.'
+                : ' '.$item->payroll_display_name.'\'s payroll computation was automatically recomputed. Other employees in this payroll were not affected.';
+
+            return redirect()
+                ->route('payroll.items.show', [$item->payroll_id, $item->id])
+                ->with('success', $message);
+        }
+
         return redirect()
             ->route('payroll-attendance-adjustments.index')
-            ->with('success', $this->successMessage($adjustment, 'saved'));
+            ->with('success', $message);
+    }
+
+    private function validateDateWithinPayrollPeriod(array $validated, int $payrollItemId): ?string
+    {
+        $item = PayrollItem::with('payroll')->find($payrollItemId);
+
+        if (! $item || ! $item->payroll) {
+            return null;
+        }
+
+        $periodStart = $this->dateString($item->payroll->period_start);
+        $periodEnd = $this->dateString($item->payroll->period_end);
+
+        if (! $periodStart || ! $periodEnd) {
+            return null;
+        }
+
+        $rules = PayrollAttendanceAdjustment::rulesFor((string) ($validated['adjustment_type'] ?? ''));
+        $isLeave = ($rules['date_mode'] ?? 'single') === 'range';
+
+        $dateFrom = $isLeave ? ($validated['date_from'] ?? null) : ($validated['work_date'] ?? null);
+        $dateTo = $isLeave ? ($validated['date_to'] ?? null) : $dateFrom;
+
+        if (! $dateFrom || ! $dateTo) {
+            return null;
+        }
+
+        if ($dateFrom <= $periodEnd && $dateTo >= $periodStart) {
+            return null;
+        }
+
+        return sprintf(
+            'The selected date must fall within this payroll\'s cutoff (%s - %s).',
+            Carbon::parse($periodStart)->format('M d, Y'),
+            Carbon::parse($periodEnd)->format('M d, Y')
+        );
+    }
+
+    /**
+     * @return array{0: PayrollItem, 1: string|null}|null Null when the item
+     *     id is absent/invalid/not authorized for recompute (e.g. a normal,
+     *     non-modal adjustment submission). Otherwise the item and, if the
+     *     recompute itself failed, the error message.
+     */
+    private function recomputeLinkedPayrollItem(int $payrollItemId, PayrollAttendanceAdjustment $adjustment): ?array
+    {
+        if ($payrollItemId <= 0) {
+            return null;
+        }
+
+        $item = PayrollItem::with('payroll')->find($payrollItemId);
+
+        if (
+            ! $item
+            || ! $item->payroll
+            || (int) $item->employee_biometric_id !== (int) $adjustment->employee_biometric_id
+            || ! auth()->user()?->can('create', Payroll::class)
+        ) {
+            return null;
+        }
+
+        try {
+            $this->payrollComputationService->recomputeItem($item->payroll, $item, auth()->id());
+
+            return [$item, null];
+        } catch (\Throwable $exception) {
+            return [$item, $exception->getMessage()];
+        }
     }
 
     public function edit(PayrollAttendanceAdjustment $payrollAttendanceAdjustment): View
@@ -479,7 +591,9 @@ class PayrollAttendanceAdjustmentController extends Controller
                     && (
                         (string) $this->dateString($existing->offset_source_date) !== (string) ($validated['offset_source_date'] ?? '')
                         || (int) ($existing->approved_minutes ?? 0) !== (int) $requestedOffsetMinutes
-                    ));
+                    ))
+                || ($type === PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT
+                    && round((float) ($existing->amount ?? 0), 2) !== round((float) ($validated['amount'] ?? 0), 2));
 
             $status = $criticalChanged ? PayrollAttendanceAdjustment::STATUS_PENDING : PayrollAttendanceAdjustment::STATUS_APPROVED;
         }
@@ -524,6 +638,9 @@ class PayrollAttendanceAdjustmentController extends Controller
             'offset_source_time_out' => null,
             'offset_source_logs' => null,
             'approved_minutes' => null,
+            'amount' => $type === PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT
+                ? round((float) ($validated['amount'] ?? 0), 2)
+                : null,
             'defer_to_next_payroll' => $deferToNextPayroll,
             'payroll_effective_date' => null,
             'is_paid' => $isPaid,
@@ -846,6 +963,7 @@ class PayrollAttendanceAdjustmentController extends Controller
             PayrollAttendanceAdjustment::TYPE_OFFICIAL_BUSINESS => 'official_business',
             PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK => 'holiday_work',
             PayrollAttendanceAdjustment::TYPE_OVERTIME => 'overtime_approved_interval',
+            PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT => 'cash_adjustment',
             default => 'adjustment',
         };
     }
@@ -911,8 +1029,12 @@ class PayrollAttendanceAdjustmentController extends Controller
             $this->rebuildDates($oldRange);
         }
 
-        // OT is payroll authorization only; it does not alter attendance time.
-        if ($adjustment->adjustment_type === PayrollAttendanceAdjustment::TYPE_OVERTIME) {
+        // OT is payroll authorization only, and Cash Adjustment is a plain
+        // cash amount; neither one alters attendance time.
+        if (in_array($adjustment->adjustment_type, [
+            PayrollAttendanceAdjustment::TYPE_OVERTIME,
+            PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT,
+        ], true)) {
             return;
         }
 
@@ -979,6 +1101,12 @@ class PayrollAttendanceAdjustmentController extends Controller
             PayrollAttendanceAdjustment::TYPE_OVERTIME => $adjustment->status === PayrollAttendanceAdjustment::STATUS_PENDING
                 ? 'Overtime adjustment '.$action.' and is PENDING Head Manager approval. Payroll will not pay this OT until it is approved.'
                 : 'Overtime adjustment '.$action.' successfully.',
+            PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT => sprintf(
+                'Cash Adjustment of ₱%s %s. It will be added to this employee\'s pay for the cutoff containing %s.',
+                number_format((float) $adjustment->amount, 2),
+                $action,
+                optional($adjustment->work_date)->format('M d, Y') ?? 'the selected date'
+            ),
             default => 'Payroll attendance adjustment '.$action.' successfully.',
         };
     }

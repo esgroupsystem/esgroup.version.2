@@ -222,6 +222,38 @@ class PayrollController extends Controller
         return view('payroll.items.show', compact('payroll', 'item', 'summaries'));
     }
 
+    /**
+     * Recompute a single employee's PayrollItem in place (e.g. right after
+     * filing an adjustment for them from the item detail page), without
+     * touching any other employee's item in the same draft payroll.
+     */
+    public function recomputeItem(Payroll $payroll, PayrollItem $item): RedirectResponse
+    {
+        $this->authorize('create', Payroll::class);
+
+        abort_if((int) $item->payroll_id !== (int) $payroll->id, 404);
+
+        try {
+            $this->payrollComputationService->recomputeItem($payroll, $item, auth()->id());
+        } catch (Throwable $exception) {
+            Log::error('Payroll item recompute failed', [
+                'payroll_id' => $payroll->id,
+                'item_id' => $item->id,
+                'message' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
+
+            throw $exception;
+        }
+
+        return redirect()
+            ->route('payroll.items.show', [$payroll, $item])
+            ->with('success', sprintf(
+                '%s\'s payroll computation was recomputed with the latest attendance and adjustment data. Other employees in this payroll were not affected.',
+                $item->payroll_display_name
+            ));
+    }
+
     public function finalize(Payroll $payroll): RedirectResponse
     {
         $this->authorize('finalize', $payroll);

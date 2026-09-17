@@ -113,6 +113,18 @@
     <input type="number" step="0.0001" name="undertime_deduction_per_minute" id="undertime_deduction_per_minute" class="form-control" value="{{ $value('undertime_deduction_per_minute', 0) }}" readonly>
 </div>
 
+<div class="col-md-3">
+    <label class="form-label d-block">Paid Night Differential</label>
+    <div class="btn-group" role="group" aria-label="Paid Night Differential">
+        <input type="radio" class="btn-check" name="paid_night_differential" id="paid_night_differential_yes" value="1" autocomplete="off" @checked((bool) $value('paid_night_differential', false))>
+        <label class="btn btn-outline-success btn-sm" for="paid_night_differential_yes">Yes</label>
+
+        <input type="radio" class="btn-check" name="paid_night_differential" id="paid_night_differential_no" value="0" autocomplete="off" @checked(! (bool) $value('paid_night_differential', false))>
+        <label class="btn btn-outline-secondary btn-sm" for="paid_night_differential_no">No</label>
+    </div>
+    <div class="form-text">Whether Night Differential (10PM-6AM) pay is computed for this employee during payroll generation.</div>
+</div>
+
 <div class="col-12">
     <hr>
     <h6 class="text-800 mb-1"><span class="fas fa-shield-alt text-success me-2"></span>Government Contributions</h6>

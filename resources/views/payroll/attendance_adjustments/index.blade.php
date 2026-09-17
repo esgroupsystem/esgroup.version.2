@@ -632,6 +632,10 @@
                                                 'color' => 'dark',
                                                 'icon' => 'fa-business-time',
                                             ],
+                                            'cash_adjustment' => [
+                                                'color' => 'success',
+                                                'icon' => 'fa-money-bill-wave',
+                                            ],
                                             default => [
                                                 'color' => 'secondary',
                                                 'icon' => 'fa-clock',
@@ -880,22 +884,37 @@
                                                 @if ($item->isApprovalRequired()
                                                     && $item->status === \App\Models\PayrollAttendanceAdjustment::STATUS_PENDING)
                                                     @can('payroll.finalize')
-                                                        @php($isOtApproval = $item->adjustment_type === \App\Models\PayrollAttendanceAdjustment::TYPE_OVERTIME)
+                                                        @php
+                                                            $isOtApproval = $item->adjustment_type === \App\Models\PayrollAttendanceAdjustment::TYPE_OVERTIME;
+                                                            $isCashApproval = $item->adjustment_type === \App\Models\PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT;
+                                                            $approveConfirm = $isOtApproval
+                                                                ? 'Approve this overtime adjustment for payroll payment?'
+                                                                : ($isCashApproval
+                                                                    ? 'Approve this Cash Adjustment of ₱'.number_format((float) $item->amount, 2).'?'
+                                                                    : 'Approve this Offset credit and apply it to the target attendance date?');
+                                                            $rejectConfirm = $isOtApproval
+                                                                ? 'Reject this overtime adjustment? It will not be paid.'
+                                                                : ($isCashApproval
+                                                                    ? 'Reject this Cash Adjustment? It will not be added to payroll.'
+                                                                    : 'Reject this Offset request? No compensatory credit will be applied.');
+                                                            $approveTitle = $isOtApproval ? 'Approve OT' : ($isCashApproval ? 'Approve Cash Adjustment' : 'Approve Offset');
+                                                            $rejectTitle = $isOtApproval ? 'Reject OT' : ($isCashApproval ? 'Reject Cash Adjustment' : 'Reject Offset');
+                                                        @endphp
                                                         <form method="POST" action="{{ route('payroll-attendance-adjustments.approve', $item) }}" class="d-inline"
-                                                            onsubmit="return confirm('{{ $isOtApproval ? 'Approve this overtime adjustment for payroll payment?' : 'Approve this Offset credit and apply it to the target attendance date?' }}');">
+                                                            onsubmit="return confirm('{{ $approveConfirm }}');">
                                                             @csrf
                                                             <button type="submit" class="btn btn-falcon-success btn-sm action-button"
-                                                                title="{{ $isOtApproval ? 'Approve OT' : 'Approve Offset' }} (Head Manager / Payroll Finalizer)">
+                                                                title="{{ $approveTitle }} (Head Manager / Payroll Finalizer)">
                                                                 <span class="fas fa-check"></span>
                                                             </button>
                                                         </form>
 
                                                         <form method="POST" action="{{ route('payroll-attendance-adjustments.reject', $item) }}" class="d-inline"
-                                                            onsubmit="return confirm('{{ $isOtApproval ? 'Reject this overtime adjustment? It will not be paid.' : 'Reject this Offset request? No compensatory credit will be applied.' }}');">
+                                                            onsubmit="return confirm('{{ $rejectConfirm }}');">
                                                             @csrf
                                                             <input type="hidden" name="rejection_reason" value="Rejected by Head Manager / authorized payroll finalizer from adjustment list.">
                                                             <button type="submit" class="btn btn-falcon-danger btn-sm action-button"
-                                                                title="{{ $isOtApproval ? 'Reject OT' : 'Reject Offset' }} (Head Manager / Payroll Finalizer)">
+                                                                title="{{ $rejectTitle }} (Head Manager / Payroll Finalizer)">
                                                                 <span class="fas fa-times"></span>
                                                             </button>
                                                         </form>

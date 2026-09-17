@@ -419,6 +419,7 @@ class PayrollEmployeeSalaryController extends Controller
             'allowance_release_schedule' => ['required', $scheduleRule],
             'sim_load_allowance' => ['nullable', 'numeric', 'min:0'],
             'sim_load_release_schedule' => ['required', $scheduleRule],
+            'paid_night_differential' => ['nullable', 'boolean'],
 
             'sss_contribution_cutoff' => ['required', $scheduleRule],
             'pagibig_contribution_cutoff' => ['required', $scheduleRule],
@@ -481,6 +482,7 @@ class PayrollEmployeeSalaryController extends Controller
             'allowance_release_schedule' => $validated['allowance_release_schedule'],
             'sim_load_allowance' => $validated['sim_load_allowance'] ?? 0,
             'sim_load_release_schedule' => $validated['sim_load_release_schedule'],
+            'paid_night_differential' => (bool) ($validated['paid_night_differential'] ?? false),
 
             'sss_contribution_cutoff' => $validated['sss_contribution_cutoff'],
             'pagibig_contribution_cutoff' => $validated['pagibig_contribution_cutoff'],
@@ -545,6 +547,7 @@ class PayrollEmployeeSalaryController extends Controller
             'allowance_release_schedule' => 'every_cutoff',
             'sim_load_allowance' => 0,
             'sim_load_release_schedule' => 'every_cutoff',
+            'paid_night_differential' => false,
 
             'sss_contribution_cutoff' => 'first_cutoff',
             'pagibig_contribution_cutoff' => 'second_cutoff',

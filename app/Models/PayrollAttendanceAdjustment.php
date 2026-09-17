@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \Carbon\CarbonInterface|null $offset_source_date
  * @property \Carbon\CarbonInterface|null $payroll_effective_date
  * @property int|null $approved_minutes
+ * @property string|float|int|null $amount
  * @property bool $defer_to_next_payroll
  * @property bool $is_paid
  * @property bool $ignore_late
@@ -72,6 +73,8 @@ class PayrollAttendanceAdjustment extends Model
 
     public const TYPE_OVERTIME = 'overtime';
 
+    public const TYPE_CASH_ADJUSTMENT = 'cash_adjustment';
+
     /**
      * Legacy generic type. New records must use one of the threshold-specific
      * variants below. It is still recognized as a 3-hour rule so old data can
@@ -113,6 +116,7 @@ class PayrollAttendanceAdjustment extends Model
         self::TYPE_OFFICIAL_BUSINESS => 'Official Business',
         self::TYPE_HOLIDAY_WORK => 'Holiday Work',
         self::TYPE_OVERTIME => 'Overtime - Manager Approval Required',
+        self::TYPE_CASH_ADJUSTMENT => 'Cash Adjustment / Extra Pay',
         self::TYPE_TYPHOON_DISASTER_3H => 'Typhoon / Disaster - All Employees - 3hrs',
         self::TYPE_TYPHOON_DISASTER_4H => 'Typhoon / Disaster - All Employees - 4hrs',
         self::TYPE_TYPHOON_DISASTER_5H => 'Typhoon / Disaster - All Employees - 5hrs',
@@ -184,6 +188,15 @@ class PayrollAttendanceAdjustment extends Model
             'default_ignore_undertime' => false,
             'approval_required' => true,
         ],
+        self::TYPE_CASH_ADJUSTMENT => [
+            'date_mode' => 'single',
+            'manual_time_mode' => 'none',
+            'default_paid' => true,
+            'default_ignore_late' => false,
+            'default_ignore_undertime' => false,
+            'approval_required' => false,
+            'uses_amount' => true,
+        ],
         self::TYPE_TYPHOON_DISASTER => [
             'date_mode' => 'single',
             'manual_time_mode' => 'none',
@@ -244,6 +257,7 @@ class PayrollAttendanceAdjustment extends Model
         'offset_source_time_out',
         'offset_source_logs',
         'approved_minutes',
+        'amount',
         'defer_to_next_payroll',
         'payroll_effective_date',
         'paid_payroll_id',
@@ -273,6 +287,7 @@ class PayrollAttendanceAdjustment extends Model
             'offset_source_date' => 'date',
             'offset_source_logs' => 'array',
             'approved_minutes' => 'integer',
+            'amount' => 'decimal:2',
             'defer_to_next_payroll' => 'boolean',
             'payroll_effective_date' => 'date',
             'paid_payroll_id' => 'integer',
@@ -363,6 +378,11 @@ class PayrollAttendanceAdjustment extends Model
         return in_array((string) $type, self::TYPHOON_DISASTER_TYPES, true);
     }
 
+    public static function isCashAdjustmentType(?string $type): bool
+    {
+        return (string) $type === self::TYPE_CASH_ADJUSTMENT;
+    }
+
     public static function typhoonDisasterRequiredMinutes(?string $type): ?int
     {
         return match ((string) $type) {
@@ -424,6 +444,12 @@ class PayrollAttendanceAdjustment extends Model
             $hours = self::typhoonDisasterRequiredHours($this->adjustment_type) ?? 3;
 
             return "Whole day paid after {$hours} completed biometric work hour(s)";
+        }
+
+        if ($this->adjustment_type === self::TYPE_CASH_ADJUSTMENT) {
+            return $this->amount
+                ? '₱'.number_format((float) $this->amount, 2).' one-time cash addition'
+                : 'No amount entered';
         }
 
         if ($this->adjustment_type === self::TYPE_OFFSET) {

@@ -462,8 +462,10 @@ class PayrollPayslipService
 
         $pagibigLoan = $this->sumDeductions($salaryDeductions, ['pagibig loan', 'pag-ibig loan']);
         $sssLoan = $this->sumDeductions($salaryDeductions, ['sss loan']);
+        $philhealthLoan = $this->sumDeductions($salaryDeductions, ['philhealth_loan', 'philhealth loan']);
         $uniform = $this->sumDeductions($salaryDeductions, ['uniform']);
-        $vale = $this->sumDeductions($salaryDeductions, ['vale']);
+        $vale = $this->sumDeductions($salaryDeductions, ['vale', 'cash_advance']);
+        $otherLoan = $this->sumDeductions($salaryDeductions, ['other_loan']);
         $sunCellular = $this->sumDeductions($salaryDeductions, ['sun', 'cellular', 'sim', 'load']);
 
         $lines = [
@@ -488,12 +490,20 @@ class PayrollPayslipService
                 'amount' => round((float) $item->philhealth_employee, 2),
             ],
             [
+                'label' => 'Philhealth Loan',
+                'amount' => $philhealthLoan,
+            ],
+            [
                 'label' => 'Uniform',
                 'amount' => $uniform,
             ],
             [
-                'label' => 'Vale',
+                'label' => 'Vale / Cash Advance',
                 'amount' => $vale,
+            ],
+            [
+                'label' => 'Other Loan',
+                'amount' => $otherLoan,
             ],
             [
                 'label' => 'Sun Cellular',
@@ -514,7 +524,7 @@ class PayrollPayslipService
         $otherDeductions = round(max(0, $totalDeductions - $shownDeductions), 2);
 
         if ($otherDeductions > 0) {
-            array_splice($lines, 8, 0, [[
+            array_splice($lines, count($lines) - 1, 0, [[
                 'label' => 'Other Deductions',
                 'amount' => $otherDeductions,
             ]]);

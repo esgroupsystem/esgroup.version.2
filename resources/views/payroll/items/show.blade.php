@@ -138,10 +138,33 @@
                             </div>
                         </div>
 
-                        <a href="{{ route('payroll.show', $payroll) }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-1"></i>
-                            Back to Payroll
-                        </a>
+                        <div class="d-flex gap-2">
+                            @can('create', \App\Models\PayrollAttendanceAdjustment::class)
+                                @if ($payroll->status !== 'finalized')
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#fileAdjustmentModal">
+                                        <i class="fas fa-file-medical me-1"></i>
+                                        File Adjustment
+                                    </button>
+                                @endif
+                            @endcan
+
+                            @can('create', \App\Models\Payroll::class)
+                                @if ($payroll->status !== 'finalized')
+                                    <form method="POST" action="{{ route('payroll.items.recompute', [$payroll, $item]) }}" class="d-inline" onsubmit="return confirm('Recompute {{ $item->payroll_display_name }}&#39;s payroll item from the latest attendance and adjustment data? Other employees in this payroll will not be affected.');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-outline-primary" title="Refresh this employee's computation from the latest approved adjustments, without regenerating the whole payroll">
+                                            <i class="fas fa-sync-alt me-1"></i>
+                                            Recompute
+                                        </button>
+                                    </form>
+                                @endif
+                            @endcan
+
+                            <a href="{{ route('payroll.show', $payroll) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-1"></i>
+                                Back to Payroll
+                            </a>
+                        </div>
                     </div>
                 </div>
 
@@ -603,6 +626,90 @@
                     </div>
                 </div>
 
+                <div class="col-lg-6">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-body-tertiary border-bottom">
+                            <h6 class="mb-0">
+                                <i class="fas fa-gift me-2 text-warning"></i>
+                                Allowances This Cutoff
+                            </h6>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">
+                                    Regular Allowance
+                                    <small class="text-muted d-block">
+                                        Monthly {{ $money(data_get($allowanceBreakdown, 'monthly_allowance', 0)) }} &middot;
+                                        Schedule: {{ str_replace('_', ' ', (string) data_get($allowanceBreakdown, 'allowance_release_schedule', '—')) }}
+                                    </small>
+                                </span>
+                                <strong>{{ $money(data_get($allowanceBreakdown, 'regular_per_cutoff', 0)) }}</strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between border-bottom py-2">
+                                <span class="text-muted">
+                                    SIM / Cellular Load Allowance
+                                    <small class="text-muted d-block">
+                                        Monthly {{ $money(data_get($allowanceBreakdown, 'monthly_sim_load_allowance', 0)) }} &middot;
+                                        Schedule: {{ str_replace('_', ' ', (string) data_get($allowanceBreakdown, 'sim_load_release_schedule', '—')) }}
+                                    </small>
+                                </span>
+                                <strong>{{ $money(data_get($allowanceBreakdown, 'sim_load_per_cutoff', 0)) }}</strong>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                <span class="fw-semibold text-muted">Total Allowance This Cutoff</span>
+                                <span class="fw-bold text-primary fs-6">{{ $money($allowancePerCutoff) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card shadow-sm border-0 h-100">
+                        <div class="card-header bg-body-tertiary border-bottom">
+                            <h6 class="mb-0">
+                                <i class="fas fa-hand-holding-usd me-2 text-danger"></i>
+                                Loans and Cash Advance This Cutoff
+                            </h6>
+                        </div>
+
+                        <div class="card-body">
+                            @php
+                                $salaryDeductionRows = collect(data_get($item->meta, 'salary_deductions', []));
+                            @endphp
+
+                            @if ($salaryDeductionRows->isEmpty())
+                                <div class="text-muted small">No loan or cash advance deduction applied this cutoff.</div>
+                            @else
+                                @foreach ($salaryDeductionRows as $deductionRow)
+                                    <div class="d-flex justify-content-between border-bottom py-2">
+                                        <span class="text-muted">
+                                            {{ data_get($deductionRow, 'name', 'Deduction') }}
+                                            <small class="text-muted d-block">
+                                                Schedule: {{ str_replace('_', ' ', (string) data_get($deductionRow, 'deduction_schedule', '—')) }}
+                                                @if (data_get($deductionRow, 'balance_after') !== null)
+                                                    &middot; Balance after: {{ $money(data_get($deductionRow, 'balance_after', 0)) }}
+                                                @endif
+                                            </small>
+                                            @if (data_get($deductionRow, 'remarks'))
+                                                <small class="text-warning d-block">{{ data_get($deductionRow, 'remarks') }}</small>
+                                            @endif
+                                        </span>
+                                        <strong class="text-danger">- {{ $money(data_get($deductionRow, 'amount', 0)) }}</strong>
+                                    </div>
+                                @endforeach
+
+                                <div class="d-flex justify-content-between align-items-center mt-3">
+                                    <span class="fw-semibold text-muted">Total Loan / Cash Advance Deductions</span>
+                                    <span class="fw-bold text-danger fs-6">{{ $money($salaryDeductionRows->sum('amount')) }}</span>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
                 <div class="col-12">
                     <div class="card shadow-sm border-0">
                         <div class="card-header bg-body-tertiary border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
@@ -674,4 +781,86 @@
 
         </div>
     </div>
+
+    @can('create', \App\Models\PayrollAttendanceAdjustment::class)
+        @if ($payroll->status !== 'finalized')
+            @php
+                // Locked to this item's employee only. Passing a single-person
+                // list (instead of the full biometrics picker) makes it
+                // impossible to accidentally file the adjustment against the
+                // wrong employee from this page.
+                $adjustmentPerson = (object) [
+                    'employee_biometric_id' => $item->employee_biometric_id,
+                    'biometric_employee_id' => $item->biometric_employee_id,
+                    'employee_no' => $item->employee_no,
+                    'employee_name' => $item->employee_name,
+                    'crosschex_id' => $item->crosschex_id,
+                ];
+
+                // Typhoon/Disaster is a global, all-employees adjustment type
+                // and does not apply to a single-employee filing, so it is
+                // left out of this modal's type list.
+                $singleEmployeeAdjustmentTypes = collect(\App\Models\PayrollAttendanceAdjustment::TYPES)
+                    ->reject(fn ($label, $key) => \App\Models\PayrollAttendanceAdjustment::isTyphoonDisasterType($key))
+                    ->all();
+            @endphp
+
+            <div class="modal fade" id="fileAdjustmentModal" tabindex="-1" aria-labelledby="fileAdjustmentModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-xl">
+                    <div class="modal-content border-0 shadow-lg">
+                        <form method="POST" action="{{ route('payroll-attendance-adjustments.store') }}">
+                            @csrf
+                            <input type="hidden" name="recompute_payroll_item_id" value="{{ $item->id }}">
+
+                            <div class="modal-header bg-body-tertiary border-bottom">
+                                <div>
+                                    <h5 class="modal-title mb-0" id="fileAdjustmentModalLabel">
+                                        <span class="fas fa-file-medical me-2 text-primary"></span>
+                                        File Adjustment for {{ $item->payroll_display_name }}
+                                    </h5>
+                                    <div class="fs-10 text-600 mt-1">
+                                        Locked to this employee and to this payroll's cutoff
+                                        ({{ \Carbon\Carbon::parse($payroll->period_start)->format('M d, Y') }}&ndash;{{ \Carbon\Carbon::parse($payroll->period_end)->format('M d, Y') }}).
+                                        Saving will automatically recompute {{ $item->payroll_display_name }}'s payroll item &mdash; no other employee in
+                                        this payroll is affected.
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                @include('payroll.attendance_adjustments._form', [
+                                    'people' => collect([$adjustmentPerson]),
+                                    'types' => $singleEmployeeAdjustmentTypes,
+                                    'lockedEmployeeBiometricId' => $item->employee_biometric_id,
+                                    'lockedCutoffStart' => $payroll->period_start,
+                                    'lockedCutoffEnd' => $payroll->period_end,
+                                ])
+                            </div>
+
+                            <div class="modal-footer bg-body-tertiary">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                <button type="submit" class="btn btn-primary">
+                                    <span class="fas fa-save me-1"></span>
+                                    Save &amp; Recompute {{ $item->payroll_display_name }}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            @if ($errors->any() && old('adjustment_type') !== null)
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        var modalEl = document.getElementById('fileAdjustmentModal');
+
+                        if (modalEl && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+                        }
+                    });
+                </script>
+            @endif
+        @endif
+    @endcan
 @endsection

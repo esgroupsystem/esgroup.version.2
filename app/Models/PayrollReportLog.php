@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @property string|null $payroll_id
  * @property string|null $payroll_item_id
+ * @property int|null $employee_biometric_id
  * @property string|null $employee_id
  * @property string|null $biometric_employee_id
  * @property string|null $employee_no
@@ -35,6 +36,7 @@ class PayrollReportLog extends Model
     protected $fillable = [
         'payroll_id',
         'payroll_item_id',
+        'employee_biometric_id',
         'employee_id',
         'biometric_employee_id',
         'employee_no',

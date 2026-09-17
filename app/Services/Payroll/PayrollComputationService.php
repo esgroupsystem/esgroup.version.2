@@ -27,6 +27,7 @@ class PayrollComputationService
         protected PaymentLogService $paymentLogService,
         protected PayrollEmployeeRosterService $employeeRosterService,
         protected PayrollPremiumService $premiumService,
+        protected PayrollDeductionService $deductionService,
     ) {}
 
     public function generate(array $data, ?int $userId = null): Payroll
@@ -159,7 +160,7 @@ class PayrollComputationService
                     (int) $data['cutoff_year'],
                     (int) $data['cutoff_month'],
                     (string) $data['cutoff_type'],
-                    fn (string $number): bool => Payroll::query()->where('payroll_number', $number)->exists()
+                    fn (string $number): bool => Payroll::withTrashed()->where('payroll_number', $number)->exists()
                 ),
                 'cutoff_month' => (int) $data['cutoff_month'],
                 'cutoff_year' => (int) $data['cutoff_year'],
@@ -249,6 +250,90 @@ class PayrollComputationService
             }
 
             return $payroll->load(['items', 'paymentLogs']);
+        });
+    }
+
+    /**
+     * Recompute a single PayrollItem in place from the current Attendance
+     * Summary and approved-adjustment data, without touching any other
+     * employee's item in the same payroll. Used when the user files or edits
+     * an adjustment for one employee after the draft was already generated
+     * and wants just that employee's numbers refreshed, instead of deleting
+     * and regenerating the whole draft.
+     */
+    public function recomputeItem(Payroll $payroll, PayrollItem $item, ?int $userId = null): PayrollItem
+    {
+        if ((int) $item->payroll_id !== (int) $payroll->id) {
+            throw ValidationException::withMessages([
+                'item' => 'This payroll item does not belong to the selected payroll.',
+            ]);
+        }
+
+        if ($payroll->status === 'finalized') {
+            throw ValidationException::withMessages([
+                'payroll' => 'This payroll is already finalized and can no longer be recomputed.',
+            ]);
+        }
+
+        $startDate = Carbon::parse($payroll->period_start)->startOfDay();
+        $endDate = Carbon::parse($payroll->period_end)->startOfDay();
+
+        $employee = $item->employee_biometric_id
+            ? EmployeeBiometric::find((int) $item->employee_biometric_id)
+            : null;
+
+        $rows = DailyAttendanceSummary::query()
+            ->with('employeeBiometric.company')
+            ->whereBetween('work_date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->when(
+                ! empty($item->employee_biometric_id),
+                fn ($query) => $query->where('employee_biometric_id', (int) $item->employee_biometric_id),
+                function ($query) use ($item): void {
+                    $query->where(function ($query) use ($item): void {
+                        if (! empty($item->biometric_employee_id)) {
+                            $query->orWhere('biometric_employee_id', $item->biometric_employee_id);
+                        }
+
+                        if (! empty($item->employee_no)) {
+                            $query->orWhere('employee_no', $item->employee_no);
+                        }
+
+                        if (! empty($item->employee_name)) {
+                            $query->orWhere('employee_name', $item->employee_name);
+                        }
+                    });
+                }
+            )
+            ->orderBy('work_date')
+            ->get();
+
+        return DB::transaction(function () use ($payroll, $item, $employee, $rows, $startDate, $endDate, $userId): PayrollItem {
+            if ($rows->isEmpty()) {
+                if (! $employee) {
+                    throw ValidationException::withMessages([
+                        'item' => 'No Attendance Summary rows and no matching Employee Biometric record were found for this employee in this cutoff. Cannot recompute.',
+                    ]);
+                }
+
+                return $this->createMissingSummaryPayrollItem(
+                    $payroll,
+                    $employee,
+                    $startDate,
+                    $endDate,
+                    $userId,
+                    $item
+                );
+            }
+
+            return $this->createPayrollItem(
+                $payroll,
+                $rows,
+                $startDate,
+                $endDate,
+                (string) $payroll->cutoff_type,
+                $userId,
+                $item
+            );
         });
     }
 
@@ -408,12 +493,31 @@ class PayrollComputationService
         return null;
     }
 
+    /**
+     * Insert a new PayrollItem for the full-batch generate() flow, or update
+     * an existing row in place for the single-employee recompute flow. The
+     * row id is kept stable on update so PaymentLog, PayrollReportLog,
+     * benefit settlement, and adjustment paid_payroll_item_id links are never
+     * orphaned by a delete+recreate.
+     */
+    protected function saveItem(?PayrollItem $existingItem, array $attributes): PayrollItem
+    {
+        if ($existingItem) {
+            $existingItem->update($attributes);
+
+            return $existingItem;
+        }
+
+        return PayrollItem::create($attributes);
+    }
+
     protected function createMissingSummaryPayrollItem(
         Payroll $payroll,
         EmployeeBiometric $employee,
         Carbon $startDate,
         Carbon $endDate,
-        ?int $userId
+        ?int $userId,
+        ?PayrollItem $existingItem = null
     ): PayrollItem {
         $reference = $this->employeeReferenceFromBiometric($employee);
         $rates = $this->resolveEmployeeRates($reference, $this->hoursPerDay());
@@ -424,7 +528,7 @@ class PayrollComputationService
          * Summary data must never silently create payable salary. The safe
          * fallback item is therefore zero-pay and explicitly tagged for review.
          */
-        $item = PayrollItem::create([
+        $item = $this->saveItem($existingItem, [
             'payroll_id' => $payroll->id,
             'employee_biometric_id' => $employee->id,
             'employee_id' => $rates['employee_id'],
@@ -508,7 +612,7 @@ class PayrollComputationService
         ];
     }
 
-    protected function createPayrollItem(Payroll $payroll, Collection $rows, Carbon $startDate, Carbon $endDate, string $cutoffType, ?int $userId): PayrollItem
+    protected function createPayrollItem(Payroll $payroll, Collection $rows, Carbon $startDate, Carbon $endDate, string $cutoffType, ?int $userId, ?PayrollItem $existingItem = null): PayrollItem
     {
         $first = $rows->first();
         $summaryCoverage = $this->summaryCoverage($rows, $startDate, $endDate);
@@ -607,7 +711,8 @@ class PayrollComputationService
         $overtimePay = round((float) $overtime['pay'], 2);
         $nightDifferentialPay = round((float) $nightDifferential['pay'], 2);
 
-        $allowancePerCutoff = round(((float) ($rates['allowance'] ?? 0)) / 2, 2);
+        $allowanceBreakdown = $this->resolveAllowanceBreakdown($rates, $cutoffType);
+        $allowancePerCutoff = $allowanceBreakdown['total_per_cutoff'];
         $manualAdjustments = $this->computeApprovedPayrollAdjustments(
             $first,
             $startDate,
@@ -723,7 +828,7 @@ class PayrollComputationService
             2
         );
 
-        $item = PayrollItem::create([
+        $item = $this->saveItem($existingItem, [
             'payroll_id' => $payroll->id,
             'employee_biometric_id' => $first->employee_biometric_id ?? null,
             'employee_id' => $rates['employee_id'],
@@ -815,6 +920,11 @@ class PayrollComputationService
                 'manual_adjustments' => $manualAdjustments,
                 'allowance' => [
                     'monthly_allowance' => round((float) ($rates['allowance'] ?? 0), 2),
+                    'allowance_release_schedule' => $rates['allowance_release_schedule'] ?? null,
+                    'monthly_sim_load_allowance' => round((float) ($rates['sim_load_allowance'] ?? 0), 2),
+                    'sim_load_release_schedule' => $rates['sim_load_release_schedule'] ?? null,
+                    'regular_per_cutoff' => $allowanceBreakdown['regular_per_cutoff'],
+                    'sim_load_per_cutoff' => $allowanceBreakdown['sim_load_per_cutoff'],
                     'allowance_per_cutoff' => $allowancePerCutoff,
                 ],
                 'attendance_deductions' => array_merge($attendanceDeductions, [
@@ -1220,16 +1330,40 @@ class PayrollComputationService
             'hourly_rate' => round($hourlyRate, 6),
             'minute_rate' => round($minuteRate, 6),
             'allowance' => round((float) ($salary->allowance ?? $salary->regular_allowance ?? 0), 2),
+            'allowance_release_schedule' => (string) ($salary->allowance_release_schedule ?? 'every_cutoff'),
+            'sim_load_allowance' => round((float) ($salary->sim_load_allowance ?? 0), 2),
+            'sim_load_release_schedule' => (string) ($salary->sim_load_release_schedule ?? 'every_cutoff'),
+            'paid_night_differential' => (bool) ($salary->paid_night_differential ?? false),
             'ot_rate_per_hour' => round($hourlyRate * (float) config('payroll.overtime.regular_multiplier', 1.25), 6),
             'late_deduction_per_minute' => round($minuteRate, 6),
             'undertime_deduction_per_minute' => round($minuteRate, 6),
             'absent_deduction_per_day' => round($dailyRate, 6),
-            'simple_deductions' => [
-                'sss_loan' => round((float) ($salary->sss_loan ?? 0), 2),
-                'pagibig_loan' => round((float) ($salary->pagibig_loan ?? 0), 2),
-                'vale' => round((float) ($salary->vale ?? 0), 2),
-                'other_loans' => round((float) ($salary->other_loans ?? 0), 2),
-            ],
+        ];
+    }
+
+    /**
+     * Split Regular Allowance and SIM/Cellular Load Allowance across the
+     * current cutoff according to each field's own release schedule from
+     * the Employee Rate screen (none/first_cutoff/second_cutoff/every_cutoff).
+     */
+    protected function resolveAllowanceBreakdown(array $rates, string $cutoffType): array
+    {
+        $regularPerCutoff = $this->deductionService->monthlyToCutoffAmount(
+            (float) ($rates['allowance'] ?? 0),
+            (string) ($rates['allowance_release_schedule'] ?? 'every_cutoff'),
+            $cutoffType
+        );
+
+        $simLoadPerCutoff = $this->deductionService->monthlyToCutoffAmount(
+            (float) ($rates['sim_load_allowance'] ?? 0),
+            (string) ($rates['sim_load_release_schedule'] ?? 'every_cutoff'),
+            $cutoffType
+        );
+
+        return [
+            'regular_per_cutoff' => $regularPerCutoff,
+            'sim_load_per_cutoff' => $simLoadPerCutoff,
+            'total_per_cutoff' => round($regularPerCutoff + $simLoadPerCutoff, 2),
         ];
     }
 
@@ -1238,26 +1372,23 @@ class PayrollComputationService
         $salary = $rates['salary_model'] ?? null;
         $deductions = [];
 
-        foreach (($rates['simple_deductions'] ?? []) as $key => $amount) {
-            $amount = round((float) $amount, 2);
-
-            if ($amount <= 0) {
-                continue;
+        if ($salary) {
+            foreach ($this->loanDeductionDefinitions() as $definition) {
+                $this->appendBalanceAwareDeduction(
+                    $deductions,
+                    (object) [
+                        'id' => $salary->id,
+                        'name' => $definition['label'],
+                        'total_amount' => (float) ($salary->{$definition['total_field']} ?? 0),
+                        'payment_amount' => (float) ($salary->{$definition['payment_field']} ?? 0),
+                        'deduction_schedule' => (string) ($salary->{$definition['schedule_field']} ?? 'none'),
+                    ],
+                    $payroll,
+                    $summary,
+                    $definition['source_type']
+                );
             }
 
-            $deductions[] = [
-                'source_type' => $key,
-                'source_id' => null,
-                'name' => strtoupper(str_replace('_', ' ', $key)),
-                'amount' => $amount,
-                'balance_before' => null,
-                'balance_after' => null,
-                'deduction_schedule' => 'per_cutoff',
-                'remarks' => 'Legacy fixed deduction column from employee rate setup.',
-            ];
-        }
-
-        if ($salary) {
             $salary->loadMissing('otherDeductions');
 
             foreach ($salary->otherDeductions as $deduction) {
@@ -1266,6 +1397,55 @@ class PayrollComputationService
         }
 
         return $deductions;
+    }
+
+    /**
+     * Deduction-type definitions mirroring the "Loans and Cash Advance" fields
+     * on the Employee Rate screen (total amount, per-cutoff payment amount,
+     * schedule). Each is resolved through appendBalanceAwareDeduction() so
+     * the schedule (none/first_cutoff/second_cutoff/every_cutoff) and the
+     * running balance against total_amount are both honored during real
+     * payroll generation, not just the live preview.
+     */
+    protected function loanDeductionDefinitions(): array
+    {
+        return [
+            [
+                'source_type' => 'sss_loan',
+                'label' => 'SSS Loan',
+                'total_field' => 'sss_loan_total_amount',
+                'payment_field' => 'sss_loan_payment_amount',
+                'schedule_field' => 'sss_loan_deduction_schedule',
+            ],
+            [
+                'source_type' => 'pagibig_loan',
+                'label' => 'Pag-IBIG Loan',
+                'total_field' => 'pagibig_loan_total_amount',
+                'payment_field' => 'pagibig_loan_payment_amount',
+                'schedule_field' => 'pagibig_loan_deduction_schedule',
+            ],
+            [
+                'source_type' => 'philhealth_loan',
+                'label' => 'PhilHealth Loan',
+                'total_field' => 'philhealth_loan_total_amount',
+                'payment_field' => 'philhealth_loan_payment_amount',
+                'schedule_field' => 'philhealth_loan_deduction_schedule',
+            ],
+            [
+                'source_type' => 'cash_advance',
+                'label' => 'Cash Advance / Vale',
+                'total_field' => 'cash_advance_total_amount',
+                'payment_field' => 'cash_advance_payment_amount',
+                'schedule_field' => 'cash_advance_deduction_schedule',
+            ],
+            [
+                'source_type' => 'other_loan',
+                'label' => 'Other Loan',
+                'total_field' => 'other_loan_total_amount',
+                'payment_field' => 'other_loan_payment_amount',
+                'schedule_field' => 'other_loan_deduction_schedule',
+            ],
+        ];
     }
 
     protected function appendBalanceAwareDeduction(array &$deductions, object $deduction, Payroll $payroll, object $summary, string $sourceType): void
@@ -1682,6 +1862,7 @@ class PayrollComputationService
         $deductions = 0.0;
         $details = [];
         $appliedOffsetIds = [];
+        $appliedCashAdjustmentIds = [];
 
         foreach ($rows as $row) {
             $type = (string) $row->adjustment_type;
@@ -1730,6 +1911,18 @@ class PayrollComputationService
                 $effect = 'Holiday-work authorization; premium calculated separately';
             } elseif ($type === PayrollAttendanceAdjustment::TYPE_OVERTIME) {
                 $effect = 'Overtime authorization; premium calculated separately';
+            } elseif ($type === PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT) {
+                $rowAmount = round((float) ($row->amount ?? 0), 2);
+                $paidThisCutoff = $rowAmount > 0 && $inCurrentWorkPeriod;
+
+                if ($paidThisCutoff) {
+                    $amount = $rowAmount;
+                    $additions += $amount;
+                    $appliedCashAdjustmentIds[] = (int) $row->id;
+                    $effect = 'Cash adjustment added to this cutoff\'s pay';
+                } else {
+                    $effect = 'Cash adjustment approved; work date is outside this cutoff';
+                }
             }
 
             $details[] = [
@@ -1758,6 +1951,7 @@ class PayrollComputationService
             'deductions' => round($deductions, 2),
             'details' => $details,
             'applied_offset_ids' => array_values(array_unique($appliedOffsetIds)),
+            'applied_cash_adjustment_ids' => array_values(array_unique($appliedCashAdjustmentIds)),
         ];
     }
 
@@ -1838,6 +2032,17 @@ class PayrollComputationService
 
     protected function computeNightDifferential(Collection $rows, array $rates, array $overtime = []): array
     {
+        if (! (bool) ($rates['paid_night_differential'] ?? false)) {
+            return [
+                'minutes' => 0,
+                'hours' => 0.0,
+                'pay' => 0.0,
+                'coverage' => '22:00-06:00',
+                'details' => [],
+                'eligible' => false,
+            ];
+        }
+
         $minutes = 0;
         $pay = 0.0;
         $details = [];
@@ -2047,6 +2252,7 @@ class PayrollComputationService
          * legitimately span more than one cutoff.
          */
         $ids = collect($manualAdjustments['applied_offset_ids'] ?? [])
+            ->merge($manualAdjustments['applied_cash_adjustment_ids'] ?? [])
             ->merge(collect($overtime['details'] ?? [])->pluck('adjustment_id'))
             ->merge(collect($holiday['details'] ?? [])->pluck('holiday_adjustment_id'))
             ->map(fn ($id): int => (int) $id)
@@ -2165,6 +2371,15 @@ class PayrollComputationService
 
     protected function createFutureReportPlaceholders(Payroll $payroll, PayrollItem $item, ?int $userId): void
     {
+        // Recomputing an existing item (single-employee recompute) re-enters
+        // this method for the same payroll_item_id. Clear prior placeholders
+        // first so they are not duplicated on every recompute.
+        PayrollReportLog::query()
+            ->where('payroll_id', $payroll->id)
+            ->where('payroll_item_id', $item->id)
+            ->where('status', 'placeholder')
+            ->delete();
+
         foreach (['13th_month', '14th_month'] as $type) {
             PayrollReportLog::create([
                 'payroll_id' => $payroll->id,
@@ -3060,11 +3275,14 @@ class PayrollComputationService
             'hourly_rate' => $hourlyRate,
             'minute_rate' => $minuteRate,
             'allowance' => 0,
+            'allowance_release_schedule' => 'none',
+            'sim_load_allowance' => 0,
+            'sim_load_release_schedule' => 'none',
+            'paid_night_differential' => false,
             'ot_rate_per_hour' => 0,
             'late_deduction_per_minute' => $minuteRate,
             'undertime_deduction_per_minute' => $minuteRate,
             'absent_deduction_per_day' => $dailyRate,
-            'simple_deductions' => [],
         ];
     }
 }

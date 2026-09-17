@@ -1,13 +1,30 @@
 @php
     $adjustment = $payrollAttendanceAdjustment ?? null;
 
+    // Set only when this partial is embedded somewhere the employee must not
+    // be changeable (e.g. the "File Adjustment" modal on a payroll item
+    // page, locked to that item's employee). Left null on the normal
+    // create/edit pages, which keep the full employee picker.
+    $lockedEmployeeBiometricId = $lockedEmployeeBiometricId ?? null;
+    $isEmployeeLocked = $lockedEmployeeBiometricId !== null;
+
+    // Set only alongside $lockedEmployeeBiometricId, from the payroll draft
+    // item's own period. Constrains and defaults the date fields to the
+    // cutoff actually being worked on, so a new adjustment always lands in
+    // the draft the user is currently reviewing.
+    $lockedCutoffStart = isset($lockedCutoffStart) ? \Carbon\Carbon::parse($lockedCutoffStart)->format('Y-m-d') : null;
+    $lockedCutoffEnd = isset($lockedCutoffEnd) ? \Carbon\Carbon::parse($lockedCutoffEnd)->format('Y-m-d') : null;
+
     $selectedType = old('adjustment_type', $adjustment->adjustment_type ?? '');
     $isGlobalDisaster = \App\Models\PayrollAttendanceAdjustment::isTyphoonDisasterType($selectedType);
 
-    $selectedEmployeeBiometricId = old('employee_biometric_id', $adjustment?->employee_biometric_id ?? '');
+    $selectedEmployeeBiometricId = old(
+        'employee_biometric_id',
+        $lockedEmployeeBiometricId ?? ($adjustment?->employee_biometric_id ?? '')
+    );
     $selectedLegacyBiometricId = old('biometric_employee_id', $adjustment?->biometric_employee_id ?? '');
 
-    $workDate = old('work_date', $adjustment?->work_date ? $adjustment->work_date->format('Y-m-d') : '');
+    $workDate = old('work_date', $adjustment?->work_date ? $adjustment->work_date->format('Y-m-d') : ($lockedCutoffEnd ?? ''));
 
     $dateFrom = old('date_from', $adjustment?->date_from ? $adjustment->date_from->format('Y-m-d') : $workDate);
 
@@ -90,8 +107,11 @@
                 <div class="row g-3">
                     <div class="col-md-7">
                         <label class="form-label fw-semibold">Biometrics Employee</label>
-                        <select name="employee_picker" id="employee_picker" class="form-select">
-                            <option value="">Select payroll-active employee</option>
+                        <select name="employee_picker" id="employee_picker" class="form-select"
+                            @disabled($isEmployeeLocked) @if ($isEmployeeLocked) data-locked="1" @endif>
+                            @unless ($isEmployeeLocked)
+                                <option value="">Select payroll-active employee</option>
+                            @endunless
 
                             @foreach ($people as $person)
                                 @php($resolvedPerson = $resolvePerson($person))
@@ -145,7 +165,11 @@
                         @enderror
 
                         <div id="employee_picker_help" class="fs-10 text-600 mt-1">
-                            Required for individual adjustments. Automatically skipped for Typhoon / Disaster.
+                            @if ($isEmployeeLocked)
+                                Locked to this employee. This adjustment can only be filed for them from this page.
+                            @else
+                                Required for individual adjustments. Automatically skipped for Typhoon / Disaster.
+                            @endif
                         </div>
 
                         @error('employee_name')
@@ -190,7 +214,9 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Date From</label>
                         <input type="date" name="date_from" id="date_from" class="form-control"
-                            value="{{ $dateFrom }}">
+                            value="{{ $dateFrom }}"
+                            @if ($lockedCutoffStart) min="{{ $lockedCutoffStart }}" @endif
+                            @if ($lockedCutoffEnd) max="{{ $lockedCutoffEnd }}" @endif>
 
                         @error('date_from')
                             <small class="text-danger">{{ $message }}</small>
@@ -200,7 +226,9 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Date To</label>
                         <input type="date" name="date_to" id="date_to" class="form-control"
-                            value="{{ $dateTo }}">
+                            value="{{ $dateTo }}"
+                            @if ($lockedCutoffStart) min="{{ $lockedCutoffStart }}" @endif
+                            @if ($lockedCutoffEnd) max="{{ $lockedCutoffEnd }}" @endif>
 
                         @error('date_to')
                             <small class="text-danger">{{ $message }}</small>
@@ -223,9 +251,50 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold" id="work_date_label">Work Date</label>
                         <input type="date" name="work_date" id="work_date" class="form-control"
-                            value="{{ $workDate }}">
+                            value="{{ $workDate }}"
+                            @if ($lockedCutoffStart) min="{{ $lockedCutoffStart }}" @endif
+                            @if ($lockedCutoffEnd) max="{{ $lockedCutoffEnd }}" @endif>
+
+                        @if ($lockedCutoffStart && $lockedCutoffEnd)
+                            <div class="fs-10 text-600 mt-1">
+                                Must fall within this payroll's cutoff: {{ \Carbon\Carbon::parse($lockedCutoffStart)->format('M d, Y') }}
+                                &ndash; {{ \Carbon\Carbon::parse($lockedCutoffEnd)->format('M d, Y') }}.
+                            </div>
+                        @endif
 
                         @error('work_date')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border shadow-none mb-3 adjustment-section" data-section="cash">
+            <div class="card-header bg-success-subtle">
+                <h6 class="mb-0 text-success">
+                    <span class="fas fa-money-bill-wave me-2"></span>
+                    Cash Amount
+                </h6>
+            </div>
+
+            <div class="card-body">
+                <div class="alert alert-success-subtle border-0">
+                    A one-time cash amount added on top of this employee's regular pay for the cutoff that contains
+                    the work date above. Applied immediately on save and does not affect attendance, late, or undertime.
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₱</span>
+                            <input type="number" name="amount" id="amount" class="form-control" min="0.01"
+                                step="0.01" placeholder="e.g. 500.00"
+                                value="{{ old('amount', $adjustment->amount ?? '') }}">
+                        </div>
+
+                        @error('amount')
                             <small class="text-danger">{{ $message }}</small>
                         @enderror
                     </div>
@@ -1030,7 +1099,8 @@
                 'adjusted_time_in',
                 'adjusted_time_out',
                 'offset_source_date',
-                'offset_hours'
+                'offset_hours',
+                'amount'
             ].forEach(function(id) {
                 const field = el(id);
 
@@ -1051,13 +1121,19 @@
         function setEmployeePickerMode(isRequired, message) {
             const picker = el('employee_picker');
             const help = el('employee_picker_help');
+            const locked = picker && picker.dataset.locked === '1';
 
             if (picker) {
                 picker.required = isRequired;
-                picker.disabled = !isRequired;
+
+                // Locked (e.g. the "File Adjustment" modal on a payroll item
+                // page) always stays disabled, regardless of adjustment type.
+                if (!locked) {
+                    picker.disabled = !isRequired;
+                }
             }
 
-            if (help) {
+            if (help && !locked) {
                 help.textContent = message;
             }
         }
@@ -1132,7 +1208,8 @@
                 offset: '<strong>Offset / Company Compensatory Leave:</strong> use verified excess work from an earlier source date as a company attendance credit on the target date. No cash addition is created. OT approval/pay remains separate; only minutes already allocated to another Offset request are unavailable.',
                 official_business: '<strong>Official Business:</strong> approved manual actual time is payable and late/undertime are ignored.',
                 holiday_work: '<strong>Holiday Work:</strong> manual approved actual Time In/Out correction/proof for a plotted holiday. Normal holiday premium is automatic from Holiday Calendar + valid attendance.',
-                overtime: '<strong>Overtime:</strong> payroll ignores automatic/raw excess time. Only an APPROVED OT adjustment is paid. Ordinary day = daily rate / 8 × 125%.'
+                overtime: '<strong>Overtime:</strong> payroll ignores automatic/raw excess time. Only an APPROVED OT adjustment is paid. Ordinary day = daily rate / 8 × 125%.',
+                cash_adjustment: '<strong>Cash Adjustment / Extra Pay:</strong> a one-time cash amount added directly to this employee\'s pay for the cutoff, applied immediately on save. Does not affect attendance, late, or undertime.'
             };
 
             guide.innerHTML = guides[type] || '<strong>Select an adjustment type</strong> to view its payroll rule.';
@@ -1148,6 +1225,7 @@
             const timeOutInput = el('adjusted_time_out');
             const offsetSourceDateInput = el('offset_source_date');
             const offsetHoursInput = el('offset_hours');
+            const amountInput = el('amount');
             const adjustmentRecordIdInput = el('adjustment_record_id');
 
             if (!typeSelect) return;
@@ -1179,6 +1257,10 @@
                 setSwitchState('is_paid', true, true, `Typhoon / Disaster is paid only when a valid biometric in/out pair completes at least ${requiredHours} paid work hour(s).`);
                 setSwitchState('ignore_late', true, true, 'Late is ignored only after the selected disaster threshold is met.');
                 setSwitchState('ignore_undertime', true, true, 'Undertime is ignored only after the selected disaster threshold is met.');
+            } else if (type === 'cash_adjustment') {
+                setSwitchState('is_paid', true, true, 'Cash Adjustment is always a direct cash addition, applied as soon as it is saved.');
+                setSwitchState('ignore_late', false, true, 'Not applicable. Cash Adjustment does not touch attendance.');
+                setSwitchState('ignore_undertime', false, true, 'Not applicable. Cash Adjustment does not touch attendance.');
             } else {
                 setSwitchState('is_paid', false, true,
                     type === 'offset' ? 'Offset is a company attendance credit. It restores eligible shortage, creates no separate cash payment, and does not cancel separately approved OT.' :
@@ -1222,6 +1304,14 @@
                     workDateLabel.textContent = `Typhoon / Disaster Date (${typhoonDisasterRequiredHours(type)}hrs threshold)`;
                 }
                 if (workDateInput) workDateInput.required = true;
+            }
+
+            if (type === 'cash_adjustment') {
+                showSection('single-date');
+                showSection('cash');
+                if (workDateLabel) workDateLabel.textContent = 'Cash Adjustment Date';
+                if (workDateInput) workDateInput.required = true;
+                if (amountInput) amountInput.required = true;
             }
 
             syncSelectedEmployee();
@@ -1431,6 +1521,10 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        function isTyphoonDisasterType(type) {
+            return String(type || '').startsWith('typhoon_disaster');
+        }
+
         function syncCanonicalEmployeeBiometricId() {
             const picker = document.getElementById('employee_picker');
             const typeSelect = document.getElementById('adjustment_type');

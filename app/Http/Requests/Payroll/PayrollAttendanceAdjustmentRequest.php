@@ -117,6 +117,14 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
                 'max:24',
             ],
 
+            'amount' => [
+                Rule::requiredIf($this->isCashAdjustmentType()),
+                'nullable',
+                'numeric',
+                'min:0.01',
+                'max:1000000',
+            ],
+
             'is_paid' => ['nullable', 'boolean'],
             'ignore_late' => ['nullable', 'boolean'],
             'ignore_undertime' => ['nullable', 'boolean'],
@@ -177,6 +185,9 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
             'offset_hours.numeric' => 'Offset hours must be a valid number.',
             'offset_hours.min' => 'Offset hours must be greater than zero.',
             'offset_hours.max' => 'Offset hours cannot exceed 24 hours in one request.',
+            'amount.required' => 'Please enter the cash amount to add.',
+            'amount.numeric' => 'Amount must be a valid number.',
+            'amount.min' => 'Amount must be greater than zero.',
             'reason.required' => 'Please enter the approved reason or supporting reference for this adjustment.',
         ];
     }
@@ -192,6 +203,11 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
     private function isOffsetType(): bool
     {
         return $this->adjustment_type === PayrollAttendanceAdjustment::TYPE_OFFSET;
+    }
+
+    private function isCashAdjustmentType(): bool
+    {
+        return PayrollAttendanceAdjustment::isCashAdjustmentType((string) $this->adjustment_type);
     }
 
     private function isGlobalDisasterType(): bool

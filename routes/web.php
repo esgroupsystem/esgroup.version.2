@@ -912,6 +912,12 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->whereNumber('item')
                 ->name('items.show');
 
+            Route::post('/{payroll}/items/{item}/recompute', 'recomputeItem')
+                ->middleware('permission:payroll.create')
+                ->whereNumber('payroll')
+                ->whereNumber('item')
+                ->name('items.recompute');
+
             /*
             |--------------------------------------------------------------------------
             | Government Benefit Settlement
