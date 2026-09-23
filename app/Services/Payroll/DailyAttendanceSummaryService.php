@@ -916,7 +916,9 @@ class DailyAttendanceSummaryService
                 $remarks[] = sprintf(
                     'Offset applied: %d minute(s) of approved company compensatory-leave credit from %s covered attendance shortage on this date. No separate cash Offset pay.',
                     $offsetAppliedMinutes,
-                    $offsetAdjustment->offset_source_date?->format('M d, Y') ?? 'source date'
+                    collect($offsetAdjustment->resolvedOffsetSources())
+                        ->map(fn (array $source): string => Carbon::parse($source['date'], 'Asia/Manila')->format('M d, Y'))
+                        ->implode(', ') ?: 'source date'
                 );
             } elseif ($offsetAvailableMinutes > 0) {
                 $remarks[] = 'Offset credit exists but this date has no attendance shortage to cover, so no Offset minutes were consumed.';
@@ -1017,6 +1019,7 @@ class DailyAttendanceSummaryService
                     'paid_minutes_per_day' => $paidMinutesPerDay,
                     'offset_adjustment_id' => $offsetAdjustment?->id,
                     'offset_source_date' => $offsetAdjustment?->offset_source_date?->toDateString(),
+                    'offset_sources' => $offsetAdjustment?->resolvedOffsetSources() ?? [],
                     'offset_available_minutes' => max(0, (int) ($offsetAdjustment->approved_minutes ?? 0)),
                     'offset_applied_minutes' => max(0, (int) $offsetAppliedMinutes),
                     'offset_mode' => $offsetAdjustment ? 'compensatory_time' : null,

@@ -232,9 +232,9 @@ class PayrollAttendanceAdjustmentController extends Controller
 
     /**
      * @return array{0: PayrollItem, 1: string|null}|null Null when the item
-     *     id is absent/invalid/not authorized for recompute (e.g. a normal,
-     *     non-modal adjustment submission). Otherwise the item and, if the
-     *     recompute itself failed, the error message.
+     *                                                    id is absent/invalid/not authorized for recompute (e.g. a normal,
+     *                                                    non-modal adjustment submission). Otherwise the item and, if the
+     *                                                    recompute itself failed, the error message.
      */
     private function recomputeLinkedPayrollItem(int $payrollItemId, PayrollAttendanceAdjustment $adjustment): ?array
     {
@@ -425,121 +425,74 @@ class PayrollAttendanceAdjustmentController extends Controller
             'biometric_employee_id' => ['nullable', 'string'],
             'employee_no' => ['nullable', 'string'],
             'employee_name' => ['required', 'string'],
-            'offset_source_date' => ['required', 'date'],
-            'work_date' => ['required', 'date', 'after:offset_source_date'],
-            'offset_hours' => ['required', 'numeric', 'min:0.01', 'max:24'],
+            'work_date' => ['required', 'date'],
+            // Multi-date Offset. The legacy single-date fields are still
+            // accepted so older pages keep working.
+            'offset_sources' => ['nullable', 'array', 'max:31'],
+            'offset_sources.*.date' => ['required', 'date', 'before:work_date', 'distinct'],
+            'offset_sources.*.hours' => ['required', 'numeric', 'min:0.01', 'max:24'],
+            'offset_source_date' => ['required_without:offset_sources', 'nullable', 'date', 'before:work_date'],
+            'offset_hours' => ['required_without:offset_sources', 'nullable', 'numeric', 'min:0.01', 'max:24'],
             'adjustment_id' => ['nullable', 'integer', 'exists:payroll_attendance_adjustments,id'],
         ]);
 
-        $employeeBiometricId = (int) $validated['employee_biometric_id'];
-        $ignoreAdjustmentId = isset($validated['adjustment_id'])
-            ? (int) $validated['adjustment_id']
-            : null;
-        $targetDate = Carbon::parse($validated['work_date'], 'Asia/Manila');
-        $targetSchedule = $this->scheduleForEmployeeDate(
-            $employeeBiometricId,
-            $targetDate->toDateString()
-        );
+        $sources = ! empty($validated['offset_sources'])
+            ? $validated['offset_sources']
+            : [['date' => $validated['offset_source_date'], 'hours' => $validated['offset_hours']]];
 
-        if (! $targetSchedule) {
-            return response()->json([
-                'found' => false,
-                'message' => 'Target date has no plotted schedule. Plot the employee schedule first.',
-            ], 422);
-        }
-
-        if ($targetSchedule->isDayOffOn($targetDate)) {
-            return response()->json([
-                'found' => false,
-                'message' => "Target date is the employee's weekly day off. Select a scheduled working date.",
-            ], 422);
-        }
-
-        $proof = $this->biometricsProofService->findOffsetProof(
-            $employeeBiometricId,
+        $result = $this->evaluateOffsetSources(
+            (int) $validated['employee_biometric_id'],
             $validated['biometric_employee_id'] ?? null,
             $validated['employee_no'] ?? null,
             $validated['employee_name'],
-            $validated['offset_source_date']
+            $validated['work_date'],
+            $sources,
+            isset($validated['adjustment_id']) ? (int) $validated['adjustment_id'] : null
         );
 
-        if (! $proof) {
-            return response()->json([
-                'found' => false,
-                'message' => 'No biometrics logs found for this employee on the selected Offset source date.',
-            ], 404);
-        }
-
-        $availableMinutes = $this->resolveOffsetApprovedMinutes(
-            $employeeBiometricId,
-            $validated['offset_source_date'],
-            $proof['time_in'] ?? null,
-            $proof['time_out'] ?? null,
-            $ignoreAdjustmentId
-        );
-        $requestedMinutes = max(1, (int) round(((float) $validated['offset_hours']) * 60));
-        $targetCapacityMinutes = $this->offsetTargetCapacityMinutes(
-            $employeeBiometricId,
-            $targetDate->toDateString(),
-            $ignoreAdjustmentId
-        );
-
-        $proof['available_minutes'] = $availableMinutes;
-        $proof['available_hours'] = round($availableMinutes / 60, 2);
-        $proof['approved_minutes'] = $availableMinutes; // backwards-compatible UI key
+        $firstProof = $result['sources'][0]['proof'] ?? null;
+        $proof = is_array($firstProof) ? $firstProof : [];
+        $proof['requested_minutes'] = $result['requested_minutes'];
+        $proof['requested_hours'] = round($result['requested_minutes'] / 60, 2);
+        $proof['available_minutes'] = $result['available_minutes'];
+        $proof['available_hours'] = round($result['available_minutes'] / 60, 2);
+        $proof['approved_minutes'] = $result['available_minutes']; // backwards-compatible UI key
         $proof['approved_hours'] = $proof['available_hours'];
-        $proof['requested_minutes'] = $requestedMinutes;
-        $proof['requested_hours'] = round($requestedMinutes / 60, 2);
-        $proof['target_capacity_minutes'] = $targetCapacityMinutes;
-        $proof['target_capacity_hours'] = $targetCapacityMinutes === null
+        $proof['target_capacity_minutes'] = $result['target_capacity_minutes'];
+        $proof['target_capacity_hours'] = $result['target_capacity_minutes'] === null
             ? null
-            : round($targetCapacityMinutes / 60, 2);
-        $proof['target_date'] = $targetDate->toDateString();
+            : round($result['target_capacity_minutes'] / 60, 2);
+        $proof['target_date'] = Carbon::parse($validated['work_date'], 'Asia/Manila')->toDateString();
 
-        if ($availableMinutes <= 0) {
-            return response()->json([
-                'found' => false,
-                'message' => 'Biometrics were found, but there is no unused excess time available. Minutes already reserved by another Offset request are excluded. Approved OT remains independently payable.',
-                'proof' => $proof,
-            ], 422);
-        }
-
-        if ($requestedMinutes > $availableMinutes) {
-            return response()->json([
-                'found' => false,
-                'message' => sprintf(
-                    'Requested %.2f hour(s), but only %.2f unused excess hour(s) are available on the source date.',
-                    $requestedMinutes / 60,
-                    $availableMinutes / 60
-                ),
-                'proof' => $proof,
-            ], 422);
-        }
-
-        if ($targetCapacityMinutes !== null && $targetCapacityMinutes <= 0) {
-            return response()->json([
-                'found' => false,
-                'message' => 'The target date already has a complete payable day with no attendance shortage to cover.',
-                'proof' => $proof,
-            ], 422);
-        }
-
-        if ($targetCapacityMinutes !== null && $requestedMinutes > $targetCapacityMinutes) {
-            return response()->json([
-                'found' => false,
-                'message' => sprintf(
-                    'Target date currently needs only %.2f hour(s) of Offset credit.',
-                    $targetCapacityMinutes / 60
-                ),
-                'proof' => $proof,
-            ], 422);
-        }
-
-        return response()->json([
-            'found' => true,
-            'message' => 'Offset is valid for review. Source excess, requested hours, and target attendance capacity are within the allowed limits.',
+        $payload = [
+            'found' => $result['error'] === null,
+            'message' => $result['error']['message']
+                ?? (count($result['sources']) > 1
+                    ? sprintf(
+                        'Offset is valid for review. %d source dates provide %.2f hour(s) of credit for the target date.',
+                        count($result['sources']),
+                        $result['requested_minutes'] / 60
+                    )
+                    : 'Offset is valid for review. Source excess, requested hours, and target attendance capacity are within the allowed limits.'),
             'proof' => $proof,
-        ]);
+            'sources' => array_map(fn (array $source): array => [
+                'date' => $source['date'],
+                'requested_minutes' => $source['requested_minutes'],
+                'requested_hours' => round($source['requested_minutes'] / 60, 2),
+                'available_minutes' => $source['available_minutes'],
+                'available_hours' => round($source['available_minutes'] / 60, 2),
+                'time_in' => $source['proof']['time_in'] ?? null,
+                'time_out' => $source['proof']['time_out'] ?? null,
+                'has_proof' => $source['proof'] !== null,
+                'error' => $source['error'],
+            ], $result['sources']),
+        ];
+
+        if ($result['error'] === null) {
+            return response()->json($payload);
+        }
+
+        return response()->json($payload, $result['error']['status'] ?? 422);
     }
 
     private function buildPayload(
@@ -591,6 +544,8 @@ class PayrollAttendanceAdjustmentController extends Controller
                     && (
                         (string) $this->dateString($existing->offset_source_date) !== (string) ($validated['offset_source_date'] ?? '')
                         || (int) ($existing->approved_minutes ?? 0) !== (int) $requestedOffsetMinutes
+                        || $this->offsetSourceSignature($existing->resolvedOffsetSources())
+                            !== $this->offsetSourceSignature($validated['offset_sources'] ?? [])
                     ))
                 || ($type === PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT
                     && round((float) ($existing->amount ?? 0), 2) !== round((float) ($validated['amount'] ?? 0), 2));
@@ -637,6 +592,7 @@ class PayrollAttendanceAdjustmentController extends Controller
             'offset_source_time_in' => null,
             'offset_source_time_out' => null,
             'offset_source_logs' => null,
+            'offset_sources' => null,
             'approved_minutes' => null,
             'amount' => $type === PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT
                 ? round((float) ($validated['amount'] ?? 0), 2)
@@ -659,94 +615,213 @@ class PayrollAttendanceAdjustmentController extends Controller
         ];
     }
 
+    /**
+     * Order-independent "date=minutes" list used to detect edited sources.
+     */
+    private function offsetSourceSignature(array $sources): string
+    {
+        return collect($sources)
+            ->filter(fn (mixed $row): bool => is_array($row) && filled($row['date'] ?? null))
+            ->map(fn (array $row): string => Carbon::parse($row['date'], 'Asia/Manila')->toDateString().'='.(
+                array_key_exists('minutes', $row)
+                    ? (int) $row['minutes']
+                    : (int) round(((float) ($row['hours'] ?? 0)) * 60)
+            ))
+            ->sort()
+            ->implode(',');
+    }
+
     private function buildOffsetProofPayload(array $validated, ?int $ignoreAdjustmentId = null): array|RedirectResponse
     {
-        $employeeBiometricId = (int) $validated['employee_biometric_id'];
-        $targetDate = Carbon::parse($validated['work_date'], 'Asia/Manila');
-        $targetSchedule = $this->scheduleForEmployeeDate(
-            $employeeBiometricId,
-            $targetDate->toDateString()
-        );
-
-        if (! $targetSchedule) {
-            return back()->withInput()->withErrors([
-                'work_date' => 'Offset target date has no plotted work schedule. Plot the employee schedule first before applying compensatory time.',
-            ]);
-        }
-
-        if ($targetSchedule->isDayOffOn($targetDate)) {
-            return back()->withInput()->withErrors([
-                'work_date' => "Offset cannot be targeted to the employee's weekly day off. Select a scheduled working date with an attendance shortage.",
-            ]);
-        }
-
-        $proof = $this->biometricsProofService->findOffsetProof(
-            $employeeBiometricId,
+        $result = $this->evaluateOffsetSources(
+            (int) $validated['employee_biometric_id'],
             $validated['biometric_employee_id'] ?? null,
             $validated['employee_no'] ?? null,
             $validated['employee_name'],
-            $validated['offset_source_date']
-        );
-
-        if (! $proof) {
-            return back()->withInput()->withErrors([
-                'offset_source_date' => 'No biometric logs found for the selected employee on the Offset source date.',
-            ]);
-        }
-
-        $availableMinutes = $this->resolveOffsetApprovedMinutes(
-            $employeeBiometricId,
-            $validated['offset_source_date'],
-            $proof['time_in'] ?? null,
-            $proof['time_out'] ?? null,
+            $validated['work_date'],
+            $validated['offset_sources'] ?? [],
             $ignoreAdjustmentId
         );
 
-        if ($availableMinutes <= 0) {
+        if ($result['error'] !== null) {
             return back()->withInput()->withErrors([
-                'offset_source_date' => 'Biometric proof exists, but there is no unused excess work time available for Offset. Only time beyond the required shift can be transferred, and minutes already allocated to another Offset request are excluded. Approved OT remains payable separately.',
+                $result['error']['field'] => $result['error']['message'],
             ]);
         }
 
-        $requestedMinutes = max(1, (int) round(((float) $validated['offset_hours']) * 60));
+        $sources = $result['sources'];
+        $earliest = $sources[0];
 
-        if ($requestedMinutes > $availableMinutes) {
-            return back()->withInput()->withErrors([
-                'offset_hours' => sprintf(
-                    'Requested Offset is %.2f hour(s), but only %.2f unused excess hour(s) are available from the selected source date.',
-                    $requestedMinutes / 60,
-                    $availableMinutes / 60
-                ),
-            ]);
+        return [
+            'offset_source_date' => $earliest['date'],
+            'offset_source_time_in' => $earliest['proof']['time_in'] ?? null,
+            'offset_source_time_out' => $earliest['proof']['time_out'] ?? null,
+            'offset_source_logs' => $earliest['proof']['logs'] ?? null,
+            'offset_sources' => array_map(fn (array $source): array => [
+                'date' => $source['date'],
+                'minutes' => $source['requested_minutes'],
+                'time_in' => $source['proof']['time_in'] ?? null,
+                'time_out' => $source['proof']['time_out'] ?? null,
+            ], $sources),
+            'approved_minutes' => $result['requested_minutes'],
+        ];
+    }
+
+    /**
+     * Validates an Offset that pools excess time from one or more earlier
+     * source dates into a single target date. Every source date needs
+     * biometric proof and enough unallocated excess time, and the pooled
+     * total may not exceed the target date's attendance shortage.
+     *
+     * @param  array<int, array{date: string, hours?: mixed, minutes?: mixed}>  $sourceRows
+     * @return array{
+     *     error: array{field: string, message: string, status?: int}|null,
+     *     sources: array<int, array{date: string, requested_minutes: int, available_minutes: int, proof: ?array, error: ?string}>,
+     *     requested_minutes: int,
+     *     available_minutes: int,
+     *     target_capacity_minutes: ?int
+     * }
+     */
+    private function evaluateOffsetSources(
+        int $employeeBiometricId,
+        ?string $biometricEmployeeId,
+        ?string $employeeNo,
+        string $employeeName,
+        string $targetDate,
+        array $sourceRows,
+        ?int $ignoreAdjustmentId = null
+    ): array {
+        $result = [
+            'error' => null,
+            'sources' => [],
+            'requested_minutes' => 0,
+            'available_minutes' => 0,
+            'target_capacity_minutes' => null,
+        ];
+
+        $fail = function (string $field, string $message, int $status = 422) use (&$result): void {
+            $result['error'] ??= ['field' => $field, 'message' => $message, 'status' => $status];
+        };
+
+        $target = Carbon::parse($targetDate, 'Asia/Manila')->startOfDay();
+        $targetSchedule = $this->scheduleForEmployeeDate($employeeBiometricId, $target->toDateString());
+
+        if (! $targetSchedule) {
+            $fail('work_date', 'Offset target date has no plotted work schedule. Plot the employee schedule first before applying compensatory time.');
+
+            return $result;
+        }
+
+        if ($targetSchedule->isDayOffOn($target)) {
+            $fail('work_date', "Offset cannot be targeted to the employee's weekly day off. Select a scheduled working date with an attendance shortage.");
+
+            return $result;
+        }
+
+        $rows = collect($sourceRows)
+            ->filter(fn (mixed $row): bool => is_array($row) && filled($row['date'] ?? null))
+            ->map(fn (array $row): array => [
+                'date' => Carbon::parse($row['date'], 'Asia/Manila')->toDateString(),
+                'minutes' => array_key_exists('minutes', $row)
+                    ? max(0, (int) $row['minutes'])
+                    : max(0, (int) round(((float) ($row['hours'] ?? 0)) * 60)),
+            ])
+            ->sortBy('date')
+            ->values();
+
+        if ($rows->isEmpty()) {
+            $fail('offset_sources', 'Please add at least one earlier source date containing excess work time for this Offset.');
+
+            return $result;
+        }
+
+        if ($rows->pluck('date')->duplicates()->isNotEmpty()) {
+            $fail('offset_sources', 'The same Offset source date is listed more than once.');
+
+            return $result;
+        }
+
+        foreach ($rows as $row) {
+            $sourceDate = $row['date'];
+            $label = Carbon::parse($sourceDate, 'Asia/Manila')->format('M d, Y');
+            $requestedMinutes = $row['minutes'];
+            $entry = [
+                'date' => $sourceDate,
+                'requested_minutes' => $requestedMinutes,
+                'available_minutes' => 0,
+                'proof' => null,
+                'error' => null,
+            ];
+
+            if ($requestedMinutes <= 0) {
+                $entry['error'] = "Enter the hours to transfer from {$label}.";
+                $fail('offset_sources', $entry['error']);
+            } elseif (Carbon::parse($sourceDate, 'Asia/Manila')->greaterThanOrEqualTo($target)) {
+                $entry['error'] = "Offset source date {$label} must be earlier than the target attendance date.";
+                $fail('offset_sources', $entry['error']);
+            } else {
+                $proof = $this->biometricsProofService->findOffsetProof(
+                    $employeeBiometricId,
+                    $biometricEmployeeId,
+                    $employeeNo,
+                    $employeeName,
+                    $sourceDate
+                );
+
+                $entry['proof'] = $proof;
+
+                if (! $proof) {
+                    $entry['error'] = "No biometric logs found for the selected employee on {$label}.";
+                    $fail('offset_sources', $entry['error'], 404);
+                } else {
+                    $availableMinutes = $this->resolveOffsetApprovedMinutes(
+                        $employeeBiometricId,
+                        $sourceDate,
+                        $proof['time_in'] ?? null,
+                        $proof['time_out'] ?? null,
+                        $ignoreAdjustmentId
+                    );
+
+                    $entry['available_minutes'] = $availableMinutes;
+
+                    if ($availableMinutes <= 0) {
+                        $entry['error'] = "{$label} has biometric proof but no unused excess work time. Only time beyond the required shift can be transferred, and minutes already allocated to another Offset request are excluded.";
+                        $fail('offset_sources', $entry['error']);
+                    } elseif ($requestedMinutes > $availableMinutes) {
+                        $entry['error'] = sprintf(
+                            'Requested %.2f hour(s) from %s, but only %.2f unused excess hour(s) are available on that date.',
+                            $requestedMinutes / 60,
+                            $label,
+                            $availableMinutes / 60
+                        );
+                        $fail('offset_sources', $entry['error']);
+                    }
+                }
+            }
+
+            $result['sources'][] = $entry;
+            $result['requested_minutes'] += $requestedMinutes;
+            $result['available_minutes'] += $entry['available_minutes'];
         }
 
         $targetCapacityMinutes = $this->offsetTargetCapacityMinutes(
             $employeeBiometricId,
-            $targetDate->toDateString(),
+            $target->toDateString(),
             $ignoreAdjustmentId
         );
+        $result['target_capacity_minutes'] = $targetCapacityMinutes;
 
         if ($targetCapacityMinutes !== null && $targetCapacityMinutes <= 0) {
-            return back()->withInput()->withErrors([
-                'work_date' => 'The selected Offset target date already has a complete payable day with no attendance shortage to cover.',
-            ]);
+            $fail('work_date', 'The selected Offset target date already has a complete payable day with no attendance shortage to cover.');
+        } elseif ($targetCapacityMinutes !== null && $result['requested_minutes'] > $targetCapacityMinutes) {
+            $fail('offset_sources', sprintf(
+                'The target date needs only %.2f hour(s) of Offset credit, but %.2f hour(s) were requested in total. Reduce the hours to avoid over-allocation.',
+                $targetCapacityMinutes / 60,
+                $result['requested_minutes'] / 60
+            ));
         }
 
-        if ($targetCapacityMinutes !== null && $requestedMinutes > $targetCapacityMinutes) {
-            return back()->withInput()->withErrors([
-                'offset_hours' => sprintf(
-                    'The target date currently needs only %.2f hour(s) of Offset credit. Reduce the requested hours to avoid over-allocation.',
-                    $targetCapacityMinutes / 60
-                ),
-            ]);
-        }
-
-        return [
-            'offset_source_time_in' => $proof['time_in'],
-            'offset_source_time_out' => $proof['time_out'],
-            'offset_source_logs' => $proof['logs'],
-            'approved_minutes' => $requestedMinutes,
-        ];
+        return $result;
     }
 
     private function resolveOffsetApprovedMinutes(
@@ -784,97 +859,65 @@ class PayrollAttendanceAdjustmentController extends Controller
          * separately paid as approved OT, but it cannot be allocated to more
          * than one Offset request.
          */
-        $allocatedOffsetMinutes = PayrollAttendanceAdjustment::query()
-            ->where('employee_biometric_id', $employeeBiometricId)
-            ->where('adjustment_type', PayrollAttendanceAdjustment::TYPE_OFFSET)
-            ->whereDate('offset_source_date', $proofDate)
-            ->where('status', '!=', PayrollAttendanceAdjustment::STATUS_REJECTED)
-            ->when($ignoreAdjustmentId, fn ($query) => $query->whereKeyNot($ignoreAdjustmentId))
-            ->sum('approved_minutes');
-
         return max(
             0,
             $sourceExcessMinutes
-                - max(0, (int) $allocatedOffsetMinutes)
+                - $this->allocatedOffsetMinutes($employeeBiometricId, $proofDate, $ignoreAdjustmentId)
         );
+    }
+
+    /**
+     * Minutes of one source date already reserved by other (non-rejected)
+     * Offset requests, including multi-date requests that list this date.
+     */
+    private function allocatedOffsetMinutes(
+        int $employeeBiometricId,
+        string $proofDate,
+        ?int $ignoreAdjustmentId = null
+    ): int {
+        return (int) PayrollAttendanceAdjustment::query()
+            ->where('employee_biometric_id', $employeeBiometricId)
+            ->where('adjustment_type', PayrollAttendanceAdjustment::TYPE_OFFSET)
+            ->where('status', '!=', PayrollAttendanceAdjustment::STATUS_REJECTED)
+            // offset_source_date holds the earliest source; the target date is
+            // always later than every source.
+            ->whereDate('offset_source_date', '<=', $proofDate)
+            ->whereDate('work_date', '>', $proofDate)
+            ->when($ignoreAdjustmentId, fn ($query) => $query->whereKeyNot($ignoreAdjustmentId))
+            ->get()
+            ->sum(fn (PayrollAttendanceAdjustment $offset): int => (int) collect($offset->resolvedOffsetSources())
+                ->where('date', $proofDate)
+                ->sum('minutes'));
     }
 
     private function offsetApprovalValidationMessage(
         PayrollAttendanceAdjustment $offsetAdjustment
     ): ?string {
         $employeeBiometricId = (int) ($offsetAdjustment->employee_biometric_id ?? 0);
-        $sourceDate = $this->dateString($offsetAdjustment->offset_source_date);
         $targetDate = $this->dateString($offsetAdjustment->work_date);
-        $requestedMinutes = max(0, (int) ($offsetAdjustment->approved_minutes ?? 0));
+        $sources = $offsetAdjustment->resolvedOffsetSources();
 
-        if ($employeeBiometricId <= 0 || ! $sourceDate || ! $targetDate) {
+        if ($employeeBiometricId <= 0 || $sources === [] || ! $targetDate) {
             return 'Offset cannot be approved because the employee, source date, or target date is incomplete. Edit and revalidate the Offset request first.';
         }
 
-        if ($requestedMinutes <= 0) {
+        if ((int) ($offsetAdjustment->approved_minutes ?? 0) <= 0 || collect($sources)->sum('minutes') <= 0) {
             return 'Offset cannot be approved because no compensatory hours are stored. Edit the request, enter the hours to transfer, and run Check Available Offset Credit again.';
         }
 
-        if (Carbon::parse($sourceDate, 'Asia/Manila')->greaterThanOrEqualTo(Carbon::parse($targetDate, 'Asia/Manila'))) {
-            return 'Offset source date must be earlier than the target attendance date.';
-        }
-
-        $targetSchedule = $this->scheduleForEmployeeDate($employeeBiometricId, $targetDate);
-
-        if (! $targetSchedule) {
-            return 'Offset target date has no plotted work schedule. Plot the employee schedule first, then edit/revalidate the Offset request.';
-        }
-
-        if ($targetSchedule->isDayOffOn(Carbon::parse($targetDate, 'Asia/Manila'))) {
-            return "Offset target date is the employee's weekly day off. Select a scheduled working date with an attendance shortage.";
-        }
-
-        $proof = $this->biometricsProofService->findOffsetProof(
+        $result = $this->evaluateOffsetSources(
             $employeeBiometricId,
             $offsetAdjustment->biometric_employee_id,
             $offsetAdjustment->employee_no,
-            $offsetAdjustment->employee_name,
-            $sourceDate
-        );
-
-        if (! $proof) {
-            return 'Offset cannot be approved because biometrics proof is no longer available on the source date. Edit the request and select a valid source date.';
-        }
-
-        $availableMinutes = $this->resolveOffsetApprovedMinutes(
-            $employeeBiometricId,
-            $sourceDate,
-            $proof['time_in'] ?? null,
-            $proof['time_out'] ?? null,
-            (int) $offsetAdjustment->id
-        );
-
-        if ($requestedMinutes > $availableMinutes) {
-            return sprintf(
-                'Offset cannot be approved. Requested credit is %.2f hour(s), but only %.2f unused company Offset hour(s) remain on the source date. Edit/revalidate the request first.',
-                $requestedMinutes / 60,
-                $availableMinutes / 60
-            );
-        }
-
-        $targetCapacityMinutes = $this->offsetTargetCapacityMinutes(
-            $employeeBiometricId,
+            (string) $offsetAdjustment->employee_name,
             $targetDate,
+            $sources,
             (int) $offsetAdjustment->id
         );
 
-        if ($targetCapacityMinutes !== null && $targetCapacityMinutes <= 0) {
-            return 'Offset cannot be approved because the target date has no attendance shortage to cover.';
-        }
-
-        if ($targetCapacityMinutes !== null && $requestedMinutes > $targetCapacityMinutes) {
-            return sprintf(
-                'Offset cannot be approved. The target date currently needs only %.2f hour(s) of attendance credit. Edit the Offset hours before approval.',
-                $targetCapacityMinutes / 60
-            );
-        }
-
-        return null;
+        return $result['error'] === null
+            ? null
+            : 'Offset cannot be approved. '.$result['error']['message'].' Edit/revalidate the request first.';
     }
 
     private function offsetTargetCapacityMinutes(
@@ -1029,8 +1072,8 @@ class PayrollAttendanceAdjustmentController extends Controller
             $this->rebuildDates($oldRange);
         }
 
-        // OT is payroll authorization only, and Cash Adjustment is a plain
-        // cash amount; neither one alters attendance time.
+        // OT is payroll authorization only, and Salary Adjustment is a plain
+        // signed amount; neither one alters attendance time.
         if (in_array($adjustment->adjustment_type, [
             PayrollAttendanceAdjustment::TYPE_OVERTIME,
             PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT,
@@ -1102,8 +1145,8 @@ class PayrollAttendanceAdjustmentController extends Controller
                 ? 'Overtime adjustment '.$action.' and is PENDING Head Manager approval. Payroll will not pay this OT until it is approved.'
                 : 'Overtime adjustment '.$action.' successfully.',
             PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT => sprintf(
-                'Cash Adjustment of ₱%s %s. It will be added to this employee\'s pay for the cutoff containing %s.',
-                number_format((float) $adjustment->amount, 2),
+                'Salary Adjustment of %s %s. It will be applied to this employee\'s pay for the cutoff containing %s.',
+                $adjustment->adjusted_time_label,
                 $action,
                 optional($adjustment->work_date)->format('M d, Y') ?? 'the selected date'
             ),

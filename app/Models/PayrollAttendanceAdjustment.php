@@ -42,6 +42,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $crosschex_id
  * @property string|null $adjusted_day_type
  * @property array<string, mixed>|null $offset_source_logs
+ * @property array<int, array{date: string, minutes: int, time_in: ?string, time_out: ?string}>|null $offset_sources
  * @property int|null $paid_payroll_id
  * @property int|null $paid_payroll_item_id
  * @property string|null $reason
@@ -116,7 +117,7 @@ class PayrollAttendanceAdjustment extends Model
         self::TYPE_OFFICIAL_BUSINESS => 'Official Business',
         self::TYPE_HOLIDAY_WORK => 'Holiday Work',
         self::TYPE_OVERTIME => 'Overtime - Manager Approval Required',
-        self::TYPE_CASH_ADJUSTMENT => 'Cash Adjustment / Extra Pay',
+        self::TYPE_CASH_ADJUSTMENT => 'Salary Adjustment',
         self::TYPE_TYPHOON_DISASTER_3H => 'Typhoon / Disaster - All Employees - 3hrs',
         self::TYPE_TYPHOON_DISASTER_4H => 'Typhoon / Disaster - All Employees - 4hrs',
         self::TYPE_TYPHOON_DISASTER_5H => 'Typhoon / Disaster - All Employees - 5hrs',
@@ -256,6 +257,7 @@ class PayrollAttendanceAdjustment extends Model
         'offset_source_time_in',
         'offset_source_time_out',
         'offset_source_logs',
+        'offset_sources',
         'approved_minutes',
         'amount',
         'defer_to_next_payroll',
@@ -286,6 +288,7 @@ class PayrollAttendanceAdjustment extends Model
             'date_to' => 'date',
             'offset_source_date' => 'date',
             'offset_source_logs' => 'array',
+            'offset_sources' => 'array',
             'approved_minutes' => 'integer',
             'amount' => 'decimal:2',
             'defer_to_next_payroll' => 'boolean',
@@ -447,15 +450,26 @@ class PayrollAttendanceAdjustment extends Model
         }
 
         if ($this->adjustment_type === self::TYPE_CASH_ADJUSTMENT) {
-            return $this->amount
-                ? '₱'.number_format((float) $this->amount, 2).' one-time cash addition'
-                : 'No amount entered';
+            $amount = round((float) ($this->amount ?? 0), 2);
+
+            if ($amount == 0.0) {
+                return 'No amount entered';
+            }
+
+            return $amount > 0
+                ? '+₱'.number_format($amount, 2).' salary addition'
+                : '-₱'.number_format(abs($amount), 2).' salary deduction';
         }
 
         if ($this->adjustment_type === self::TYPE_OFFSET) {
-            return $this->approved_minutes
-                ? number_format($this->approved_minutes / 60, 2).' compensatory hour(s)'
-                : 'Source excess time determines credit';
+            if (! $this->approved_minutes) {
+                return 'Source excess time determines credit';
+            }
+
+            $sourceCount = count($this->resolvedOffsetSources());
+
+            return number_format($this->approved_minutes / 60, 2).' compensatory hour(s)'
+                .($sourceCount > 1 ? " from {$sourceCount} source dates" : '');
         }
 
         if (! $this->adjusted_time_in && ! $this->adjusted_time_out) {
@@ -473,13 +487,58 @@ class PayrollAttendanceAdjustment extends Model
             return 'Not applicable';
         }
 
-        if (! $this->offset_source_date) {
+        $sources = $this->resolvedOffsetSources();
+
+        if ($sources === []) {
             return 'No proof date';
         }
 
-        return $this->offset_source_date->format('M d, Y').' | '
-            .($this->offset_source_time_in ?? '--:--').' - '
-            .($this->offset_source_time_out ?? '--:--');
+        return collect($sources)
+            ->map(fn (array $source): string => \Carbon\Carbon::parse($source['date'])->format('M d, Y').' | '
+                .($source['time_in'] ?? '--:--').' - '
+                .($source['time_out'] ?? '--:--')
+                .(count($sources) > 1 ? ' ('.number_format($source['minutes'] / 60, 2).' hr)' : ''))
+            ->implode('; ');
+    }
+
+    /**
+     * Source dates whose excess time funds this Offset. Legacy records only
+     * have the single offset_source_date column, which is mapped to one entry.
+     *
+     * @return array<int, array{date: string, minutes: int, time_in: ?string, time_out: ?string}>
+     */
+    public function resolvedOffsetSources(): array
+    {
+        if ($this->adjustment_type !== self::TYPE_OFFSET) {
+            return [];
+        }
+
+        $sources = collect(is_array($this->offset_sources) ? $this->offset_sources : [])
+            ->filter(fn (mixed $source): bool => is_array($source) && filled($source['date'] ?? null))
+            ->map(fn (array $source): array => [
+                'date' => \Carbon\Carbon::parse($source['date'])->toDateString(),
+                'minutes' => max(0, (int) ($source['minutes'] ?? 0)),
+                'time_in' => $source['time_in'] ?? null,
+                'time_out' => $source['time_out'] ?? null,
+            ])
+            ->sortBy('date')
+            ->values()
+            ->all();
+
+        if ($sources !== []) {
+            return $sources;
+        }
+
+        if (! $this->offset_source_date) {
+            return [];
+        }
+
+        return [[
+            'date' => $this->offset_source_date->toDateString(),
+            'minutes' => max(0, (int) ($this->approved_minutes ?? 0)),
+            'time_in' => $this->offset_source_time_in,
+            'time_out' => $this->offset_source_time_out,
+        ]];
     }
 
     public function isGlobalDisasterAdjustment(): bool

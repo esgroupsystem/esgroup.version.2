@@ -30,10 +30,19 @@
 
     $dateTo = old('date_to', $adjustment?->date_to ? $adjustment->date_to->format('Y-m-d') : $workDate);
 
-    $offsetSourceDate = old(
-        'offset_source_date',
-        $adjustment?->offset_source_date ? $adjustment->offset_source_date->format('Y-m-d') : '',
-    );
+    // One Offset may pool excess time from several earlier source dates.
+    $offsetSourceRows = old('offset_sources');
+
+    if (!is_array($offsetSourceRows)) {
+        $offsetSourceRows = collect($adjustment?->resolvedOffsetSources() ?? [])
+            ->map(fn (array $source): array => [
+                'date' => $source['date'],
+                'hours' => number_format($source['minutes'] / 60, 2, '.', ''),
+            ])
+            ->all();
+    }
+
+    $offsetSourceRows = array_values(array_filter($offsetSourceRows, 'is_array')) ?: [['date' => '', 'hours' => '']];
 
     $typeRules = \App\Models\PayrollAttendanceAdjustment::rulesFor($selectedType);
     $isPaid = old('is_paid', $adjustment->is_paid ?? ($typeRules['default_paid'] ?? false));
@@ -274,14 +283,15 @@
             <div class="card-header bg-success-subtle">
                 <h6 class="mb-0 text-success">
                     <span class="fas fa-money-bill-wave me-2"></span>
-                    Cash Amount
+                    Salary Adjustment Amount
                 </h6>
             </div>
 
             <div class="card-body">
                 <div class="alert alert-success-subtle border-0">
-                    A one-time cash amount added on top of this employee's regular pay for the cutoff that contains
-                    the work date above. Applied immediately on save and does not affect attendance, late, or undertime.
+                    A one-time salary adjustment for the cutoff that contains the work date above. Enter a
+                    <strong>positive</strong> amount (e.g. 500) to add pay, or a <strong>negative</strong> amount (e.g. -1000) to deduct
+                    from net pay. Applied immediately on save and does not affect attendance, late, or undertime.
                 </div>
 
                 <div class="row g-3">
@@ -289,8 +299,8 @@
                         <label class="form-label fw-semibold">Amount</label>
                         <div class="input-group">
                             <span class="input-group-text">₱</span>
-                            <input type="number" name="amount" id="amount" class="form-control" min="0.01"
-                                step="0.01" placeholder="e.g. 500.00"
+                            <input type="number" name="amount" id="amount" class="form-control"
+                                step="0.01" placeholder="e.g. 500.00 or -1000.00"
                                 value="{{ old('amount', $adjustment->amount ?? '') }}">
                         </div>
 
@@ -368,36 +378,67 @@
 
             <div class="card-body">
                 <div class="alert alert-warning-subtle border-0">
-                    <strong>Normal Offset rule:</strong> select the earlier source date where the employee rendered verified excess time beyond the required shift.
+                    <strong>Normal Offset rule:</strong> select one or more earlier source dates where the employee rendered verified excess time beyond the required shift
+                    (example: 1 extra hour on each of Monday to Friday can be pooled to cover an absence on the next Monday).
                     Only excess minutes not already assigned to another Offset request may be used. The approved company credit covers eligible late, undertime, partial-day, or absence shortage on the target date. <strong>No separate cash Offset payment is created, and approved OT remains payable separately.</strong><br>
                     <span class="text-warning-emphasis">Payroll safeguard:</span> Offset never cancels an employee's separately approved overtime entitlement.
                 </div>
 
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-5">
-                        <label class="form-label fw-semibold">Source Excess-Time Date</label>
-                        <input type="date" name="offset_source_date" id="offset_source_date" class="form-control"
-                            value="{{ $offsetSourceDate }}">
+                <div class="row g-2 mb-1 d-none d-md-flex">
+                    <div class="col-md-6"><label class="form-label fw-semibold mb-0">Source Excess-Time Date</label></div>
+                    <div class="col-md-4"><label class="form-label fw-semibold mb-0">Hours to Transfer</label></div>
+                </div>
 
-                        @error('offset_source_date')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Hours to Transfer</label>
-                        <div class="input-group">
-                            <input type="number" name="offset_hours" id="offset_hours" class="form-control"
-                                min="0.01" max="24" step="0.01"
-                                value="{{ old('offset_hours', $adjustment?->approved_minutes ? number_format($adjustment->approved_minutes / 60, 2, '.', '') : '') }}"
-                                placeholder="e.g. 1.50">
-                            <span class="input-group-text">hr</span>
+                <div id="offset_sources_list">
+                    @foreach ($offsetSourceRows as $sourceIndex => $sourceRow)
+                        <div class="row g-2 mb-2 align-items-center offset-source-row">
+                            <div class="col-md-6">
+                                <input type="date" name="offset_sources[{{ $sourceIndex }}][date]"
+                                    class="form-control offset-source-date" value="{{ $sourceRow['date'] ?? '' }}"
+                                    aria-label="Source excess-time date">
+                            </div>
+                            <div class="col-8 col-md-4">
+                                <div class="input-group">
+                                    <input type="number" name="offset_sources[{{ $sourceIndex }}][hours]"
+                                        class="form-control offset-source-hours" min="0.01" max="24" step="0.01"
+                                        value="{{ $sourceRow['hours'] ?? '' }}" placeholder="e.g. 1.00"
+                                        aria-label="Hours to transfer">
+                                    <span class="input-group-text">hr</span>
+                                </div>
+                            </div>
+                            <div class="col-4 col-md-2">
+                                <button type="button" class="btn btn-outline-danger w-100 offset-source-remove"
+                                    title="Remove this source date">
+                                    <span class="fas fa-times"></span>
+                                </button>
+                            </div>
                         </div>
-                        @error('offset_hours')
-                            <small class="text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
+                    @endforeach
+                </div>
 
+                @error('offset_sources')
+                    <small class="text-danger d-block">{{ $message }}</small>
+                @enderror
+                @foreach ($errors->get('offset_sources.*') as $sourceMessages)
+                    <small class="text-danger d-block">{{ $sourceMessages[0] }}</small>
+                @endforeach
+                @error('offset_source_date')
+                    <small class="text-danger d-block">{{ $message }}</small>
+                @enderror
+                @error('offset_hours')
+                    <small class="text-danger d-block">{{ $message }}</small>
+                @enderror
+
+                <div class="row g-2 align-items-center mt-1">
+                    <div class="col-md-4">
+                        <button type="button" id="add_offset_source_btn" class="btn btn-outline-warning w-100">
+                            <span class="fas fa-plus me-1"></span>
+                            Add Source Date
+                        </button>
+                    </div>
+                    <div class="col-md-4 text-md-center fw-semibold">
+                        Total credit: <span id="offset_sources_total">0.00</span> hr
+                    </div>
                     <div class="col-md-4">
                         <button type="button" id="check_offset_proof_btn" class="btn btn-falcon-warning w-100"
                             data-url="{{ route('payroll-attendance-adjustments.offset-proof') }}">
@@ -869,6 +910,60 @@
             }
         }
 
+        function openMultiSourceModal(data, employeeName) {
+            const ok = Boolean(data.found);
+            const proof = data.proof || {};
+            const rows = data.sources.map(function(source, index) {
+                const range = source.has_proof
+                    ? `${escapeHtml(formatTimeToAmPm(source.time_in))} - ${escapeHtml(formatTimeToAmPm(source.time_out))}`
+                    : '<span class="text-danger">No biometrics</span>';
+
+                return `
+                    <tr class="${source.error ? 'table-danger' : ''}">
+                        <td>${index + 1}</td>
+                        <td class="fw-semibold">${escapeHtml(source.date)}</td>
+                        <td>${range}</td>
+                        <td class="text-end">${escapeHtml(Number(source.available_hours || 0).toFixed(2))}</td>
+                        <td class="text-end fw-semibold">${escapeHtml(Number(source.requested_hours || 0).toFixed(2))}</td>
+                        <td class="fs-10">${source.error ? escapeHtml(source.error) : '<span class="text-success">OK</span>'}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            openBiometricsModal(
+                ok
+                    ? '<span class="fas fa-check-circle me-2"></span> Offset Sources Verified'
+                    : '<span class="fas fa-exclamation-triangle me-2"></span> Offset Sources Need Attention',
+                `Employee: <strong>${escapeHtml(proof.employee_name || employeeName)}</strong> | Target: <strong>${escapeHtml(proof.target_date || 'N/A')}</strong>`,
+                `
+                    <div class="alert ${ok ? 'alert-success' : 'alert-warning'} border-0 shadow-sm">
+                        <div class="fw-semibold">${escapeHtml(data.message || '')}</div>
+                        <div class="fs-10 mt-1">
+                            Total requested: <strong>${escapeHtml(Number(proof.requested_hours || 0).toFixed(2))} hr</strong>
+                            ${proof.target_capacity_hours !== null && proof.target_capacity_hours !== undefined
+                                ? ` | Target shortage: <strong>${escapeHtml(Number(proof.target_capacity_hours).toFixed(2))} hr</strong>`
+                                : ' | Target attendance not built yet; credit is capped by the actual shortage later.'}
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered align-middle mb-0">
+                            <thead class="bg-body-tertiary">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Source Date</th>
+                                    <th>Biometrics</th>
+                                    <th class="text-end">Unused Excess (hr)</th>
+                                    <th class="text-end">Requested (hr)</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                `
+            );
+        }
+
         function openProofModal(proof, employeeName, proofDate) {
             const logs = Array.isArray(proof.logs) ? proof.logs : [];
 
@@ -1098,8 +1193,6 @@
                 'date_to',
                 'adjusted_time_in',
                 'adjusted_time_out',
-                'offset_source_date',
-                'offset_hours',
                 'amount'
             ].forEach(function(id) {
                 const field = el(id);
@@ -1108,6 +1201,80 @@
                     field.required = false;
                 }
             });
+
+            setOffsetSourcesRequired(false);
+        }
+
+        function offsetSourceRows() {
+            return Array.from(document.querySelectorAll('#offset_sources_list .offset-source-row'));
+        }
+
+        function setOffsetSourcesRequired(required) {
+            offsetSourceRows().forEach(function(row) {
+                row.querySelectorAll('.offset-source-date, .offset-source-hours').forEach(function(input) {
+                    input.required = required;
+                });
+            });
+        }
+
+        function collectOffsetSources() {
+            return offsetSourceRows()
+                .map(function(row) {
+                    return {
+                        date: (row.querySelector('.offset-source-date')?.value || '').trim(),
+                        hours: (row.querySelector('.offset-source-hours')?.value || '').trim()
+                    };
+                })
+                .filter(function(source) {
+                    return source.date !== '' || source.hours !== '';
+                });
+        }
+
+        function renumberOffsetSourceRows() {
+            offsetSourceRows().forEach(function(row, index) {
+                const dateInput = row.querySelector('.offset-source-date');
+                const hoursInput = row.querySelector('.offset-source-hours');
+
+                if (dateInput) dateInput.name = `offset_sources[${index}][date]`;
+                if (hoursInput) hoursInput.name = `offset_sources[${index}][hours]`;
+            });
+
+            const rows = offsetSourceRows();
+            rows.forEach(function(row) {
+                const removeButton = row.querySelector('.offset-source-remove');
+                if (removeButton) removeButton.disabled = rows.length === 1;
+            });
+
+            updateOffsetSourcesTotal();
+        }
+
+        function updateOffsetSourcesTotal() {
+            const totalLabel = el('offset_sources_total');
+            if (!totalLabel) return;
+
+            const total = collectOffsetSources().reduce(function(sum, source) {
+                const hours = parseFloat(source.hours);
+                return sum + (Number.isFinite(hours) ? hours : 0);
+            }, 0);
+
+            totalLabel.textContent = total.toFixed(2);
+        }
+
+        function addOffsetSourceRow() {
+            const list = el('offset_sources_list');
+            const template = offsetSourceRows()[0];
+            if (!list || !template) return;
+
+            const row = template.cloneNode(true);
+            row.querySelectorAll('input').forEach(function(input) {
+                input.value = '';
+            });
+
+            list.appendChild(row);
+            renumberOffsetSourceRows();
+            setOffsetSourcesRequired(el('adjustment_type')?.value === 'offset');
+            resetOffsetProofHiddenFields();
+            row.querySelector('.offset-source-date')?.focus();
         }
 
         function showSection(name) {
@@ -1209,7 +1376,7 @@
                 official_business: '<strong>Official Business:</strong> approved manual actual time is payable and late/undertime are ignored.',
                 holiday_work: '<strong>Holiday Work:</strong> manual approved actual Time In/Out correction/proof for a plotted holiday. Normal holiday premium is automatic from Holiday Calendar + valid attendance.',
                 overtime: '<strong>Overtime:</strong> payroll ignores automatic/raw excess time. Only an APPROVED OT adjustment is paid. Ordinary day = daily rate / 8 × 125%.',
-                cash_adjustment: '<strong>Cash Adjustment / Extra Pay:</strong> a one-time cash amount added directly to this employee\'s pay for the cutoff, applied immediately on save. Does not affect attendance, late, or undertime.'
+                cash_adjustment: '<strong>Salary Adjustment:</strong> a one-time amount for this employee\'s cutoff pay. A positive amount adds pay; a negative amount (e.g. -1000) is deducted. Applied immediately on save. Does not affect attendance, late, or undertime.'
             };
 
             guide.innerHTML = guides[type] || '<strong>Select an adjustment type</strong> to view its payroll rule.';
@@ -1223,8 +1390,6 @@
             const dateToInput = el('date_to');
             const timeInInput = el('adjusted_time_in');
             const timeOutInput = el('adjusted_time_out');
-            const offsetSourceDateInput = el('offset_source_date');
-            const offsetHoursInput = el('offset_hours');
             const amountInput = el('amount');
             const adjustmentRecordIdInput = el('adjustment_record_id');
 
@@ -1258,9 +1423,9 @@
                 setSwitchState('ignore_late', true, true, 'Late is ignored only after the selected disaster threshold is met.');
                 setSwitchState('ignore_undertime', true, true, 'Undertime is ignored only after the selected disaster threshold is met.');
             } else if (type === 'cash_adjustment') {
-                setSwitchState('is_paid', true, true, 'Cash Adjustment is always a direct cash addition, applied as soon as it is saved.');
-                setSwitchState('ignore_late', false, true, 'Not applicable. Cash Adjustment does not touch attendance.');
-                setSwitchState('ignore_undertime', false, true, 'Not applicable. Cash Adjustment does not touch attendance.');
+                setSwitchState('is_paid', true, true, 'Salary Adjustment is always applied to pay as soon as it is saved (positive adds, negative deducts).');
+                setSwitchState('ignore_late', false, true, 'Not applicable. Salary Adjustment does not touch attendance.');
+                setSwitchState('ignore_undertime', false, true, 'Not applicable. Salary Adjustment does not touch attendance.');
             } else {
                 setSwitchState('is_paid', false, true,
                     type === 'offset' ? 'Offset is a company attendance credit. It restores eligible shortage, creates no separate cash payment, and does not cancel separately approved OT.' :
@@ -1293,8 +1458,7 @@
                 showSection('offset');
                 if (workDateLabel) workDateLabel.textContent = 'Offset Target Date';
                 if (workDateInput) workDateInput.required = true;
-                if (offsetSourceDateInput) offsetSourceDateInput.required = true;
-                if (offsetHoursInput) offsetHoursInput.required = true;
+                setOffsetSourcesRequired(true);
             }
 
             if (isTyphoonDisasterType(type)) {
@@ -1309,7 +1473,7 @@
             if (type === 'cash_adjustment') {
                 showSection('single-date');
                 showSection('cash');
-                if (workDateLabel) workDateLabel.textContent = 'Cash Adjustment Date';
+                if (workDateLabel) workDateLabel.textContent = 'Salary Adjustment Date';
                 if (workDateInput) workDateInput.required = true;
                 if (amountInput) amountInput.required = true;
             }
@@ -1333,9 +1497,7 @@
             const biometricIdInput = el('biometric_employee_id');
             const employeeNoInput = el('employee_no');
             const employeeNameInput = el('employee_name');
-            const offsetSourceDateInput = el('offset_source_date');
             const workDateInput = el('work_date');
-            const offsetHoursInput = el('offset_hours');
             const adjustmentRecordIdInput = el('adjustment_record_id');
 
             if (!typeSelect || typeSelect.value !== 'offset') {
@@ -1343,10 +1505,10 @@
                 return;
             }
 
-            if (!canonicalIdInput || !biometricIdInput || !employeeNameInput || !offsetSourceDateInput || !workDateInput || !offsetHoursInput) {
+            if (!canonicalIdInput || !biometricIdInput || !employeeNameInput || !workDateInput) {
                 openErrorModal(
                     'Required fields are missing.',
-                    'Please check the employee, Offset target date, source date, and hours to transfer.'
+                    'Please check the employee, Offset target date, source dates, and hours to transfer.'
                 );
                 return;
             }
@@ -1355,18 +1517,23 @@
             const biometricId = biometricIdInput.value.trim();
             const employeeNo = employeeNoInput ? employeeNoInput.value.trim() : '';
             const employeeName = employeeNameInput.value.trim();
-            const offsetSourceDate = offsetSourceDateInput.value.trim();
             const targetDate = workDateInput.value.trim();
-            const offsetHours = offsetHoursInput.value.trim();
+            const sources = collectOffsetSources();
+            const incompleteSource = sources.some(function(source) {
+                return source.date === '' || source.hours === '';
+            });
+            const offsetSourceDate = sources.map(function(source) {
+                return source.date;
+            }).join(', ');
 
-            if (!canonicalId || !employeeName || !offsetSourceDate || !targetDate || !offsetHours) {
+            if (!canonicalId || !employeeName || !targetDate || sources.length === 0 || incompleteSource) {
                 openErrorModal(
                     'Please complete the Offset details first.',
                     `
                         Employee: ${escapeHtml(employeeName || 'empty')} |
                         Target: ${escapeHtml(targetDate || 'empty')} |
-                        Source: ${escapeHtml(offsetSourceDate || 'empty')} |
-                        Hours: ${escapeHtml(offsetHours || 'empty')}
+                        Source dates: ${escapeHtml(offsetSourceDate || 'empty')}
+                        <br>Every source row needs both a date and the hours to transfer.
                     `
                 );
                 return;
@@ -1384,9 +1551,12 @@
                 biometric_employee_id: biometricId,
                 employee_no: employeeNo,
                 employee_name: employeeName,
-                offset_source_date: offsetSourceDate,
-                work_date: targetDate,
-                offset_hours: offsetHours
+                work_date: targetDate
+            });
+
+            sources.forEach(function(source, index) {
+                params.set(`offset_sources[${index}][date]`, source.date);
+                params.set(`offset_sources[${index}][hours]`, source.hours);
             });
 
             if (adjustmentRecordIdInput && adjustmentRecordIdInput.value.trim() !== '') {
@@ -1442,6 +1612,15 @@
 
                 const data = await response.json();
 
+                if (Array.isArray(data.sources) && data.sources.length > 1) {
+                    if (response.ok && data.found) {
+                        setOffsetProofHiddenFields(data.proof || {});
+                    }
+
+                    openMultiSourceModal(data, employeeName);
+                    return;
+                }
+
                 if (!response.ok || !data.found) {
                     openNoProofModal(data, employeeName, offsetSourceDate);
                     return;
@@ -1474,7 +1653,8 @@
             const picker = el('employee_picker');
             const typeSelect = el('adjustment_type');
             const checkButton = el('check_offset_proof_btn');
-            const offsetSourceDateInput = el('offset_source_date');
+            const offsetSourcesList = el('offset_sources_list');
+            const addOffsetSourceButton = el('add_offset_source_btn');
 
             if (picker) {
                 picker.addEventListener('change', syncSelectedEmployee);
@@ -1484,19 +1664,33 @@
                 typeSelect.addEventListener('change', refreshAdjustmentFields);
             }
 
-            if (offsetSourceDateInput) {
-                offsetSourceDateInput.addEventListener('change', resetOffsetProofHiddenFields);
+            if (offsetSourcesList) {
+                // Delegated so rows added later are covered too.
+                offsetSourcesList.addEventListener('input', function() {
+                    updateOffsetSourcesTotal();
+                    resetOffsetProofHiddenFields();
+                });
+
+                offsetSourcesList.addEventListener('click', function(event) {
+                    const removeButton = event.target.closest('.offset-source-remove');
+                    if (!removeButton || offsetSourceRows().length <= 1) return;
+
+                    removeButton.closest('.offset-source-row')?.remove();
+                    renumberOffsetSourceRows();
+                    resetOffsetProofHiddenFields();
+                });
             }
 
+            if (addOffsetSourceButton) {
+                addOffsetSourceButton.addEventListener('click', addOffsetSourceRow);
+            }
+
+            renumberOffsetSourceRows();
+
             const workDateInput = el('work_date');
-            const offsetHoursInput = el('offset_hours');
 
             if (workDateInput) {
                 workDateInput.addEventListener('change', resetOffsetProofHiddenFields);
-            }
-
-            if (offsetHoursInput) {
-                offsetHoursInput.addEventListener('input', resetOffsetProofHiddenFields);
             }
 
             if (checkButton) {

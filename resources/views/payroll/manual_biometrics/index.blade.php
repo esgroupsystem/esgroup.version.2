@@ -24,7 +24,7 @@
                         <div>
                             <h4 class="mb-1">Manual WFH Cutoff Encoding</h4>
                             <p class="text-muted mb-0">
-                                Search one employee from biometrics logs, load the whole cutoff, then encode daily Time In /
+                                Search one payroll employee, load the whole cutoff, then encode daily Time In /
                                 Time Out fast.
                             </p>
                         </div>
@@ -81,13 +81,13 @@
                                 <label class="form-label fw-semibold">Employee Search</label>
                                 <div class="position-relative">
                                     <input type="text" class="form-control" id="employeeSearch"
-                                        placeholder="Type employee name / employee no / crosschex id"
+                                        placeholder="Type employee name / employee no"
                                         value="{{ \App\Support\PayrollEmployeeNameFormatter::display($selectedEmployee['employee_name'] ?? null) }}">
                                     <div id="employeeResults" class="list-group position-absolute w-100 shadow-sm d-none"
                                         style="z-index: 1050; max-height: 260px; overflow-y: auto;"></div>
                                 </div>
-                                <input type="hidden" name="crosschex_id" id="crosschexId"
-                                    value="{{ $selectedCrosschexId }}">
+                                <input type="hidden" name="employee_biometric_id" id="employeeBiometricId"
+                                    value="{{ $selectedEmployeeBiometricId ?: '' }}">
                             </div>
 
                             <div class="col-md-2">
@@ -118,8 +118,8 @@
                             </div>
                             <div class="col-lg-4">
                                 <div class="border rounded-3 p-3 h-100 bg-light">
-                                    <small class="text-muted d-block">CrossChex ID</small>
-                                    <div class="fw-semibold fs-9">{{ $selectedEmployee['crosschex_id'] ?: '-' }}</div>
+                                    <small class="text-muted d-block">Bio ID / Account</small>
+                                    <div class="fw-semibold fs-9">#{{ $selectedEmployee['employee_biometric_id'] }} / {{ $selectedEmployee['crosschex_account'] }}</div>
                                 </div>
                             </div>
                         </div>
@@ -132,11 +132,7 @@
                     <input type="hidden" name="cutoff_month" value="{{ $cutoffMonth }}">
                     <input type="hidden" name="cutoff_year" value="{{ $cutoffYear }}">
                     <input type="hidden" name="cutoff_type" value="{{ $cutoffType }}">
-
-                    <input type="hidden" name="crosschex_id" value="{{ $selectedEmployee['crosschex_id'] }}">
-                    <input type="hidden" name="employee_id" value="{{ $selectedEmployee['employee_id'] }}">
-                    <input type="hidden" name="employee_no" value="{{ $selectedEmployee['employee_no'] }}">
-                    <input type="hidden" name="employee_name" value="{{ $selectedEmployee['employee_name'] }}">
+                    <input type="hidden" name="employee_biometric_id" value="{{ $selectedEmployee['employee_biometric_id'] }}">
 
                     <div class="card border-0 shadow-sm mb-3">
                         <div class="card-header bg-body-tertiary border-bottom">
@@ -193,6 +189,7 @@
                                         <th style="width: 150px;">Time In</th>
                                         <th style="width: 150px;">Time Out</th>
                                         <th style="min-width: 220px;">Remarks</th>
+                                        <th style="min-width: 150px;">Device Punches</th>
                                         <th style="width: 130px;">Encoded</th>
                                     </tr>
                                 </thead>
@@ -230,6 +227,9 @@
                                                 <input type="text" name="rows[{{ $index }}][remarks]"
                                                     class="form-control row-remarks" value="{{ $row['remarks'] }}"
                                                     placeholder="Optional remarks">
+                                            </td>
+                                            <td class="fs-10 text-muted">
+                                                {{ $row['device_punches'] ? implode(', ', $row['device_punches']) : '-' }}
                                             </td>
                                             <td>
                                                 @if ($row['has_manual_log'])
@@ -321,13 +321,13 @@
     <script>
         const employeeSearch = document.getElementById('employeeSearch');
         const employeeResults = document.getElementById('employeeResults');
-        const crosschexIdInput = document.getElementById('crosschexId');
+        const employeeBiometricIdInput = document.getElementById('employeeBiometricId');
         let employeeDebounce = null;
 
         if (employeeSearch) {
             employeeSearch.addEventListener('input', function() {
                 const keyword = this.value.trim();
-                crosschexIdInput.value = '';
+                employeeBiometricIdInput.value = '';
 
                 clearTimeout(employeeDebounce);
 
@@ -357,17 +357,18 @@
                                 const item = document.createElement('button');
                                 item.type = 'button';
                                 item.className = 'list-group-item list-group-item-action';
-                                item.innerHTML = `
-                                <div class="fw-semibold">${employeeDisplayName}</div>
-                                <small class="text-muted">
-                                    Employee No: ${emp.employee_no ?? '-'} |
-                                    CrossChex ID: ${emp.crosschex_id ?? '-'}
-                                </small>
-                            `;
+                                const nameLine = document.createElement('div');
+                                nameLine.className = 'fw-semibold';
+                                nameLine.textContent = employeeDisplayName;
+                                const metaLine = document.createElement('small');
+                                metaLine.className = 'text-muted';
+                                metaLine.textContent =
+                                    `Employee No: ${emp.employee_no ?? '-'} | Bio ID: #${emp.employee_biometric_id ?? '-'}`;
+                                item.append(nameLine, metaLine);
 
                                 item.addEventListener('click', function() {
                                     employeeSearch.value = employeeDisplayName;
-                                    crosschexIdInput.value = emp.crosschex_id ?? '';
+                                    employeeBiometricIdInput.value = emp.employee_biometric_id ?? '';
                                     employeeResults.innerHTML = '';
                                     employeeResults.classList.add('d-none');
                                 });

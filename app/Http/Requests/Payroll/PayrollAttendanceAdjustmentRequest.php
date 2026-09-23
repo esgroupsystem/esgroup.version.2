@@ -28,6 +28,10 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
             ]);
         }
 
+        if ($type === PayrollAttendanceAdjustment::TYPE_OFFSET) {
+            $this->merge($this->normalizedOffsetSourceInput());
+        }
+
         if (PayrollAttendanceAdjustment::isTyphoonDisasterType($type)) {
             $this->merge([
                 'employee_biometric_id' => null,
@@ -117,12 +121,36 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
                 'max:24',
             ],
 
+            'offset_sources' => [
+                Rule::requiredIf($this->isOffsetType()),
+                'nullable',
+                'array',
+                'max:31',
+            ],
+            'offset_sources.*.date' => [
+                'required',
+                'date',
+                'before:work_date',
+                'distinct',
+            ],
+            'offset_sources.*.hours' => [
+                'required',
+                'numeric',
+                'min:0.01',
+                'max:24',
+            ],
+
             'amount' => [
                 Rule::requiredIf($this->isCashAdjustmentType()),
                 'nullable',
                 'numeric',
-                'min:0.01',
+                'min:-1000000',
                 'max:1000000',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (is_numeric($value) && round((float) $value, 2) == 0.0) {
+                        $fail('Amount cannot be zero. Use a positive amount to add pay or a negative amount (e.g. -1000) to deduct.');
+                    }
+                },
             ],
 
             'is_paid' => ['nullable', 'boolean'],
@@ -185,9 +213,17 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
             'offset_hours.numeric' => 'Offset hours must be a valid number.',
             'offset_hours.min' => 'Offset hours must be greater than zero.',
             'offset_hours.max' => 'Offset hours cannot exceed 24 hours in one request.',
-            'amount.required' => 'Please enter the cash amount to add.',
+            'offset_sources.required' => 'Please add at least one earlier source date containing excess work time for this Offset.',
+            'offset_sources.*.date.required' => 'Every Offset source row needs a source date.',
+            'offset_sources.*.date.before' => 'Every Offset source date must be earlier than the target attendance date.',
+            'offset_sources.*.date.distinct' => 'The same Offset source date is listed more than once.',
+            'offset_sources.*.hours.required' => 'Every Offset source row needs the hours to transfer.',
+            'offset_sources.*.hours.min' => 'Offset hours for each source date must be greater than zero.',
+            'offset_sources.*.hours.max' => 'Offset hours for one source date cannot exceed 24.',
+            'amount.required' => 'Please enter the salary adjustment amount. Use a negative amount (e.g. -1000) for a deduction.',
             'amount.numeric' => 'Amount must be a valid number.',
-            'amount.min' => 'Amount must be greater than zero.',
+            'amount.min' => 'A salary adjustment deduction cannot exceed ₱1,000,000.',
+            'amount.max' => 'A salary adjustment addition cannot exceed ₱1,000,000.',
             'reason.required' => 'Please enter the approved reason or supporting reference for this adjustment.',
         ];
     }
@@ -203,6 +239,45 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
     private function isOffsetType(): bool
     {
         return $this->adjustment_type === PayrollAttendanceAdjustment::TYPE_OFFSET;
+    }
+
+    /**
+     * Offset may pool excess time from several source dates. Blank rows are
+     * dropped; the legacy single-date fields are derived from the list (or,
+     * for old clients, the list is built from them).
+     */
+    private function normalizedOffsetSourceInput(): array
+    {
+        $sources = collect(is_array($this->input('offset_sources')) ? $this->input('offset_sources') : [])
+            ->filter(fn (mixed $row): bool => is_array($row)
+                && (filled($row['date'] ?? null) || filled($row['hours'] ?? null)))
+            ->map(fn (array $row): array => [
+                'date' => trim((string) ($row['date'] ?? '')),
+                'hours' => trim((string) ($row['hours'] ?? '')),
+            ])
+            ->values();
+
+        if ($sources->isEmpty() && filled($this->input('offset_source_date'))) {
+            $sources = collect([[
+                'date' => trim((string) $this->input('offset_source_date')),
+                'hours' => trim((string) $this->input('offset_hours')),
+            ]]);
+        }
+
+        if ($sources->isEmpty()) {
+            return ['offset_sources' => []];
+        }
+
+        $validDates = $sources->pluck('date')->filter(fn (string $date): bool => strtotime($date) !== false);
+
+        return [
+            'offset_sources' => $sources->all(),
+            'offset_source_date' => $validDates->sort()->first() ?? $sources->first()['date'],
+            'offset_hours' => (string) round(
+                $sources->sum(fn (array $row): float => is_numeric($row['hours']) ? (float) $row['hours'] : 0.0),
+                2
+            ),
+        ];
     }
 
     private function isCashAdjustmentType(): bool

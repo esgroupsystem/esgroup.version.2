@@ -124,11 +124,11 @@ class SaveEmployeePlottingScheduleRequest extends FormRequest
                     $validator->errors()->add(
                         "schedule.{$index}.time_out",
                         sprintf(
-                            '%s requires exactly %d clock hours (%d paid hour%s + 1 hour lunch). Current schedule span is %s.',
+                            '%s requires exactly %d clock hours (%d paid hours%s). Current schedule span is %s.',
                             $workdayType->shortLabel(),
                             (int) ($workdayType->clockMinutes() / 60),
                             $workdayType->paidHours(),
-                            $workdayType->paidHours() === 1 ? '' : 's',
+                            $workdayType->lunchMinutes() > 0 ? ' + 1 hour lunch' : ', no lunch break',
                             $this->formatMinutes($clockMinutes)
                         )
                     );

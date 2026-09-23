@@ -5,15 +5,36 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
+use App\Models\EmployeeBiometric;
 use App\Models\MirasolBiometricsLog;
+use App\Services\Biometrics\EmployeeBiometricIdentityService;
+use App\Services\Payroll\DailyAttendanceSummaryService;
 use App\Support\PayrollEmployeeNameFormatter;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
+/**
+ * Manual WFH encoding writes punches into mirasol_biometrics_logs.
+ *
+ * CrossChex stores a per-punch hash in crosschex_id (unique per account), so
+ * employees are identified here by their EmployeeBiometric record and every
+ * manual punch receives its own MANUAL-* crosschex_id. Attendance matches the
+ * punches through employee_no, exactly like device logs.
+ */
 class ManualBiometricsEncodingController extends Controller
 {
+    public const DEVICE_SN = 'WFH-MANUAL';
+
+    public const DEVICE_NAME = 'WFH Manual Encoding';
+
+    public function __construct(
+        private readonly EmployeeBiometricIdentityService $identityService,
+        private readonly DailyAttendanceSummaryService $dailyAttendanceSummaryService,
+    ) {}
+
     public function index(Request $request)
     {
         [$defaultCutoffMonth, $defaultCutoffYear, $defaultCutoffType] = $this->getDefaultCutoff();
@@ -24,40 +45,36 @@ class ManualBiometricsEncodingController extends Controller
 
         [$startDate, $endDate, $cutoffLabel] = $this->resolveCutoffRange($cutoffYear, $cutoffMonth, $cutoffType);
 
-        $selectedCrosschexId = trim((string) $request->crosschex_id);
+        $selectedEmployeeBiometricId = (int) $request->employee_biometric_id;
 
         $selectedEmployee = null;
         $cutoffRows = collect();
         $recentLogs = collect();
 
-        if ($selectedCrosschexId !== '') {
-            $selectedEmployee = $this->findEmployeeByCrosschexId($selectedCrosschexId);
+        if ($selectedEmployeeBiometricId > 0) {
+            $employee = EmployeeBiometric::query()->find($selectedEmployeeBiometricId);
+            $selectedEmployee = $employee ? $this->employeePayload($employee) : null;
 
             if ($selectedEmployee) {
-                $existingLogs = MirasolBiometricsLog::query()
-                    ->where('crosschex_id', $selectedCrosschexId)
-                    ->whereBetween('check_time', [
-                        $startDate->copy()->startOfDay(),
-                        $endDate->copy()->endOfDay(),
-                    ])
+                $logsByDate = $this->logsQuery($selectedEmployee, $startDate, $endDate)
                     ->orderBy('check_time')
                     ->get()
-                    ->groupBy(function ($log) {
-                        return Carbon::parse($log->check_time)->format('Y-m-d');
-                    });
+                    // Manual punches carry their grid date so an overnight Time
+                    // Out stays on the row it was encoded on.
+                    ->groupBy(fn (MirasolBiometricsLog $log): string => (string) (data_get($log->raw, 'work_date')
+                        ?: Carbon::parse($log->check_time)->format('Y-m-d')));
 
-                $period = CarbonPeriod::create($startDate, $endDate);
+                foreach (CarbonPeriod::create($startDate, $endDate) as $date) {
+                    $dayLogs = collect($logsByDate->get($date->format('Y-m-d'), []));
+                    $manualLogs = $dayLogs->where('device_sn', self::DEVICE_SN);
+                    $deviceLogs = $dayLogs->where('device_sn', '!=', self::DEVICE_SN);
 
-                foreach ($period as $date) {
-                    $dayLogs = collect($existingLogs->get($date->format('Y-m-d'), []));
-
-                    $checkInLog = $dayLogs->first(function ($log) {
-                        return strtolower((string) $log->state) === 'check in';
-                    });
-
-                    $checkOutLog = $dayLogs->first(function ($log) {
-                        return strtolower((string) $log->state) === 'check out';
-                    });
+                    $checkInLog = $manualLogs->first(
+                        fn (MirasolBiometricsLog $log): bool => strtolower((string) $log->state) === 'check in'
+                    );
+                    $checkOutLog = $manualLogs->first(
+                        fn (MirasolBiometricsLog $log): bool => strtolower((string) $log->state) === 'check out'
+                    );
 
                     $cutoffRows->push([
                         'work_date' => $date->format('Y-m-d'),
@@ -66,19 +83,16 @@ class ManualBiometricsEncodingController extends Controller
                         'time_out' => $checkOutLog ? Carbon::parse($checkOutLog->check_time)->format('H:i') : null,
                         'remarks' => data_get($checkInLog?->raw, 'remarks')
                             ?: data_get($checkOutLog?->raw, 'remarks'),
-                        'has_manual_log' => $dayLogs->contains(function ($log) {
-                            return (string) $log->device_sn === 'WFH-MANUAL';
-                        }),
+                        'has_manual_log' => $manualLogs->isNotEmpty(),
+                        'device_punches' => $deviceLogs
+                            ->map(fn (MirasolBiometricsLog $log): string => Carbon::parse($log->check_time)->format('h:i A'))
+                            ->values()
+                            ->all(),
                     ]);
                 }
 
-                $recentLogs = MirasolBiometricsLog::query()
-                    ->where('crosschex_id', $selectedCrosschexId)
-                    ->where('device_sn', 'WFH-MANUAL')
-                    ->whereBetween('check_time', [
-                        $startDate->copy()->startOfDay(),
-                        $endDate->copy()->endOfDay(),
-                    ])
+                $recentLogs = $this->logsQuery($selectedEmployee, $startDate, $endDate)
+                    ->where('device_sn', self::DEVICE_SN)
                     ->orderBy('check_time')
                     ->get();
             }
@@ -91,7 +105,7 @@ class ManualBiometricsEncodingController extends Controller
             'cutoffLabel',
             'startDate',
             'endDate',
-            'selectedCrosschexId',
+            'selectedEmployeeBiometricId',
             'selectedEmployee',
             'cutoffRows',
             'recentLogs'
@@ -102,40 +116,31 @@ class ManualBiometricsEncodingController extends Controller
     {
         $search = trim((string) $request->input('q'));
 
-        $employees = MirasolBiometricsLog::query()
-            ->select(
-                'crosschex_id',
-                DB::raw('MAX(employee_id) as employee_id'),
-                DB::raw('MAX(employee_no) as employee_no'),
-                DB::raw('MAX(employee_name) as employee_name')
-            )
-            ->whereNotNull('crosschex_id')
-            ->whereNotNull('employee_name')
-            ->when($search !== '', function ($query) use ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('employee_name', 'like', "%{$search}%")
-                        ->orWhere('employee_no', 'like', "%{$search}%")
-                        ->orWhere('crosschex_id', 'like', "%{$search}%");
+        $employees = EmployeeBiometric::query()
+            ->payrollActive()
+            ->when($search !== '', function ($query) use ($search): void {
+                $query->where(function ($q) use ($search): void {
+                    $q->where('display_name', 'like', "%{$search}%")
+                        ->orWhere('source_employee_name', 'like', "%{$search}%")
+                        ->orWhere('display_employee_no', 'like', "%{$search}%")
+                        ->orWhere('source_employee_no', 'like', "%{$search}%")
+                        ->orWhere('source_employee_id', 'like', "%{$search}%");
                 });
             })
-            ->groupBy('crosschex_id')
-            ->orderBy(DB::raw('MAX(employee_name)'))
-            ->limit(100)
+            ->payrollDirectoryOrder()
+            ->limit(20)
             ->get()
-            ->map(function ($item) {
-                $displayName = PayrollEmployeeNameFormatter::display($item->employee_name);
+            ->map(function (EmployeeBiometric $employee): array {
+                $payload = $this->employeePayload($employee);
 
                 return [
-                    'crosschex_id' => $item->crosschex_id,
-                    'employee_id' => $item->employee_id,
-                    'employee_no' => $item->employee_no,
-                    'employee_name' => $item->employee_name,
-                    'employee_display_name' => $displayName,
-                    'label' => trim($displayName.' | '.($item->employee_no ?? '-').' | '.($item->crosschex_id ?? '-')),
+                    'employee_biometric_id' => $employee->id,
+                    'employee_no' => $payload['employee_no'],
+                    'employee_name' => $payload['employee_name'],
+                    'employee_display_name' => $payload['employee_display_name'],
+                    'label' => trim($payload['employee_display_name'].' | '.($payload['employee_no'] ?? '-')),
                 ];
             })
-            ->sortBy(fn (array $item): string => strtolower((string) $item['employee_display_name']))
-            ->take(20)
             ->values();
 
         return response()->json($employees);
@@ -147,10 +152,7 @@ class ManualBiometricsEncodingController extends Controller
             'cutoff_month' => ['required', 'integer', 'min:1', 'max:12'],
             'cutoff_year' => ['required', 'integer', 'min:2000', 'max:2100'],
             'cutoff_type' => ['required', 'in:first,second'],
-            'crosschex_id' => ['required', 'string', 'max:255'],
-            'employee_id' => ['nullable', 'string', 'max:255'],
-            'employee_no' => ['nullable', 'string', 'max:255'],
-            'employee_name' => ['required', 'string', 'max:255'],
+            'employee_biometric_id' => ['required', 'integer', 'exists:employee_biometrics,id'],
             'rows' => ['required', 'array', 'min:1'],
             'rows.*.work_date' => ['required', 'date'],
             'rows.*.time_in' => ['nullable', 'date_format:H:i'],
@@ -164,147 +166,87 @@ class ManualBiometricsEncodingController extends Controller
             (string) $validated['cutoff_type']
         );
 
-        $created = 0;
-        $updated = 0;
-        $skipped = 0;
+        $employee = EmployeeBiometric::query()->findOrFail((int) $validated['employee_biometric_id']);
+        $identity = $this->employeePayload($employee);
 
-        DB::beginTransaction();
+        $redirectParams = [
+            'cutoff_month' => $validated['cutoff_month'],
+            'cutoff_year' => $validated['cutoff_year'],
+            'cutoff_type' => $validated['cutoff_type'],
+            'employee_biometric_id' => $employee->id,
+        ];
+
+        if (blank($identity['employee_no'])) {
+            return back()->withInput()->withErrors([
+                'error' => 'This employee has no employee number, so manual logs cannot be matched to attendance. Set the employee number in the biometrics directory first.',
+            ]);
+        }
+
+        $created = 0;
+        $removed = 0;
+        $changedDates = [];
 
         try {
-            foreach ($validated['rows'] as $row) {
-                $workDate = Carbon::parse($row['work_date'], 'Asia/Manila')->format('Y-m-d');
+            DB::transaction(function () use ($validated, $startDate, $endDate, $identity, &$created, &$removed, &$changedDates): void {
+                foreach ($validated['rows'] as $row) {
+                    $workDate = Carbon::parse($row['work_date'], 'Asia/Manila')->startOfDay();
 
-                $workDateCarbon = Carbon::parse($workDate, 'Asia/Manila');
+                    if ($workDate->lt($startDate->copy()->startOfDay()) || $workDate->gt($endDate->copy()->endOfDay())) {
+                        continue;
+                    }
 
-                if (
-                    $workDateCarbon->lt($startDate->copy()->startOfDay()) ||
-                    $workDateCarbon->gt($endDate->copy()->endOfDay())
-                ) {
-                    continue;
-                }
+                    $timeIn = $row['time_in'] ?? null;
+                    $timeOut = $row['time_out'] ?? null;
+                    $remarks = $row['remarks'] ?? null;
 
-                $timeIn = $row['time_in'] ?? null;
-                $timeOut = $row['time_out'] ?? null;
-                $remarks = $row['remarks'] ?? null;
+                    $punches = array_filter([
+                        'Check In' => $timeIn ? $workDate->copy()->setTimeFromTimeString($timeIn) : null,
+                        // An earlier Time Out than Time In is an overnight shift.
+                        'Check Out' => $timeOut
+                            ? tap($workDate->copy()->setTimeFromTimeString($timeOut), function (Carbon $out) use ($timeIn, $workDate): void {
+                                if ($timeIn && $out->lessThanOrEqualTo($workDate->copy()->setTimeFromTimeString($timeIn))) {
+                                    $out->addDay();
+                                }
+                            })
+                            : null,
+                    ]);
 
-                if (blank($timeIn) && blank($timeOut)) {
-                    $skipped++;
+                    // The grid is the source of truth for manual punches on a
+                    // date: replace them so an edited or cleared time never
+                    // leaves a stale punch that attendance would still read.
+                    $existing = $this->manualLogsForDate($identity, $workDate);
+                    $unchanged = $existing->count() === count($punches)
+                        && $existing->every(fn (MirasolBiometricsLog $log): bool => isset($punches[$log->state])
+                            && Carbon::parse($log->check_time)->equalTo($punches[$log->state])
+                            && (string) data_get($log->raw, 'remarks') === (string) $remarks);
 
-                    continue;
-                }
+                    if ($unchanged) {
+                        continue;
+                    }
 
-                $commonData = [
-                    'crosschex_id' => $validated['crosschex_id'],
-                    'employee_id' => $validated['employee_id'] ?? null,
-                    'employee_no' => $validated['employee_no'] ?? null,
-                    'employee_name' => $validated['employee_name'],
-                    'device_sn' => 'WFH-MANUAL',
-                    'device_name' => 'WFH Manual Encoding',
-                ];
+                    $removed += $existing->count();
+                    MirasolBiometricsLog::query()->whereKey($existing->modelKeys())->delete();
 
-                if ($timeIn) {
-                    $checkInDateTime = Carbon::createFromFormat(
-                        'Y-m-d H:i',
-                        $workDate.' '.$timeIn,
-                        'Asia/Manila'
-                    );
-
-                    $existing = MirasolBiometricsLog::query()
-                        ->where('employee_no', $validated['employee_no'])
-                        ->where('check_time', $checkInDateTime->format('Y-m-d H:i:s'))
-                        ->where('device_sn', 'WFH-MANUAL')
-                        ->first();
-
-                    if ($existing) {
-                        $existing->fill(array_merge($commonData, [
-                            'state' => 'Check In',
-                            'raw' => [
-                                'source' => 'manual_wfh_cutoff_encoding',
-                                'type' => 'time_in',
-                                'remarks' => $remarks,
-                                'encoded_at' => now('Asia/Manila')->toDateTimeString(),
-                                'cutoff_month' => (int) $validated['cutoff_month'],
-                                'cutoff_year' => (int) $validated['cutoff_year'],
-                                'cutoff_type' => (string) $validated['cutoff_type'],
-                            ],
-                        ]));
-                        $existing->save();
-                        $updated++;
-                    } else {
-                        MirasolBiometricsLog::create(array_merge($commonData, [
-                            'check_time' => $checkInDateTime->format('Y-m-d H:i:s'),
-                            'state' => 'Check In',
-                            'raw' => [
-                                'source' => 'manual_wfh_cutoff_encoding',
-                                'type' => 'time_in',
-                                'remarks' => $remarks,
-                                'encoded_at' => now('Asia/Manila')->toDateTimeString(),
-                                'cutoff_month' => (int) $validated['cutoff_month'],
-                                'cutoff_year' => (int) $validated['cutoff_year'],
-                                'cutoff_type' => (string) $validated['cutoff_type'],
-                            ],
-                        ]));
+                    foreach ($punches as $state => $checkTime) {
+                        MirasolBiometricsLog::create($this->manualLogAttributes(
+                            $identity,
+                            $checkTime,
+                            $state,
+                            $remarks,
+                            $validated,
+                            $workDate
+                        ));
                         $created++;
                     }
+
+                    $changedDates[] = $workDate->toDateString();
                 }
-
-                if ($timeOut) {
-                    $checkOutDateTime = Carbon::createFromFormat(
-                        'Y-m-d H:i',
-                        $workDate.' '.$timeOut,
-                        'Asia/Manila'
-                    );
-
-                    $existing = MirasolBiometricsLog::query()
-                        ->where('employee_no', $validated['employee_no'])
-                        ->where('check_time', $checkOutDateTime->format('Y-m-d H:i:s'))
-                        ->where('device_sn', 'WFH-MANUAL')
-                        ->first();
-
-                    if ($existing) {
-                        $existing->fill(array_merge($commonData, [
-                            'state' => 'Check Out',
-                            'raw' => [
-                                'source' => 'manual_wfh_cutoff_encoding',
-                                'type' => 'time_out',
-                                'remarks' => $remarks,
-                                'encoded_at' => now('Asia/Manila')->toDateTimeString(),
-                                'cutoff_month' => (int) $validated['cutoff_month'],
-                                'cutoff_year' => (int) $validated['cutoff_year'],
-                                'cutoff_type' => (string) $validated['cutoff_type'],
-                            ],
-                        ]));
-                        $existing->save();
-                        $updated++;
-                    } else {
-                        MirasolBiometricsLog::create(array_merge($commonData, [
-                            'check_time' => $checkOutDateTime->format('Y-m-d H:i:s'),
-                            'state' => 'Check Out',
-                            'raw' => [
-                                'source' => 'manual_wfh_cutoff_encoding',
-                                'type' => 'time_out',
-                                'remarks' => $remarks,
-                                'encoded_at' => now('Asia/Manila')->toDateTimeString(),
-                                'cutoff_month' => (int) $validated['cutoff_month'],
-                                'cutoff_year' => (int) $validated['cutoff_year'],
-                                'cutoff_type' => (string) $validated['cutoff_type'],
-                            ],
-                        ]));
-                        $created++;
-                    }
-                }
-            }
-
-            DB::commit();
-
-            return redirect()->route('manual-biometrics.index', [
-                'cutoff_month' => $validated['cutoff_month'],
-                'cutoff_year' => $validated['cutoff_year'],
-                'cutoff_type' => $validated['cutoff_type'],
-                'crosschex_id' => $validated['crosschex_id'],
-            ])->with('success', "WFH cutoff logs saved successfully. Created: {$created}, Updated: {$updated}, Skipped: {$skipped}");
+            });
         } catch (\Throwable $e) {
-            DB::rollBack();
+            Log::error('Manual biometrics save failed.', [
+                'employee_biometric_id' => $employee->id,
+                'exception' => $e,
+            ]);
 
             return back()
                 ->withInput()
@@ -312,31 +254,144 @@ class ManualBiometricsEncodingController extends Controller
                     'error' => 'Failed to save manual cutoff biometrics logs. '.$e->getMessage(),
                 ]);
         }
-    }
 
-    private function findEmployeeByCrosschexId(string $crosschexId): ?array
-    {
-        $employee = MirasolBiometricsLog::query()
-            ->select(
-                'crosschex_id',
-                DB::raw('MAX(employee_id) as employee_id'),
-                DB::raw('MAX(employee_no) as employee_no'),
-                DB::raw('MAX(employee_name) as employee_name')
-            )
-            ->where('crosschex_id', $crosschexId)
-            ->groupBy('crosschex_id')
-            ->first();
+        $message = "Manual biometrics saved. Punches written: {$created}, replaced/removed: {$removed}, dates changed: ".count($changedDates).'.';
 
-        if (! $employee) {
-            return null;
+        try {
+            $this->rebuildAttendance($employee, $changedDates);
+        } catch (\Throwable $e) {
+            Log::warning('Manual biometrics saved but attendance rebuild failed.', [
+                'employee_biometric_id' => $employee->id,
+                'exception' => $e,
+            ]);
+
+            $message .= ' Logs were saved, but the attendance summary could not be rebuilt automatically; rebuild it from Attendance Summary.';
         }
 
+        return redirect()->route('manual-biometrics.index', $redirectParams)->with('success', $message);
+    }
+
+    /**
+     * @return array{employee_biometric_id: int, employee_no: ?string, employee_name: string, employee_display_name: string, source_employee_id: ?string, crosschex_account: string, crosschex_account_name: ?string}
+     */
+    private function employeePayload(EmployeeBiometric $employee): array
+    {
+        $snapshot = $this->identityService->snapshot($employee);
+
+        // Device logs carry the CrossChex employee number, which is what the
+        // attendance summary matches on; prefer it over a display override.
+        $employeeNo = $this->identityService->clean($employee->source_employee_no)
+            ?? $this->identityService->clean($snapshot['employee_no']);
+
         return [
-            'crosschex_id' => $employee->crosschex_id,
-            'employee_id' => $employee->employee_id,
-            'employee_no' => $employee->employee_no,
-            'employee_name' => $employee->employee_name,
+            'employee_biometric_id' => (int) $employee->id,
+            'employee_no' => $employeeNo,
+            'employee_name' => (string) $snapshot['employee_name'],
+            'employee_display_name' => PayrollEmployeeNameFormatter::display($snapshot['employee_name']),
+            'source_employee_id' => $this->identityService->clean($employee->source_employee_id),
+            'crosschex_account' => $this->identityService->clean($employee->source_crosschex_account) ?? 'main',
+            'crosschex_account_name' => $this->identityService->clean($employee->source_crosschex_account_name),
         ];
+    }
+
+    private function logsQuery(array $identity, Carbon $startDate, Carbon $endDate)
+    {
+        return MirasolBiometricsLog::query()
+            ->where('employee_no', $identity['employee_no'])
+            ->where('crosschex_account', $identity['crosschex_account'])
+            ->whereBetween('check_time', [
+                $startDate->copy()->startOfDay(),
+                // Overnight manual Time Out lands on the next calendar day.
+                $endDate->copy()->addDay()->endOfDay(),
+            ]);
+    }
+
+    private function manualLogsForDate(array $identity, Carbon $workDate)
+    {
+        return MirasolBiometricsLog::query()
+            ->where('employee_no', $identity['employee_no'])
+            ->where('crosschex_account', $identity['crosschex_account'])
+            ->where('device_sn', self::DEVICE_SN)
+            ->where(function ($query) use ($workDate): void {
+                $query->whereDate('check_time', $workDate->toDateString())
+                    // Overnight Check Out saved on the following day.
+                    ->orWhere(function ($overnight) use ($workDate): void {
+                        $overnight->whereDate('check_time', $workDate->copy()->addDay()->toDateString())
+                            ->where('state', 'Check Out')
+                            ->where('raw->work_date', $workDate->toDateString());
+                    });
+            })
+            ->get();
+    }
+
+    private function manualLogAttributes(
+        array $identity,
+        Carbon $checkTime,
+        string $state,
+        ?string $remarks,
+        array $validated,
+        Carbon $workDate
+    ): array {
+        $checkTimeString = $checkTime->format('Y-m-d H:i:s');
+        $sourceEmployeeId = $identity['source_employee_id'];
+
+        return [
+            'crosschex_account' => $identity['crosschex_account'],
+            'crosschex_account_name' => $identity['crosschex_account_name'],
+            // crosschex_id is unique per account and holds CrossChex's
+            // per-punch id, so manual punches need their own unique value.
+            'crosschex_id' => 'MANUAL-'.sha1(implode('|', [
+                $identity['crosschex_account'],
+                $identity['employee_no'],
+                $checkTimeString,
+                $state,
+            ])),
+            'source_employee_id' => $sourceEmployeeId,
+            'employee_id' => $sourceEmployeeId !== null && ctype_digit($sourceEmployeeId) ? $sourceEmployeeId : null,
+            'employee_no' => $identity['employee_no'],
+            'employee_name' => $identity['employee_name'],
+            'check_time' => $checkTimeString,
+            'device_sn' => self::DEVICE_SN,
+            'device_name' => self::DEVICE_NAME,
+            'state' => $state,
+            'raw' => [
+                'source' => 'manual_wfh_cutoff_encoding',
+                'type' => $state === 'Check In' ? 'time_in' : 'time_out',
+                'work_date' => $workDate->toDateString(),
+                'remarks' => $remarks,
+                'encoded_by' => auth()->id(),
+                'encoded_at' => now('Asia/Manila')->toDateTimeString(),
+                'cutoff_month' => (int) $validated['cutoff_month'],
+                'cutoff_year' => (int) $validated['cutoff_year'],
+                'cutoff_type' => (string) $validated['cutoff_type'],
+                'employee_biometric_id' => $identity['employee_biometric_id'],
+            ],
+        ];
+    }
+
+    private function rebuildAttendance(EmployeeBiometric $employee, array $dates): void
+    {
+        if ($dates === []) {
+            return;
+        }
+
+        $snapshot = $this->identityService->snapshot($employee);
+        $person = [
+            'employee_biometric_id' => $employee->id,
+            'crosschex_id' => $snapshot['crosschex_id'],
+            'biometric_employee_id' => $snapshot['biometric_employee_id'],
+            'employee_no' => $snapshot['employee_no'],
+            'employee_name' => $snapshot['employee_name'],
+            'source_employee_id' => $this->identityService->clean($employee->source_employee_id),
+            'source_employee_no' => $this->identityService->clean($employee->source_employee_no),
+            'source_crosschex_id' => $this->identityService->clean($employee->source_crosschex_id),
+            'source_key' => $this->identityService->clean($employee->source_key),
+            'source_crosschex_account' => $this->identityService->clean($employee->source_crosschex_account),
+        ];
+
+        foreach (array_unique($dates) as $date) {
+            $this->dailyAttendanceSummaryService->buildForPersonDate($person, $date);
+        }
     }
 
     private function getDefaultCutoff(): array

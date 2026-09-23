@@ -515,6 +515,15 @@ class PayrollPayslipService
             ],
         ];
 
+        $salaryAdjustmentDeduction = round((float) data_get($item->meta, 'manual_adjustments.deductions', 0), 2);
+
+        if ($salaryAdjustmentDeduction > 0) {
+            array_splice($lines, count($lines) - 1, 0, [[
+                'label' => 'Salary Adjustment',
+                'amount' => $salaryAdjustmentDeduction,
+            ]]);
+        }
+
         $totalDeductions = round(
             max(0, (float) $item->gross_pay - (float) $item->net_pay),
             2

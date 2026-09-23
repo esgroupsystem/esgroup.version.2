@@ -132,6 +132,9 @@ class EmployeePlottingScheduleController extends Controller
             'nine_hours' => $schedules->filter(
                 fn (EmployeePlottingSchedule $schedule): bool => $schedule->resolvedWorkdayType() === WorkdayType::NineHours
             )->count(),
+            'straight_eight' => $schedules->filter(
+                fn (EmployeePlottingSchedule $schedule): bool => $schedule->resolvedWorkdayType() === WorkdayType::StraightEightHours
+            )->count(),
         ];
 
         $workdayOptions = WorkdayType::options();

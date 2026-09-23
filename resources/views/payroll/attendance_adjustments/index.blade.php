@@ -890,15 +890,15 @@
                                                             $approveConfirm = $isOtApproval
                                                                 ? 'Approve this overtime adjustment for payroll payment?'
                                                                 : ($isCashApproval
-                                                                    ? 'Approve this Cash Adjustment of ₱'.number_format((float) $item->amount, 2).'?'
+                                                                    ? 'Approve this Salary Adjustment of '.$item->adjusted_time_label.'?'
                                                                     : 'Approve this Offset credit and apply it to the target attendance date?');
                                                             $rejectConfirm = $isOtApproval
                                                                 ? 'Reject this overtime adjustment? It will not be paid.'
                                                                 : ($isCashApproval
-                                                                    ? 'Reject this Cash Adjustment? It will not be added to payroll.'
+                                                                    ? 'Reject this Salary Adjustment? It will not be applied to payroll.'
                                                                     : 'Reject this Offset request? No compensatory credit will be applied.');
-                                                            $approveTitle = $isOtApproval ? 'Approve OT' : ($isCashApproval ? 'Approve Cash Adjustment' : 'Approve Offset');
-                                                            $rejectTitle = $isOtApproval ? 'Reject OT' : ($isCashApproval ? 'Reject Cash Adjustment' : 'Reject Offset');
+                                                            $approveTitle = $isOtApproval ? 'Approve OT' : ($isCashApproval ? 'Approve Salary Adjustment' : 'Approve Offset');
+                                                            $rejectTitle = $isOtApproval ? 'Reject OT' : ($isCashApproval ? 'Reject Salary Adjustment' : 'Reject Offset');
                                                         @endphp
                                                         <form method="POST" action="{{ route('payroll-attendance-adjustments.approve', $item) }}" class="d-inline"
                                                             onsubmit="return confirm('{{ $approveConfirm }}');">

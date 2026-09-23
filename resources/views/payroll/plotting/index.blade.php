@@ -35,8 +35,8 @@
                                 <h4 class="mb-0">Permanent Plotting Schedule</h4>
                             </div>
                             <p class="text-muted mb-3">
-                                Assign either 8 paid hours plus 1 unpaid lunch hour, or 9 paid hours plus 1 unpaid lunch
-                                hour. You may select more than one weekly day off for each employee.
+                                Assign 8 paid hours plus 1 unpaid lunch hour, 9 paid hours plus 1 unpaid lunch hour, or 8
+                                straight paid hours with no lunch break. You may select more than one weekly day off for each employee.
                             </p>
 
                             <div class="d-flex flex-wrap gap-2">
@@ -51,6 +51,10 @@
                                 <span class="badge rounded-pill bg-info-subtle text-info border border-info-subtle px-3 py-2">
                                     <span class="fas fa-business-time me-1"></span>
                                     {{ number_format($stats['nine_hours'] ?? 0) }} on 9-hour workday
+                                </span>
+                                <span class="badge rounded-pill bg-warning-subtle text-warning border border-warning-subtle px-3 py-2">
+                                    <span class="fas fa-stopwatch me-1"></span>
+                                    {{ number_format($stats['straight_eight'] ?? 0) }} on straight 8 hours
                                 </span>
                             </div>
                         </div>
@@ -249,8 +253,8 @@
                             <div>
                                 <h5 class="mb-1">Employee Work Schedule</h5>
                                 <p class="text-muted fs-10 mb-0">
-                                    Regular Shift must span exactly 9 clock hours for an 8-hour workday or 10 clock hours
-                                    for a 9-hour workday. One lunch hour is unpaid.
+                                    Regular Shift must span exactly 9 clock hours for an 8-hour workday, 10 clock hours for a
+                                    9-hour workday (one lunch hour is unpaid), or 8 clock hours for straight 8 hours with no lunch.
                                 </p>
                             </div>
                             <button type="submit" class="btn btn-primary">
@@ -287,7 +291,11 @@
                                             $schedule?->resolvedWorkdayType()->value ?? 'eight_hours',
                                         );
                                         $rowTimeIn = old("schedule.$rowIndex.time_in", $schedule?->time_in ? substr((string) $schedule->time_in, 0, 5) : '08:00');
-                                        $defaultTimeOut = $rowWorkdayType === 'nine_hours' ? '18:00' : '17:00';
+                                        $defaultTimeOut = match ($rowWorkdayType) {
+                                            'nine_hours' => '18:00',
+                                            'straight_eight' => '16:00',
+                                            default => '17:00',
+                                        };
                                         $rowTimeOut = old("schedule.$rowIndex.time_out", $schedule?->time_out ? substr((string) $schedule->time_out, 0, 5) : $defaultTimeOut);
                                         $rowGrace = old("schedule.$rowIndex.grace_minutes", $schedule?->grace_minutes ?? 15);
                                         $rowDayOffs = old("schedule.$rowIndex.day_offs", $schedule?->resolvedDayOffs() ?? []);
@@ -467,7 +475,16 @@
         }
 
         .grace-cell {
-            min-width: 120px;
+            min-width: 130px;
+        }
+
+        .grace-cell .input-group {
+            flex-wrap: nowrap;
+        }
+
+        .grace-cell .plot-grace {
+            min-width: 64px;
+            text-align: right;
         }
 
         .day-off-cell {
@@ -588,7 +605,9 @@
                 }
 
                 if (workdayHelp) {
-                    workdayHelp.textContent = `${rule.paid_hours} paid + ${rule.lunch_minutes / 60} unpaid lunch hour`;
+                    workdayHelp.textContent = rule.lunch_minutes > 0
+                        ? `${rule.paid_hours} paid + ${rule.lunch_minutes / 60} unpaid lunch hour`
+                        : `${rule.paid_hours} paid hours straight, no lunch deduction`;
                 }
 
                 if (setupBadge) {

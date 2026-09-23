@@ -45,6 +45,7 @@
                 $overtimePay = (float) ($item->overtime_pay ?? 0);
                 $nightDifferentialPay = (float) ($item->night_differential_pay ?? 0);
                 $manualAdjustmentPay = (float) data_get($manualAdjustments, 'additions', 0);
+                $salaryAdjustmentDeduction = (float) data_get($manualAdjustments, 'deductions', 0);
                 $grossPay = (float) $item->gross_pay;
                 $netPay = (float) $item->net_pay;
 
@@ -397,7 +398,7 @@
 
                                     @if ($manualAdjustmentPay > 0)
                                         <tr>
-                                            <td class="text-muted">Manual Payroll Adjustment Pay</td>
+                                            <td class="text-muted">Salary Adjustment (Addition)</td>
                                             <td class="text-end text-success">
                                                 + {{ $money($manualAdjustmentPay) }}
                                             </td>
@@ -417,6 +418,15 @@
                                             - {{ $money($salaryDeduction) }}
                                         </td>
                                     </tr>
+
+                                    @if ($salaryAdjustmentDeduction > 0)
+                                        <tr>
+                                            <td class="text-muted ps-4 fs-10">incl. Salary Adjustment (Deduction)</td>
+                                            <td class="text-end text-danger fs-10">
+                                                - {{ $money($salaryAdjustmentDeduction) }}
+                                            </td>
+                                        </tr>
+                                    @endif
 
                                     <tr>
                                         <td class="text-muted">Government Deduction</td>

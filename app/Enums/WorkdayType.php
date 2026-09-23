@@ -8,12 +8,14 @@ enum WorkdayType: string
 {
     case EightHours = 'eight_hours';
     case NineHours = 'nine_hours';
+    case StraightEightHours = 'straight_eight';
 
     public function label(): string
     {
         return match ($this) {
             self::EightHours => '8 work hours + 1 hour lunch',
             self::NineHours => '9 work hours + 1 hour lunch',
+            self::StraightEightHours => '8 work hours straight (no lunch)',
         };
     }
 
@@ -22,13 +24,14 @@ enum WorkdayType: string
         return match ($this) {
             self::EightHours => '8 hrs + 1 hr lunch',
             self::NineHours => '9 hrs + 1 hr lunch',
+            self::StraightEightHours => '8 hrs straight, no lunch',
         };
     }
 
     public function paidHours(): int
     {
         return match ($this) {
-            self::EightHours => 8,
+            self::EightHours, self::StraightEightHours => 8,
             self::NineHours => 9,
         };
     }
@@ -40,7 +43,7 @@ enum WorkdayType: string
 
     public function lunchMinutes(): int
     {
-        return 60;
+        return $this === self::StraightEightHours ? 0 : 60;
     }
 
     public function clockMinutes(): int

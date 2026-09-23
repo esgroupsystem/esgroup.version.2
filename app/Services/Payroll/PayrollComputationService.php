@@ -1912,16 +1912,25 @@ class PayrollComputationService
             } elseif ($type === PayrollAttendanceAdjustment::TYPE_OVERTIME) {
                 $effect = 'Overtime authorization; premium calculated separately';
             } elseif ($type === PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT) {
+                // Salary Adjustment: positive amounts are extra pay (part of
+                // gross), negative amounts are deducted after gross like a
+                // salary deduction so they never shrink the government basis.
                 $rowAmount = round((float) ($row->amount ?? 0), 2);
-                $paidThisCutoff = $rowAmount > 0 && $inCurrentWorkPeriod;
+                $paidThisCutoff = $rowAmount != 0.0 && $inCurrentWorkPeriod;
 
                 if ($paidThisCutoff) {
                     $amount = $rowAmount;
-                    $additions += $amount;
                     $appliedCashAdjustmentIds[] = (int) $row->id;
-                    $effect = 'Cash adjustment added to this cutoff\'s pay';
+
+                    if ($rowAmount > 0) {
+                        $additions += $rowAmount;
+                        $effect = 'Salary adjustment added to this cutoff\'s pay';
+                    } else {
+                        $deductions += abs($rowAmount);
+                        $effect = 'Salary adjustment deducted from this cutoff\'s pay';
+                    }
                 } else {
-                    $effect = 'Cash adjustment approved; work date is outside this cutoff';
+                    $effect = 'Salary adjustment approved; work date is outside this cutoff';
                 }
             }
 
