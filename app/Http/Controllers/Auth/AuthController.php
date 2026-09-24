@@ -17,6 +17,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
 use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 use Throwable;
 
 final class AuthController extends Controller
@@ -173,9 +175,13 @@ final class AuthController extends Controller
         }
     }
 
-    public function changePasswordForm(): View
+    public function changePasswordForm(Request $request): Response
     {
-        return view('auth.change-password');
+        return Inertia::render('auth/change-password', [
+            // A temporary password is replaced without asking for it again (see ChangePasswordRequest).
+            'requiresCurrent' => ! (bool) $request->user()?->must_change_password,
+            'urls' => ['update' => route('auth.change.password.update')],
+        ]);
     }
 
     public function changePasswordUpdate(ChangePasswordRequest $request): RedirectResponse

@@ -17,12 +17,14 @@ use App\Models\PayrollEmployeeSalary;
 use App\Models\PayrollEmployeeSalaryOtherDeduction;
 use App\Models\PayrollItem;
 use App\Models\PayrollReportLog;
+use App\Models\User;
 use App\Observers\PayrollAuditObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
@@ -47,6 +49,11 @@ final class AppServiceProvider extends ServiceProvider
             Model::preventLazyLoading();
             Model::preventSilentlyDiscardingAttributes();
         }
+
+        // Developers always hold every permission, including permissions added
+        // after their role was last synced. Returning null (not false) for
+        // everyone else keeps normal role/permission checks in charge.
+        Gate::before(static fn ($user): ?bool => $user instanceof User && $user->isDeveloper() ? true : null);
 
         Schema::defaultStringLength(191);
 

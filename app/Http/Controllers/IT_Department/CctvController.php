@@ -15,7 +15,8 @@ use App\Services\ITDepartment\CctvConcernDirectoryService;
 use App\Services\ITDepartment\CctvConcernService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 use Throwable;
 
 final class CctvController extends Controller
@@ -25,7 +26,7 @@ final class CctvController extends Controller
         private readonly CctvConcernDirectoryService $directoryService,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $search = trim((string) $request->input('q', ''));
         $status = trim((string) $request->input('status', ''));
@@ -34,7 +35,70 @@ final class CctvController extends Controller
             $status = '';
         }
 
-        return view('it_department.concern.index', $this->directoryService->indexData($search, $status));
+        $data = $this->directoryService->indexData($search, $status);
+        $user = $request->user();
+        $bus = static fn ($bus): ?string => $bus ? implode(' - ', array_filter([$bus->body_number, $bus->plate_number, $bus->name, $bus->garage])) : null;
+
+        return Inertia::render('it/cctv/index', [
+            'concerns' => $data['jobOrders']->through(fn (CctvConcern $concern): array => [
+                'id' => $concern->id,
+                'jo_no' => $concern->jo_no,
+                'reported_by' => $concern->reported_by,
+                'bus_body' => $concern->bus?->body_number,
+                'bus_detail' => $concern->bus ? ($concern->bus->plate_number ?? 'No plate').' - '.($concern->bus->name ?? 'No name') : null,
+                'bus_display' => $bus($concern->bus),
+                'issue_type' => $concern->issue_type,
+                'problem_details' => $concern->problem_details,
+                'action_taken' => $concern->action_taken,
+                'status' => $concern->status,
+                'assigned_to' => $concern->assigned_to ? (string) $concern->assigned_to : '',
+                'assignee' => $concern->assignee?->full_name,
+                'items' => $concern->usedItems->map(fn ($used): array => [
+                    'it_inventory_item_id' => (string) $used->it_inventory_item_id,
+                    'name' => $used->inventoryItem->item_name ?? 'Item',
+                    'qty_used' => (string) $used->qty_used,
+                    'remarks' => (string) ($used->remarks ?? ''),
+                ])->values(),
+            ]),
+            'stats' => [
+                'total' => $data['totalOrders'],
+                'open' => $data['openCount'],
+                'progress' => $data['progressCount'],
+                'done' => $data['fixedCount'] + $data['closedCount'],
+                'topIssue' => $data['topIssue'],
+                'topIssueCount' => $data['topIssueCount'],
+                'topPart' => $data['topPart'],
+                'topPartCount' => $data['topPartCount'],
+                'topAssignee' => $data['topAssignee'],
+                'topAssigneeCount' => $data['topAssigneeCount'],
+            ],
+            'buses' => $data['buses']->map(fn ($item): array => ['value' => (string) $item->id, 'label' => $item->display_name])->values(),
+            'agents' => $data['agents']->map(fn (User $agent): array => ['id' => (string) $agent->id, 'name' => $agent->full_name])->values(),
+            'inventoryItems' => $data['inventoryItems']->map(fn ($item): array => [
+                'value' => (string) $item->id,
+                'label' => $item->item_name,
+                'hint' => 'Stock: '.$item->stock_qty.' '.$item->unit.($item->brand ? ' | '.$item->brand : ''),
+            ])->values(),
+            'statuses' => CctvConcernStatus::values(),
+            'issueTypes' => ['Camera', 'Monitor', 'DVR', 'Wiring', 'Power', 'Other'],
+            'filters' => ['q' => $search, 'status' => $status],
+            'openId' => $request->integer('open') ?: null,
+            'reporter' => (string) ($user?->full_name ?? ''),
+            'can' => [
+                'create' => (bool) $user?->can('cctv.create'),
+                'update' => (bool) $user?->can('cctv.update'),
+                'delete' => (bool) $user?->can('cctv.delete'),
+                'export' => (bool) $user?->can('cctv.export'),
+            ],
+            'urls' => [
+                'index' => route('concern.cctv.index'),
+                'store' => route('concern.cctv.store'),
+                'update' => route('concern.cctv.update', '__ID__'),
+                'destroy' => route('concern.cctv.destroy', '__ID__'),
+                'print' => route('concern.export', ['type' => 'print', 'q' => $search ?: null, 'status' => $status ?: null]),
+                'csv' => route('concern.export', ['type' => 'csv', 'q' => $search ?: null, 'status' => $status ?: null]),
+            ],
+        ]);
     }
 
     public function store(StoreCctvConcernRequest $request): RedirectResponse
@@ -87,13 +151,10 @@ final class CctvController extends Controller
 
     public function view(int $id)
     {
-        $jobOrder = CctvConcern::with([
-            'assignee',
-            'creator',
-            'usedItems.inventoryItem',
-        ])->findOrFail($id);
+        $jobOrder = CctvConcern::query()->findOrFail($id);
 
-        return view('it_department.concern.index', compact('jobOrder'));
+        // The concern opens in the list's View / Edit dialog.
+        return redirect()->route('concern.cctv.index', ['q' => $jobOrder->jo_no, 'open' => $jobOrder->id]);
     }
 
     public function acceptTask(int $id)
@@ -284,10 +345,21 @@ final class CctvController extends Controller
 
         $buses->setCollection($collection);
 
-        return view('it_department.concern.bus-status', [
-            'busStatuses' => $buses,
-            'issueColumns' => $issueColumns,
-            'q' => $q,
+        return Inertia::render('it/cctv/bus-status', [
+            'buses' => $buses->through(fn (BusDetail $bus): array => [
+                'id' => $bus->id,
+                'body_number' => $bus->body_number,
+                'detail' => implode(' - ', array_filter([$bus->plate_number, $bus->name, $bus->garage])),
+                'summary' => $bus->getAttribute('status_summary'),
+                'total' => (int) $bus->getAttribute('total_issues'),
+                'url' => $bus->body_number ? route('concern.bus-status.show', $bus->body_number) : null,
+            ]),
+            'columns' => array_keys($issueColumns),
+            'filters' => ['q' => $q],
+            'urls' => [
+                'index' => route('concern.bus-status'),
+                'concerns' => route('concern.cctv.index'),
+            ],
         ]);
     }
 
@@ -375,20 +447,45 @@ final class CctvController extends Controller
         $issueOptions = ['Camera', 'Monitor', 'DVR', 'Wiring', 'Power', 'Other'];
         $statusOptions = ['Open', 'In Progress', 'Fixed', 'Closed'];
 
-        return view('it_department.concern.bus-status-show', compact(
-            'bus',
-            'issueColumns',
-            'statusSummary',
-            'totalIssues',
-            'completedCount',
-            'partsSummary',
-            'activeJobOrders',
-            'completedJobOrders',
-            'timeline',
-            'issueOptions',
-            'statusOptions',
-            'issue',
-            'status'
-        ));
+        $concernRow = fn (CctvConcern $concern): array => [
+            'id' => $concern->id,
+            'jo_no' => $concern->jo_no,
+            'issue_type' => $concern->issue_type,
+            'status' => $concern->status,
+            'overdue' => $concern->status === 'In Progress' && $concern->created_at && $concern->created_at->lt(now()->subDays(3)),
+            'assignee' => $concern->assignee?->full_name,
+            'problem_details' => $concern->problem_details,
+            'action_taken' => $concern->action_taken,
+            'parts' => $concern->usedItems->map(fn ($used): string => ($used->inventoryItem->item_name ?? 'Item').' x'.$used->qty_used)->values(),
+        ];
+
+        return Inertia::render('it/cctv/bus-status-show', [
+            'bus' => [
+                'body_number' => $bus->body_number,
+                'display_name' => $bus->display_name,
+                'plate_number' => $bus->plate_number,
+                'garage' => $bus->garage,
+            ],
+            'statusSummary' => $statusSummary,
+            'totalIssues' => $totalIssues,
+            'completedCount' => $completedCount,
+            'partsSummary' => $partsSummary,
+            'activeJobOrders' => $activeJobOrders->through($concernRow),
+            'completedJobOrders' => $completedJobOrders->through($concernRow),
+            'timeline' => $timeline->map(fn (CctvConcern $item): array => [
+                'id' => $item->id,
+                'jo_no' => $item->jo_no,
+                'issue_type' => $item->issue_type,
+                'status' => $item->status,
+                'updated_at' => $item->updated_at?->format('M d, Y h:i A'),
+            ])->values(),
+            'issueOptions' => $issueOptions,
+            'statusOptions' => $statusOptions,
+            'filters' => ['issue' => (string) ($issue ?? ''), 'status' => (string) ($status ?? '')],
+            'urls' => [
+                'self' => route('concern.bus-status.show', $bus->body_number),
+                'back' => route('concern.bus-status'),
+            ],
+        ]);
     }
 }

@@ -23,8 +23,10 @@ class PayrollGroupAccess
         |--------------------------------------------------------------------------
         */
         if (
-            $user->hasRole('developer')
-            || $user->hasPermissionTo('payroll.all-access')
+            $user->isDeveloper()
+            // can() (unlike hasPermissionTo) returns false instead of throwing
+            // when the permission has not been synced into the database yet.
+            || $user->can('payroll.all-access')
         ) {
             session([
                 'payroll_allowed_groups' => 'all',
@@ -50,11 +52,11 @@ class PayrollGroupAccess
 
         $allowedGroups = [];
 
-        if ($user->hasPermissionTo('payroll.mirasol')) {
+        if ($user->can('payroll.mirasol')) {
             $allowedGroups[] = 1;
         }
 
-        if ($user->hasPermissionTo('payroll.gonzales')) {
+        if ($user->can('payroll.gonzales')) {
             $allowedGroups[] = 2;
         }
 

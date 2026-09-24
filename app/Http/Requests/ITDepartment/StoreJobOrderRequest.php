@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\ITDepartment;
 
+use App\Support\IT\SeatNumbers;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -12,6 +13,14 @@ final class StoreJobOrderRequest extends FormRequest
     public function authorize(): bool
     {
         return $this->user()?->can('tickets.create') ?? false;
+    }
+
+    /** The seat map sends "13,12" style lists; store them as "12, 13". */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('job_sitNumber')) {
+            $this->merge(['job_sitNumber' => SeatNumbers::normalize($this->input('job_sitNumber'))]);
+        }
     }
 
     public function rules(): array
@@ -50,12 +59,7 @@ final class StoreJobOrderRequest extends FormRequest
                 'date_format:H:i',
             ],
 
-            'job_sitNumber' => [
-                'nullable',
-                'integer',
-                'min:1',
-                'max:60',
-            ],
+            'job_sitNumber' => SeatNumbers::rules(),
 
             'job_remarks' => [
                 'nullable',
@@ -118,6 +122,7 @@ final class StoreJobOrderRequest extends FormRequest
             'job_datestart.date_format' => 'The incident date must use the DD/MM/YY format.',
             'job_time_start.date_format' => 'The start time must use the HH:MM format.',
             'job_time_end.date_format' => 'The end time must use the HH:MM format.',
+            'job_sitNumber.regex' => 'Seat numbers must be numbers separated by commas, e.g. 12, 13.',
         ];
     }
 }

@@ -13,7 +13,8 @@ use App\Services\HR_Department\DepartmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Log;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 use Throwable;
 
 final class DepartmentController extends Controller
@@ -22,11 +23,30 @@ final class DepartmentController extends Controller
         private readonly DepartmentService $departmentService
     ) {}
 
-    public function index(): View|RedirectResponse
+    public function index(): Response|RedirectResponse
     {
         try {
-            return view('hr_department.departments.index', [
-                'departments' => $this->departmentService->directory(),
+            $user = auth()->user();
+
+            return Inertia::render('hr/departments/index', [
+                'departments' => collect($this->departmentService->directory())->map(fn (Department $department): array => [
+                    'id' => $department->id,
+                    'name' => $department->name,
+                    'positions' => $department->positions->map(fn (Position $position): array => [
+                        'id' => $position->id,
+                        'title' => $position->title,
+                        'destroy_url' => route('employees.positions.destroy', $position->id),
+                    ])->values(),
+                    'destroy_url' => route('employees.departments.destroy', $department->id),
+                ])->values(),
+                'can' => [
+                    'create' => (bool) $user?->can('departments.create'),
+                    'delete' => (bool) $user?->can('departments.delete'),
+                ],
+                'urls' => [
+                    'store' => route('employees.departments.store'),
+                    'storePosition' => route('employees.departments.position.store'),
+                ],
             ]);
         } catch (Throwable $exception) {
             Log::error('Department index failed.', [

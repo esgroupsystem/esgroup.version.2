@@ -18,6 +18,8 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class MirasolBiometricsLogController extends Controller
 {
@@ -26,7 +28,7 @@ class MirasolBiometricsLogController extends Controller
         private readonly CrossChexServiceFactory $crossChexFactory,
     ) {}
 
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         [$defaultCutoffMonth, $defaultCutoffYear, $defaultCutoffType] = $this->getDefaultCutoff();
 
@@ -46,41 +48,13 @@ class MirasolBiometricsLogController extends Controller
         $isSearch = $search !== '';
 
         if (! $isSearch) {
-            $rows = $this->emptyPaginator($request);
-
-            return view('hr_department.mirasol_logs.index', [
-                'rows' => $rows,
-                'people' => $people,
-                'cutoffMonth' => $cutoffMonth,
-                'cutoffYear' => $cutoffYear,
-                'cutoffType' => $cutoffType,
-                'startDate' => $startDate,
-                'endDate' => $endDate,
-                'cutoffLabel' => $cutoffLabel,
-                'search' => $search,
-                'isSearch' => false,
-                'syncAccounts' => $syncAccounts,
-            ]);
+            return $this->renderIndex($request, $this->emptyPaginator($request), $people, $cutoffMonth, $cutoffYear, $cutoffType, $cutoffLabel, $search, false, $syncAccounts);
         }
 
         $matchedPeople = $this->resolvePeopleFromSearch($search);
 
         if ($matchedPeople->isEmpty()) {
-            $rows = $this->emptyPaginator($request);
-
-            return view('hr_department.mirasol_logs.index', [
-                'rows' => $rows,
-                'people' => $people,
-                'cutoffMonth' => $cutoffMonth,
-                'cutoffYear' => $cutoffYear,
-                'cutoffType' => $cutoffType,
-                'startDate' => $startDate,
-                'endDate' => $endDate,
-                'cutoffLabel' => $cutoffLabel,
-                'search' => $search,
-                'isSearch' => true,
-                'syncAccounts' => $syncAccounts,
-            ]);
+            return $this->renderIndex($request, $this->emptyPaginator($request), $people, $cutoffMonth, $cutoffYear, $cutoffType, $cutoffLabel, $search, true, $syncAccounts);
         }
 
         $employeeNos = $matchedPeople
@@ -171,18 +145,83 @@ class MirasolBiometricsLogController extends Controller
 
         $rows = $this->paginateCollection($rows, 20, $request);
 
-        return view('hr_department.mirasol_logs.index', [
-            'rows' => $rows,
-            'people' => $people,
-            'cutoffMonth' => $cutoffMonth,
-            'cutoffYear' => $cutoffYear,
-            'cutoffType' => $cutoffType,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
+        return $this->renderIndex($request, $rows, $people, $cutoffMonth, $cutoffYear, $cutoffType, $cutoffLabel, $search, true, $syncAccounts);
+    }
+
+    private function renderIndex(
+        Request $request,
+        LengthAwarePaginator $rows,
+        $people,
+        int $cutoffMonth,
+        int $cutoffYear,
+        string $cutoffType,
+        string $cutoffLabel,
+        string $search,
+        bool $isSearch,
+        array $syncAccounts,
+    ): Response {
+        $time = fn ($value): ?string => ! empty($value) ? Carbon::parse($value)->format('h:i A') : null;
+
+        return Inertia::render('biometrics/sync/index', [
+            'rows' => $rows->through(fn (array $row): array => [
+                'employee_name' => PayrollEmployeeNameFormatter::display($row['employee_name'] ?? null),
+                'employee_no' => $row['employee_no'] ?: null,
+                'date_label' => $row['log_date'] ? Carbon::parse($row['log_date'])->format('F d, Y (l)') : null,
+                'remarks' => $row['remarks'] ?? null,
+                'shift_name' => $row['shift_name'] ?? null,
+                'shift_mode' => $row['shift_mode'] ?? null,
+                'schedule_status' => $row['schedule_status'] ?? null,
+                'scheduled_time_in' => $time($row['scheduled_time_in'] ?? null),
+                'scheduled_time_out' => $time($row['scheduled_time_out'] ?? null),
+                'grace_minutes' => (int) ($row['grace_minutes'] ?? 15),
+                'paid_hours' => number_format(((int) ($row['paid_work_minutes'] ?? 480)) / 60, 0),
+                'day_off' => $row['day_off'] ?? null,
+                'actual_time_in' => $time($row['actual_time_in'] ?? null),
+                'actual_time_out' => $time($row['actual_time_out'] ?? null),
+                'worked_hours_label' => $row['worked_hours_label'] ?? '—',
+                'required_hours_label' => $row['required_hours_label'] ?? '—',
+                'late_minutes' => (int) ($row['late_minutes'] ?? 0),
+                'late_label' => $row['late_label'] ?? '—',
+                'undertime_minutes' => (int) ($row['undertime_minutes'] ?? 0),
+                'undertime_label' => $row['undertime_label'] ?? '—',
+                'attendance_note' => $row['attendance_note'] ?? '—',
+                'attendance_class' => $row['attendance_class'] ?? 'secondary',
+            ]),
+            'people' => collect($people)->flatMap(function (array $person): array {
+                $name = PayrollEmployeeNameFormatter::display($person['employee_name'] ?? null);
+                $options = [];
+
+                if (! empty($person['employee_name'])) {
+                    $options[] = ['value' => $person['employee_name'], 'label' => $name.(! empty($person['employee_no']) ? ' - '.$person['employee_no'] : '')];
+                }
+
+                if (! empty($person['employee_no'])) {
+                    $options[] = ['value' => (string) $person['employee_no'], 'label' => $name];
+                }
+
+                return $options;
+            })->values(),
+            'filters' => [
+                'q' => $search,
+                'cutoff_month' => $cutoffMonth,
+                'cutoff_year' => $cutoffYear,
+                'cutoff_type' => $cutoffType,
+            ],
             'cutoffLabel' => $cutoffLabel,
-            'search' => $search,
-            'isSearch' => true,
-            'syncAccounts' => $syncAccounts,
+            'cutoffTypes' => [
+                '26_10' => config('payroll.cutoff_display_by_range.26_10', '1st Cutoff (26-10)'),
+                '11_25' => config('payroll.cutoff_display_by_range.11_25', '2nd Cutoff (11-25)'),
+            ],
+            'isSearch' => $isSearch,
+            'syncAccounts' => array_values($syncAccounts),
+            'today' => now()->toDateString(),
+            'can' => ['sync' => (bool) $request->user()?->can('mirasol-logs.sync')],
+            'urls' => [
+                'index' => route('mirasol-logs.index'),
+                'syncStart' => route('mirasol-logs.sync-start'),
+                'syncStep' => route('mirasol-logs.sync-step'),
+                'syncStatus' => route('mirasol-logs.sync-status'),
+            ],
         ]);
     }
 

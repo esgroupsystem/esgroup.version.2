@@ -15,6 +15,8 @@ use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+use Inertia\Response;
 
 /**
  * Manual WFH encoding writes punches into mirasol_biometrics_logs.
@@ -35,7 +37,7 @@ class ManualBiometricsEncodingController extends Controller
         private readonly DailyAttendanceSummaryService $dailyAttendanceSummaryService,
     ) {}
 
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         [$defaultCutoffMonth, $defaultCutoffYear, $defaultCutoffType] = $this->getDefaultCutoff();
 
@@ -98,18 +100,32 @@ class ManualBiometricsEncodingController extends Controller
             }
         }
 
-        return view('payroll.manual_biometrics.index', compact(
-            'cutoffMonth',
-            'cutoffYear',
-            'cutoffType',
-            'cutoffLabel',
-            'startDate',
-            'endDate',
-            'selectedEmployeeBiometricId',
-            'selectedEmployee',
-            'cutoffRows',
-            'recentLogs'
-        ));
+        return Inertia::render('payroll/manual-biometrics/index', [
+            'filters' => [
+                'cutoff_month' => $cutoffMonth,
+                'cutoff_year' => $cutoffYear,
+                'cutoff_type' => $cutoffType,
+            ],
+            'cutoffLabel' => $cutoffLabel,
+            'selectedEmployee' => $selectedEmployee ? [
+                ...$selectedEmployee,
+                'label' => $selectedEmployee['employee_display_name'].' | '.($selectedEmployee['employee_no'] ?? '-'),
+            ] : null,
+            'cutoffRows' => $cutoffRows->values(),
+            'recentLogs' => $recentLogs->map(fn (MirasolBiometricsLog $log): array => [
+                'id' => $log->id,
+                'check_time' => $log->check_time ? Carbon::parse($log->check_time)->format('M d, Y h:i A') : null,
+                'state' => $log->state,
+                'device_name' => $log->device_name,
+                'remarks' => data_get($log->raw, 'remarks') ?: '-',
+            ])->values(),
+            'can' => ['create' => (bool) $request->user()?->can('manual-biometrics.create')],
+            'urls' => [
+                'index' => route('manual-biometrics.index'),
+                'search' => route('manual-biometrics.search-employees'),
+                'store' => route('manual-biometrics.store'),
+            ],
+        ]);
     }
 
     public function searchEmployees(Request $request)

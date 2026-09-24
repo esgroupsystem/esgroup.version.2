@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\Accounting\AccountingController;
 use App\Http\Controllers\AllBusController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Biometrics\BiometricCompanyController;
 use App\Http\Controllers\Biometrics\EmployeeBiometricController;
 use App\Http\Controllers\BusDetailController;
 use App\Http\Controllers\Chairman\HrDataController;
@@ -28,9 +28,7 @@ use App\Http\Controllers\Maintenance\ItemsController;
 use App\Http\Controllers\Maintenance\JobOrderMaintenanceController;
 use App\Http\Controllers\Maintenance\OdometerReportController;
 use App\Http\Controllers\Maintenance\PartsOutController;
-use App\Http\Controllers\Maintenance\PurchaseReceiveController;
 use App\Http\Controllers\Maintenance\ReceivingController;
-use App\Http\Controllers\Maintenance\RequestController;
 use App\Http\Controllers\Maintenance\StockTransferController;
 use App\Http\Controllers\Payroll\AttendanceSummaryController;
 use App\Http\Controllers\Payroll\BenefitsRecordController;
@@ -95,14 +93,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
             Route::get('/', 'index')
                 ->name('index');
-
-            Route::get('/analytics', 'analyticsindex')
-                ->middleware('permission:dashboard.analytics')
-                ->name('analytics');
-
-            Route::get('/crm', 'crmindex')
-                ->middleware('permission:dashboard.crm')
-                ->name('crm');
 
             Route::get('/it-department', 'itindex')
                 ->middleware('permission:dashboard.it')
@@ -194,10 +184,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::get('/export/{type}', 'export')
                 ->middleware(['permission:tickets.export', 'throttle:expensive'])
                 ->name('export');
-
-            Route::get('/cctv', 'cctvindex')
-                ->middleware('permission:tickets.view')
-                ->name('cctv.index');
 
             Route::get('joborder/{id}/print', 'print')
                 ->middleware('permission:tickets.view')
@@ -770,7 +756,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         ])
         ->group(function () {
 
-            Route::get(
+            Route::post(
                 'employee-salaries/sync',
                 [
                     PayrollEmployeeSalaryController::class,
@@ -1035,7 +1021,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:users.update')
                     ->name('users.reset.password');
 
-                Route::get('/users/status/{id}', 'status')
+                Route::post('/users/status/{id}', 'status')
                     ->middleware('permission:users.update')
                     ->name('users.status');
             });
@@ -1112,36 +1098,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:allbus.delete');
             });
 
-        Route::prefix('request')
-            ->name('request.')
-            ->controller(RequestController::class)
-            ->group(function () {
-
-                Route::get('/index', 'index')
-                    ->middleware('permission:request.view')
-                    ->name('index');
-
-                Route::get('/create', 'create')
-                    ->middleware('permission:request.create')
-                    ->name('create');
-
-                Route::post('/store', 'store')
-                    ->middleware('permission:request.create')
-                    ->name('store');
-
-                Route::get('/edit/{id}', 'edit')
-                    ->middleware('permission:request.update')
-                    ->name('edit');
-
-                Route::put('/update/{id}', 'update')
-                    ->middleware('permission:request.update')
-                    ->name('update');
-
-                Route::get('/status/{id}', 'destroy')
-                    ->middleware('permission:request.delete')
-                    ->name('destroy');
-            });
-
         Route::prefix('category')
             ->name('category.')
             ->controller(CategoryController::class)
@@ -1163,7 +1119,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:category.update')
                     ->name('update');
 
-                Route::get('/status/{id}', 'destroy')
+                Route::delete('/status/{id}', 'destroy')
                     ->middleware('permission:category.delete')
                     ->name('destroy');
             });
@@ -1276,23 +1232,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->name('rollback');
             });
 
-        Route::prefix('received')
-            ->name('received.')
-            ->controller(PurchaseReceiveController::class)
-            ->group(function () {
-                Route::get('po/receiving', 'index')
-                    ->middleware('permission:received.view')
-                    ->name('index');
-
-                Route::get('po/receiving/{id}', 'details')
-                    ->middleware('permission:received.view')
-                    ->name('details');
-
-                Route::post('po/item/{id}/receive', 'receive')
-                    ->middleware('permission:received.receive')
-                    ->name('received');
-            });
-
         Route::prefix('buses')
             ->name('buses.')
             ->controller(BusDetailController::class)
@@ -1372,29 +1311,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::delete('/maintenance/odometer/{odometerSubmission}', 'destroyOdometer')
                 ->middleware('permission:odometer.delete')
                 ->name('destroy');
-        });
-
-    /*
-    |--------------------------------------------------------------------------
-    | Accounting - Purchase Orders
-    |--------------------------------------------------------------------------
-    */
-
-    Route::model('order', App\Models\PurchaseOrder::class);
-
-    Route::middleware(['auth'])
-        ->prefix('purchase')
-        ->name('purchase.')
-        ->controller(AccountingController::class)
-        ->group(function () {
-
-            Route::get('/index', 'index')
-                ->middleware('permission:purchase.view')
-                ->name('index');
-
-            Route::post('/update/{order}', 'update')
-                ->middleware('permission:purchase.update')
-                ->name('update');
         });
 
     /*
@@ -1479,7 +1395,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->middleware('permission:biometrics.update')
                 ->name('employees.update');
 
-            Route::post('/companies', 'store')
+            Route::post('/companies', [BiometricCompanyController::class, 'store'])
                 ->middleware('permission:biometrics.create')
                 ->name('companies.store');
         });

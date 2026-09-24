@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\HandleModalRedirects;
 use App\Http\Middleware\PayrollGroupAccess;
 use App\Providers\EventServiceProvider;
 use Illuminate\Foundation\Application;
@@ -19,6 +21,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+
+        // React pages (Inertia). Blade responses pass through untouched.
+        $middleware->web(append: [
+            HandleInertiaRequests::class,
+            // Inner to Inertia: rewrites redirects of saves made inside a React modal.
+            HandleModalRedirects::class,
+        ]);
 
         $middleware->alias([
             'role' => RoleMiddleware::class,

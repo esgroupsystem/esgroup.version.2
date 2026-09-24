@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1.2",
+        "inertiajs/inertia-laravel": "^3.3",
         "laracasts/flash": "^3.2",
         "laravel/framework": "^12.61.1",
         "laravel/sanctum": "^4.3.3",

@@ -17,6 +17,7 @@ use App\Services\Payroll\BiometricsProofService;
 use App\Services\Payroll\DailyAttendanceSummaryService;
 use App\Services\Payroll\PayrollComputationService;
 use App\Services\Payroll\PayrollPremiumService;
+use App\Support\PayrollEmployeeNameFormatter;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use DateTimeInterface;
@@ -24,7 +25,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\View\View;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class PayrollAttendanceAdjustmentController extends Controller
 {
@@ -36,7 +39,7 @@ class PayrollAttendanceAdjustmentController extends Controller
         private readonly PayrollComputationService $payrollComputationService,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $this->authorize('viewAny', PayrollAttendanceAdjustment::class);
 
@@ -45,6 +48,7 @@ class PayrollAttendanceAdjustmentController extends Controller
         $dateFrom = $request->date_from;
         $dateTo = $request->date_to;
         $groupName = trim((string) $request->group_name);
+        $status = trim((string) $request->status);
 
         $query = PayrollAttendanceAdjustment::query()
             ->with(['encoder', 'employeeBiometric', 'approver', 'rejector', 'paidPayroll'])
@@ -65,6 +69,7 @@ class PayrollAttendanceAdjustmentController extends Controller
                 });
             })
             ->when($type, fn ($query) => $query->where('adjustment_type', $type))
+            ->when(in_array($status, [PayrollAttendanceAdjustment::STATUS_PENDING, PayrollAttendanceAdjustment::STATUS_APPROVED, PayrollAttendanceAdjustment::STATUS_REJECTED], true), fn ($query) => $query->where('status', $status))
             ->when($groupName !== '', fn ($query) => $query->whereHas('employeeBiometric', fn ($employeeQuery) => $employeeQuery->where('group_name', $groupName)))
             ->when($dateFrom, function ($query) use ($dateFrom): void {
                 $query->whereDate(DB::raw('COALESCE(date_from, work_date)'), '>=', $dateFrom);
@@ -96,27 +101,167 @@ class PayrollAttendanceAdjustmentController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('payroll.attendance_adjustments.index', [
-            'adjustments' => $adjustments,
+        $user = $request->user();
+
+        return Inertia::render('payroll/adjustments/index', [
+            'adjustments' => $adjustments->through(
+                fn (PayrollAttendanceAdjustment $item): array => $this->adjustmentListRow($item)
+            ),
             'stats' => $stats,
-            'search' => $search,
-            'type' => $type,
-            'dateFrom' => $dateFrom,
-            'dateTo' => $dateTo,
-            'groupName' => $groupName,
-            'groups' => $this->groups(),
+            'filters' => [
+                'search' => $search,
+                'type' => (string) ($type ?? ''),
+                'date_from' => (string) ($dateFrom ?? ''),
+                'date_to' => (string) ($dateTo ?? ''),
+                'group_name' => $groupName,
+                'status' => $status,
+            ],
+            'groups' => ['1' => 'Mirasol / Balintawak Payroll', '2' => 'Gonzales Payroll'],
             'types' => PayrollAttendanceAdjustment::TYPES,
+            'can' => [
+                'create' => $user->can('create', PayrollAttendanceAdjustment::class),
+                'update' => $user->can('payroll-attendance-adjustments.update'),
+                'delete' => $user->can('payroll-attendance-adjustments.delete'),
+                'approve' => $user->can('payroll.finalize'),
+            ],
+            'urls' => [
+                'index' => route('payroll-attendance-adjustments.index'),
+                'create' => route('payroll-attendance-adjustments.create'),
+            ],
         ]);
     }
 
-    public function create(): View
+    /**
+     * One row of the adjustment list, with every label the Blade table showed.
+     */
+    private function adjustmentListRow(PayrollAttendanceAdjustment $item): array
+    {
+        $type = (string) $item->adjustment_type;
+        $isOffset = $type === PayrollAttendanceAdjustment::TYPE_OFFSET;
+        $isOvertime = $type === PayrollAttendanceAdjustment::TYPE_OVERTIME;
+        $isSalaryAdjustment = $type === PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT;
+        $approvalNoun = $isOvertime ? 'OT' : ($isSalaryAdjustment ? 'Salary Adjustment' : 'Offset');
+
+        $effect = match (true) {
+            $isOffset => 'Comp Time Credit',
+            $isOvertime => $item->status === PayrollAttendanceAdjustment::STATUS_APPROVED ? 'OT Pay Authorized' : 'No OT Pay Yet',
+            $type === PayrollAttendanceAdjustment::TYPE_HOLIDAY_WORK => 'Holiday Premium',
+            (bool) $item->is_paid => 'Paid Attendance',
+            default => 'Attendance Rule Only',
+        };
+
+        return [
+            'id' => $item->id,
+            'is_disaster' => $item->isGlobalDisasterAdjustment(),
+            'disaster_hours' => PayrollAttendanceAdjustment::typhoonDisasterRequiredHours($type),
+            'employee' => [
+                'name' => $item->payroll_display_name,
+                'employee_no' => $item->employee_no,
+                'employee_biometric_id' => $item->employee_biometric_id,
+                'biometric_employee_id' => $item->biometric_employee_id,
+            ],
+            'type' => $type,
+            'type_label' => $item->type_label,
+            'status' => $item->status ?: PayrollAttendanceAdjustment::STATUS_APPROVED,
+            'period_label' => $item->period_label,
+            'day_type_label' => $item->adjusted_day_type ? Str::headline($item->adjusted_day_type) : 'Standard day',
+            'adjusted_time_label' => $item->adjusted_time_label,
+            'offset' => $isOffset ? [
+                'proof_label' => $item->offset_proof_label,
+                'approved_hours' => $item->approved_minutes ? round($item->approved_minutes / 60, 2) : null,
+                'paid_payroll_number' => $item->paidPayroll?->payroll_number,
+            ] : null,
+            'effect' => $effect,
+            'effect_positive' => ! ($isOvertime && $item->status !== PayrollAttendanceAdjustment::STATUS_APPROVED),
+            'ignore_late' => (bool) $item->ignore_late,
+            'ignore_undertime' => (bool) $item->ignore_undertime,
+            'encoder_name' => $item->encoder?->name,
+            'encoded_at' => $item->encoded_at?->timezone('Asia/Manila')->format('M d, Y h:i A'),
+            'can_decide' => $item->isApprovalRequired() && $item->status === PayrollAttendanceAdjustment::STATUS_PENDING,
+            'approve_title' => "Approve {$approvalNoun}",
+            'reject_title' => "Reject {$approvalNoun}",
+            'approve_confirm' => match (true) {
+                $isOvertime => 'Approve this overtime adjustment for payroll payment?',
+                $isSalaryAdjustment => 'Approve this Salary Adjustment of '.$item->adjusted_time_label.'?',
+                default => 'Approve this Offset credit and apply it to the target attendance date?',
+            },
+            'reject_confirm' => match (true) {
+                $isOvertime => 'Reject this overtime adjustment? It will not be paid.',
+                $isSalaryAdjustment => 'Reject this Salary Adjustment? It will not be applied to payroll.',
+                default => 'Reject this Offset request? No compensatory credit will be applied.',
+            },
+            'urls' => [
+                'edit' => route('payroll-attendance-adjustments.edit', $item),
+                'destroy' => route('payroll-attendance-adjustments.destroy', $item),
+                'approve' => route('payroll-attendance-adjustments.approve', $item),
+                'reject' => route('payroll-attendance-adjustments.reject', $item),
+            ],
+        ];
+    }
+
+    public function create(): Response
     {
         $this->authorize('create', PayrollAttendanceAdjustment::class);
 
-        return view('payroll.attendance_adjustments.create', [
-            'people' => $this->getBiometricsPeople(),
+        return $this->renderForm(null);
+    }
+
+    /**
+     * Shared React form for create and edit. The same store/update endpoints,
+     * validation and payroll rules are used as before.
+     */
+    private function renderForm(?PayrollAttendanceAdjustment $adjustment): Response
+    {
+        $time = fn (?string $value): string => $value ? substr($value, 0, 5) : '';
+
+        return Inertia::render('payroll/adjustments/form', [
+            'adjustment' => $adjustment ? [
+                'id' => $adjustment->id,
+                'employee_biometric_id' => $adjustment->employee_biometric_id,
+                'adjustment_type' => (string) $adjustment->adjustment_type,
+                'work_date' => $adjustment->work_date?->toDateString() ?? '',
+                'date_from' => $adjustment->date_from?->toDateString() ?? '',
+                'date_to' => $adjustment->date_to?->toDateString() ?? '',
+                'adjusted_time_in' => $time($adjustment->adjusted_time_in),
+                'adjusted_time_out' => $time($adjustment->adjusted_time_out),
+                'offset_sources' => collect($adjustment->resolvedOffsetSources())
+                    ->map(fn (array $source): array => [
+                        'date' => $source['date'],
+                        'hours' => number_format($source['minutes'] / 60, 2, '.', ''),
+                    ])
+                    ->values()
+                    ->all(),
+                'amount' => $adjustment->amount !== null ? (string) $adjustment->amount : '',
+                'is_paid' => (bool) $adjustment->is_paid,
+                'ignore_late' => (bool) $adjustment->ignore_late,
+                'ignore_undertime' => (bool) $adjustment->ignore_undertime,
+                'reason' => (string) ($adjustment->reason ?? ''),
+                'remarks' => (string) ($adjustment->remarks ?? ''),
+                'status' => $adjustment->status,
+                'is_locked' => (bool) $adjustment->paid_payroll_id,
+            ] : null,
+            'people' => $this->getBiometricsPeople()
+                ->map(fn (object $person): array => [
+                    'employee_biometric_id' => (int) $person->employee_biometric_id,
+                    'biometric_employee_id' => $person->biometric_employee_id,
+                    'employee_no' => $person->employee_no,
+                    'employee_name' => $person->employee_name,
+                    'display_name' => PayrollEmployeeNameFormatter::display($person->employee_name),
+                    'crosschex_id' => $person->crosschex_id,
+                    'group_name' => $person->group_name !== null ? (string) $person->group_name : null,
+                ])
+                ->values(),
             'types' => PayrollAttendanceAdjustment::TYPES,
-            'groups' => $this->groups(),
+            'typeRules' => collect(PayrollAttendanceAdjustment::TYPES)
+                ->keys()
+                ->mapWithKeys(fn (string $type): array => [$type => PayrollAttendanceAdjustment::rulesFor($type)]),
+            'urls' => [
+                'index' => route('payroll-attendance-adjustments.index'),
+                'submit' => $adjustment
+                    ? route('payroll-attendance-adjustments.update', $adjustment)
+                    : route('payroll-attendance-adjustments.store'),
+                'offsetProof' => route('payroll-attendance-adjustments.offset-proof'),
+            ],
         ]);
     }
 
@@ -262,16 +407,11 @@ class PayrollAttendanceAdjustmentController extends Controller
         }
     }
 
-    public function edit(PayrollAttendanceAdjustment $payrollAttendanceAdjustment): View
+    public function edit(PayrollAttendanceAdjustment $payrollAttendanceAdjustment): Response
     {
         $this->authorize('update', $payrollAttendanceAdjustment);
 
-        return view('payroll.attendance_adjustments.edit', [
-            'payrollAttendanceAdjustment' => $payrollAttendanceAdjustment->load('employeeBiometric'),
-            'people' => $this->getBiometricsPeople(),
-            'types' => PayrollAttendanceAdjustment::TYPES,
-            'groups' => $this->groups(),
-        ]);
+        return $this->renderForm($payrollAttendanceAdjustment);
     }
 
     public function update(

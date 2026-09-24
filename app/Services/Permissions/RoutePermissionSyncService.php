@@ -113,6 +113,7 @@ class RoutePermissionSyncService
             $permissionsToDelete = Permission::query()
                 ->where('guard_name', $guardName)
                 ->whereIn('name', $toDelete)
+                ->with('roles')
                 ->get();
 
             foreach ($permissionsToDelete as $permission) {

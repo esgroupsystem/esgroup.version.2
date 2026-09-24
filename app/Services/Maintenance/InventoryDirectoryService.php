@@ -66,6 +66,7 @@ final class InventoryDirectoryService
     {
         return StockTransfer::query()
             ->with(['fromLocation', 'toLocation', 'creator'])
+            ->withCount('items')
             ->when(trim($search) !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $query) use ($search): void {
                     $query->where('transfer_number', 'like', "%{$search}%")

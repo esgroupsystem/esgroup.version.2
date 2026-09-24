@@ -11,11 +11,12 @@ use App\Models\DriverLeave;
 use App\Services\HR_Department\DriverLeaveActionService;
 use App\Services\HR_Department\LeaveDirectoryService;
 use App\Services\HR_Department\LeaveRecordService;
+use App\Support\HR\LeavePagePresenter;
 use DomainException;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Inertia\Response;
 use Throwable;
 
 class DriverLeaveController extends Controller
@@ -26,25 +27,14 @@ class DriverLeaveController extends Controller
         private readonly LeaveDirectoryService $leaveDirectoryService
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
-        $data = $this->leaveDirectoryService->driverIndex($request);
-
-        if ($request->ajax()) {
-            return view('hr_department.leaves.driver.table', [
-                'leaves' => $data['leaves'],
-                'today' => $data['today'],
-            ]);
-        }
-
-        return view('hr_department.leaves.driver.index', $data);
+        return LeavePagePresenter::index('driver', $this->leaveDirectoryService->driverIndex($request), $request);
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        return view('hr_department.leaves.driver.create', [
-            'drivers' => $this->leaveDirectoryService->drivers(),
-        ]);
+        return LeavePagePresenter::form('driver', null, $this->leaveDirectoryService->drivers());
     }
 
     public function store(LeaveRecordRequest $request): RedirectResponse
@@ -61,14 +51,11 @@ class DriverLeaveController extends Controller
         return redirect()->route('driver-leave.driver.index');
     }
 
-    public function edit(DriverLeave $leave): View
+    public function edit(DriverLeave $leave): Response
     {
         $leave->load(['employee.position']);
 
-        return view('hr_department.leaves.driver.edit', [
-            'leave' => $leave,
-            'drivers' => $this->leaveDirectoryService->drivers($leave),
-        ]);
+        return LeavePagePresenter::form('driver', $leave, $this->leaveDirectoryService->drivers($leave));
     }
 
     public function update(

@@ -14,6 +14,8 @@ final class EmployeeStatusTest extends TestCase
         $this->assertSame([
             'Active',
             'Active(Re-Entry)',
+            // Written by LeaveRecordService; must be accepted by the profile form.
+            'On Leave',
             'Inactive',
             'Suspended',
             'Terminated',
@@ -30,5 +32,8 @@ final class EmployeeStatusTest extends TestCase
         $this->assertSame(['Active', 'Active(Re-Entry)'], EmployeeStatus::activeValues());
         $this->assertContains('Terminated(due to AWOL)', EmployeeStatus::inactiveValues());
         $this->assertNotContains('Suspended', EmployeeStatus::inactiveValues());
+        // On leave is still employed: neither in the active count nor the inactive one.
+        $this->assertNotContains('On Leave', EmployeeStatus::activeValues());
+        $this->assertNotContains('On Leave', EmployeeStatus::inactiveValues());
     }
 }

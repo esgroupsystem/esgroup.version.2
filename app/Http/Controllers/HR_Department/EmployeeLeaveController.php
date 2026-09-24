@@ -11,11 +11,12 @@ use App\Models\EmployeeLeave;
 use App\Services\HR_Department\EmployeeLeaveActionService;
 use App\Services\HR_Department\LeaveDirectoryService;
 use App\Services\HR_Department\LeaveRecordService;
+use App\Support\HR\LeavePagePresenter;
 use DomainException;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Inertia\Response;
 use Throwable;
 
 class EmployeeLeaveController extends Controller
@@ -26,25 +27,14 @@ class EmployeeLeaveController extends Controller
         private readonly LeaveDirectoryService $leaveDirectoryService
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
-        $data = $this->leaveDirectoryService->employeeIndex($request);
-
-        if ($request->ajax()) {
-            return view('hr_department.leaves.employee.table', [
-                'leaves' => $data['leaves'],
-                'today' => $data['today'],
-            ]);
-        }
-
-        return view('hr_department.leaves.employee.index', $data);
+        return LeavePagePresenter::index('employee', $this->leaveDirectoryService->employeeIndex($request), $request);
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        return view('hr_department.leaves.employee.create', [
-            'employees' => $this->leaveDirectoryService->employees(),
-        ]);
+        return LeavePagePresenter::form('employee', null, $this->leaveDirectoryService->employees());
     }
 
     public function store(LeaveRecordRequest $request): RedirectResponse
@@ -61,14 +51,11 @@ class EmployeeLeaveController extends Controller
         return redirect()->route('employee-leave.employee.index');
     }
 
-    public function edit(EmployeeLeave $leave): View
+    public function edit(EmployeeLeave $leave): Response
     {
         $leave->load(['employee.position']);
 
-        return view('hr_department.leaves.employee.edit', [
-            'leave' => $leave,
-            'employees' => $this->leaveDirectoryService->employees($leave),
-        ]);
+        return LeavePagePresenter::form('employee', $leave, $this->leaveDirectoryService->employees($leave));
     }
 
     public function update(

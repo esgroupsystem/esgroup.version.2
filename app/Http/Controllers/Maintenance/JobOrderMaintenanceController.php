@@ -14,12 +14,14 @@ use App\Models\Bus;
 use App\Models\JobOrderMaintenance;
 use App\Services\Maintenance\JobOrderMaintenanceDirectoryService;
 use App\Services\Maintenance\JobOrderMaintenanceService;
-use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -30,7 +32,7 @@ final class JobOrderMaintenanceController extends Controller
         private readonly JobOrderMaintenanceService $jobOrderMaintenanceService,
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): InertiaResponse
     {
         $filters = $this->directoryService->filters($request);
 
@@ -69,13 +71,74 @@ final class JobOrderMaintenanceController extends Controller
                 ];
             });
 
-        return view('maintenance.job-orders.index', [
-            'jobOrders' => $jobOrders,
-            'buses' => $buses,
-            'statuses' => JobOrderStatus::options(),
-            'statusCards' => $statusCards,
-            'filters' => $filters,
+        $user = $request->user();
+
+        return Inertia::render('maintenance/job-orders/index', [
+            'jobOrders' => $jobOrders->through(fn (JobOrderMaintenance $jobOrder): array => [
+                ...$this->summary($jobOrder),
+                'work' => $jobOrder->description_of_work,
+                'repair_types' => $jobOrder->repair_type_enums->map(fn (JobOrderRepairType $type): array => ['value' => $type->value, 'label' => $type->label()])->values(),
+                'mechanics' => $jobOrder->mechanic_names_list !== [] ? $jobOrder->mechanic_names_label : null,
+                'odometer' => $jobOrder->odometer_reading !== null ? number_format($jobOrder->odometer_reading).' km' : null,
+                'odometer_note' => $jobOrder->odometer_comparison_label,
+                'odometer_lower' => (bool) $jobOrder->is_odometer_lower_than_last,
+                'downtime' => $jobOrder->total_downtime_label,
+                'downtime_running' => (bool) $jobOrder->is_downtime_running,
+                'created_date' => $jobOrder->created_at->format('M d, Y'),
+                'created_time' => $jobOrder->created_at->format('h:i A'),
+                'show_url' => route('maintenance.job-orders.show', $jobOrder),
+                'edit_status_url' => route('maintenance.job-orders.edit-status', $jobOrder),
+            ]),
+            'buses' => $buses->map(fn (Bus $bus): array => ['value' => (string) $bus->id, 'label' => $bus->bus_no.' — '.($bus->plate_no ?? 'No Plate')])->values(),
+            'statusCards' => $statusCards->map(fn (array $card): array => collect($card)->except(['badge_class', 'icon'])->all())->values(),
+            'statuses' => self::statusOptions(),
+            'filters' => [...$filters, 'bus_id' => $filters['bus_id'] ? (string) $filters['bus_id'] : ''],
+            'can' => [
+                'create' => (bool) $user?->can('job-orders.create'),
+                'updateStatus' => (bool) $user?->can('job-orders.update-status'),
+            ],
+            'urls' => [
+                'index' => route('maintenance.job-orders.index'),
+                'create' => route('maintenance.job-orders.create'),
+                'export' => route('maintenance.job-orders.export'),
+            ],
         ]);
+    }
+
+    /** @return array<string, mixed> Shared header fields for list rows and detail pages. */
+    private function summary(JobOrderMaintenance $jobOrder): array
+    {
+        return [
+            'id' => $jobOrder->id,
+            'job_order_no' => $jobOrder->job_order_no,
+            'creator' => $jobOrder->creator?->name ?? 'System',
+            'bus_no' => $jobOrder->bus?->bus_no ?? ($jobOrder->bus_no_snapshot ?? 'N/A'),
+            'plate_no' => $jobOrder->bus?->plate_no ?? ($jobOrder->plate_no_snapshot ?? 'N/A'),
+            'company' => $jobOrder->bus?->company ?? ($jobOrder->company_snapshot ?? 'N/A'),
+            'garage' => $jobOrder->bus?->garage ?? ($jobOrder->garage_snapshot ?? 'N/A'),
+            'requester' => $jobOrder->full_name ?: 'Not specified',
+            'status' => [
+                'value' => $jobOrder->status?->value,
+                'label' => $jobOrder->status_label,
+                'description' => $jobOrder->status_description,
+            ],
+        ];
+    }
+
+    /** @return list<array{value: string, label: string, description: string}> */
+    private static function statusOptions(): array
+    {
+        return collect(JobOrderStatus::cases())->map(fn (JobOrderStatus $status): array => [
+            'value' => $status->value,
+            'label' => $status->label(),
+            'description' => $status->description(),
+        ])->values()->all();
+    }
+
+    /** @return list<array{value: string, label: string}> */
+    private static function repairTypeOptions(): array
+    {
+        return collect(JobOrderRepairType::cases())->map(fn (JobOrderRepairType $type): array => ['value' => $type->value, 'label' => $type->label()])->values()->all();
     }
 
     public function export(Request $request): StreamedResponse|Response
@@ -103,7 +166,7 @@ final class JobOrderMaintenanceController extends Controller
         };
     }
 
-    public function create(): View
+    public function create(): InertiaResponse
     {
         $buses = Bus::query()
             ->with('latestJobOrderMaintenanceWithOdometer')
@@ -119,9 +182,22 @@ final class JobOrderMaintenanceController extends Controller
             ->orderBy('bus_no')
             ->get();
 
-        return view('maintenance.job-orders.create', [
-            'buses' => $buses,
-            'repairTypes' => JobOrderRepairType::cases(),
+        return Inertia::render('maintenance/job-orders/create', [
+            'buses' => $buses->map(fn (Bus $bus): array => [
+                'value' => (string) $bus->id,
+                'label' => $bus->bus_no.' — '.($bus->plate_no ?: 'No Plate'),
+                'hint' => ($bus->company ?: 'No Company').' — '.($bus->garage ?: 'No Garage'),
+                'bus_no' => $bus->bus_no,
+                'plate_no' => $bus->plate_no ?: '—',
+                'garage' => $bus->garage ?: '—',
+                'status' => $bus->operational_status_label,
+                'last_odometer' => $bus->latestJobOrderMaintenanceWithOdometer?->odometer_reading,
+            ])->values(),
+            'repairTypes' => self::repairTypeOptions(),
+            'urls' => [
+                'index' => route('maintenance.job-orders.index'),
+                'store' => route('maintenance.job-orders.store'),
+            ],
         ]);
     }
 
@@ -152,7 +228,7 @@ final class JobOrderMaintenanceController extends Controller
         }
     }
 
-    public function show(JobOrderMaintenance $jobOrderMaintenance): View
+    public function show(Request $request, JobOrderMaintenance $jobOrderMaintenance): InertiaResponse
     {
         $jobOrderMaintenance->load([
             'bus',
@@ -160,13 +236,71 @@ final class JobOrderMaintenanceController extends Controller
             'histories.user',
             'statusPeriods.changedBy',
         ]);
+        $jobOrder = $jobOrderMaintenance;
+        $user = $request->user();
+        $breakdown = $jobOrder->downtime_breakdown;
+        $km = static fn (?int $value): ?string => $value !== null ? number_format($value).' km' : null;
 
-        return view('maintenance.job-orders.show', [
-            'jobOrder' => $jobOrderMaintenance,
+        return Inertia::render('maintenance/job-orders/show', [
+            'jobOrder' => [
+                ...$this->summary($jobOrder),
+                'created' => $jobOrder->created_at->format('M d, Y h:i A'),
+                'created_date' => $jobOrder->created_at->format('M d, Y'),
+                'created_time' => $jobOrder->created_at->format('h:i A'),
+                'updated' => $jobOrder->updated_at?->format('M d, Y h:i A') ?? 'N/A',
+                'work' => $jobOrder->description_of_work,
+                'mechanics' => $jobOrder->mechanic_names_list,
+                'mechanics_label' => $jobOrder->mechanic_names_label,
+                'repair_types' => $jobOrder->repair_type_enums->map(fn (JobOrderRepairType $type): array => ['value' => $type->value, 'label' => $type->label()])->values(),
+                'repair_types_label' => $jobOrder->repair_types_label,
+                'downtime' => $jobOrder->total_downtime_label,
+                'downtime_running' => (bool) $jobOrder->is_downtime_running,
+                'downtime_breakdown' => collect(JobOrderStatus::downtimeStatuses())->map(fn (JobOrderStatus $status): array => [
+                    'value' => $status->value,
+                    'label' => $status->label(),
+                    'duration' => $breakdown[$status->value]['label'] ?? '—',
+                    'current' => $jobOrder->status === $status,
+                ])->values(),
+                'periods' => $jobOrder->statusPeriods->map(fn ($period): array => [
+                    'id' => $period->id,
+                    'status' => $period->status->value,
+                    'label' => $period->status->label(),
+                    'started' => $period->started_at?->format('M d, Y h:i A') ?? 'N/A',
+                    'ended' => $period->ended_at?->format('M d, Y h:i A'),
+                    'duration' => $period->duration_label,
+                    'by' => $period->changedBy?->name ?? 'System',
+                ])->values(),
+                'odometer' => $km($jobOrder->odometer_reading),
+                'last_odometer' => $km($jobOrder->last_odometer_reading),
+                'odometer_difference' => $km($jobOrder->odometer_difference),
+                'odometer_lower' => (bool) $jobOrder->is_odometer_lower_than_last,
+                'odometer_note' => $jobOrder->odometer_comparison_label,
+                'histories' => $jobOrder->histories->map(fn ($history): array => [
+                    'id' => $history->id,
+                    'action' => $history->action,
+                    'at' => $history->created_at?->format('M d, Y h:i A'),
+                    'by' => $history->user?->name ?? 'System',
+                    'old' => $history->old_value,
+                    'new' => $history->new_value,
+                    'remarks' => $history->remarks,
+                ])->values(),
+            ],
+            'statuses' => self::statusOptions(),
+            'can' => [
+                'updateNumber' => (bool) $user?->can('job-orders.update-number'),
+                'updateStatus' => (bool) $user?->can('job-orders.update-status'),
+            ],
+            'urls' => [
+                'index' => route('maintenance.job-orders.index'),
+                'csv' => route('maintenance.job-orders.export-single', ['jobOrderMaintenance' => $jobOrder, 'export_type' => 'csv']),
+                'xls' => route('maintenance.job-orders.export-single', ['jobOrderMaintenance' => $jobOrder, 'export_type' => 'xls']),
+                'editNumber' => route('maintenance.job-orders.edit-number', $jobOrder),
+                'editStatus' => route('maintenance.job-orders.edit-status', $jobOrder),
+            ],
         ]);
     }
 
-    public function editStatus(JobOrderMaintenance $jobOrderMaintenance): View
+    public function editStatus(JobOrderMaintenance $jobOrderMaintenance): InertiaResponse
     {
         $jobOrderMaintenance->load([
             'bus',
@@ -174,10 +308,23 @@ final class JobOrderMaintenanceController extends Controller
             'statusPeriods',
         ]);
 
-        return view('maintenance.job-orders.edit-status', [
-            'jobOrder' => $jobOrderMaintenance,
-            'statuses' => JobOrderStatus::cases(),
-            'repairTypes' => JobOrderRepairType::cases(),
+        return Inertia::render('maintenance/job-orders/edit-status', [
+            'jobOrder' => [
+                ...$this->summary($jobOrderMaintenance),
+                'work' => Str::limit((string) $jobOrderMaintenance->description_of_work, 220),
+            ],
+            'values' => [
+                'status' => (string) ($jobOrderMaintenance->status?->value ?? ''),
+                'mechanic_names' => $jobOrderMaintenance->mechanic_names_list !== [] ? array_values($jobOrderMaintenance->mechanic_names_list) : [''],
+                'repair_types' => array_values(array_map('strval', $jobOrderMaintenance->repair_types ?? [])),
+                'remarks' => '',
+            ],
+            'statuses' => self::statusOptions(),
+            'repairTypes' => self::repairTypeOptions(),
+            'urls' => [
+                'show' => route('maintenance.job-orders.show', $jobOrderMaintenance),
+                'update' => route('maintenance.job-orders.update-status', $jobOrderMaintenance),
+            ],
         ]);
     }
 
@@ -215,12 +362,16 @@ final class JobOrderMaintenanceController extends Controller
         }
     }
 
-    public function editNumber(JobOrderMaintenance $jobOrderMaintenance): View
+    public function editNumber(JobOrderMaintenance $jobOrderMaintenance): InertiaResponse
     {
         $jobOrderMaintenance->load(['bus', 'creator']);
 
-        return view('maintenance.job-orders.edit-number', [
-            'jobOrder' => $jobOrderMaintenance,
+        return Inertia::render('maintenance/job-orders/edit-number', [
+            'jobOrder' => $this->summary($jobOrderMaintenance),
+            'urls' => [
+                'show' => route('maintenance.job-orders.show', $jobOrderMaintenance),
+                'update' => route('maintenance.job-orders.update-number', $jobOrderMaintenance),
+            ],
         ]);
     }
 

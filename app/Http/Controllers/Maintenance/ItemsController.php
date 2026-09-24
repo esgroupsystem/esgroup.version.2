@@ -11,34 +11,47 @@ use App\Services\Maintenance\ProductCatalogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\View\View;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Inertia\Inertia;
+use Inertia\Response as InertiaResponse;
 
 final class ItemsController extends Controller
 {
     public function __construct(private readonly ProductCatalogService $productCatalogService) {}
 
-    public function index(Request $request): View|string|Response
+    public function index(Request $request): InertiaResponse
     {
-        $target = trim((string) $request->input('target', ''));
         $data = $this->productCatalogService->indexData((string) $request->input('search', ''));
+        $user = $request->user();
+        $row = fn (Product $product): array => [
+            'id' => $product->id,
+            'category_id' => (string) $product->category_id,
+            'category' => $product->category?->name,
+            'product_name' => $product->product_name,
+            'supplier_name' => $product->supplier_name,
+            'unit' => $product->unit,
+            'part_number' => $product->part_number,
+            'details' => $product->details,
+            'stock_qty' => (int) ($product->stock_qty ?? 0),
+            'update_url' => route('items.update', $product->id),
+            'destroy_url' => route('items.destroy', $product->id),
+        ];
 
-        if ($request->ajax()) {
-            if ($target === 'items') {
-                return view('maintenance.items.items_table', ['items' => $data['items']])->render();
-            }
-
-            if ($target === 'stock') {
-                return view('maintenance.items.stock_table', ['products' => $data['stock']])->render();
-            }
-
-            return response('<div class="alert alert-danger m-3">Invalid AJAX target.</div>', 400);
-        }
-
-        return view('maintenance.items.index', $data);
+        return Inertia::render('products/items/index', [
+            'items' => $data['items']->through($row),
+            'stock' => $data['stock']->through($row),
+            'categories' => $data['categories']->map(fn ($category): array => ['value' => (string) $category->id, 'label' => $category->name])->values(),
+            'filters' => ['search' => $data['search'], 'showStock' => $request->boolean('stock')],
+            'can' => [
+                'create' => (bool) $user?->can('items.create'),
+                'update' => (bool) $user?->can('items.update'),
+                'delete' => (bool) $user?->can('items.delete'),
+            ],
+            'urls' => ['index' => route('items.index'), 'store' => route('items.store')],
+        ]);
     }
 
-    public function dashboard(Request $request): View|RedirectResponse
+    public function dashboard(Request $request): InertiaResponse|RedirectResponse
     {
         $locationFilter = $request->input('location');
         if (! in_array($locationFilter, ['main', 'balintawak', 'needs_transfer', null, ''], true)) {
@@ -58,11 +71,56 @@ final class ItemsController extends Controller
             $request->query()
         );
 
-        return view('maintenance.items.dashboard', [
-            'search' => $search,
-            'locationFilter' => $locationFilter,
-            ...$data,
+        $tab = (string) $request->input('tab', '');
+
+        return Inertia::render('dashboards/maintenance-stock/index', [
+            'filters' => [
+                'search' => $search,
+                'location' => (string) ($locationFilter ?? ''),
+                'tab' => in_array($tab, ['main', 'balintawak', 'transfer'], true) ? $tab : 'main',
+            ],
+            'locationNames' => [
+                'main' => $data['mainLocation']->name ?? 'Main',
+                'balintawak' => $data['balintawakLocation']->name ?? 'Balintawak',
+            ],
+            'totals' => [
+                'items' => $data['totalItems'],
+                'stock' => (int) $data['totalStock'],
+                'main' => (int) $data['mainTotalStock'],
+                'balintawak' => (int) $data['balintawakTotalStock'],
+                'low' => $data['lowStock'],
+                'out' => $data['outOfStock'],
+            ],
+            'main' => $this->stockPage($data['mainStocksPaginated'], 'main_qty'),
+            'balintawak' => $this->stockPage($data['balintawakStocksPaginated'], 'balintawak_qty'),
+            'transfer' => $this->stockPage($data['needsTransferPaginated'], 'main_qty'),
+            'urls' => ['index' => route('items.dashboard'), 'items' => route('items.index')],
         ]);
+    }
+
+    /**
+     * Paginator → Inertia payload. The service paginates a collection with
+     * forPage(), which keeps keys, so rows are re-indexed to stay a JSON list.
+     *
+     * @return array<string, mixed>
+     */
+    private function stockPage(LengthAwarePaginator $paginator, string $qtyField): array
+    {
+        $page = $paginator->toArray();
+        $page['data'] = collect($paginator->items())->map(fn (Product $product): array => [
+            'id' => $product->id,
+            'category' => $product->category->name ?? ($product->category->category_name ?? '—'),
+            'name' => $product->product_name,
+            'details' => $product->details,
+            'part_number' => $product->part_number,
+            'unit' => $product->unit,
+            'qty' => (int) $product->{$qtyField},
+            'main_qty' => (int) $product->main_qty,
+            'balintawak_qty' => (int) $product->balintawak_qty,
+            'suggestion' => $product->transfer_suggestion,
+        ])->values()->all();
+
+        return $page;
     }
 
     public function store(ProductRequest $request): RedirectResponse

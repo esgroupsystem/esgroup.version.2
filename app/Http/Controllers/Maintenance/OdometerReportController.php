@@ -13,10 +13,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class OdometerReportController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $busId = $request->filled('bus_detail_id') ? (int) $request->bus_detail_id : null;
 
@@ -63,6 +65,7 @@ class OdometerReportController extends Controller
                 'odometer_submissions.driver_name',
                 'odometer_submissions.new_odometer',
                 'odometer_submissions.diesel_consumption',
+                'odometer_submissions.date_bus_deployed',
                 'bus_details.garage',
                 'bus_details.name as bus_name',
                 'bus_details.body_number',
@@ -140,28 +143,94 @@ class OdometerReportController extends Controller
             ->orderByDesc('id')
             ->get();
 
-        return view('maintenance.odometer.report', compact(
-            'records',
-            'submissions',
-            'buses',
-            'busId',
-            'selectedBus',
-            'lastChangeOilKm',
-            'filterType',
-            'month',
-            'selectedDate',
-            'dateFrom',
-            'dateTo',
-            'periodLabel',
-            'totalKm',
-            'totalLiters',
-            'averageKmPerLiter',
-            'currentDieselStock',
-            'periodDieselIn',
-            'periodDieselOut',
-            'periodDieselAdjustment',
-            'dieselStockMovements'
-        ));
+        $daily = $allRecords
+            ->groupBy(fn (array $row): string => Carbon::parse($row['date'])->toDateString())
+            ->sortKeys()
+            ->map(fn (Collection $rows, string $date): array => [
+                'label' => Carbon::parse($date)->format('M d'),
+                'km' => (int) $rows->sum('total_km_run'),
+                'liters' => round((float) $rows->sum('diesel_consumption'), 2),
+            ])
+            ->values();
+
+        $perBus = $allRecords
+            ->groupBy('bus_detail_id')
+            ->map(fn (Collection $rows): array => [
+                'label' => trim(($rows->first()['body_number'] ?? 'N/A').' '.($rows->first()['bus_name'] ?? '')),
+                'value' => (int) $rows->sum('total_km_run'),
+            ])
+            ->sortByDesc('value')
+            ->take(10)
+            ->values();
+
+        $user = $request->user();
+
+        return Inertia::render('dashboards/odometer/index', [
+            'filters' => [
+                'filter_type' => in_array($filterType, ['day', 'range'], true) ? $filterType : 'month',
+                'month' => $month,
+                'date' => $selectedDate,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'bus_detail_id' => $busId ? (string) $busId : '',
+                'last_change_oil' => $lastChangeOilKm !== null ? (string) $lastChangeOilKm : '',
+            ],
+            'periodLabel' => $periodLabel,
+            'selectedBus' => $selectedBus ? trim(($selectedBus->body_number ?? '').' - '.($selectedBus->name ?? '')) : null,
+            'buses' => $buses->map(fn (BusDetail $bus): array => [
+                'value' => (string) $bus->id,
+                'label' => trim(($bus->body_number ?? 'N/A').' - '.($bus->name ?? '').' · '.($bus->plate_number ?? '-').' · '.($bus->garage ?? '-')),
+            ])->values(),
+            'summary' => [
+                'current_stock' => round((float) $currentDieselStock, 2),
+                'period_in' => round((float) $periodDieselIn, 2),
+                'period_out' => round((float) $periodDieselOut, 2),
+                'period_adjustment' => round((float) $periodDieselAdjustment, 2),
+                'total_km' => (int) $totalKm,
+                'total_liters' => round((float) $totalLiters, 2),
+                'average_km_per_liter' => round((float) $averageKmPerLiter, 2),
+            ],
+            'records' => [
+                ...collect($submissions->toArray())->except('data')->all(),
+                'data' => $records->map(fn (array $row): array => [
+                    ...$row,
+                    'date_label' => Carbon::parse($row['date'])->format('M d, Y'),
+                    'date' => Carbon::parse($row['date'])->toDateString(),
+                    'time_label' => Carbon::parse($row['time'])->format('g:i A'),
+                    'time' => Carbon::parse($row['time'])->format('H:i'),
+                    'date_bus_deployed' => $row['date_bus_deployed'] ? Carbon::parse($row['date_bus_deployed'])->toDateString() : null,
+                    'km_per_liter' => round((float) $row['km_per_liter'], 2),
+                    'update_url' => route('odometer.update', $row['id']),
+                    'destroy_url' => route('odometer.destroy', $row['id']),
+                ])->values(),
+            ],
+            'movements' => $dieselStockMovements->map(fn (DieselStock $stock): array => [
+                'id' => $stock->id,
+                'date' => $stock->date?->format('M d, Y') ?? '-',
+                'type' => $stock->type,
+                'reference_no' => $stock->reference_no,
+                'bus' => $stock->bus ? trim(($stock->bus->body_number ?? '').' - '.($stock->bus->name ?? '')) : null,
+                'liters' => (float) $stock->liters,
+                'unit_cost' => $stock->unit_cost !== null ? (float) $stock->unit_cost : null,
+                'total_cost' => $stock->total_cost !== null ? (float) $stock->total_cost : null,
+                'remarks' => $stock->remarks,
+                'encoder' => $stock->encoder?->full_name,
+            ])->values(),
+            'charts' => ['daily' => $daily, 'perBus' => $perBus],
+            // Mirrors the route middleware on each odometer.* write route.
+            'can' => [
+                'create' => (bool) $user?->can('odometer.create'),
+                'edit' => (bool) $user?->can('odometer.edit'),
+                'delete' => (bool) $user?->can('odometer.delete'),
+                'diesel' => (bool) $user?->can('odometer.update'),
+            ],
+            'urls' => [
+                'index' => route('odometer.index'),
+                'export' => route('odometer.export'),
+                'manual' => route('odometer.manual.store'),
+                'diesel' => route('odometer.diesel-stock.store'),
+            ],
+        ]);
     }
 
     public function storeDieselStock(Request $request)
@@ -194,7 +263,8 @@ class OdometerReportController extends Controller
             'date_bus_deployed' => ['nullable', 'date'],
             'date' => ['required', 'date'],
             'time' => ['required', 'regex:/^\d{2}:\d{2}(:\d{2})?$/'],
-            'driver_name' => ['nullable', 'string', 'max:255'],
+            // odometer_submissions.driver_name is NOT NULL; a blank name used to fail with a 500.
+            'driver_name' => ['required', 'string', 'max:255'],
             'new_odometer' => ['required', 'integer', 'min:0'],
             'diesel_consumption' => ['nullable', 'numeric', 'min:0'],
             'also_deduct_diesel_stock' => ['nullable', 'boolean'],
@@ -318,7 +388,8 @@ class OdometerReportController extends Controller
             'date_bus_deployed' => ['nullable', 'date'],
             'date' => ['required', 'date'],
             'time' => ['required'],
-            'driver_name' => ['nullable', 'string', 'max:255'],
+            // odometer_submissions.driver_name is NOT NULL; a blank name used to fail with a 500.
+            'driver_name' => ['required', 'string', 'max:255'],
             'new_odometer' => ['required', 'integer', 'min:0'],
             'diesel_consumption' => ['nullable', 'numeric', 'min:0'],
         ]);
@@ -453,6 +524,7 @@ class OdometerReportController extends Controller
 
             return [
                 'id' => (int) $row->id,
+                'bus_detail_id' => $currentBusId,
                 'garage' => $row->garage,
                 'bus_name' => $row->bus_name,
                 'body_number' => $row->body_number,
@@ -460,6 +532,9 @@ class OdometerReportController extends Controller
                 'date' => $row->date,
                 'time' => $row->time,
                 'driver_name' => $row->driver_name ?: 'N/A',
+                // Raw values for the edit form (index only selects date_bus_deployed).
+                'driver_name_raw' => $row->driver_name,
+                'date_bus_deployed' => $row->date_bus_deployed ?? null,
                 'previous_odometer' => $previousOdometer,
                 'new_odometer' => $newOdometer,
                 'total_km_run' => $totalKmRun,

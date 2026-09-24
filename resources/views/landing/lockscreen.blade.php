@@ -1,201 +1,208 @@
-@extends('layouts.landing')
+@extends('layouts.auth')
 
 @php
     $nonce = app()->bound('csp_nonce') ? app('csp_nonce') : '';
+    $lockUser = Auth::user();
+    $displayName = $lockUser?->full_name ?: ($lockUser?->name ?: $lockUser?->username);
 @endphp
 
-@section('body_class', 'auth-login-body')
+@section('title', 'Session locked | Jell Group of Company')
+@section('body_class', 'lx-body')
+
+@push('styles')
+    @include('layouts.partials.auth-styles')
+    <style>
+        /* This headline is longer than the login one; let it wrap instead of running under the card. */
+        .lx-title > span {
+            white-space: normal;
+        }
+
+        .lx-avatar {
+            width: 5.2em;
+            height: 5.2em;
+            margin: 0 auto 1em;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #fff;
+            box-shadow: 0 10px 24px -10px rgba(15, 23, 42, .5), 0 0 0 1px rgba(15, 23, 42, .08);
+        }
+
+        .lx-lock-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: .4em;
+            margin-top: .9em;
+            padding: .3em .75em;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-size: .72em;
+            font-weight: 600;
+        }
+
+        .lx-lock-badge svg {
+            width: 1em;
+            height: 1em;
+        }
+
+        .lx-signout {
+            border: 0;
+            background: none;
+            padding: 0;
+            font: inherit;
+            cursor: pointer;
+        }
+    </style>
+@endpush
 
 @section('content')
-    <main class="main auth-login-page" id="top">
-        <div class="container-fluid px-0 h-100">
-            <div class="row g-0 h-100 bg-100">
+    <main class="lx-page" id="top">
+        <img class="lx-bg" src="{{ asset('assets/img/generic/groupes.jpg') }}" alt="" aria-hidden="true">
 
-                {{-- LEFT LOCKSCREEN SIDE --}}
-                <div class="col-lg-5 col-xl-4 d-flex align-items-center justify-content-center px-3 px-sm-4">
-                    <div class="card auth-login-card shadow-lg border-0 mx-auto overflow-hidden">
-                        <div class="card-header bg-primary bg-gradient text-center py-3">
-                            <h3 class="text-white fw-bolder mb-1">JELL GROUP</h3>
-                            <p class="text-white opacity-75 mb-0 fs-10">Secure Employee Session</p>
+        <div class="lx-shell">
+            {{-- LEFT: brand + message --}}
+            <section class="lx-hero" aria-label="Jell Group">
+                <div class="lx-brand">
+                    <div class="lx-brand-mark">
+                        <img src="{{ asset('assets/img/favicons/esgroup-logo180x180.png') }}" alt="">
+                    </div>
+                    <div class="lx-brand-name">Jell Group of Company</div>
+                </div>
+
+                <div class="lx-rule"></div>
+
+                <div class="lx-tagline">
+                    Locked Safe <i></i> Reliable Access <i></i> Secure Service
+                </div>
+
+                <h1 class="lx-title">
+                    <span>Safety Starts Here,</span>
+                    <span><em>Access</em> Continues Securely.</span>
+                </h1>
+
+                <p class="lx-lead">
+                    Every journey deserves protection. We secure every session, every route, and every client we serve.
+                </p>
+
+                <div class="lx-hero-foot">
+                    <div class="lx-pillars">
+                        <div class="lx-pillar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                            <strong>Locked Safe</strong>
+                            <span>Your account stays protected</span>
                         </div>
+                        <div class="lx-pillar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M8 6v6" /><path d="M15 6v6" /><path d="M2 12h19.6" />
+                                <path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3" />
+                                <circle cx="7" cy="18" r="2" /><path d="M9 18h5" /><circle cx="16" cy="18" r="2" />
+                            </svg>
+                            <strong>Reliable Access</strong>
+                            <span>Ready when duty calls</span>
+                        </div>
+                        <div class="lx-pillar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="m9 12 2 2 4-4" />
+                            </svg>
+                            <strong>Secure Service</strong>
+                            <span>Protection for every workflow</span>
+                        </div>
+                    </div>
+                    <div class="lx-system"><span>Secure Employee Session</span></div>
+                </div>
+            </section>
 
-                        <div class="card-body p-4">
-                            <div class="text-center mb-4">
-                                <div class="avatar avatar-4xl mx-auto mb-3">
-                                    <img class="rounded-circle shadow-sm"
-                                        src="{{ asset('assets/img/lockscreen/profile_lockscreen.jpg') }}" alt="User Avatar">
-                                </div>
+            {{-- RIGHT: unlock card --}}
+            <div class="lx-card-wrap">
+                <div class="lx-card">
+                    <div class="lx-card-head">
+                        <img class="lx-avatar" src="{{ asset('assets/img/lockscreen/profile_lockscreen.jpg') }}" alt="">
+                        <div class="lx-card-brand">Jell Group of Company</div>
+                        <h2 class="lx-card-title">Hello, {{ $displayName }}</h2>
+                        <p class="lx-card-sub">Your session is locked. Enter your password to continue.</p>
+                        <span class="lx-lock-badge">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                            Session locked
+                        </span>
+                    </div>
 
-                                <h4 class="fw-bold mb-1">
-                                    Hello, {{ Auth::user()->name ?? Auth::user()->username }}
-                                </h4>
-                                <p class="text-600 mb-0 fs-10">
-                                    Your session is locked. Enter your password to continue.
-                                </p>
-                            </div>
+                    {{-- Errors show as top-right toasts (layouts.partials.toasts). --}}
 
-                            @if ($errors->any())
-                                <div class="alert alert-danger small rounded-3 py-2">
-                                    {{ $errors->first() }}
-                                </div>
-                            @endif
+                    <form method="POST" action="{{ route('lockscreen.unlock') }}" id="lockscreenForm">
+                        @csrf
 
-                            <form method="POST" action="{{ route('lockscreen.unlock') }}" id="lockscreenForm">
-                                @csrf
-
-                                <div class="mb-2">
-                                    <label class="form-label" for="lockPassword">Password</label>
-                                    <div class="position-relative">
-                                        <input class="form-control pe-5" id="lockPassword" name="password" type="password"
-                                            required autofocus>
-
-                                        <span id="toggleLockPassword" class="password-eye">👁</span>
-                                    </div>
-                                </div>
-
-                                {{-- CLOUDFLARE TURNSTILE --}}
-                                <div class="card bg-light border border-300 mb-2">
-                                    <div class="card-body py-2 d-flex justify-content-center align-items-center">
-                                        <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}"
-                                            data-theme="light" data-callback="turnstileSuccess"
-                                            data-expired-callback="turnstileExpired" data-error-callback="turnstileExpired">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                @error('turnstile')
-                                    <div class="text-danger small mt-1 text-center">{{ $message }}</div>
-                                @enderror
-
-                                <button class="btn btn-primary d-block w-100 mt-3" type="submit">
-                                    Unlock Session
+                        <div class="lx-field">
+                            <label class="lx-label" for="lockPassword">Password</label>
+                            <div class="lx-input-wrap">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                                <input class="lx-input" id="lockPassword" name="password" type="password"
+                                    placeholder="Enter your password" autocomplete="current-password" required autofocus>
+                                <button type="button" id="toggleLockPassword" class="lx-eye" aria-label="Show password" aria-pressed="false">
+                                    <svg class="lx-eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    <svg class="lx-eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" hidden>
+                                        <path d="M9.9 4.2A10.4 10.4 0 0 1 12 4c6.5 0 10 8 10 8a17.6 17.6 0 0 1-2.2 3.2" />
+                                        <path d="M6.6 6.6A17.4 17.4 0 0 0 2 12s3.5 8 10 8a9.7 9.7 0 0 0 5.4-1.6" />
+                                        <path d="M14.1 14.1a3 3 0 1 1-4.2-4.2" /><path d="m2 2 20 20" />
+                                    </svg>
                                 </button>
-                            </form>
-
-                            <div class="text-center mt-3 fs-10 text-600">
-                                Not you?
-                                <a href="{{ route('logout') }}"
-                                    onclick="event.preventDefault(); document.getElementById('logoutForm').submit();">
-                                    Sign out
-                                </a>
                             </div>
-
-                            <p class="text-center fs-10 text-600 mt-2 mb-0">
-                                Protected access for JELL GROUP employees.
-                            </p>
-
-                            <form id="logoutForm" action="{{ route('logout') }}" method="POST" class="d-none">
-                                @csrf
-                            </form>
                         </div>
-                    </div>
+
+                        <div class="lx-verify">
+                            <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}"
+                                data-theme="light" data-callback="turnstileSuccess"
+                                data-expired-callback="turnstileExpired" data-error-callback="turnstileExpired">
+                            </div>
+                        </div>
+
+                        @error('turnstile')
+                            <p class="lx-field-error">{{ $message }}</p>
+                        @enderror
+
+                        <button class="lx-submit" type="submit" style="margin-top: .6em;">
+                            <span>Unlock Session</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+                            </svg>
+                        </button>
+                    </form>
+
+                    <p class="lx-help">
+                        Not you?
+                        <button type="submit" form="logoutForm" class="lx-link lx-signout">Sign out</button>
+                    </p>
+
+                    <form id="logoutForm" action="{{ route('logout') }}" method="POST" hidden>
+                        @csrf
+                    </form>
                 </div>
-
-                {{-- RIGHT TRANSPORT DESIGN SIDE --}}
-                <div
-                    class="col-lg-7 col-xl-8 d-none d-lg-flex align-items-center bg-primary position-relative overflow-hidden auth-transport-side">
-                    <img class="position-absolute w-100 h-100 object-fit-cover auth-transport-img"
-                        src="{{ asset('assets/img/generic/groupes.jpg') }}" alt="Jell Group Transport">
-
-                    <div class="position-relative z-1 px-5 px-xl-7 text-white auth-transport-content">
-                        <div class="badge rounded-pill bg-white text-primary px-3 py-2 mb-3 shadow-sm auth-fade-up">
-                            Secure Transport Portal
-                        </div>
-
-                        <div class="transport-hero-copy auth-fade-up">
-                            <div class="transport-kicker">
-                                <span class="transport-bus">🚌</span>
-                                <span id="transportWord">Session Protected</span>
-                            </div>
-
-                            <h1 class="fw-bolder mb-3 auth-title">
-                                Safety Starts <span>Here,</span><br>
-                                Access Continues Securely.
-                            </h1>
-                        </div>
-
-                        <div class="card border-0 shadow-lg bg-white bg-opacity-75 auth-quote-card auth-fade-up">
-                            <div class="card-body p-4">
-                                <p class="mb-0 fw-semibold text-900 auth-quote-text">
-                                    “Every journey deserves protection. We secure every session,
-                                    every route, and every client we serve.”
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mt-3 auth-fade-up">
-                            <div class="col-md-4">
-                                <div class="card bg-white bg-opacity-75 border-0 shadow-sm h-100">
-                                    <div class="card-body p-3">
-                                        <span class="fas fa-lock text-primary fs-4 mb-2"></span>
-                                        <h6 class="fw-bold mb-1">Locked Safe</h6>
-                                        <p class="text-700 fs-10 mb-0">Your account stays protected.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <div class="card bg-white bg-opacity-75 border-0 shadow-sm h-100">
-                                    <div class="card-body p-3">
-                                        <span class="fas fa-bus text-primary fs-4 mb-2"></span>
-                                        <h6 class="fw-bold mb-1">Reliable Access</h6>
-                                        <p class="text-700 fs-10 mb-0">Ready when duty calls.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <div class="card bg-white bg-opacity-75 border-0 shadow-sm h-100">
-                                    <div class="card-body p-3">
-                                        <span class="fas fa-shield-alt text-primary fs-4 mb-2"></span>
-                                        <h6 class="fw-bold mb-1">Secure Service</h6>
-                                        <p class="text-700 fs-10 mb-0">Protection for every workflow.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
             </div>
         </div>
+
+        <footer class="lx-footer">
+            <span>&copy; {{ now()->year }} Jell Group of Company. All rights reserved.</span>
+            <nav aria-label="Legal">
+                <span>Privacy</span><span>Terms</span><span>Support</span>
+            </nav>
+        </footer>
     </main>
 
     @push('scripts')
-        <script nonce="{{ $nonce }}">
-            document.addEventListener('DOMContentLoaded', function() {
-                const word = document.getElementById('transportWord');
-                if (!word) return;
-
-                const words = [
-                    'Session Protected',
-                    'Safe Access',
-                    'Secure Routes',
-                    'Trusted Service',
-                    'Ready to Continue'
-                ];
-
-                let index = 0;
-
-                setInterval(function() {
-                    word.classList.add('transport-word-out');
-
-                    setTimeout(function() {
-                        index = (index + 1) % words.length;
-                        word.textContent = words[index];
-
-                        word.classList.remove('transport-word-out');
-                        word.classList.add('transport-word-in');
-
-                        setTimeout(function() {
-                            word.classList.remove('transport-word-in');
-                        }, 650);
-                    }, 420);
-                }, 5000);
-            });
-        </script>
+        <script nonce="{{ $nonce }}" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
         <script nonce="{{ $nonce }}">
+            // The widget calls these; unlocking itself only checks the password (UnlockRequest).
+            window.turnstileSuccess = function() {};
+            window.turnstileExpired = function() {};
+
             document.addEventListener('DOMContentLoaded', function() {
                 const toggle = document.getElementById('toggleLockPassword');
                 const password = document.getElementById('lockPassword');
@@ -203,10 +210,13 @@
                 if (!toggle || !password) return;
 
                 toggle.addEventListener('click', function() {
-                    const isHidden = password.type === 'password';
+                    const show = password.type === 'password';
 
-                    password.type = isHidden ? 'text' : 'password';
-                    this.textContent = isHidden ? '🙈' : '👁';
+                    password.type = show ? 'text' : 'password';
+                    toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+                    toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    toggle.querySelector('.lx-eye-open').hidden = show;
+                    toggle.querySelector('.lx-eye-closed').hidden = !show;
                 });
             });
         </script>

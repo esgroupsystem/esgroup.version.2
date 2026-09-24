@@ -1,165 +1,174 @@
-@extends('layouts.landing')
+@extends('layouts.auth')
 
 @php
     $nonce = app()->bound('csp_nonce') ? app('csp_nonce') : '';
 @endphp
 
-@section('body_class', 'auth-login-body')
+@section('title', 'Sign in | Jell Group of Company')
+@section('body_class', 'lx-body')
+
+@push('styles')
+    @include('layouts.partials.auth-styles')
+@endpush
 
 @section('content')
-    <main class="main auth-login-page" id="top">
-        <div class="container-fluid px-0 h-100">
-            <div class="row g-0 h-100 bg-100">
+    <main class="lx-page" id="top">
+        <img class="lx-bg" src="{{ asset('assets/img/generic/groupes.jpg') }}" alt="" aria-hidden="true">
 
-                {{-- LEFT LOGIN SIDE --}}
-                <div class="col-lg-5 col-xl-4 d-flex align-items-center justify-content-center px-3 px-sm-4">
-                    <div class="card auth-login-card shadow-lg border-0 mx-auto overflow-hidden">
-                        <div class="card-header bg-primary bg-gradient text-center py-3">
-                            <h3 class="text-white fw-bolder mb-1">JELL GROUP</h3>
-                            <p class="text-white opacity-75 mb-0 fs-10">Employee Transport Portal</p>
-                        </div>
-
-                        <div class="card-body p-4">
-                            <div class="mb-3">
-                                <h3 class="fw-bold mb-1">Account Login</h3>
-                                <p class="text-600 mb-0 fs-10">Verify Cloudflare to continue.</p>
-                            </div>
-
-                            @if ($errors->any())
-                                <div class="alert alert-danger small rounded-3 py-2">
-                                    <ul class="mb-0">
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            @endif
-
-                            <form method="POST" action="{{ route('login.post') }}" id="loginForm">
-                                @csrf
-
-                                <div class="mb-2">
-                                    <label class="form-label" for="username">Username</label>
-                                    <input class="form-control" id="username" name="username" type="text"
-                                        value="{{ old('username') }}" required autofocus>
-                                </div>
-
-                                <div class="mb-2">
-                                    <label class="form-label" for="password">Password</label>
-                                    <div class="position-relative">
-                                        <input class="form-control pe-5" id="password" name="password" type="password"
-                                            required>
-                                        <span id="togglePassword" class="password-eye">👁</span>
-                                    </div>
-                                </div>
-
-                                <div class="row flex-between-center mb-2">
-                                    <div class="col-auto">
-                                        <div class="form-check mb-0">
-                                            <input class="form-check-input" type="checkbox" id="remember" name="remember">
-                                            <label class="form-check-label mb-0 fs-10" for="remember">Remember me</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <a class="fs-10" href="#">Forgot Password?</a>
-                                    </div>
-                                </div>
-
-                                <div class="card bg-light border border-300 mb-2">
-                                    <div class="card-body py-2 d-flex justify-content-center align-items-center">
-                                        <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}"
-                                            data-theme="light" data-callback="turnstileSuccess"
-                                            data-expired-callback="turnstileExpired" data-error-callback="turnstileExpired">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div id="turnstileStatus" class="text-danger fs-10 text-center mb-2">
-                                    Complete Cloudflare verification to enable login.
-                                </div>
-
-                                @error('turnstile')
-                                    <div class="text-danger small mt-1 text-center">{{ $message }}</div>
-                                @enderror
-
-                                <button id="loginBtn" class="btn btn-primary d-block w-100 mt-2" type="submit" disabled>
-                                    <span id="loginBtnText"> Log in </span> </button>
-                            </form>
-                        </div>
+        <div class="lx-shell">
+            {{-- LEFT: brand + message --}}
+            <section class="lx-hero" aria-label="Jell Group">
+                <div class="lx-brand">
+                    <div class="lx-brand-mark">
+                        <img src="{{ asset('assets/img/favicons/esgroup-logo180x180.png') }}" alt="">
                     </div>
+                    <div class="lx-brand-name">Jell Group of Company</div>
                 </div>
 
-                {{-- RIGHT TRANSPORT DESIGN SIDE --}}
-                <div
-                    class="col-lg-7 col-xl-8 d-none d-lg-flex align-items-center bg-primary position-relative overflow-hidden auth-transport-side">
-                    <img class="position-absolute w-100 h-100 object-fit-cover auth-transport-img"
-                        src="{{ asset('assets/img/generic/groupes.jpg') }}" alt="Jell Group Transport">
+                <div class="lx-rule"></div>
 
-                    <div class="position-relative z-1 px-5 px-xl-7 text-white auth-transport-content">
-                        <div class="badge rounded-pill bg-white text-primary px-3 py-2 mb-3 shadow-sm auth-fade-up">
-                            EDSA Carousel Philippines
-                        </div>
-
-                        <div class="transport-hero-copy auth-fade-up">
-                            <div class="transport-kicker">
-                                <span class="transport-bus">🚌</span>
-                                <span id="transportWord">Safe Travel</span>
-                            </div>
-
-                            <h1 class="fw-bolder mb-3 auth-title">
-                                Moving People <span>Safely,</span><br>
-                                One Journey at a Time.
-                            </h1>
-                        </div>
-
-                        <div class="card border-0 shadow-lg bg-white bg-opacity-75 auth-quote-card auth-fade-up">
-                            <div class="card-body p-4">
-                                <p class="mb-0 fw-semibold text-900 auth-quote-text">
-                                    “Every journey matters. We move with safety, serve with respect,
-                                    and carry every client toward a better destination.”
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mt-3 auth-fade-up">
-                            <div class="col-md-4">
-                                <div class="card bg-white bg-opacity-75 border-0 shadow-sm h-100">
-                                    <div class="card-body p-3">
-                                        <span class="fas fa-shield-alt text-primary fs-4 mb-2"></span>
-                                        <h6 class="fw-bold mb-1">Safe Travel</h6>
-                                        <p class="text-700 fs-10 mb-0">Security and care in every route.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <div class="card bg-white bg-opacity-75 border-0 shadow-sm h-100">
-                                    <div class="card-body p-3">
-                                        <span class="fas fa-bus text-primary fs-4 mb-2"></span>
-                                        <h6 class="fw-bold mb-1">Reliable Fleet</h6>
-                                        <p class="text-700 fs-10 mb-0">Prepared to serve passengers daily.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <div class="card bg-white bg-opacity-75 border-0 shadow-sm h-100">
-                                    <div class="card-body p-3">
-                                        <span class="fas fa-handshake text-primary fs-4 mb-2"></span>
-                                        <h6 class="fw-bold mb-1">Client First</h6>
-                                        <p class="text-700 fs-10 mb-0">Service built with trust and respect.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div class="lx-tagline">
+                    Safe Travel <i></i> Reliable Fleet <i></i> Client First
                 </div>
 
+                <h1 class="lx-title">
+                    <span>Moving People Safely,</span>
+                    <span><em>One Journey</em> at a Time.</span>
+                </h1>
+
+                <p class="lx-lead">
+                    Every journey matters. We move with safety, serve with respect, and carry every client toward a
+                    better destination.
+                </p>
+
+                <div class="lx-hero-foot">
+                    <div class="lx-pillars">
+                        <div class="lx-pillar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                <path d="m9 12 2 2 4-4" />
+                            </svg>
+                            <strong>Safe Travel</strong>
+                            <span>Security in every route</span>
+                        </div>
+                        <div class="lx-pillar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M8 6v6" /><path d="M15 6v6" /><path d="M2 12h19.6" />
+                                <path d="M18 18h3s.5-1.7.8-2.8c.1-.4.2-.8.2-1.2 0-.4-.1-.8-.2-1.2l-1.4-5C20.1 6.8 19.1 6 18 6H4a2 2 0 0 0-2 2v10h3" />
+                                <circle cx="7" cy="18" r="2" /><path d="M9 18h5" /><circle cx="16" cy="18" r="2" />
+                            </svg>
+                            <strong>Reliable Fleet</strong>
+                            <span>Ready to serve daily</span>
+                        </div>
+                        <div class="lx-pillar">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                            <strong>Client First</strong>
+                            <span>Built on trust and respect</span>
+                        </div>
+                    </div>
+                    <div class="lx-system"><span>Employee Transport Portal</span></div>
+                </div>
+            </section>
+
+            {{-- RIGHT: login card --}}
+            <div class="lx-card-wrap">
+                <div class="lx-card">
+                    <div class="lx-card-head">
+                        <div class="lx-card-logo">
+                            <img src="{{ asset('assets/img/favicons/esgroup-logo180x180.png') }}" alt="">
+                        </div>
+                        <div class="lx-card-brand">Jell Group of Company</div>
+                        <h2 class="lx-card-title">Welcome Back</h2>
+                        <p class="lx-card-sub">Sign in to access your company portal</p>
+                    </div>
+
+                    {{-- Errors and flash messages show as top-right toasts (layouts.partials.toasts). --}}
+
+                    <form method="POST" action="{{ route('login.post') }}" id="loginForm">
+                        @csrf
+
+                        <div class="lx-field">
+                            <label class="lx-label" for="username">Username</label>
+                            <div class="lx-input-wrap">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+                                </svg>
+                                <input class="lx-input" id="username" name="username" type="text" value="{{ old('username') }}"
+                                    placeholder="Enter your username" autocomplete="username" required autofocus>
+                            </div>
+                        </div>
+
+                        <div class="lx-field">
+                            <label class="lx-label" for="password">Password</label>
+                            <div class="lx-input-wrap">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                </svg>
+                                <input class="lx-input" id="password" name="password" type="password"
+                                    placeholder="Enter your password" autocomplete="current-password" required>
+                                <button type="button" id="togglePassword" class="lx-eye" aria-label="Show password" aria-pressed="false">
+                                    <svg class="lx-eye-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    <svg class="lx-eye-closed" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" hidden>
+                                        <path d="M9.9 4.2A10.4 10.4 0 0 1 12 4c6.5 0 10 8 10 8a17.6 17.6 0 0 1-2.2 3.2" />
+                                        <path d="M6.6 6.6A17.4 17.4 0 0 0 2 12s3.5 8 10 8a9.7 9.7 0 0 0 5.4-1.6" />
+                                        <path d="M14.1 14.1a3 3 0 1 1-4.2-4.2" /><path d="m2 2 20 20" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="lx-row">
+                            <label class="lx-check" for="remember">
+                                <input type="checkbox" id="remember" name="remember" @checked(old('remember'))>
+                                Remember me
+                            </label>
+                            <a class="lx-link" href="#" id="forgotPassword">Forgot Password?</a>
+                        </div>
+
+                        <div class="lx-verify">
+                            <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.site_key') }}"
+                                data-theme="light" data-callback="turnstileSuccess"
+                                data-expired-callback="turnstileExpired" data-error-callback="turnstileExpired">
+                            </div>
+                        </div>
+
+                        <p id="turnstileStatus" class="lx-status text-danger">
+                            Complete the security check to enable sign in.
+                        </p>
+
+                        @error('turnstile')
+                            <p class="lx-field-error">{{ $message }}</p>
+                        @enderror
+
+                        <button id="loginBtn" class="lx-submit" type="submit" disabled>
+                            <span id="loginBtnText">Sign In</span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="M5 12h14" /><path d="m12 5 7 7-7 7" />
+                            </svg>
+                        </button>
+                    </form>
+
+                    <p class="lx-help">Need help? <a class="lx-link" href="#" id="contactSupport">Contact IT Support</a></p>
+                </div>
             </div>
         </div>
+
+        <footer class="lx-footer">
+            <span>&copy; {{ now()->year }} Jell Group of Company. All rights reserved.</span>
+            <nav aria-label="Legal">
+                <span>Privacy</span><span>Terms</span><span>Support</span>
+            </nav>
+        </footer>
     </main>
 
     @push('scripts')
+        <script nonce="{{ $nonce }}" src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
         <script nonce="{{ $nonce }}">
             window.turnstileSuccess = function() {
                 const loginBtn = document.getElementById('loginBtn');
@@ -169,7 +178,7 @@
                 loginBtn.classList.remove('disabled');
                 turnstileStatus.classList.remove('text-danger');
                 turnstileStatus.classList.add('text-success');
-                turnstileStatus.textContent = 'Cloudflare verified. You can now log in.';
+                turnstileStatus.textContent = 'Security check passed. You can now sign in.';
             };
 
             window.turnstileExpired = function() {
@@ -180,41 +189,8 @@
                 loginBtn.classList.add('disabled');
                 turnstileStatus.classList.remove('text-success');
                 turnstileStatus.classList.add('text-danger');
-                turnstileStatus.textContent = 'Please verify Cloudflare again before login.';
+                turnstileStatus.textContent = 'Please complete the security check again before signing in.';
             };
-        </script>
-
-        <script nonce="{{ $nonce }}">
-            document.addEventListener('DOMContentLoaded', function() {
-                const word = document.getElementById('transportWord');
-                if (!word) return;
-
-                const words = [
-                    'Safe Travel',
-                    'Reliable Routes',
-                    'Client Care',
-                    'Commuter Trust',
-                    'Better Journeys'
-                ];
-
-                let index = 0;
-
-                setInterval(function() {
-                    word.classList.add('transport-word-out');
-
-                    setTimeout(function() {
-                        index = (index + 1) % words.length;
-                        word.textContent = words[index];
-
-                        word.classList.remove('transport-word-out');
-                        word.classList.add('transport-word-in');
-
-                        setTimeout(function() {
-                            word.classList.remove('transport-word-in');
-                        }, 650);
-                    }, 420);
-                }, 5000);
-            });
         </script>
 
         <script nonce="{{ $nonce }}">
@@ -225,10 +201,27 @@
                 if (!toggle || !password) return;
 
                 toggle.addEventListener('click', function() {
-                    const isHidden = password.type === 'password';
+                    const show = password.type === 'password';
 
-                    password.type = isHidden ? 'text' : 'password';
-                    this.textContent = isHidden ? '🙈' : '👁';
+                    password.type = show ? 'text' : 'password';
+                    toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+                    toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+                    toggle.querySelector('.lx-eye-open').hidden = show;
+                    toggle.querySelector('.lx-eye-closed').hidden = !show;
+                });
+
+                // Forgot password / IT support have no self-service flow yet; point users to IT.
+                ['forgotPassword', 'contactSupport'].forEach(function(id) {
+                    const link = document.getElementById(id);
+                    if (!link) return;
+
+                    link.addEventListener('click', function(event) {
+                        event.preventDefault();
+                        const status = document.getElementById('turnstileStatus');
+                        status.classList.remove('text-danger');
+                        status.classList.add('text-success');
+                        status.textContent = 'Please contact the IT Department to reset your password or get help signing in.';
+                    });
                 });
             });
         </script>
@@ -267,7 +260,6 @@
                     loginBtn.classList.add('disabled');
 
                     loginBtn.style.pointerEvents = 'none';
-                    loginBtn.style.opacity = '0.8';
 
                     /*
                     |--------------------------------------------------------------------------
@@ -286,8 +278,7 @@
                     |--------------------------------------------------------------------------
                     */
 
-                    loginBtnText.innerHTML =
-                        `Please wait (${seconds}s)`;
+                    loginBtnText.textContent = `Please wait (${seconds}s)`;
 
                     const timer = setInterval(() => {
 
@@ -302,8 +293,7 @@
                             return;
                         }
 
-                        loginBtnText.innerHTML =
-                            `Please wait (${seconds}s)`;
+                        loginBtnText.textContent = `Please wait (${seconds}s)`;
 
                     }, 1000);
                 @endif

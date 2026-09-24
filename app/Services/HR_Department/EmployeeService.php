@@ -13,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 final class EmployeeService
 {
+    public const ASSET_DOCUMENTS = ['birth_certificate', 'resume', 'contract'];
+
     public function __construct(private readonly EmployeeAuditService $audit) {}
 
     /** @param  array<string, mixed>  $data */
@@ -163,6 +165,22 @@ final class EmployeeService
                 } elseif ($manualDate !== null) {
                     $asset->{$dateField} = $manualDate;
                 }
+            }
+
+            // 201 documents are stored on the private disk and served by SecureFileController.
+            foreach (self::ASSET_DOCUMENTS as $document) {
+                $file = $data[$document] ?? null;
+                if (! $file instanceof UploadedFile) {
+                    continue;
+                }
+
+                if ($asset->{$document}) {
+                    Storage::disk('local')->delete($asset->{$document});
+                }
+
+                $name = $document.'_'.$employee->id.'_'.time().'.'.strtolower($file->getClientOriginalExtension());
+                $asset->{$document} = $file->storeAs('employees/201', $name, 'local');
+                $asset->{$document.'_updated_at'} = now();
             }
 
             $asset->save();

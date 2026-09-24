@@ -7,11 +7,18 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ClaimRequest;
 use App\Models\Claim;
 use App\Models\Employee;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ClaimController extends Controller
 {
-    public function index(Request $request)
+    public const TYPES = ['SSS', 'MATERNITY', 'PATERNITY', 'SICKNESS', 'RETIREMENT'];
+
+    public const STATUSES = ['Draft', 'Ongoing', 'Approved', 'Requested', 'Released', 'Rejected'];
+
+    public function index(Request $request): Response
     {
         $base = Claim::query()->with('employee');
 
@@ -68,7 +75,57 @@ class ClaimController extends Controller
             ->orderBy('full_name')
             ->get();
 
-        return view('hr_department.claims.index', compact('claims', 'allClaims', 'employees', 'dateField'));
+        $date = static fn ($value): ?string => $value ? Carbon::parse($value)->format('Y-m-d') : null;
+        $user = $request->user();
+
+        return Inertia::render('hr/claims/index', [
+            'claims' => $claims->through(fn (Claim $claim): array => [
+                'id' => $claim->id,
+                'employee_id' => (string) $claim->employee_id,
+                'employee' => $claim->employee?->full_name,
+                'claim_type' => $claim->claim_type,
+                'status' => $claim->status,
+                'reference_no' => $claim->reference_no,
+                'date_of_notification' => $date($claim->date_of_notification),
+                'date_filed' => $date($claim->date_filed),
+                'approval_date' => $date($claim->approval_date),
+                'fund_request_date' => $date($claim->fund_request_date),
+                'fund_released_date' => $date($claim->fund_released_date),
+                'amount' => $claim->amount !== null ? (string) $claim->amount : null,
+                'remarks' => $claim->remarks,
+            ]),
+            'statusCounts' => $allClaims->groupBy('status')->map->count(),
+            'employees' => $employees->map(fn (Employee $employee): array => ['value' => (string) $employee->id, 'label' => (string) $employee->full_name])->values(),
+            'types' => self::TYPES,
+            'statuses' => self::STATUSES,
+            'dateFields' => [
+                'date_of_notification' => 'Notification',
+                'date_filed' => 'Filed',
+                'approval_date' => 'Approval',
+                'fund_request_date' => 'Fund request',
+                'fund_released_date' => 'Fund released',
+            ],
+            'filters' => [
+                'q' => (string) $request->input('q', ''),
+                'employee_id' => (string) $request->input('employee_id', ''),
+                'claim_type' => (string) $request->input('claim_type', ''),
+                'status' => (string) $request->input('status', ''),
+                'date_field' => $dateField,
+                'date_from' => (string) $request->input('date_from', ''),
+                'date_to' => (string) $request->input('date_to', ''),
+            ],
+            'can' => [
+                'create' => (bool) $user?->can('claims.create'),
+                'update' => (bool) $user?->can('claims.update'),
+                'delete' => (bool) $user?->can('claims.delete'),
+            ],
+            'urls' => [
+                'index' => route('claims.index'),
+                'store' => route('claims.store'),
+                'update' => route('claims.update', '__ID__'),
+                'destroy' => route('claims.destroy', '__ID__'),
+            ],
+        ]);
     }
 
     public function store(ClaimRequest $request)

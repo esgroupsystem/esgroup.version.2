@@ -14,7 +14,8 @@ use App\Services\Payroll\EmployeePlottingScheduleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class EmployeePlottingScheduleController extends Controller
 {
@@ -26,7 +27,7 @@ class EmployeePlottingScheduleController extends Controller
     /**
      * Display one permanent schedule row per active biometric employee.
      */
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $search = trim((string) $request->query('search', ''));
         $status = trim((string) $request->query('status', ''));
@@ -137,7 +138,6 @@ class EmployeePlottingScheduleController extends Controller
             )->count(),
         ];
 
-        $workdayOptions = WorkdayType::options();
         $workdayRules = collect(WorkdayType::cases())
             ->mapWithKeys(fn (WorkdayType $type): array => [
                 $type->value => [
@@ -152,19 +152,45 @@ class EmployeePlottingScheduleController extends Controller
             ->all();
         $weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
-        return view('payroll.plotting.index', compact(
-            'employees',
-            'schedules',
-            'search',
-            'status',
-            'shift',
-            'groupName',
-            'groups',
-            'stats',
-            'workdayOptions',
-            'workdayRules',
-            'weekdays'
-        ));
+        $employees->through(function (EmployeeBiometric $employee) use ($schedules): array {
+            $schedule = $schedules->get((int) $employee->id);
+
+            return [
+                'employee_biometric_id' => (int) $employee->id,
+                'name' => $employee->plotting_employee_name,
+                'employee_no' => $employee->plotting_employee_no,
+                'group_name' => $employee->group_name !== null ? (string) $employee->group_name : null,
+                'schedule' => [
+                    'status' => $schedule->status ?? 'scheduled',
+                    'shift_name' => $schedule->shift_name ?? 'Regular Shift',
+                    'workday_type' => $schedule?->resolvedWorkdayType()->value ?? WorkdayType::EightHours->value,
+                    'time_in' => $schedule?->time_in ? substr((string) $schedule->time_in, 0, 5) : null,
+                    'time_out' => $schedule?->time_out ? substr((string) $schedule->time_out, 0, 5) : null,
+                    'grace_minutes' => $schedule->grace_minutes ?? 15,
+                    'day_offs' => $schedule?->resolvedDayOffs() ?? [],
+                    'remarks' => $schedule->remarks ?? '',
+                    'is_saved' => $schedule !== null,
+                ],
+            ];
+        });
+
+        return Inertia::render('payroll/plotting/index', [
+            'employees' => $employees,
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'shift' => $shift,
+                'group_name' => $groupName,
+            ],
+            'groups' => $groups->map(fn ($group): string => (string) $group)->values(),
+            'stats' => $stats,
+            'workdayRules' => $workdayRules,
+            'weekdays' => $weekdays,
+            'urls' => [
+                'index' => route('payroll-plotting.index'),
+                'save' => route('payroll-plotting.save'),
+            ],
+        ]);
     }
 
     /**

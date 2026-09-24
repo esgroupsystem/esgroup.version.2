@@ -8,19 +8,22 @@ use App\Http\Controllers\Controller;
 use App\Models\Holiday;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class HolidayController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $year = (int) ($request->year ?: now('Asia/Manila')->year);
         $month = (int) ($request->month ?: now('Asia/Manila')->month);
         $search = trim((string) $request->search);
+        $type = in_array($request->type, [Holiday::TYPE_REGULAR, Holiday::TYPE_SPECIAL], true) ? (string) $request->type : '';
 
         $query = Holiday::query()
             ->whereYear('observed_date', $year)
             ->when($month, fn ($q) => $q->whereMonth('observed_date', $month))
+            ->when($type, fn ($q) => $q->where('holiday_type', $type))
             ->when($search, function ($q) use ($search): void {
                 $q->where(function ($inner) use ($search): void {
                     $inner->where('name', 'like', "%{$search}%")
@@ -36,20 +39,49 @@ class HolidayController extends Controller
             ->whereYear('observed_date', $year)
             ->orderBy('observed_date')
             ->get()
-            ->groupBy(fn ($holiday) => $holiday->observed_date->format('Y-m-d'));
+            ->groupBy(fn (Holiday $holiday): string => $holiday->observed_date->format('Y-m-d'))
+            ->map(fn ($day) => $day->map(fn (Holiday $holiday): array => [
+                'name' => $holiday->name,
+                'type' => $holiday->holiday_type,
+                'moved_from' => $holiday->is_moved ? $holiday->actual_date->format('M d') : null,
+            ])->values());
 
-        return view('payroll.holidays.index', compact(
-            'holidays',
-            'calendar',
-            'year',
-            'month',
-            'search'
-        ));
+        $user = $request->user();
+
+        return Inertia::render('payroll/holidays/index', [
+            'holidays' => $holidays->through(fn (Holiday $holiday): array => [
+                'id' => $holiday->id,
+                'name' => $holiday->name,
+                'type' => $holiday->holiday_type,
+                'actual_date' => $holiday->actual_date->format('M d, Y'),
+                'observed_date' => $holiday->observed_date->format('M d, Y'),
+                'is_moved' => (bool) $holiday->is_moved,
+                'is_active' => (bool) $holiday->is_active,
+                'not_worked_multiplier' => (float) $holiday->not_worked_multiplier,
+                'worked_multiplier' => (float) $holiday->worked_multiplier,
+                'source' => $holiday->source_proclamation,
+                'urls' => [
+                    'edit' => route('holidays.edit', $holiday),
+                    'destroy' => route('holidays.destroy', $holiday),
+                ],
+            ]),
+            'calendar' => $calendar,
+            'filters' => ['year' => $year, 'month' => $month, 'search' => $search, 'type' => $type],
+            'can' => [
+                'create' => $user->can('holidays.create'),
+                'update' => $user->can('holidays.update'),
+                'delete' => $user->can('holidays.delete'),
+            ],
+            'urls' => [
+                'index' => route('holidays.index'),
+                'create' => route('holidays.create'),
+            ],
+        ]);
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        return view('payroll.holidays.create');
+        return $this->renderForm(null);
     }
 
     public function store(Request $request): RedirectResponse
@@ -63,9 +95,9 @@ class HolidayController extends Controller
             ->with('success', 'Holiday created successfully. Payroll multiplier was assigned automatically from the holiday type.');
     }
 
-    public function edit(Holiday $holiday): View
+    public function edit(Holiday $holiday): Response
     {
-        return view('payroll.holidays.edit', compact('holiday'));
+        return $this->renderForm($holiday);
     }
 
     public function update(Request $request, Holiday $holiday): RedirectResponse
@@ -86,6 +118,42 @@ class HolidayController extends Controller
         return redirect()
             ->route('holidays.index')
             ->with('success', 'Holiday deleted successfully.');
+    }
+
+    private function renderForm(?Holiday $holiday): Response
+    {
+        $type = $holiday->holiday_type ?? Holiday::TYPE_REGULAR;
+        $standard = Holiday::standardMultipliers($type);
+        $notWorked = $holiday ? (float) $holiday->not_worked_multiplier : (float) $standard['not_worked_multiplier'];
+        $worked = $holiday ? (float) $holiday->worked_multiplier : (float) $standard['worked_multiplier'];
+
+        return Inertia::render('payroll/holidays/form', [
+            'holiday' => $holiday ? ['id' => $holiday->id, 'name' => $holiday->name] : null,
+            'values' => [
+                'name' => (string) ($holiday->name ?? ''),
+                'holiday_type' => $type,
+                'source_proclamation' => (string) ($holiday->source_proclamation ?? ''),
+                'actual_date' => $holiday?->actual_date?->format('Y-m-d') ?? '',
+                'observed_date' => $holiday?->observed_date?->format('Y-m-d') ?? '',
+                // A saved holiday whose multipliers differ from the standard ones was customised.
+                'override_multipliers' => $holiday !== null
+                    && (abs($notWorked - (float) $standard['not_worked_multiplier']) > 0.001
+                        || abs($worked - (float) $standard['worked_multiplier']) > 0.001),
+                'not_worked_multiplier' => number_format($notWorked, 2, '.', ''),
+                'worked_multiplier' => number_format($worked, 2, '.', ''),
+                'notes' => (string) ($holiday->notes ?? ''),
+                'is_moved' => (bool) ($holiday->is_moved ?? false),
+                'is_active' => (bool) ($holiday->is_active ?? true),
+            ],
+            'standardMultipliers' => [
+                Holiday::TYPE_REGULAR => Holiday::standardMultipliers(Holiday::TYPE_REGULAR),
+                Holiday::TYPE_SPECIAL => Holiday::standardMultipliers(Holiday::TYPE_SPECIAL),
+            ],
+            'urls' => [
+                'index' => route('holidays.index'),
+                'submit' => $holiday ? route('holidays.update', $holiday) : route('holidays.store'),
+            ],
+        ]);
     }
 
     private function validatedPayload(Request $request): array

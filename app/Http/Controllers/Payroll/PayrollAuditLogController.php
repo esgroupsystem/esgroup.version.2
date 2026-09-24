@@ -9,11 +9,12 @@ use App\Models\PayrollAuditLog;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class PayrollAuditLogController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:150'],
@@ -89,12 +90,47 @@ class PayrollAuditLogController extends Controller
             ->orderBy('full_name')
             ->get(['id', 'full_name', 'username', 'email']);
 
-        return view('payroll.audit_logs.index', compact(
-            'logs',
-            'modules',
-            'actions',
-            'users',
-            'filters'
-        ));
+        $json = fn ($value): ?string => $value === null || $value === []
+            ? null
+            : json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $headline = fn (?string $value): string => ucwords(str_replace('_', ' ', (string) $value));
+
+        return Inertia::render('payroll/audit-logs/index', [
+            'logs' => $logs->through(fn (PayrollAuditLog $log): array => [
+                'id' => $log->id,
+                'date' => $log->created_at?->timezone('Asia/Manila')->format('M d, Y'),
+                'time' => $log->created_at?->timezone('Asia/Manila')->format('h:i:s A'),
+                'user_name' => $log->user?->full_name ?: ($log->user?->username ?: 'System / Console'),
+                'user_email' => $log->user?->email,
+                'module' => $headline($log->module),
+                'action' => $log->action,
+                'action_label' => $headline($log->action),
+                'payroll_number' => $log->payroll?->payroll_number,
+                'employee_name' => $log->employeeBiometric?->payroll_display_name,
+                'employee_no' => $log->employeeBiometric
+                    ? ($log->employeeBiometric->effective_employee_no ?? 'Bio ID: '.$log->employee_biometric_id)
+                    : ($log->employee_biometric_id ? 'Bio ID: '.$log->employee_biometric_id : null),
+                'garage_group' => $log->garage_group ?: 'N/A',
+                'description' => $log->description ?: 'Payroll-related change',
+                'request_id' => $log->request_id,
+                'ip_address' => $log->ip_address ?: 'System / Console',
+                'user_agent' => $log->user_agent ?: 'N/A',
+                'old_values' => $json($log->old_values),
+                'new_values' => $json($log->new_values),
+                'context' => $json($log->context),
+            ]),
+            'modules' => $modules->mapWithKeys(fn ($module): array => [(string) $module => $headline($module)]),
+            'actions' => $actions->mapWithKeys(fn ($action): array => [(string) $action => $headline($action)]),
+            'users' => $users->mapWithKeys(fn (User $user): array => [(string) $user->id => $user->full_name ?: $user->username]),
+            'filters' => [
+                'search' => (string) ($filters['search'] ?? ''),
+                'module' => (string) ($filters['module'] ?? ''),
+                'action' => (string) ($filters['action'] ?? ''),
+                'user_id' => isset($filters['user_id']) ? (string) $filters['user_id'] : '',
+                'date_from' => (string) ($filters['date_from'] ?? ''),
+                'date_to' => (string) ($filters['date_to'] ?? ''),
+            ],
+            'urls' => ['index' => route('payroll-audit-logs.index')],
+        ]);
     }
 }

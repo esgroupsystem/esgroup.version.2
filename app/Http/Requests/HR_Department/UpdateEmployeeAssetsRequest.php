@@ -25,6 +25,9 @@ final class UpdateEmployeeAssetsRequest extends FormRequest
             'tin_updated_at' => ['nullable', 'date'],
             'philhealth_updated_at' => ['nullable', 'date'],
             'pagibig_updated_at' => ['nullable', 'date'],
+            'birth_certificate' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx'],
+            'resume' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx'],
+            'contract' => ['nullable', 'file', 'max:10240', 'mimes:pdf,jpg,jpeg,png,webp,doc,docx'],
         ];
     }
 }

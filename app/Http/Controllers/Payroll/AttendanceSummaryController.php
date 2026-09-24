@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
 
 class AttendanceSummaryController extends Controller
 {
@@ -56,33 +58,106 @@ class AttendanceSummaryController extends Controller
             ->paginate(25)
             ->withQueryString();
 
-        if ($request->ajax()) {
-            return view('payroll.attendance_summary.table', compact(
-                'summaries',
-                'cutoffLabel',
-                'stats'
-            ))->render();
-        }
-
-        $statusOptions = $this->statusOptions();
-        $dayTypeOptions = $this->dayTypeOptions();
         $payrollGroups = $this->payrollGroups();
+        $filters = [
+            'cutoff_month' => $cutoffMonth,
+            'cutoff_year' => $cutoffYear,
+            'cutoff_type' => $cutoffType,
+            'search' => $search,
+            'status' => $status,
+            'day_type' => $dayType,
+            'group_name' => $groupName,
+        ];
+        $thisYear = (int) now('Asia/Manila')->year;
 
-        return view('payroll.attendance_summary.index', compact(
-            'summaries',
-            'stats',
-            'cutoffMonth',
-            'cutoffYear',
-            'cutoffType',
-            'cutoffLabel',
-            'search',
-            'status',
-            'dayType',
-            'groupName',
-            'statusOptions',
-            'dayTypeOptions',
-            'payrollGroups'
-        ));
+        return Inertia::render('payroll/attendance-summary/index', [
+            'summaries' => $summaries->through(fn (DailyAttendanceSummary $row): array => $this->summaryRow($row)),
+            'stats' => $stats,
+            'filters' => $filters,
+            'cutoffLabel' => $cutoffLabel,
+            'groupLabel' => $groupName !== '' ? ($payrollGroups[$groupName] ?? 'Payroll Group '.$groupName) : 'All Payroll Groups',
+            'statusOptions' => $this->statusOptions(),
+            'dayTypeOptions' => $this->dayTypeOptions(),
+            'payrollGroups' => $payrollGroups,
+            'years' => range($thisYear + 1, $thisYear - 3),
+            'can' => [
+                'rebuild' => $request->user()->can('attendance-summary.create'),
+                'export' => $request->user()->can('attendance-summary.export'),
+            ],
+            'urls' => [
+                'index' => route('attendance-summary.index'),
+                'rebuild' => route('attendance-summary.rebuild'),
+                'export' => route('attendance-summary.export-payroll', array_filter($filters, fn ($value) => $value !== '' && $value !== null)),
+            ],
+        ]);
+    }
+
+    /**
+     * One table row with the same derived labels the Blade table computed.
+     */
+    private function summaryRow(DailyAttendanceSummary $row): array
+    {
+        $status = (string) ($row->attendance_status ?? '');
+        $paidMinutesPerDay = max(60, (int) data_get($row->meta, 'paid_minutes_per_day', 480));
+        $scheduledClockMinutes = max($paidMinutesPerDay, (int) data_get($row->meta, 'scheduled_clock_minutes', $paidMinutesPerDay + 60));
+        $isFlexible = $row->isFlexibleShift();
+        $isNoSchedule = ! $row->hasConfiguredSchedule()
+            || $status === 'no_schedule'
+            || strtolower((string) $row->shift_name) === 'no schedule';
+        $payableDays = (float) $row->payable_days;
+        $time = fn ($value): ?string => $value ? Carbon::parse($value)->format('h:i A') : null;
+        $hours = fn (float $value): string => number_format($value, $value == floor($value) ? 0 : 2);
+
+        return [
+            'id' => $row->id,
+            'work_date' => $row->work_date ? Carbon::parse($row->work_date)->format('M d, Y') : null,
+            'weekday' => $row->work_date ? Carbon::parse($row->work_date)->format('l') : null,
+            'employee_name' => $row->payroll_display_name,
+            'employee_no' => $row->employee_no,
+            'biometric_employee_id' => $row->biometric_employee_id,
+            'schedule' => [
+                'kind' => $isNoSchedule ? 'none' : ($isFlexible ? 'flexible' : (($row->scheduled_time_in || $row->scheduled_time_out) ? 'fixed' : 'other')),
+                'shift_name' => $row->shift_name,
+                'time_in' => $time($row->scheduled_time_in),
+                'time_out' => $time($row->scheduled_time_out),
+                'paid_hours' => $hours($paidMinutesPerDay / 60),
+                'clock_hours' => $hours($scheduledClockMinutes / 60),
+                'has_lunch' => $scheduledClockMinutes > $paidMinutesPerDay,
+                'grace_minutes' => (int) $row->grace_minutes,
+                'status_label' => $row->schedule_status ? strtoupper(str_replace('_', ' ', $row->schedule_status)) : 'NO STATUS',
+            ],
+            'actual_in' => $row->actual_time_in ? ['time' => $time($row->actual_time_in), 'date' => Carbon::parse($row->actual_time_in)->format('M d')] : null,
+            'actual_out' => $row->actual_time_out ? ['time' => $time($row->actual_time_out), 'date' => Carbon::parse($row->actual_time_out)->format('M d')] : null,
+            'late_minutes' => (int) $row->late_minutes,
+            'undertime_minutes' => (int) $row->undertime_minutes,
+            'worked_minutes' => (int) $row->worked_minutes,
+            'status' => $status,
+            'status_label' => strtoupper(str_replace('_', ' ', $status ?: 'N/A')),
+            'needs_check' => in_array($status, ['holiday_unpaid', 'no_schedule', 'incomplete_log'], true),
+            'day' => match (true) {
+                (bool) $row->is_holiday => [
+                    'kind' => 'holiday',
+                    'name' => $row->holiday_name ?: 'Holiday',
+                    'type' => $row->holiday_type ? strtoupper(str_replace('_', ' ', $row->holiday_type)) : 'Type not set',
+                ],
+                (bool) $row->is_rest_day => ['kind' => 'rest_day'],
+                (bool) $row->is_leave => ['kind' => 'leave'],
+                default => ['kind' => 'regular'],
+            },
+            'adjustment' => $row->has_adjustment ? [
+                'type' => $row->adjustment_type ? strtoupper(str_replace('_', ' ', $row->adjustment_type)) : 'Manual Adjustment',
+                'remarks' => $row->adjustment_remarks ? Str::limit($row->adjustment_remarks, 60) : null,
+            ] : null,
+            'pay_label' => match (true) {
+                $payableDays > 1 => 'Premium Pay',
+                $payableDays == 1.0 => 'Full Pay',
+                $payableDays > 0 => 'Partial Pay',
+                default => 'No Pay',
+            },
+            'payable_days' => number_format($payableDays, 2),
+            'payable_hours' => number_format((float) $row->payable_hours, 2),
+            'remarks' => trim((string) $row->remarks) !== '' ? Str::limit(trim((string) $row->remarks), 180) : null,
+        ];
     }
 
     public function rebuild(Request $request, DailyAttendanceSummaryService $service)

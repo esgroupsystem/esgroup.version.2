@@ -12,19 +12,20 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 final class UserManagementController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $q = trim((string) $request->input('q', ''));
         $actor = $request->user();
 
         $users = User::query()
             ->with('roles')
-            ->when(!$actor->isDeveloper(), function ($query): void {
+            ->when(! $actor->isDeveloper(), function ($query): void {
                 $query->whereDoesntHave('roles', function ($roleQuery): void {
                     $roleQuery->where('name', 'Developer');
                 });
@@ -44,7 +45,7 @@ final class UserManagementController extends Controller
             ->withQueryString();
 
         $roles = collect(User::availableAssignableRoles($actor))
-            ->map(fn(string $name) => \Spatie\Permission\Models\Role::findByName($name, 'web'))
+            ->map(fn (string $name) => \Spatie\Permission\Models\Role::findByName($name, 'web'))
             ->filter()
             ->sortBy('name')
             ->values();
@@ -53,7 +54,40 @@ final class UserManagementController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('users.index', compact('users', 'roles', 'locations', 'q'));
+        return Inertia::render('authentication/users/index', [
+            'users' => $users->through(fn (User $user): array => [
+                'id' => $user->id,
+                'full_name' => $user->full_name,
+                'username' => $user->username,
+                'email' => $user->email,
+                'role' => $user->role ?? 'N/A',
+                'role_name' => $user->roles->pluck('name')->first() ?? (string) ($user->role ?? ''),
+                'location_id' => $user->location_id ? (string) $user->location_id : '',
+                'account_status' => $user->account_status,
+                'last_online' => $user->last_online?->format('M d, Y h:i A'),
+                'updated_at' => $user->updated_at?->format('M d, Y h:i A'),
+                'is_self' => $user->is($actor),
+                'update_url' => route('authentication.users.update', $user->id),
+                'reset_url' => route('authentication.users.reset.password', $user->id),
+                'status_url' => route('authentication.users.status', $user->id),
+            ]),
+            'roles' => $roles->pluck('name')->values(),
+            'locations' => $locations->map(fn (Location $location): array => ['value' => (string) $location->id, 'label' => (string) $location->name])->values(),
+            'filters' => ['q' => $q],
+            // Flashed by store/resetPassword; shown once and never persisted.
+            'temporaryPassword' => session('temporary_password') ? [
+                'password' => (string) session('temporary_password'),
+                'username' => (string) session('temporary_password_user'),
+            ] : null,
+            'can' => [
+                'create' => (bool) $actor?->can('users.create'),
+                'update' => (bool) $actor?->can('users.update'),
+            ],
+            'urls' => [
+                'index' => route('authentication.users.index'),
+                'store' => route('authentication.users.store'),
+            ],
+        ]);
     }
 
     public function store(StoreUserRequest $request): RedirectResponse
@@ -166,22 +200,22 @@ final class UserManagementController extends Controller
     {
         $initials = collect(explode(' ', strtolower(trim($fullName))))
             ->filter()
-            ->map(fn(string $name): string => $name[0])
+            ->map(fn (string $name): string => $name[0])
             ->implode('');
 
-        return $initials . '123456';
+        return $initials.'123456';
     }
 
     private function assertRoleAssignmentAllowed(User $actor, string $role): void
     {
-        if ($role === 'Developer' && !$actor->isDeveloper()) {
+        if ($role === 'Developer' && ! $actor->isDeveloper()) {
             throw new AccessDeniedHttpException('Only a Developer may assign the Developer role.');
         }
     }
 
     private function assertTargetManageable(User $actor, User $target): void
     {
-        if ($target->isDeveloper() && !$actor->isDeveloper()) {
+        if ($target->isDeveloper() && ! $actor->isDeveloper()) {
             throw new AccessDeniedHttpException('The Developer account may only be managed by a Developer.');
         }
     }

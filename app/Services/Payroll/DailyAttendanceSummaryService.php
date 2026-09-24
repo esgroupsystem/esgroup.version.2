@@ -148,6 +148,7 @@ class DailyAttendanceSummaryService
             });
 
         EmployeePlottingSchedule::query()
+            ->with('employeeBiometric')
             ->whereNotNull('employee_biometric_id')
             ->get()
             ->each(function (EmployeePlottingSchedule $row) use ($people): void {
@@ -219,6 +220,7 @@ class DailyAttendanceSummaryService
                             ->whereDate('date_to', '>=', $date);
                     });
             })
+            ->with('employeeBiometric')
             ->get()
             ->each(function (PayrollAttendanceAdjustment $row) use ($people): void {
                 $employee = $this->identityService->resolveFromModel($row, true);

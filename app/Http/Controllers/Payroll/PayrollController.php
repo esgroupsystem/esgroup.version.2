@@ -25,6 +25,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
@@ -46,6 +47,7 @@ class PayrollController extends Controller
         $search = trim((string) $request->search);
         $status = trim((string) $request->status);
         $cutoffType = trim((string) $request->cutoff_type);
+        $group = trim((string) $request->garage_group);
 
         $payrolls = Payroll::query()
             ->with(['generator', 'finalizer'])
@@ -60,6 +62,7 @@ class PayrollController extends Controller
             })
             ->when($status, fn ($query) => $query->where('status', $status))
             ->when($cutoffType, fn ($query) => $query->where('cutoff_type', $cutoffType))
+            ->when($group !== '', fn ($query) => $query->where('garage_group', $group))
             // Actual period dates keep both historical records and the new
             // cycle-month cutoff convention in the correct chronological order.
             ->orderByDesc('period_end')
@@ -69,12 +72,41 @@ class PayrollController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('payroll.payrolls.index', compact(
-            'payrolls',
-            'search',
-            'status',
-            'cutoffType'
-        ));
+        $user = $request->user();
+
+        return Inertia::render('payroll/payrolls/index', [
+            'payrolls' => $payrolls->through(fn (Payroll $payroll): array => [
+                'id' => $payroll->id,
+                'payroll_number' => $payroll->payroll_number,
+                'cutoff_label' => $payroll->cutoff_label,
+                'period_start' => $payroll->period_start?->format('M d, Y'),
+                'period_end' => $payroll->period_end?->format('M d, Y'),
+                'contribution_label' => $payroll->contribution_label,
+                'items_count' => (int) ($payroll->items_count ?? 0),
+                'group_label' => $payroll->garage_group_label,
+                'is_finalized' => $payroll->status === 'finalized',
+                'generator_name' => $payroll->generator->full_name ?? $payroll->generator->name ?? 'N/A',
+                'generated_at' => $payroll->generated_at?->timezone('Asia/Manila')->format('M d, Y h:i A'),
+                'urls' => [
+                    'show' => route('payroll.show', $payroll),
+                    'destroy' => route('payroll.destroy', $payroll),
+                ],
+            ]),
+            'filters' => ['search' => $search, 'status' => $status, 'cutoff_type' => $cutoffType, 'garage_group' => $group],
+            'payrollGroups' => ['1' => 'Mirasol / Balintawak Payroll', '2' => 'Gonzales Payroll'],
+            'cutoffTypes' => [
+                'second' => config('payroll.cutoff_display.second.full', '1st Cutoff (26-10)'),
+                'first' => config('payroll.cutoff_display.first.full', '2nd Cutoff (11-25)'),
+            ],
+            'can' => [
+                'create' => $user->can('payroll.create'),
+                'delete' => $user->can('payroll.delete'),
+            ],
+            'urls' => [
+                'index' => route('payroll.index'),
+                'create' => route('payroll.create'),
+            ],
+        ]);
     }
 
     public function create()
@@ -102,12 +134,21 @@ class PayrollController extends Controller
 
         }
 
-        return view('payroll.payrolls.create', compact(
-            'defaultCutoffMonth',
-            'defaultCutoffYear',
-            'defaultCutoffType',
-            'payrollGroups'
-        ));
+        $thisYear = (int) now('Asia/Manila')->year;
+
+        return Inertia::render('payroll/payrolls/create', [
+            'defaults' => [
+                'cutoff_month' => (int) $defaultCutoffMonth,
+                'cutoff_year' => (int) $defaultCutoffYear,
+                'cutoff_type' => (string) $defaultCutoffType,
+            ],
+            'payrollGroups' => $payrollGroups->mapWithKeys(fn (string $label, int $value): array => [(string) $value => $label]),
+            'years' => range($thisYear + 1, 2020),
+            'urls' => [
+                'index' => route('payroll.index'),
+                'store' => route('payroll.store'),
+            ],
+        ]);
     }
 
     public function store(GeneratePayrollRequest $request): RedirectResponse
@@ -179,8 +220,134 @@ class PayrollController extends Controller
         );
 
         $totals = $this->totals($payroll);
+        $items = $payroll->items->map(fn (PayrollItem $item): array => $this->payrollItemRow($payroll, $item));
+        $user = request()->user();
 
-        return view('payroll.payrolls.show', compact('payroll', 'totals'));
+        return Inertia::render('payroll/payrolls/show', [
+            'payroll' => [
+                'id' => $payroll->id,
+                'payroll_number' => $payroll->payroll_number,
+                'status' => $payroll->status,
+                'cutoff_label' => $payroll->cutoff_label,
+                'contribution_label' => $payroll->contribution_label,
+                'period_start' => $payroll->period_start?->format('M d, Y'),
+                'period_end' => $payroll->period_end?->format('M d, Y'),
+                'group_label' => $payroll->garage_group_label,
+                'eligible_roster' => (int) data_get($payroll->meta, 'roster_audit.eligible_employee_count', $items->count()),
+                'missing_summary_employees' => (int) data_get($payroll->meta, 'roster_audit.employees_without_summary_rows', 0),
+                'settlement_carry_forward' => (int) data_get($payroll->meta, 'roster_audit.closing_settlement_carry_forward_count', 0),
+            ],
+            'totals' => [
+                'employees' => (int) data_get($totals, 'employees', $items->count()),
+                'regular_pay' => (float) data_get($totals, 'regular_pay', $payroll->items->sum('regular_pay')),
+                'holiday_pay' => (float) data_get($totals, 'holiday_pay', $payroll->items->sum('holiday_pay')),
+                'rest_day_pay' => (float) data_get($totals, 'rest_day_pay', $payroll->items->sum('rest_day_pay')),
+                'overtime_pay' => (float) data_get($totals, 'overtime_pay', $payroll->items->sum('overtime_pay')),
+                'night_differential_pay' => (float) data_get($totals, 'night_differential_pay', $payroll->items->sum('night_differential_pay')),
+                'leave_pay' => (float) data_get($totals, 'leave_pay', $payroll->items->sum('leave_pay')),
+                'other_additions' => (float) data_get($totals, 'other_additions', $payroll->items->sum('other_additions')),
+                'gross_pay' => (float) data_get($totals, 'gross_pay', $payroll->items->sum('gross_pay')),
+                'government' => (float) data_get($totals, 'total_employee_government_deductions', $payroll->items->sum('total_employee_government_deductions')),
+                'other_deductions' => (float) data_get($totals, 'other_deductions', $payroll->items->sum('other_deductions')),
+                'net_pay' => (float) data_get($totals, 'net_pay', $payroll->items->sum('net_pay')),
+                'payable_days' => (float) $payroll->items->sum('total_payable_days'),
+                'payable_hours' => (float) $payroll->items->sum('total_payable_hours'),
+            ],
+            'items' => $items->values(),
+            'can' => [
+                'finalize' => $payroll->status !== 'finalized' && $user->can('payroll.finalize'),
+                'export' => $user->can('payroll.export'),
+            ],
+            'urls' => [
+                'index' => route('payroll.index'),
+                'finalize' => route('payroll.finalize', $payroll),
+                'excel' => route('payroll.export.excel', $payroll),
+                'pdf' => route('payroll.export.pdf', $payroll),
+            ],
+        ]);
+    }
+
+    /**
+     * One employee row of the payroll breakdown, including the audit badges
+     * that flag rows needing review (same rules as the former Blade page).
+     */
+    private function payrollItemRow(Payroll $payroll, PayrollItem $item): array
+    {
+        $additions = (float) ($item->holiday_pay ?? 0) + (float) ($item->rest_day_pay ?? 0)
+            + (float) ($item->overtime_pay ?? 0) + (float) ($item->night_differential_pay ?? 0)
+            + (float) ($item->leave_pay ?? 0) + (float) ($item->other_additions ?? 0);
+        $government = (float) ($item->total_employee_government_deductions ?? 0);
+        $otherDeductions = (float) ($item->other_deductions ?? 0);
+        $regular = (float) ($item->regular_pay ?? 0);
+        $gross = (float) ($item->gross_pay ?? 0);
+        $net = (float) ($item->net_pay ?? 0);
+        $payableDays = (float) ($item->total_payable_days ?? 0);
+        $payableHours = (float) ($item->total_payable_hours ?? 0);
+        $missingSummaryDays = (int) data_get($item->meta, 'attendance_summary_coverage.missing_days', 0);
+        $settlementOnly = (bool) data_get($item->meta, 'closing_benefit_settlement_only', false);
+        $tags = collect(data_get($item->meta, 'adjustment_tags', []));
+        $paidTags = $tags->filter(fn ($tag): bool => (bool) data_get($tag, 'paid_this_cutoff', false));
+
+        $badges = [];
+        if ($settlementOnly) {
+            $badges[] = ['label' => 'Benefit Settlement Only', 'tone' => 'info'];
+        } elseif ((bool) data_get($item->meta, 'safe_zero_pay', false)) {
+            $badges[] = ['label' => 'No Summary', 'tone' => 'danger'];
+        } elseif ($missingSummaryDays > 0) {
+            $badges[] = ['label' => 'Summary Gap '.$missingSummaryDays.'d', 'tone' => 'warning'];
+        }
+
+        if (! $settlementOnly) {
+            if ($regular <= 0) {
+                $badges[] = ['label' => 'No Regular', 'tone' => 'danger'];
+            }
+            if ($gross <= 0) {
+                $badges[] = ['label' => 'No Gross', 'tone' => 'danger'];
+            }
+            if ($net <= 0) {
+                $badges[] = ['label' => 'No Net', 'tone' => 'danger'];
+            }
+            if ($payableDays <= 0 && $payableHours <= 0) {
+                $badges[] = ['label' => 'No Payable', 'tone' => 'warning'];
+            }
+        } elseif ($net < -0.009) {
+            $badges[] = ['label' => 'Negative Settlement', 'tone' => 'danger'];
+        }
+
+        if ($gross > 0 && ($government + $otherDeductions) > $gross * 0.6) {
+            $badges[] = ['label' => 'High Deduct.', 'tone' => 'warning'];
+        }
+        if ($additions > 0) {
+            $badges[] = ['label' => 'Additions', 'tone' => 'info'];
+        }
+        if ($paidTags->isNotEmpty()) {
+            $badges[] = ['label' => 'ADJ Paid '.$paidTags->count(), 'tone' => 'primary'];
+        } elseif ($tags->isNotEmpty()) {
+            $badges[] = ['label' => 'ADJ '.$tags->count(), 'tone' => 'info'];
+        }
+
+        $tones = array_column($badges, 'tone');
+
+        return [
+            'id' => $item->id,
+            'name' => $item->payroll_display_name,
+            'employee_no' => $item->employee_no,
+            'settlement_only' => $settlementOnly,
+            'tags' => $tags->take(3)->map(fn ($tag): array => [
+                'label' => (string) data_get($tag, 'label', 'Adjustment'),
+                'amount' => (float) data_get($tag, 'amount', 0),
+            ])->values(),
+            'payable_days' => $payableDays,
+            'regular' => $regular,
+            'additions' => $additions,
+            'government' => $government,
+            'other_deductions' => $otherDeductions,
+            'gross' => $gross,
+            'net' => $net,
+            'badges' => $badges === [] ? [['label' => 'OK', 'tone' => 'success']] : $badges,
+            'severity' => in_array('danger', $tones, true) ? 'danger' : (in_array('warning', $tones, true) ? 'warning' : 'ok'),
+            'url' => route('payroll.items.show', [$payroll, $item]),
+        ];
     }
 
     public function showItem(Payroll $payroll, PayrollItem $item)
@@ -219,7 +386,8 @@ class PayrollController extends Controller
             ->orderBy('work_date')
             ->get();
 
-        return view('payroll.items.show', compact('payroll', 'item', 'summaries'));
+        return Inertia::render('payroll/items/show', app(\App\Support\Payroll\PayrollItemPresenter::class)
+            ->present($payroll, $item, $summaries, request()->user()));
     }
 
     /**

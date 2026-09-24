@@ -6,10 +6,12 @@ namespace App\Http\Controllers;
 
 use App\Models\BusDetail;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AllBusController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
         $search = $request->search;
 
@@ -24,19 +26,31 @@ class AllBusController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'html' => view('maintenance.allbus.table', compact('buses'))->render(),
-            ]);
-        }
+        $user = $request->user();
 
-        return view('maintenance.allbus.index', compact('buses'));
+        return Inertia::render('fleet/all-bus/index', [
+            'buses' => $buses->through(fn (BusDetail $bus): array => [
+                'id' => $bus->id,
+                'garage' => $bus->garage,
+                'name' => $bus->name,
+                'body_number' => $bus->body_number,
+                'plate_number' => $bus->plate_number,
+                'edit_url' => route('allbus.edit', ['bus' => $bus->id]),
+                'destroy_url' => route('allbus.destroy', ['bus' => $bus->id]),
+            ]),
+            'filters' => ['search' => (string) ($search ?? '')],
+            'can' => [
+                'create' => (bool) $user?->can('allbus.create'),
+                'edit' => (bool) $user?->can('allbus.edit'),
+                'delete' => (bool) $user?->can('allbus.delete'),
+            ],
+            'urls' => ['index' => route('allbus.index'), 'create' => route('allbus.create')],
+        ]);
     }
 
-    public function create()
+    public function create(): Response
     {
-        return view('maintenance.allbus.create');
+        return $this->form(null);
     }
 
     public function store(Request $request)
@@ -60,9 +74,9 @@ class AllBusController extends Controller
             ->with('success', 'Bus added successfully.');
     }
 
-    public function edit(BusDetail $bus)
+    public function edit(BusDetail $bus): Response
     {
-        return view('maintenance.allbus.edit', compact('bus'));
+        return $this->form($bus);
     }
 
     public function update(Request $request, BusDetail $bus)
@@ -89,5 +103,23 @@ class AllBusController extends Controller
         $bus->delete();
 
         return redirect()->route('allbus.index')->with('success', 'Bus deleted successfully.');
+    }
+
+    private function form(?BusDetail $bus): Response
+    {
+        return Inertia::render('fleet/all-bus/form', [
+            'bus' => $bus ? ['id' => $bus->id, 'body_number' => $bus->body_number] : null,
+            'values' => [
+                'garage' => (string) ($bus->garage ?? ''),
+                'name' => (string) ($bus->name ?? ''),
+                'body_number' => (string) ($bus->body_number ?? ''),
+                'plate_number' => (string) ($bus->plate_number ?? ''),
+            ],
+            'garages' => BusDetail::query()->whereNotNull('garage')->where('garage', '!=', '')->distinct()->orderBy('garage')->pluck('garage'),
+            'urls' => [
+                'index' => route('allbus.index'),
+                'submit' => $bus ? route('allbus.update', ['bus' => $bus->id]) : route('allbus.store'),
+            ],
+        ]);
     }
 }

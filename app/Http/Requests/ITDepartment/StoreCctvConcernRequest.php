@@ -21,6 +21,7 @@ final class StoreCctvConcernRequest extends FormRequest
             'bus_no' => ['required', 'integer', 'exists:bus_details,id'],
             'issue_type' => ['required', 'string', 'max:80'],
             'problem_details' => ['required', 'string'],
+            'action_taken' => ['nullable', 'string'],
             'status' => ['required', Rule::enum(CctvConcernStatus::class)],
             'assigned_to' => ['nullable', 'integer', 'exists:users,id'],
             'items' => ['nullable', 'array'],

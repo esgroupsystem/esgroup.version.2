@@ -18,11 +18,13 @@ use App\Services\HR_Department\EmployeeDirectoryService;
 use App\Services\HR_Department\EmployeeHistoryService;
 use App\Services\HR_Department\EmployeeProfileService;
 use App\Services\HR_Department\EmployeeService;
+use App\Support\HR\EmployeePagePresenter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 final class EmployeeController extends Controller
@@ -38,17 +40,19 @@ final class EmployeeController extends Controller
     /* ==========================================================
         LISTING / SEARCH
     ========================================================== */
-    public function index(Request $request)
+    public function index(Request $request): Response
     {
-        return view('hr_department.employees.index', $this->directory->indexData($request->query()));
+        session(['employees_back_url' => $request->fullUrl()]);
+
+        return EmployeePagePresenter::index($this->directory->indexData($request->query()), $request);
     }
 
     /* ==========================================================
         SHOW PROFILE
     ========================================================== */
-    public function show(Employee $employee)
+    public function show(Request $request, Employee $employee): Response
     {
-        return view('hr_department.employees.modals._employee_profile', $this->profiles->data($employee));
+        return EmployeePagePresenter::profile($this->profiles->data($employee), $request);
     }
 
     /* ==========================================================
@@ -118,7 +122,10 @@ final class EmployeeController extends Controller
     public function updateAssets(UpdateEmployeeAssetsRequest $request, Employee $employee): RedirectResponse
     {
         try {
-            $this->employees->updateAssets($employee, $request->validated());
+            $this->employees->updateAssets($employee, [
+                ...$request->validated(),
+                ...array_filter($request->only(EmployeeService::ASSET_DOCUMENTS), fn ($file): bool => $file !== null),
+            ]);
             flash('201 file updated successfully!')->success();
         } catch (\Throwable $exception) {
             Log::error('updateAssets error', ['employee_id' => $employee->id, 'message' => $exception->getMessage()]);

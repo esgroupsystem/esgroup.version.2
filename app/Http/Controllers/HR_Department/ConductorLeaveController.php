@@ -11,11 +11,12 @@ use App\Models\ConductorLeave;
 use App\Services\HR_Department\ConductorLeaveActionService;
 use App\Services\HR_Department\LeaveDirectoryService;
 use App\Services\HR_Department\LeaveRecordService;
+use App\Support\HR\LeavePagePresenter;
 use DomainException;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Inertia\Response;
 use Throwable;
 
 class ConductorLeaveController extends Controller
@@ -26,25 +27,14 @@ class ConductorLeaveController extends Controller
         private readonly LeaveDirectoryService $leaveDirectoryService
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
-        $data = $this->leaveDirectoryService->conductorIndex($request);
-
-        if ($request->ajax()) {
-            return view('hr_department.leaves.conductor.table', [
-                'leaves' => $data['leaves'],
-                'today' => $data['today'],
-            ]);
-        }
-
-        return view('hr_department.leaves.conductor.index', $data);
+        return LeavePagePresenter::index('conductor', $this->leaveDirectoryService->conductorIndex($request), $request);
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        return view('hr_department.leaves.conductor.create', [
-            'conductors' => $this->leaveDirectoryService->conductors(),
-        ]);
+        return LeavePagePresenter::form('conductor', null, $this->leaveDirectoryService->conductors());
     }
 
     public function store(LeaveRecordRequest $request): RedirectResponse
@@ -61,14 +51,11 @@ class ConductorLeaveController extends Controller
         return redirect()->route('conductor-leave.conductor.index');
     }
 
-    public function edit(ConductorLeave $leave): View
+    public function edit(ConductorLeave $leave): Response
     {
         $leave->load(['employee.position']);
 
-        return view('hr_department.leaves.conductor.edit', [
-            'leave' => $leave,
-            'conductors' => $this->leaveDirectoryService->conductors($leave),
-        ]);
+        return LeavePagePresenter::form('conductor', $leave, $this->leaveDirectoryService->conductors($leave));
     }
 
     public function update(

@@ -26,4 +26,12 @@ abstract class TestCase extends BaseTestCase
 
         return $app;
     }
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        // Page rendering must not depend on a fresh `npm run build`.
+        $this->withoutVite();
+    }
 }

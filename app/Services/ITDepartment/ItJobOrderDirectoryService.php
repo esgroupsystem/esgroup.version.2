@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 final class ItJobOrderDirectoryService
 {
-    private const CATEGORIES = [
+    public const CATEGORIES = [
         'ACCIDENT',
         'COLLECTING FARE',
         'CUTTING FARE',
@@ -51,12 +51,7 @@ final class ItJobOrderDirectoryService
             'pending' => $this->paginateTab('pending', $search, 'pending_page')->appends(['tab' => 'pending']),
             'progress' => $this->paginateTab('progress', $search, 'progress_page')->appends(['tab' => 'progress']),
             'completed' => $this->paginateTab('completed', $search, 'completed_page')->appends(['tab' => 'completed']),
-            'stats' => [
-                'new' => JobOrder::query()->whereDate('created_at', today())->count(),
-                'pending' => JobOrder::query()->whereIn('job_status', [ItTicketStatus::Pending->value, ItTicketStatus::Approval->value])->count(),
-                'progress' => JobOrder::query()->where('job_status', ItTicketStatus::InProgress->value)->count(),
-                'completed' => JobOrder::query()->where('job_status', ItTicketStatus::Completed->value)->count(),
-            ],
+            'stats' => $this->stats(),
             'categories' => collect(self::CATEGORIES)
                 ->map(fn (string $category): array => [
                     'name' => $category,
@@ -69,6 +64,17 @@ final class ItJobOrderDirectoryService
                 ->withCount('jobOrdersAssigned')
                 ->orderBy('full_name')
                 ->get(),
+        ];
+    }
+
+    /** @return array{new: int, pending: int, progress: int, completed: int} */
+    public function stats(): array
+    {
+        return [
+            'new' => JobOrder::query()->whereDate('created_at', today())->count(),
+            'pending' => JobOrder::query()->whereIn('job_status', [ItTicketStatus::Pending->value, ItTicketStatus::Approval->value])->count(),
+            'progress' => JobOrder::query()->where('job_status', ItTicketStatus::InProgress->value)->count(),
+            'completed' => JobOrder::query()->where('job_status', ItTicketStatus::Completed->value)->count(),
         ];
     }
 

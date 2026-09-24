@@ -17,8 +17,6 @@ class PermissionSeeder extends Seeder
         $permissions = [
             // Dashboard
             'dashboard.view',
-            'dashboard.analytics',
-            'dashboard.crm',
             'dashboard.it',
 
             // Tickets
@@ -146,10 +144,6 @@ class PermissionSeeder extends Seeder
             'roles.delete',
 
             // Maintenance Requests
-            'request.view',
-            'request.create',
-            'request.update',
-            'request.delete',
 
             // Categories
             'category.view',
@@ -174,8 +168,6 @@ class PermissionSeeder extends Seeder
             'odometer.update',
 
             // Purchase Orders
-            'purchase.view',
-            'purchase.update',
 
             // Parts Out
             'parts-out.view',
@@ -191,9 +183,6 @@ class PermissionSeeder extends Seeder
             'receivings.rollback',
 
             // Purchase Receiving
-            'received.view',
-            'received.receive',
-            'received.update',
 
             // Buses
             'buses.view',

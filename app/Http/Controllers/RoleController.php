@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Services\Permissions\RoutePermissionSyncService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,13 +12,15 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class RoleController extends Controller
 {
-    public function index(RoutePermissionSyncService $routePermissionSyncService): View|RedirectResponse
+    public function index(RoutePermissionSyncService $routePermissionSyncService): Response|RedirectResponse
     {
         try {
             $roles = Role::query()
@@ -40,14 +43,43 @@ class RoleController extends Controller
                 ->values();
 
             $permissionGroups = $this->buildPermissionGroups($permissions);
+            $risks = $permissionGroups->flatten(1)->pluck('risk', 'name');
+            $user = auth()->user();
+            $isDeveloper = $user?->isDeveloper() === true;
 
-            return view('roles.index', compact(
-                'roles',
-                'permissions',
-                'permissionGroups',
-                'routePermissions',
-                'missingRoutePermissions'
-            ));
+            return Inertia::render('authentication/roles/index', [
+                'roles' => $roles->map(fn (Role $role): array => [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                    'users_count' => (int) $role->users_count,
+                    'permissions' => $role->permissions->pluck('name')->sort()->values(),
+                    'high_risk' => $role->permissions->filter(fn (Permission $permission): bool => ($risks[$permission->name] ?? 'low') === 'high')->count(),
+                    'medium_risk' => $role->permissions->filter(fn (Permission $permission): bool => ($risks[$permission->name] ?? 'low') === 'medium')->count(),
+                    'update_url' => route('roles.update', $role->id),
+                    'destroy_url' => route('roles.destroy', $role->id),
+                ])->values(),
+                'permissionGroups' => $permissionGroups->map(fn (Collection $group, string $module): array => [
+                    'module' => $module,
+                    'permissions' => $group->values(),
+                ])->values(),
+                'missingRoutePermissions' => $missingRoutePermissions,
+                'stats' => [
+                    'roles' => $roles->count(),
+                    'permissions' => $permissions->count(),
+                    'modules' => $permissionGroups->count(),
+                    'users' => User::query()->count(),
+                ],
+                // Every role change is Developer-only (assertDeveloper), on top of the route permission.
+                'can' => [
+                    'create' => $isDeveloper && (bool) $user?->can('roles.create'),
+                    'update' => $isDeveloper && (bool) $user?->can('roles.update'),
+                    'delete' => $isDeveloper && (bool) $user?->can('roles.delete'),
+                ],
+                'urls' => [
+                    'store' => route('roles.store'),
+                    'sync' => route('roles.sync-permissions'),
+                ],
+            ]);
         } catch (\Throwable $e) {
             Log::error('Role index error', [
                 'message' => $e->getMessage(),
@@ -88,6 +120,9 @@ class RoleController extends Controller
             });
 
             return back()->with('success', 'Role created successfully.');
+        } catch (ValidationException $e) {
+            // Let field errors (e.g. duplicate role name) reach the form.
+            throw $e;
         } catch (\Throwable $e) {
             Log::error('Role create error', [
                 'message' => $e->getMessage(),
@@ -133,6 +168,8 @@ class RoleController extends Controller
             });
 
             return back()->with('success', 'Role updated successfully.');
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Throwable $e) {
             Log::error('Role update error', [
                 'role_id' => $role->id,

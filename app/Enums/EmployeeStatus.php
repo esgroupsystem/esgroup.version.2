@@ -8,6 +8,8 @@ enum EmployeeStatus: string
 {
     case Active = 'Active';
     case ActiveReEntry = 'Active(Re-Entry)';
+    // Set automatically by LeaveRecordService while a leave is running.
+    case OnLeave = 'On Leave';
     case Inactive = 'Inactive';
     case Suspended = 'Suspended';
     case Terminated = 'Terminated';

@@ -72,7 +72,10 @@ class SaveEmployeePlottingScheduleRequest extends FormRequest
             'schedule.*.time_out' => ['nullable', 'date_format:H:i'],
             'schedule.*.grace_minutes' => ['nullable', 'integer', 'min:0', 'max:240'],
             'schedule.*.day_offs' => ['nullable', 'array', 'max:7'],
-            'schedule.*.day_offs.*' => ['required', 'string', Rule::in(self::WEEKDAYS), 'distinct'],
+            // No 'distinct' here: with the nested wildcard Laravel compares day-offs
+            // across every employee row, so two employees could not share a day off.
+            // Duplicates within one row are already removed in prepareForValidation().
+            'schedule.*.day_offs.*' => ['required', 'string', Rule::in(self::WEEKDAYS)],
             'schedule.*.remarks' => ['nullable', 'string', 'max:255'],
         ];
     }
@@ -142,7 +145,6 @@ class SaveEmployeePlottingScheduleRequest extends FormRequest
         return [
             'schedule.*.employee_biometric_id.distinct' => 'An employee can only appear once in the submitted schedule.',
             'schedule.*.day_offs.max' => 'A maximum of seven weekly days off may be selected.',
-            'schedule.*.day_offs.*.distinct' => 'Duplicate weekly day-off selections are not allowed.',
         ];
     }
 

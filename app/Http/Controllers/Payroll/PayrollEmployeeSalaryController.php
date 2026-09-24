@@ -10,13 +10,15 @@ use App\Models\EmployeePlottingSchedule;
 use App\Models\PayrollEmployeeSalary;
 use App\Services\Biometrics\EmployeeBiometricIdentityService;
 use App\Services\Payroll\PayrollDeductionService;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 use Throwable;
 
 class PayrollEmployeeSalaryController extends Controller
@@ -26,7 +28,7 @@ class PayrollEmployeeSalaryController extends Controller
         private readonly EmployeeBiometricIdentityService $identityService
     ) {}
 
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $search = trim((string) $request->search);
         $groupName = trim((string) $request->group_name);
@@ -123,14 +125,150 @@ class PayrollEmployeeSalaryController extends Controller
             ->orderBy('group_name')
             ->pluck('group_name');
 
-        return view('payroll.employee_salaries.index', compact('salaries', 'search', 'groupName', 'employmentStatus', 'groups'));
+        $user = $request->user();
+
+        return Inertia::render('payroll/employee-salaries/index', [
+            'salaries' => $salaries->through(function (PayrollEmployeeSalary $salary): array {
+                $preview = $salary->payroll_preview ?? [];
+
+                return [
+                    'id' => $salary->id,
+                    'name' => $salary->payroll_display_name,
+                    'employee_no' => $salary->employee_no,
+                    'employee_biometric_id' => $salary->employee_biometric_id,
+                    'rate_type' => $salary->rate_type,
+                    'basic_salary' => (float) $salary->basic_salary,
+                    'ot_rate_per_hour' => (float) $salary->ot_rate_per_hour,
+                    'late_deduction_per_minute' => (float) $salary->late_deduction_per_minute,
+                    'government' => [
+                        ['label' => 'SSS', 'schedule' => $salary->sss_contribution_cutoff, 'amount' => (float) data_get($preview, 'monthly_government.sss', 0)],
+                        ['label' => 'Pag-IBIG', 'schedule' => $salary->pagibig_contribution_cutoff, 'amount' => (float) data_get($preview, 'monthly_government.pagibig', 0)],
+                        ['label' => 'PhilHealth', 'schedule' => $salary->philhealth_contribution_cutoff, 'amount' => (float) data_get($preview, 'monthly_government.philhealth', 0)],
+                    ],
+                    'allowances' => [
+                        ['label' => 'Regular', 'schedule' => $salary->allowance_release_schedule, 'amount' => (float) $salary->allowance],
+                        ['label' => 'SIM Load', 'schedule' => $salary->sim_load_release_schedule, 'amount' => (float) $salary->sim_load_allowance],
+                    ],
+                    'is_active' => (bool) $salary->is_active,
+                    'bio_included' => ($salary->employeeBiometric?->employment_status ?? 'active') === 'active'
+                        && ($salary->employeeBiometric?->is_payroll_active ?? true),
+                    'urls' => [
+                        'edit' => route('payroll-employee-salaries.edit', $salary),
+                        'destroy' => route('payroll-employee-salaries.destroy', $salary),
+                    ],
+                ];
+            }),
+            'filters' => ['search' => $search, 'group_name' => $groupName, 'employment_status' => $employmentStatus],
+            'groups' => $groups->map(fn ($group): string => (string) $group)->values(),
+            'can' => [
+                'create' => $user->can('employee-salaries.create'),
+                'update' => $user->can('employee-salaries.update'),
+                'delete' => $user->can('employee-salaries.delete'),
+            ],
+            'urls' => [
+                'index' => route('payroll-employee-salaries.index'),
+                'create' => route('payroll-employee-salaries.create'),
+                'sync' => route('payroll-employee-salaries.sync'),
+            ],
+        ]);
     }
 
-    public function create(): View
+    public function create(): Response
     {
-        $people = $this->biometricPeople();
+        return $this->renderSalaryForm(null);
+    }
 
-        return view('payroll.employee_salaries.create', compact('people'));
+    /**
+     * React salary form for create and edit. Store/update, validation and
+     * rate computation are unchanged.
+     */
+    private function renderSalaryForm(?PayrollEmployeeSalary $salary): Response
+    {
+        $date = fn ($value): string => blank($value) ? '' : Carbon::parse($value)->format('Y-m-d');
+        $field = fn (string $key, mixed $default) => $salary ? (data_get($salary, $key) ?? $default) : $default;
+        $loanPrefixes = ['sss_loan', 'pagibig_loan', 'philhealth_loan', 'cash_advance', 'other_loan'];
+
+        $values = [
+            'employee_biometric_id' => $salary?->employee_biometric_id,
+            'employee_no' => (string) ($salary?->employee_no ?? ''),
+            'employee_name' => (string) ($salary?->employee_name ?? ''),
+            'crosschex_id' => (string) ($salary?->crosschex_id ?? ''),
+            'biometric_employee_id' => (string) ($salary?->biometric_employee_id ?? ''),
+            'rate_type' => (string) $field('rate_type', 'daily'),
+            'basic_salary' => (string) $field('basic_salary', '0'),
+            'allowance' => (string) $field('allowance', '0'),
+            'allowance_release_schedule' => (string) $field('allowance_release_schedule', 'every_cutoff'),
+            'sim_load_allowance' => (string) $field('sim_load_allowance', '0'),
+            'sim_load_release_schedule' => (string) $field('sim_load_release_schedule', 'every_cutoff'),
+            'paid_night_differential' => (bool) $field('paid_night_differential', false),
+            'sss_contribution_cutoff' => (string) $field('sss_contribution_cutoff', 'first_cutoff'),
+            'pagibig_contribution_cutoff' => (string) $field('pagibig_contribution_cutoff', 'second_cutoff'),
+            'philhealth_contribution_cutoff' => (string) $field('philhealth_contribution_cutoff', 'second_cutoff'),
+            'other_deductions' => $salary
+                ? $salary->otherDeductions->map(fn ($deduction): array => [
+                    'name' => (string) $deduction->name,
+                    'total_amount' => (string) $deduction->total_amount,
+                    'payment_amount' => (string) $deduction->payment_amount,
+                    'deduction_schedule' => (string) ($deduction->deduction_schedule ?? 'none'),
+                    'start_date' => $date($deduction->start_date),
+                    'remarks' => (string) ($deduction->remarks ?? ''),
+                ])->values()->all()
+                : [],
+            'is_active' => (bool) $field('is_active', true),
+            'remarks' => (string) ($salary?->remarks ?? ''),
+        ];
+
+        foreach ($loanPrefixes as $prefix) {
+            $values["{$prefix}_total_amount"] = (string) $field("{$prefix}_total_amount", '0');
+            $values["{$prefix}_payment_amount"] = (string) $field("{$prefix}_payment_amount", '0');
+            $values["{$prefix}_deduction_schedule"] = (string) $field("{$prefix}_deduction_schedule", 'none');
+            $values["{$prefix}_start_date"] = $date(data_get($salary, "{$prefix}_start_date"));
+        }
+
+        $people = $this->biometricPeople()->map(fn (object $person): array => [
+            'employee_biometric_id' => (int) $person->employee_biometric_id,
+            'biometric_employee_id' => $person->biometric_employee_id,
+            'employee_no' => $person->employee_no,
+            'employee_name' => $person->employee_name,
+            'display_name' => \App\Support\PayrollEmployeeNameFormatter::display($person->employee_name),
+            'crosschex_id' => $person->crosschex_id,
+            'group_name' => $person->group_name !== null ? (string) $person->group_name : null,
+            'paid_work_hours' => (float) $person->paid_work_hours,
+            'workday_label' => $person->workday_label,
+        ])->values();
+
+        $schedule = $salary?->employeeBiometric?->plottingSchedules?->first();
+
+        return Inertia::render('payroll/employee-salaries/form', [
+            'salary' => $salary ? ['id' => $salary->id, 'name' => $salary->payroll_display_name] : null,
+            'values' => $values,
+            'people' => $people,
+            'workday' => [
+                'paid_hours' => (float) ($schedule?->paidWorkHours() ?? 8.0),
+                'label' => $schedule?->resolvedWorkdayType()->shortLabel() ?? '8 hrs + 1 hr lunch',
+            ],
+            'scheduleOptions' => [
+                'none' => 'No Deduction / Not Applicable',
+                'second_cutoff' => config('payroll.cutoff_display.second.label', '1st Cutoff').' Only ('.config('payroll.cutoff_display.second.range', '26-10').')',
+                'first_cutoff' => config('payroll.cutoff_display.first.label', '2nd Cutoff').' Only ('.config('payroll.cutoff_display.first.range', '11-25').')',
+                'every_cutoff' => 'Every Cutoff',
+            ],
+            'cutoffLabels' => [
+                'first' => config('payroll.cutoff_display.first.label', '2nd Cutoff').' ('.config('payroll.cutoff_display.first.range', '11-25').')',
+                'second' => config('payroll.cutoff_display.second.label', '1st Cutoff').' ('.config('payroll.cutoff_display.second.range', '26-10').')',
+            ],
+            'sssRules' => config('sss.business_employee'),
+            'sssCircular' => [
+                'number' => config('sss.business_employee.circular_number', '2024-006'),
+                'effective' => Carbon::parse(config('sss.business_employee.effective_from', '2025-01-01'))->format('F Y'),
+            ],
+            'urls' => [
+                'index' => route('payroll-employee-salaries.index'),
+                'submit' => $salary
+                    ? route('payroll-employee-salaries.update', $salary)
+                    : route('payroll-employee-salaries.store'),
+            ],
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -158,7 +296,7 @@ class PayrollEmployeeSalaryController extends Controller
             ->with('success', 'Salary record created successfully.');
     }
 
-    public function edit(PayrollEmployeeSalary $payrollEmployeeSalary): View
+    public function edit(PayrollEmployeeSalary $payrollEmployeeSalary): Response
     {
         $payrollEmployeeSalary->load([
             'otherDeductions',
@@ -167,10 +305,7 @@ class PayrollEmployeeSalaryController extends Controller
                 ->latest('id'),
         ]);
 
-        return view('payroll.employee_salaries.edit', [
-            'salary' => $payrollEmployeeSalary,
-            'people' => $this->biometricPeople(),
-        ]);
+        return $this->renderSalaryForm($payrollEmployeeSalary);
     }
 
     public function update(Request $request, PayrollEmployeeSalary $payrollEmployeeSalary): RedirectResponse

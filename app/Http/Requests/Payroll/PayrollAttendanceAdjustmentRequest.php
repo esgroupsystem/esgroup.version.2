@@ -30,6 +30,10 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
 
         if ($type === PayrollAttendanceAdjustment::TYPE_OFFSET) {
             $this->merge($this->normalizedOffsetSourceInput());
+        } else {
+            // The form always posts its (hidden, blank) Offset source rows;
+            // they must not be validated for any other adjustment type.
+            $this->merge(['offset_sources' => []]);
         }
 
         if (PayrollAttendanceAdjustment::isTyphoonDisasterType($type)) {

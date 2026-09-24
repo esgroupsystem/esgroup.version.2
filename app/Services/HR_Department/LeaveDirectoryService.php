@@ -62,6 +62,9 @@ final class LeaveDirectoryService
     {
         $today = Carbon::now('Asia/Manila')->startOfDay();
         $search = trim((string) $request->input('search', ''));
+        $status = strtolower(trim((string) $request->input('status', '')));
+        $leaveType = trim((string) $request->input('leave_type', ''));
+        $garage = trim((string) $request->input('garage', ''));
 
         $baseQuery = $leaveClass::query()
             ->with(['employee.position'])
@@ -83,6 +86,13 @@ final class LeaveDirectoryService
             });
 
         $leaves = (clone $baseQuery)
+            ->when($status === 'active', fn (Builder $query) => $query->where(fn (Builder $inner) => $inner
+                ->whereNull('status')
+                ->orWhere('status', '')
+                ->orWhereRaw('LOWER(status) IN (?, ?)', ['active', 'on_leave'])))
+            ->when(in_array($status, ['inactive', 'completed', 'cancelled', 'terminated'], true), fn (Builder $query) => $query->whereRaw('LOWER(status) = ?', [$status]))
+            ->when($leaveType !== '', fn (Builder $query) => $query->where('leave_type', $leaveType))
+            ->when($garage !== '', fn (Builder $query) => $query->whereHas('employee', fn (Builder $employeeQuery) => $employeeQuery->where('garage', $garage)))
             ->orderByRaw("CASE WHEN status IS NULL OR status = '' THEN 1 WHEN LOWER(status) IN ('active', 'on_leave') THEN 1 WHEN LOWER(status) = 'inactive' THEN 2 WHEN LOWER(status) = 'completed' THEN 3 WHEN LOWER(status) = 'cancelled' THEN 4 WHEN LOWER(status) = 'terminated' THEN 5 ELSE 3 END ASC")
             ->orderByDesc('id')
             ->paginate(10)
@@ -177,6 +187,8 @@ final class LeaveDirectoryService
                 default => 'No Notice',
             };
             $leave->status_label = $statusLabel;
+            $leave->record_status_tone = $statusColor;
+            $leave->remaining = ['label' => $statusLabel, 'tone' => $statusColor];
 
             if (in_array($rawStatus, ['cancelled', 'completed', 'terminated'], true)) {
                 $leave->remaining_status = $leave->record_status_badge;
@@ -194,11 +206,18 @@ final class LeaveDirectoryService
             if ($today->lte($end)) {
                 $remainingDays = (int) $today->diffInDays($end) + 1;
                 $leave->remaining_status = '<span class="badge rounded-pill badge-subtle-success text-success">On Leave: '.$remainingDays.' '.($remainingDays === 1 ? 'day' : 'days').' left</span>';
+                $leave->remaining = ['label' => 'On Leave: '.$remainingDays.' '.($remainingDays === 1 ? 'day' : 'days').' left', 'tone' => 'success'];
 
                 continue;
             }
 
             $daysAfterEnd = (int) $end->diffInDays($today);
+            $leave->remaining = match (true) {
+                $daysAfterEnd === 1 => ['label' => 'Ready for Duty', 'tone' => 'primary'],
+                $daysAfterEnd <= 9 => ['label' => 'Warning for 1st Notice', 'tone' => 'info'],
+                $daysAfterEnd <= 22 => ['label' => 'Warning for 2nd Notice', 'tone' => 'warning'],
+                default => ['label' => 'Subject for Final Notice', 'tone' => 'danger'],
+            };
             $leave->remaining_status = match (true) {
                 $daysAfterEnd === 1 => '<span class="badge rounded-pill badge-subtle-primary text-primary">Ready for Duty</span>',
                 $daysAfterEnd <= 9 => '<span class="badge rounded-pill badge-subtle-info text-info">Warning for 1st Notice</span>',
