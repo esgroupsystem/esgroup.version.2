@@ -1,14 +1,16 @@
-import { ChevronLeft, ChevronRight, Inbox, Loader2, Search, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, Download, FileSpreadsheet, FileText, Inbox, Loader2, Printer, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useModal } from '@/components/modal/modal-context';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardAction, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import type { Paginated } from '@/types';
+import { fetchAllPages, runExport, type ExportFormat } from './data-export';
 
 export interface FilterOption {
     value: string;
@@ -38,6 +40,10 @@ export interface DataTableColumn<T> {
     hideBelow?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
     className?: string;
     headClassName?: string;
+    /** Text for Excel/CSV/print when the cell is not plain text (default: the rendered cell's text). */
+    exportValue?: (row: T) => string | number | null | undefined;
+    /** false = leave this column out of export and print (e.g. a column of inputs). */
+    exportable?: boolean;
 }
 
 type Values = Record<string, string>;
@@ -62,6 +68,10 @@ interface CommonProps<T> {
     className?: string;
     /** Minimum table width before it scrolls sideways on small screens. */
     minWidth?: number;
+    /** Export (Excel / CSV) and Print buttons; on by default. */
+    exportable?: boolean;
+    /** Title of the exported file / printout (default: the table title). */
+    exportTitle?: string;
 }
 
 /** Server mode: the controller filters and paginates. Search and filters are query params. */
@@ -144,9 +154,19 @@ function ServerTable<T>(props: ServerProps<T>) {
         go(next);
     };
 
+    // Export/print: every page of this list, with the filters currently applied.
+    const allRows = () =>
+        fetchAllPages(paginator, (page) => {
+            const target = new URL(url, window.location.origin);
+            Object.entries({ ...keepParams, ...(filters as Values) }).forEach(([key, value]) => value && target.searchParams.set(key, String(value)));
+            target.searchParams.set(pageParam, String(page));
+            return target.toString();
+        });
+
     return (
         <TableShell
             {...props}
+            allRows={allRows}
             rows={paginator.data}
             values={values}
             searchParam={searchParam}
@@ -216,6 +236,7 @@ function ClientTable<T>(props: ClientProps<T>) {
     return (
         <TableShell
             {...props}
+            allRows={async () => filtered}
             rows={slice}
             values={values}
             searchParam={searchable ? 'search' : null}
@@ -254,6 +275,8 @@ interface ShellProps<T> extends CommonProps<T> {
     pending: boolean;
     total: number;
     pager: ReactNode;
+    /** Every row matching the current search and filters (all pages). */
+    allRows: () => Promise<T[]>;
 }
 
 function TableShell<T>({
@@ -279,6 +302,9 @@ function TableShell<T>({
     total,
     noun = 'record',
     pager,
+    exportable = true,
+    exportTitle,
+    allRows,
 }: ShellProps<T>) {
     const hasFilterRow = columns.some((column) => column.filter);
     const colSpan = columns.length + (rowActions ? 1 : 0);
@@ -319,8 +345,9 @@ function TableShell<T>({
                 )}
                 {toolbar && <CardAction className="flex flex-wrap items-center gap-2">{toolbar}</CardAction>}
 
-                {searchParam && (
+                {(searchParam || exportable) && (
                     <div className="col-span-full flex flex-wrap items-center gap-2">
+                        {searchParam && (
                         <div className="relative w-full sm:w-80">
                             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
@@ -345,6 +372,7 @@ function TableShell<T>({
                                 )
                             )}
                         </div>
+                        )}
                         {chips.length > 0 && (
                             <div className="flex flex-wrap items-center gap-1.5">
                                 {chips.map((chip) => (
@@ -360,6 +388,19 @@ function TableShell<T>({
                                     Clear all
                                 </Button>
                             </div>
+                        )}
+                        {exportable && (
+                            <ExportButtons
+                                onExport={(format) =>
+                                    runExport({
+                                        format,
+                                        title: exportTitle ?? (typeof title === 'string' ? title : document.title.replace(/\s*\|.*$/, '')),
+                                        filters: chips.map((chip) => `${chip.label}: ${chip.value}`),
+                                        columns,
+                                        rows: allRows,
+                                    })
+                                }
+                            />
                         )}
                     </div>
                 )}
@@ -508,6 +549,44 @@ function Pager({ from, to, total, page, lastPage, noun = 'record', onPage }: { f
                     </Button>
                 </div>
             )}
+        </div>
+    );
+}
+
+/** Excel / CSV download and Print, on the right of the search row. */
+function ExportButtons({ onExport }: { onExport: (format: ExportFormat) => Promise<void> }) {
+    const [busy, setBusy] = useState(false);
+    const run = (format: ExportFormat) => {
+        setBusy(true);
+        onExport(format).finally(() => setBusy(false));
+    };
+
+    return (
+        <div className="ml-auto flex items-center gap-1.5">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" disabled={busy}>
+                        {busy ? <Loader2 className="animate-spin" /> : <Download />}
+                        Export
+                        <ChevronDown className="opacity-60" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => run('xlsx')}>
+                        <FileSpreadsheet className="text-emerald-600" />
+                        Excel (.xlsx)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => run('csv')}>
+                        <FileText />
+                        CSV
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            {/* Print opens its window inside the click (popup blockers), so no state change first. */}
+            <Button variant="outline" size="sm" disabled={busy} onClick={() => onExport('print')}>
+                <Printer />
+                Print
+            </Button>
         </div>
     );
 }

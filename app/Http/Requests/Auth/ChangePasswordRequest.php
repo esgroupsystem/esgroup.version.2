@@ -22,7 +22,8 @@ final class ChangePasswordRequest extends FormRequest
                 'required',
                 'string',
                 'confirmed',
-                Password::min(12)->mixedCase()->numbers()->symbols(),
+                // Kept short on purpose: at least 7 characters with a number and a special character.
+                Password::min(7)->numbers()->symbols(),
             ],
         ];
 

@@ -76,16 +76,15 @@ final class DashboardInertiaTest extends TestCase
 
     public function test_inertia_visit_to_a_blade_page_becomes_a_full_page_load(): void
     {
-        // The lock screen is still Blade. Send the real asset version so the 409
-        // comes from the Blade conversion, not from a version mismatch.
-        $user = $this->makeUser(['dashboard.view']);
+        // Any plain HTML page (a print view, ...). Send the real asset version so the
+        // 409 comes from the Blade conversion, not from a version mismatch.
+        \Illuminate\Support\Facades\Route::middleware('web')->get('/_plain-html', fn () => response('<html><body>Print</body></html>'));
         $version = (string) app(\App\Http\Middleware\HandleInertiaRequests::class)->version(request());
 
-        $this->actingAs($user)
-            ->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => $version])
-            ->get(route('lockscreen.show'))
+        $this->withHeaders(['X-Inertia' => 'true', 'X-Inertia-Version' => $version])
+            ->get('/_plain-html')
             ->assertStatus(409)
-            ->assertHeader('X-Inertia-Location', route('lockscreen.show'));
+            ->assertHeader('X-Inertia-Location', url('/_plain-html'));
     }
 
     public function test_developer_always_has_every_permission(): void
@@ -117,13 +116,19 @@ final class DashboardInertiaTest extends TestCase
         $this->asUnlocked($user)->get(route('payroll-plotting.index'))->assertForbidden();
     }
 
-    public function test_locked_session_redirects_to_lock_screen(): void
+    public function test_locked_session_shows_the_lock_screen_instead_of_the_page(): void
     {
         $user = $this->makeUser(['dashboard.view']);
 
+        // No page data at all while locked: the React lock screen is rendered in place.
         $this->actingAs($user)
             ->get(route('dashboard.index'))
-            ->assertRedirect(route('lockscreen.show'));
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('auth/lock')
+                ->where('user.name', 'Juan Dela Cruz')
+                ->missing('greeting'))
+            ->assertSessionHas('lock_intended', route('dashboard.index'));
     }
 
     private function asUnlocked(User $user): static

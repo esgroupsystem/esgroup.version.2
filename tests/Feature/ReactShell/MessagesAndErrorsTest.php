@@ -20,21 +20,27 @@ final class MessagesAndErrorsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_every_listed_status_has_its_own_error_page_without_falcon(): void
+    public function test_every_listed_status_renders_the_react_error_page(): void
     {
-        foreach (array_keys(HttpStatusMessage::MESSAGES) as $code) {
-            $this->assertFileExists(resource_path("views/errors/{$code}.blade.php"));
+        config(['app.debug' => false]);
+        \Illuminate\Support\Facades\Route::middleware('web')->get('/_status/{code}', fn (string $code) => abort((int) $code));
+        $this->assertDirectoryDoesNotExist(resource_path('views/errors'));
 
-            $html = view("errors.{$code}", ['exception' => new \Symfony\Component\HttpKernel\Exception\HttpException($code)])->render();
+        foreach (array_keys(HttpStatusMessage::MESSAGES) as $code) {
             $status = HttpStatusMessage::for($code);
 
-            $this->assertStringContainsString((string) $code, $html);
-            $this->assertStringContainsString(e($status['title']), $html);
-            // Shown as a top-right toast as well, and no Falcon assets are loaded.
-            $this->assertStringContainsString('jgToast', $html);
-            $this->assertStringNotContainsString('theme.css', $html);
-            $this->assertStringNotContainsString('vendors/', $html);
+            $this->get("/_status/{$code}")
+                ->assertStatus($code)
+                ->assertInertia(fn (Assert $page) => $page
+                    ->component('errors/show')
+                    ->where('status.code', $code)
+                    ->where('status.title', $status['title'])
+                    ->where('primary.href', fn ($href) => is_string($href) && $href !== ''));
         }
+
+        // A deliberate abort message is shown; framework messages never are.
+        \Illuminate\Support\Facades\Route::middleware('web')->get('/_forbidden', fn () => abort(403, 'Payroll is locked for this cutoff.'));
+        $this->get('/_forbidden')->assertInertia(fn (Assert $page) => $page->where('detail', 'Payroll is locked for this cutoff.'));
     }
 
     public function test_missing_page_renders_the_new_404_page(): void
@@ -64,17 +70,19 @@ final class MessagesAndErrorsTest extends TestCase
         // Real flow: a failed security check redirects back with an error.
         \Illuminate\Support\Facades\Http::fake(['challenges.cloudflare.com/*' => \Illuminate\Support\Facades\Http::response(['success' => false])]);
 
-        $html = $this->from(route('login'))
+        $this->from(route('login'))
             ->followingRedirects()
             ->post(route('login.post'), ['username' => 'nobody', 'password' => 'wrong-password', 'cf-turnstile-response' => 'x'])
             ->assertOk()
-            ->assertSee('Welcome Back')
-            ->getContent();
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('auth/login')
+                // Validation errors become toasts on the client (lib/notify.ts).
+                ->where('errors.turnstile', 'Security verification failed. Please try again.')
+                ->where('old.username', 'nobody')
+                ->where('old.remember', false)
+                ->has('turnstileSiteKey'));
 
-        $this->assertStringContainsString('Security verification failed. Please try again.', $html);
-        $this->assertStringContainsString('jgToast', $html);
-        $this->assertStringNotContainsString('class="lx-errors"', $html);
-        $this->assertStringNotContainsString('theme.css', $html);
+        $this->assertDirectoryDoesNotExist(resource_path('views/landing'));
     }
 
     public function test_change_password_page_is_react(): void

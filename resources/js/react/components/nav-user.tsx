@@ -1,5 +1,5 @@
-import { usePage } from '@inertiajs/react';
-import { ChevronsUpDown, LogOut } from 'lucide-react';
+import { router, usePage } from '@inertiajs/react';
+import { ChevronsUpDown, Lock, LogOut } from 'lucide-react';
 import { useRef } from 'react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -56,7 +56,11 @@ export function NavUser() {
                             <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">{identity}</div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {/* A real form POST: logout ends on the Blade login page. */}
+                        <DropdownMenuItem onSelect={() => router.post(routes.lock)}>
+                            <Lock />
+                            Lock screen
+                        </DropdownMenuItem>
+                        {/* A real form POST, so logout ends on a fresh login page. */}
                         <DropdownMenuItem onSelect={() => logoutForm.current?.submit()}>
                             <LogOut />
                             Log out

@@ -1,9 +1,10 @@
-import { Head } from '@inertiajs/react';
+import { Head, usePage } from '@inertiajs/react';
 import type { CSSProperties, ReactNode } from 'react';
 import { AppSidebar } from '@/components/app-sidebar';
 import { ModalStack } from '@/components/modal/modal-stack';
 import { SiteHeader } from '@/components/site-header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import { useIdleLock } from '@/lib/use-idle-lock';
 
 function sidebarDefaultOpen(): boolean {
     // Written by the shadcn sidebar on toggle; read client-side because
@@ -12,6 +13,9 @@ function sidebarDefaultOpen(): boolean {
 }
 
 export default function AppLayout({ title, children }: { title: string; children: ReactNode }) {
+    const { routes } = usePage().props;
+    // Lock the screen after a while without activity (the server enforces the lock).
+    useIdleLock(routes?.lock);
 
     return (
         <SidebarProvider

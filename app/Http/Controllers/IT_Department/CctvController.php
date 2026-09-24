@@ -221,11 +221,19 @@ final class CctvController extends Controller
             ->get();
 
         if ($type === 'print') {
-            return view('it_department.concern.print', [
-                'jobOrders' => $jobOrders,
-                'busDisplayMap' => $busDisplayMap,
+            return Inertia::render('it/cctv/print', [
+                'rows' => $jobOrders->map(fn (CctvConcern $jo): array => [
+                    'id' => $jo->id,
+                    'bus' => (string) ($busDisplayMap[$jo->bus_no] ?? $jo->bus_no),
+                    'reporter' => $jo->reported_by,
+                    'issue' => (string) $jo->issue_type,
+                    'details' => $jo->problem_details,
+                    'status' => (string) $jo->status,
+                    'date' => $jo->created_at?->format('Y-m-d h:i A'),
+                ])->values(),
                 'status' => $status ?: 'All',
-                'q' => $q,
+                'search' => $q,
+                'generated' => now()->format('F d, Y h:i A'),
             ]);
         }
 

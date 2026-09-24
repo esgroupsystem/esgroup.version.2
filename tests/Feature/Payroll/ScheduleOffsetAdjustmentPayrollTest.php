@@ -652,6 +652,16 @@ final class ScheduleOffsetAdjustmentPayrollTest extends TestCase
                 ->has('rows', 0)
                 ->has('totals.sss_total')
                 ->where('urls.print', route('benefits-records.print', $filters)));
+
+        $this->asPayrollUser()->get(route('benefits-records.print', $filters))
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $p) => $p
+                ->component('payroll/benefits-records/print')
+                ->where('period', 'October 2026')
+                ->where('rows.0.name', 'Bartolo, Divina')
+                ->where('rows.0.summary.posted', false)
+                ->has('totals.grand_total')
+                ->where('urls.back', route('benefits-records.overall', $filters)));
     }
 
     public function test_employee_salary_pages_render_and_update(): void
@@ -739,6 +749,17 @@ final class ScheduleOffsetAdjustmentPayrollTest extends TestCase
                 ->has('stats.eligible_employees')
                 ->where('can.rebuild', true)
             );
+
+        // The payroll export is a React print page: one card per employee with the cutoff rows.
+        $this->asPayrollUser()
+            ->get(route('attendance-summary.export-payroll', $cutoff))
+            ->assertOk()
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $page) => $page
+                ->component('payroll/attendance-summary/export')
+                ->where('groupLabel', 'Mirasol / Balintawak Payroll')
+                ->where('employees.0.employee_no', '4713002')
+                ->where('employees.0.records', fn ($records) => collect($records)->contains(fn (array $record): bool => $record['in'] === '08:00 AM' && $record['out'] === '05:00 PM'))
+                ->has('stats.eligible_employees'));
     }
 
     public function test_manual_biometrics_saves_replaces_and_feeds_attendance(): void

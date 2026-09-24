@@ -36,7 +36,7 @@ export interface SharedData {
     appName: string;
     auth: { user: AuthUser | null };
     navigation: NavGroup[];
-    routes: { logout: string; changePassword: string };
+    routes: { logout: string; changePassword: string; lock: string };
     flash: {
         success: string | null;
         error: string | null;

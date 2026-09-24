@@ -177,6 +177,10 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
         },
         {
             key: 'status',
+            exportValue: (employee) => {
+                const { row } = edit(employee);
+                return row ? STATUS_OPTIONS.find((option) => option.value === row.status)?.label ?? row.status : "";
+            },
             header: 'Status',
             className: 'align-top',
             filter: { type: 'select', param: 'status', options: STATUS_OPTIONS.map(({ value, label }) => ({ value, label })), placeholder: 'All statuses' },
@@ -199,6 +203,10 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
         },
         {
             key: 'shift',
+            exportValue: (employee) => {
+                const { row, rule } = edit(employee);
+                return row ? `${row.shift_name} · ${rule.label}` : "";
+            },
             header: 'Shift & work hours',
             className: 'align-top',
             filter: { type: 'select', param: 'shift', options: SHIFT_OPTIONS.map((shift) => ({ value: shift, label: shift })), placeholder: 'All shifts' },
@@ -230,6 +238,10 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
         },
         {
             key: 'time',
+            exportValue: (employee) => {
+                const { row } = edit(employee);
+                return row ? row.status === 'scheduled' && row.shift_name !== 'Flexible Shift' ? `${row.time_in} – ${row.time_out} · ${row.grace_minutes} min grace` : `${row.grace_minutes} min grace` : "";
+            },
             header: 'Time in / out & grace',
             className: 'align-top',
             cell: (employee) => {
@@ -274,6 +286,10 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
         },
         {
             key: 'days_off',
+            exportValue: (employee) => {
+                const { row } = edit(employee);
+                return row ? [row.day_offs.length ? `Off: ${row.day_offs.join(', ')}` : 'No day off', row.remarks].filter(Boolean).join(' · ') : "";
+            },
             header: 'Days off & remarks',
             className: 'align-top',
             cell: (employee) => {
@@ -297,6 +313,7 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
         },
         {
             key: 'preview',
+            exportable: false,
             header: 'Preview',
             hideBelow: '2xl',
             className: 'align-top text-xs text-muted-foreground',

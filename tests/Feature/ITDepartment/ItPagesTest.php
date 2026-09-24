@@ -104,6 +104,15 @@ final class ItPagesTest extends TestCase
         $this->assertSame('ACCIDENT', $job->refresh()->job_type);
         $this->assertSame('Juan', $job->driver_name);
 
+        $this->client()->get(route('tickets.joborder.print', $job->id))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('it/job-orders/print')
+                ->where('job.number', str_pad((string) $job->id, 5, '0', STR_PAD_LEFT))
+                ->where('job.seat', '5')
+                ->where('job.driver', 'Juan')
+                ->where('job.bus.body_number', 'BUS-001'));
+
         $this->client()->post(route('tickets.joborder.addnote', $job->id), ['reason' => 'Other', 'details' => 'Checked'])->assertSessionHasNoErrors();
         $this->client()->post(route('tickets.joborder.addfile', $job->id), ['files' => [UploadedFile::fake()->create('report.pdf', 20, 'application/pdf')]])->assertSessionHasNoErrors();
 
@@ -169,6 +178,15 @@ final class ItPagesTest extends TestCase
                 ->where('concerns.data.0.items.0.qty_used', '2')
                 ->where('stats.open', 1)
                 ->where('inventoryItems.0.label', 'CCTV Camera'));
+
+        // Print view is a React page with plain rows (no Blade).
+        $this->client()->get(route('concern.export', ['type' => 'print']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('it/cctv/print')
+                ->where('status', 'All')
+                ->where('rows.0.issue', $concern->issue_type)
+                ->has('generated'));
 
         $this->client()->get(route('concern.cctv.view', $concern->id))
             ->assertRedirect(route('concern.cctv.index', ['q' => $concern->jo_no, 'open' => $concern->id]));

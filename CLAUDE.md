@@ -7,7 +7,7 @@ Branch `feature/react-shadcn` holds the ongoing move from Blade to React + shadc
 
 - Laravel 12, PHP 8.2, MariaDB (XAMPP on Windows, git-bash shell), spatie/laravel-permission.
 - Inertia v3 + React 19 + TypeScript, Tailwind v4, shadcn/ui (new-york style), lucide-react icons, recharts (via the shadcn `chart` component), Vite 7.
-- React code lives in `resources/js/react/` (`pages/`, `components/`, `components/ui/`, `lib/`, `layouts/`, `types/`). The only Vite CSS entry is `resources/css/react.css`. `public/assets/img` holds just the few images in use: favicons, the bus photo, the lock-screen image, the seat plan and `no-image-default`.
+- React code lives in `resources/js/react/` (`pages/`, `components/`, `components/ui/`, `lib/`, `layouts/`, `types/`). The only Vite CSS entry is `resources/css/react.css`. `public/assets/img` holds just the few images in use: favicons, the bus photo (login), the seat plan and `no-image-default`.
 
 ## How the user works
 
@@ -29,7 +29,7 @@ Branch `feature/react-shadcn` holds the ongoing move from Blade to React + shadc
 5. Add the route name to `App\Support\Navigation\MainNavigation::INERTIA_ROUTES` so the sidebar link is a client-side visit. Routes not listed there are full page loads into Blade (`HandleInertiaRequests` returns a 409 location for Blade pages).
 6. Paginators built from collections with `forPage()` keep their keys. Re-index with `->values()` or page 2+ turns into a JSON object.
 7. Add or extend a feature test (`tests/Feature/...`) that renders the component with `assertInertia` and exercises every write action.
-8. Print, PDF, Excel and CSV export views stay Blade.
+8. Printable pages are React too: `components/print/print-shell.tsx` (`PrintShell`, `printTable`) gives the paper look, a Print / Close bar that never prints, the Jell Group header and auto-print (options: `landscape`, `pageSize`, `bare`). Examples: `it/cctv/print`, `it/job-orders/print`, `payroll/benefits-records/print`, `payroll/attendance-summary/export`. Link to them with `<a target="_blank">`. Only server-generated **PDF downloads** (dompdf: payslip, 201 file, ticket export) and CSV/Excel streams stay on the server side.
 
 ### Standard list + modal pattern (Payroll is the reference implementation)
 
@@ -91,6 +91,10 @@ Every list page is built the same way. Copy `pages/payroll/payrolls/index.tsx` o
 - Layout: `layouts/app-layout.tsx` (`<AppLayout title>`, mounts `ModalStack`), `lib/define-page.tsx` (`definePage`, `ModalSize`), `components/page-header.tsx` (`PageHeader`, `StatCard`).
 - Modals: `components/modal/modal-link.tsx` (`ModalLink`), `modal-store.ts` (`openModal`, `closeAllModals`), `modal-context.tsx` (`useModal`: `inModal`, `visit`, `get`, `close`, `refresh`), `modal-stack.tsx`, `detail-dialog.tsx` (`DetailDialog`, `DetailGrid`).
 - Tables: `components/data-table/data-table.tsx` (`DataTable`, `DataTableColumn`, `ColumnFilter`), `month-year-picker.tsx`, `cutoff-toolbar.tsx`. The older `data-pagination.tsx` is only for pages not yet on `DataTable`.
+- **Every DataTable has Export (Excel .xlsx / CSV) and Print** (`components/data-table/data-export.ts`, on by default, `exportable={false}` to turn off).
+  - It exports **all rows matching the current search and filters**: server tables fetch every page as Inertia JSON (`fetchInertiaProps` in `modal-store.ts`); client tables use the filtered rows. Capped at 200 pages.
+  - Cell text comes from `column.exportValue` → `column.value` → the rendered cell's text (icons, buttons, avatars removed; flex/grid parts joined with " · "). Give `exportValue` to columns of inputs (see `payroll/plotting`), and `exportable: false` to columns that should not print.
+  - Excel uses the `write-excel-file` package (lazy-loaded). Print opens a clean printable window with the Jell Group header, active filters and a record count.
 - Forms: `form-field.tsx`, `search-select.tsx` (searchable select, `ariaLabel`), `employee-combobox.tsx`, `remote-employee-search.tsx`, `file-drop.tsx`, `cutoff-picker.tsx`, `adjustments/adjustment-editor.tsx` (modal-aware).
 - Actions: `confirm-action.tsx` (`ConfirmAction`, `IconButton` with `onClick`). Buttons inside clickable rows must `stopPropagation()`; wrap row actions in a span that stops it, because dialog portals bubble through React.
 - Dashboards: `components/dashboard/charts.tsx` (`DashboardCard`, `KpiCard`, `SimpleBarChart`, `SeriesChart`, `DonutChart`, `BreakdownList`).
@@ -126,18 +130,17 @@ Every list page is built the same way. Copy `pages/payroll/payrolls/index.tsx` o
   For a toast from your own code, use `notify(level, message)` or `notifyHttpError(status)`. The single `<Toaster>` lives in `app.tsx`, not in the layout.
 - `<Alert>` stays for permanent notices only: rules, payroll formula warnings, "rolled back" records, the one-time temporary password.
 - HTTP status wording lives in `app/Support/HttpStatusMessage.php` and `resources/js/react/lib/http-status.ts` (keep them identical). Covered: 400, 401, 402, 403, 404, 405, 409, 419, 422, 429, 500, 503.
-- Error pages: `resources/views/errors/{code}.blade.php` all include `errors/page.blade.php` (4xx and 5xx fallbacks too). Full-page errors show that page plus a toast.
+- Error pages are React: `bootstrap/app.php` (`withExceptions` → `respond`) renders `pages/errors/show.tsx` for failed **browser visits** (status, title, message from `HttpStatusMessage`, a deliberate 403/409/429 abort message, and a Go back / Dashboard / Sign in button). It also toasts. Inertia visits and JSON calls keep the raw status (toast only). Debug-mode 5xx keep Laravel's debug page; if React cannot render, Laravel's plain page is the fallback. There are no Blade error views.
 - `HandleInertiaRequests` converts Blade HTML answers to Inertia visits into a 409 full-page load only for status < 400. Errors reach the client as `httpException` and become toasts.
-- Blade pages (login, lock screen, errors) use `layouts/partials/toasts.blade.php` (`window.jgToast(level, title, description)`), which shows session flashes and validation errors.
 
 ## No Falcon
 
 - The Falcon admin template is fully removed: Bootstrap theme CSS/JS, `public/vendors`, `public/src`, demo images, `layouts.app`, the old Blade pages, `resources/css/app.css`, `resources/js/app.js`, and the Bootstrap / Choices / Flatpickr / Swiper / Chart.js npm packages. Never add them back.
-- The only Blade pages left are:
-  - login and lock screen (`layouts/auth.blade.php` + `layouts/partials/auth-styles.blade.php`);
-  - error pages;
-  - print and PDF views (standalone HTML);
-  - the two mail templates.
+- The only Blade files left (they cannot be React) are:
+  - `app-react.blade.php`, the shell every React page loads into;
+  - the three dompdf PDF templates (`payroll/payrolls/payslip-pdf`, `hr_department/employees/modals/_employee_201_pdf`, `it_department/export/pdf`);
+  - the two mail templates (`emails/*`).
+  Login, lock screen, error pages and print pages are all React. Never add a Blade page again.
 - The old Purchase Request, Accounting PO approval, PO Receiving, old CCTV page, analytics/CRM demo dashboards and Stock page were deleted on request. Their database tables and models are kept.
 
 ## Sidebar
@@ -147,11 +150,16 @@ Every list page is built the same way. Copy `pages/payroll/payrolls/index.tsx` o
 - Dashboard is a single link (not expandable). Odometer Monitoring and Bus Analytics are under Fleet. Maintenance Stock is under Inventory. The All Data / HR / IT dashboards are hidden from the menu (their routes still exist).
 - Compact style: 30px items with a 2px gap and small uppercase group labels.
 
-## Login page
+## Login page, lock screen and passwords
 
-- `resources/views/landing/login.blade.php` and `lockscreen.blade.php` stay Blade (`layouts/auth.blade.php`): Cloudflare Turnstile, the lockout countdown and the CSP nonce live there. Both use the same `lx-` design from `layouts/partials/auth-styles.blade.php`.
-- The design follows the reference: the `groupes.jpg` bus photo with a navy overlay, hero on the left, a 640px card centred in the right half. It is sized in `em` off `.lx-page` so it scales with screen width. Classes are prefixed `lx-` to avoid clashing with `public/assets/css/user.css`.
-- Keep the IDs the scripts rely on: `loginForm`, `username`, `password`, `remember`, `togglePassword`, `loginBtn`, `loginBtnText`, `turnstileStatus`, plus the `turnstileSuccess` / `turnstileExpired` callbacks.
+- **Login** is React: `pages/auth/login.tsx` (`AuthController::showLogin`). **Its look is fixed and approved by the user; never restyle it.** It uses `pages/auth/login.css`, the exact stylesheet of the former Blade login (`lx-` classes, sized in `em` off `.lx-page`, font-size `clamp(14px, 0.78vw, 20px)`), with the same markup. Do not replace it with Tailwind. Bus photo `groupes.jpg` with a navy wash, hero left, card 32em centred in the right half. Same fields and endpoint (`username`, `password`, `remember`, `cf-turnstile-response` → `login.post`). The lockout countdown comes from the `seconds` prop; `old` refills username/remember; errors and flashes are toasts.
+  - Cloudflare Turnstile: `components/auth/turnstile.tsx` (explicit render, script loaded once, `reset()` after every failed attempt because a token works once). Site key from `config('services.turnstile.site_key')`.
+  - Kept element ids: `loginForm`, `username`, `password`, `remember`, `togglePassword`, `loginBtn`, `loginBtnText`, `turnstileStatus`.
+- **Lock screen** is React: `pages/auth/lock.tsx` (blurred fake app shell + lock icon + password, "Not you? Sign out").
+  - The server enforces it: `App\Http\Middleware\ForceLockscreen`. While the session is locked (`unlocked` = false) every page request renders the lock page **in place** (no page data is sent) and stores the URL in `lock_intended`. Writes redirect to `/lockscreen`, and JSON gets 423.
+  - `POST /lock` (`lockscreen.lock`) locks from the user menu ("Lock screen") and from the idle timer (`lib/use-idle-lock.ts`, 15 minutes without activity in any tab, used in `AppLayout`).
+  - `POST /unlock` checks the password (5 tries / 60 s) and returns to `lock_intended`, same site only (`AuthController::sameSite`), else the dashboard.
+- **Password rule** (change password): at least **7 characters with a number and a special character** (`ChangePasswordRequest`: `Password::min(7)->numbers()->symbols()`). `pages/auth/change-password.tsx` shows a live checklist, a show/hide eye and a match hint.
 
 ## Safety rules (must follow)
 

@@ -305,8 +305,6 @@ class AttendanceSummaryController extends Controller
             ];
         });
 
-        $employeePages = $employees->chunk(9);
-
         $stats = $this->buildStats($this->summaryBaseQuery(
             $startDate,
             $endDate,
@@ -320,20 +318,43 @@ class AttendanceSummaryController extends Controller
             $this->buildRosterCoverageStats($startDate, $endDate, $groupName)
         );
 
-        return view('payroll.attendance_summary.export-payroll', compact(
-            'employees',
-            'employeePages',
-            'summaryRows',
-            'stats',
-            'cutoffMonth',
-            'cutoffYear',
-            'cutoffType',
-            'cutoffLabel',
-            'search',
-            'status',
-            'dayType',
-            'groupName'
-        ));
+        $time = fn ($value): ?string => $value ? Carbon::parse($value)->format('h:i A') : null;
+
+        return Inertia::render('payroll/attendance-summary/export', [
+            'cutoffLabel' => $cutoffLabel,
+            'groupLabel' => match ($groupName) {
+                '1' => 'Mirasol / Balintawak Payroll',
+                '2' => 'Gonzales Payroll',
+                default => 'All Payroll Groups',
+            },
+            'recordCount' => $summaryRows->count(),
+            'stats' => collect($stats)->map(fn ($value) => is_numeric($value) ? (float) $value : $value)->all(),
+            'employees' => $employees->map(fn (array $employee): array => [
+                'id' => (int) $employee['employee_biometric_id'],
+                'name' => $employee['employee_name'],
+                'employee_no' => $employee['employee_no'],
+                'biometric_id' => $employee['biometric_employee_id'],
+                'records' => $employee['records']->map(fn ($record): array => [
+                    'day' => $record->work_date ? Carbon::parse($record->work_date)->format('D') : null,
+                    'date' => $record->work_date ? Carbon::parse($record->work_date)->format('m/d') : null,
+                    'in' => $time($record->actual_time_in),
+                    'out' => $time($record->actual_time_out),
+                    'worked_hours' => round(((int) $record->worked_minutes) / 60, 2),
+                    'payable_days' => (float) $record->payable_days,
+                    'status' => (string) ($record->attendance_status ?? ''),
+                ])->values(),
+                'totals' => [
+                    'absent' => (int) $employee['total_absent_count'],
+                    'review' => (int) $employee['total_review_count'],
+                    'holiday_paid' => (int) $employee['total_holiday_paid_count'],
+                    'holiday_unpaid' => (int) $employee['total_holiday_unpaid_count'],
+                    'late_minutes' => (float) $employee['total_late_minutes'],
+                    'undertime_minutes' => (float) $employee['total_undertime_minutes'],
+                    'payable_days' => (float) $employee['total_payable_days'],
+                ],
+            ])->values(),
+            'printed' => now('Asia/Manila')->format('F d, Y h:i A'),
+        ]);
     }
 
     protected function summaryBaseQuery(

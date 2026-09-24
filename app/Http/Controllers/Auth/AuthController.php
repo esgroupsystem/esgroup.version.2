@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Middleware\ForceLockscreen;
 use App\Http\Requests\Auth\ChangePasswordRequest;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\UnlockRequest;
@@ -16,21 +17,35 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
-use Illuminate\View\View;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\Response as HttpResponse;
 use Throwable;
 
 final class AuthController extends Controller
 {
-    public function showLogin(Request $request): View
+    public function showLogin(Request $request): Response
     {
-        $seconds = RateLimiter::availableIn($this->ipThrottleKey($request));
+        $ipKey = $this->ipThrottleKey($request);
+        $seconds = RateLimiter::availableIn($ipKey);
 
-        return view('landing.login', compact('seconds'));
+        return Inertia::render('auth/login', [
+            // The username lockout is reported by login() through the "throttle" flash.
+            'seconds' => max($seconds, (int) session('throttle', 0)),
+            'old' => [
+                'username' => (string) old('username', ''),
+                'remember' => (bool) old('remember', false),
+            ],
+            'turnstileSiteKey' => (string) config('services.turnstile.site_key'),
+            'images' => [
+                'background' => asset('assets/img/generic/groupes.jpg'),
+                'logo' => asset('assets/img/favicons/esgroup-logo180x180.png'),
+            ],
+            'urls' => ['login' => route('login.post')],
+        ]);
     }
 
-    public function showLockscreen(): View|RedirectResponse
+    public function showLockscreen(Request $request): HttpResponse
     {
         Session::put('unlocked', false);
 
@@ -38,7 +53,18 @@ final class AuthController extends Controller
             return redirect()->route('login');
         }
 
-        return view('landing.lockscreen');
+        return ForceLockscreen::render($request);
+    }
+
+    /** "Lock screen" from the user menu or the idle timer: lock now, come back to this page after unlocking. */
+    public function lock(Request $request): RedirectResponse
+    {
+        if (Auth::check()) {
+            Session::put('unlocked', false);
+            Session::put(ForceLockscreen::INTENDED, $this->sameSite(url()->previous()));
+        }
+
+        return redirect()->route('lockscreen.show');
     }
 
     public function unlock(UnlockRequest $request): RedirectResponse
@@ -63,7 +89,22 @@ final class AuthController extends Controller
         Session::put('unlocked', true);
         Session::put('last_activity_time', now()->timestamp);
 
-        return redirect()->route('dashboard.index');
+        // Back to the page that was open when the screen locked.
+        return redirect()->to($this->sameSite(Session::pull(ForceLockscreen::INTENDED)));
+    }
+
+    /** Only redirect inside this app; anything else goes to the dashboard. */
+    private function sameSite(mixed $url): string
+    {
+        $url = is_string($url) ? $url : '';
+        $root = rtrim(url('/'), '/');
+        $path = parse_url($url, PHP_URL_PATH) ?? '';
+
+        if ($url === '' || ! str_starts_with($url, $root.'/') || in_array(rtrim($path, '/'), ['', '/lockscreen', '/lock', '/unlock', '/login'], true)) {
+            return route('dashboard.index');
+        }
+
+        return $url;
     }
 
     public function login(LoginRequest $request): RedirectResponse

@@ -15,14 +15,13 @@ use Symfony\Component\HttpFoundation\Response;
 class HandleInertiaRequests extends Middleware
 {
     /**
-     * Root template for React pages. The few Blade pages left (login, lock
-     * screen, error and print pages) use layouts.auth or standalone HTML.
+     * Root template for every React page, including login, the lock screen and
+     * error pages. Only server PDFs, a few print views and emails are Blade.
      */
     protected $rootView = 'app-react';
 
     /**
-     * When a React page makes an Inertia visit that ends on a Blade page (the
-     * lock screen, the login page after logout, a print page, ...), the client
+     * When a React page makes an Inertia visit that ends on a Blade page (a print page, a download, ...), the client
      * would otherwise show that HTML in an error modal. Turn it into a full
      * page load instead. Error statuses (4xx/5xx) are left alone: the client
      * turns them into a toast (resources/js/react/lib/notify.ts) and stays on
@@ -70,6 +69,7 @@ class HandleInertiaRequests extends Middleware
             'routes' => [
                 'logout' => route('logout'),
                 'changePassword' => route('auth.change.password.update'),
+                'lock' => route('lockscreen.lock'),
             ],
             // Where a save made inside a React modal wanted to go (HandleModalRedirects).
             'modal' => [

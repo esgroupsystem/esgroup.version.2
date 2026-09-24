@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Payroll\BenefitsRecordIndexRequest;
 use App\Services\Payroll\BenefitRecordsService;
 use Carbon\Carbon;
-use Illuminate\View\View;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -95,7 +94,7 @@ class BenefitsRecordController extends Controller
         ]);
     }
 
-    public function print(BenefitsRecordIndexRequest $request): View
+    public function print(BenefitsRecordIndexRequest $request): Response
     {
         $filters = $request->validated();
 
@@ -103,10 +102,33 @@ class BenefitsRecordController extends Controller
             $filters,
             session('payroll_allowed_groups')
         );
+        $shared = $this->sharedProps($filters, $data['groupOptions']);
+        $number = fn (mixed $value): mixed => is_numeric($value) ? (float) $value : $value;
 
-        return view('payroll.benefits_records.print', [
-            ...$data,
-            'filters' => $filters,
+        return Inertia::render('payroll/benefits-records/print', [
+            'period' => Carbon::create($shared['filters']['year'], $shared['filters']['month'], 1, 0, 0, 0, 'Asia/Manila')->format('F Y'),
+            'generated' => now('Asia/Manila')->format('F d, Y h:i A'),
+            'activeEmployeeCount' => (int) ($data['activeEmployeeCount'] ?? 0),
+            'postedEmployeeCount' => (int) ($data['postedEmployeeCount'] ?? 0),
+            'rows' => collect($data['rows'])->map(fn (array $row): array => [
+                'id' => $row['employee']->id,
+                'name' => $row['employee']->payroll_display_name,
+                'employee_no' => $row['employee']->effective_employee_no,
+                'company' => $row['company_name'],
+                'ids' => [
+                    'sss' => $row['identifiers']['sss'] ?? null,
+                    'philhealth' => $row['identifiers']['philhealth'] ?? null,
+                    'pagibig' => $row['identifiers']['pagibig'] ?? null,
+                ],
+                'summary' => collect($row['summary'])->map($number)->all(),
+            ])->values(),
+            'totals' => collect($data['totals'])->map($number)->all(),
+            'companyTotals' => collect($data['companyTotals'])->map(fn (array $company): array => [
+                'company_name' => $company['company_name'],
+                'employee_count' => (int) $company['employee_count'],
+                'totals' => collect($company['totals'])->map($number)->all(),
+            ])->values(),
+            'urls' => ['back' => $shared['urls']['overallWithFilters']],
         ]);
     }
 

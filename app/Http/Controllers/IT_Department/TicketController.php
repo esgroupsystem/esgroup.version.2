@@ -433,7 +433,45 @@ final class TicketController extends Controller
     public function print($id)
     {
         $job = JobOrder::with('bus')->findOrFail($id);
+        $format = static function (mixed $value, string $format): string {
+            if (blank($value)) {
+                return 'N/A';
+            }
 
-        return view('it_department.print.joborder', compact('job'));
+            try {
+                return Carbon::parse($value)->format($format);
+            } catch (Throwable) {
+                return (string) $value;
+            }
+        };
+        $created = $job->job_date_filled ?: $job->created_at;
+
+        return Inertia::render('it/job-orders/print', [
+            'job' => [
+                'number' => str_pad((string) $job->id, 5, '0', STR_PAD_LEFT),
+                'status' => (string) ($job->job_status ?? ''),
+                'created_short' => $format($created, 'M d, Y'),
+                'created_long' => $format($created, 'F d, Y h:i A'),
+                'creator' => $job->job_creator,
+                'assigned_to' => $job->job_assign_person,
+                'job_type' => $job->job_type,
+                'direction' => $job->direction,
+                'date_start' => $format($job->job_datestart, 'F d, Y'),
+                'time_start' => $format($job->job_time_start, 'h:i A'),
+                'time_end' => $format($job->job_time_end, 'h:i A'),
+                'seat' => filled($job->job_sitNumber) ? (string) $job->job_sitNumber : null,
+                'driver' => $job->driver_name,
+                'conductor' => $job->conductor_name,
+                'remarks' => $job->job_remarks,
+                'bus' => [
+                    'name' => $job->bus?->name,
+                    'body_number' => $job->bus?->body_number,
+                    'plate_number' => $job->bus?->plate_number,
+                    'garage' => $job->bus?->garage,
+                ],
+            ],
+            'appName' => (string) config('app.name', 'Jell Group'),
+            'printed' => now()->timezone(config('app.timezone', 'Asia/Manila'))->format('F d, Y h:i A'),
+        ]);
     }
 }

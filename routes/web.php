@@ -69,6 +69,7 @@ Route::controller(AuthController::class)->group(function () {
         ->name('login.post');
     Route::post('/logout', 'logout')->name('logout');
     Route::get('/lockscreen', 'showLockscreen')->name('lockscreen.show');
+    Route::post('/lock', 'lock')->middleware('auth')->name('lockscreen.lock');
     Route::post('/unlock', 'unlock')
         ->name('lockscreen.unlock');
 });

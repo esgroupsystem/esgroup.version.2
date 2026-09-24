@@ -67,6 +67,26 @@ export function setInertiaVersion(value: string | null | undefined): void {
     version = value ?? null;
 }
 
+/**
+ * Fetch another page's props as Inertia JSON without navigating (used by table
+ * export to collect every page of a list). Throws with the HTTP status on failure.
+ */
+export async function fetchInertiaProps(url: string): Promise<Record<string, unknown>> {
+    const response = await fetch(url, {
+        headers: {
+            Accept: 'text/html, application/xhtml+xml',
+            'X-Inertia': 'true',
+            'X-Requested-With': 'XMLHttpRequest',
+            ...(version ? { 'X-Inertia-Version': version } : {}),
+        },
+        credentials: 'same-origin',
+    });
+
+    if (!response.ok || !response.headers.get('X-Inertia')) throw new Error(String(response.status));
+
+    return ((await response.json()) as Page).props as Record<string, unknown>;
+}
+
 const pathOf = (url: string) => new URL(url, window.location.origin).pathname.replace(/\/+$/, '');
 export const samePath = (a: string, b: string) => pathOf(a) === pathOf(b);
 
