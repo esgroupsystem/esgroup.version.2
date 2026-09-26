@@ -17,6 +17,7 @@ use App\Services\Payroll\BiometricsProofService;
 use App\Services\Payroll\DailyAttendanceSummaryService;
 use App\Services\Payroll\PayrollComputationService;
 use App\Services\Payroll\PayrollPremiumService;
+use App\Support\Payroll\OvertimeCheck;
 use App\Support\PayrollEmployeeNameFormatter;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -25,9 +26,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PayrollAttendanceAdjustmentController extends Controller
 {
@@ -69,7 +72,6 @@ class PayrollAttendanceAdjustmentController extends Controller
                 });
             })
             ->when($type, fn ($query) => $query->where('adjustment_type', $type))
-            ->when(in_array($status, [PayrollAttendanceAdjustment::STATUS_PENDING, PayrollAttendanceAdjustment::STATUS_APPROVED, PayrollAttendanceAdjustment::STATUS_REJECTED], true), fn ($query) => $query->where('status', $status))
             ->when($groupName !== '', fn ($query) => $query->whereHas('employeeBiometric', fn ($employeeQuery) => $employeeQuery->where('group_name', $groupName)))
             ->when($dateFrom, function ($query) use ($dateFrom): void {
                 $query->whereDate(DB::raw('COALESCE(date_from, work_date)'), '>=', $dateFrom);
@@ -77,6 +79,18 @@ class PayrollAttendanceAdjustmentController extends Controller
             ->when($dateTo, function ($query) use ($dateTo): void {
                 $query->whereDate(DB::raw('COALESCE(date_to, work_date)'), '<=', $dateTo);
             });
+
+        // Status cards (For approval / Approved / Rejected) count every status under the other filters.
+        $statusCounts = (clone $query)
+            ->reorder()
+            ->selectRaw('status, COUNT(*) as aggregate')
+            ->groupBy('status')
+            ->pluck('aggregate', 'status');
+
+        $query->when(
+            in_array($status, [PayrollAttendanceAdjustment::STATUS_PENDING, PayrollAttendanceAdjustment::STATUS_APPROVED, PayrollAttendanceAdjustment::STATUS_REJECTED], true),
+            fn ($query) => $query->where('status', $status)
+        );
 
         $stats = [
             'total' => (clone $query)->count(),
@@ -93,6 +107,9 @@ class PayrollAttendanceAdjustmentController extends Controller
             ])->count(),
             'disasters' => (clone $query)->whereIn('adjustment_type', PayrollAttendanceAdjustment::TYPHOON_DISASTER_TYPES)->count(),
             'pending' => (clone $query)->where('status', PayrollAttendanceAdjustment::STATUS_PENDING)->count(),
+            'status_pending' => (int) ($statusCounts[PayrollAttendanceAdjustment::STATUS_PENDING] ?? 0),
+            'status_approved' => (int) ($statusCounts[PayrollAttendanceAdjustment::STATUS_APPROVED] ?? 0),
+            'status_rejected' => (int) ($statusCounts[PayrollAttendanceAdjustment::STATUS_REJECTED] ?? 0),
         ];
 
         $adjustments = $query
@@ -176,6 +193,23 @@ class PayrollAttendanceAdjustmentController extends Controller
             'ignore_late' => (bool) $item->ignore_late,
             'ignore_undertime' => (bool) $item->ignore_undertime,
             'encoder_name' => $item->encoder?->name,
+            // Who clicked Approve / Reject, and when.
+            'decision' => match (true) {
+                $item->status === PayrollAttendanceAdjustment::STATUS_APPROVED && $item->approved_by => [
+                    'by' => $item->approver?->full_name ?: ($item->approver?->name ?: 'Unknown user'),
+                    'at' => $item->approved_at?->timezone('Asia/Manila')->format('M d, Y h:i A'),
+                ],
+                $item->status === PayrollAttendanceAdjustment::STATUS_REJECTED && $item->rejected_by => [
+                    'by' => $item->rejector?->full_name ?: ($item->rejector?->name ?: 'Unknown user'),
+                    'at' => $item->rejected_at?->timezone('Asia/Manila')->format('M d, Y h:i A'),
+                    'reason' => $item->rejection_reason,
+                ],
+                default => null,
+            },
+            'attachment' => $item->attachment_path ? [
+                'name' => (string) $item->attachment_name,
+                'url' => route('payroll-attendance-adjustments.attachment', $item),
+            ] : null,
             'encoded_at' => $item->encoded_at?->timezone('Asia/Manila')->format('M d, Y h:i A'),
             'can_decide' => $item->isApprovalRequired() && $item->status === PayrollAttendanceAdjustment::STATUS_PENDING,
             'approve_title' => "Approve {$approvalNoun}",
@@ -239,6 +273,10 @@ class PayrollAttendanceAdjustmentController extends Controller
                 'remarks' => (string) ($adjustment->remarks ?? ''),
                 'status' => $adjustment->status,
                 'is_locked' => (bool) $adjustment->paid_payroll_id,
+                'attachment' => $adjustment->attachment_path ? [
+                    'name' => (string) $adjustment->attachment_name,
+                    'url' => route('payroll-attendance-adjustments.attachment', $adjustment),
+                ] : null,
             ] : null,
             'people' => $this->getBiometricsPeople()
                 ->map(fn (object $person): array => [
@@ -261,6 +299,7 @@ class PayrollAttendanceAdjustmentController extends Controller
                     ? route('payroll-attendance-adjustments.update', $adjustment)
                     : route('payroll-attendance-adjustments.store'),
                 'offsetProof' => route('payroll-attendance-adjustments.offset-proof'),
+                'overtimeCheck' => route('payroll-attendance-adjustments.overtime-check'),
             ],
         ]);
     }
@@ -295,7 +334,7 @@ class PayrollAttendanceAdjustmentController extends Controller
             }
         }
 
-        $payload = $this->buildPayload($validated, $request);
+        $payload = $this->buildPayload($validated, $request) + $this->storeOtForm($request);
 
         if ($validated['adjustment_type'] === PayrollAttendanceAdjustment::TYPE_OFFSET) {
             $offset = $this->buildOffsetProofPayload($validated);
@@ -437,7 +476,7 @@ class PayrollAttendanceAdjustmentController extends Controller
         }
 
         $oldRange = $this->adjustmentDateRange($payrollAttendanceAdjustment);
-        $payload = $this->buildPayload($validated, $request, $payrollAttendanceAdjustment);
+        $payload = $this->buildPayload($validated, $request, $payrollAttendanceAdjustment) + $this->storeOtForm($request, $payrollAttendanceAdjustment);
 
         if ($validated['adjustment_type'] === PayrollAttendanceAdjustment::TYPE_OFFSET) {
             $offset = $this->buildOffsetProofPayload($validated, $payrollAttendanceAdjustment->id);
@@ -554,6 +593,71 @@ class PayrollAttendanceAdjustmentController extends Controller
         return redirect()
             ->route('payroll-attendance-adjustments.index')
             ->with('success', 'Payroll attendance adjustment deleted successfully.');
+    }
+
+    /** Live OT checker for the form (same rules as the save). */
+    public function overtimeCheck(Request $request, OvertimeCheck $check): JsonResponse
+    {
+        $this->authorize('offsetProof', PayrollAttendanceAdjustment::class);
+
+        $validated = $request->validate([
+            'employee_biometric_id' => ['required', 'integer', 'exists:employee_biometrics,id'],
+            'biometric_employee_id' => ['nullable', 'string'],
+            'employee_no' => ['nullable', 'string'],
+            'employee_name' => ['required', 'string'],
+            'work_date' => ['required', 'date'],
+            'adjusted_time_in' => ['required', 'date_format:H:i'],
+            'adjusted_time_out' => ['required', 'date_format:H:i', 'different:adjusted_time_in'],
+            'adjustment_id' => ['nullable', 'integer'],
+        ]);
+
+        return response()->json($check->check(
+            (int) $validated['employee_biometric_id'],
+            $validated['biometric_employee_id'] ?? null,
+            $validated['employee_no'] ?? null,
+            $validated['employee_name'],
+            $validated['work_date'],
+            $validated['adjusted_time_in'],
+            $validated['adjusted_time_out'],
+            isset($validated['adjustment_id']) ? (int) $validated['adjustment_id'] : null,
+        ));
+    }
+
+    /** The uploaded approved OT form (private file, shown inline). */
+    public function attachment(PayrollAttendanceAdjustment $payrollAttendanceAdjustment): StreamedResponse
+    {
+        $this->authorize('viewAny', PayrollAttendanceAdjustment::class);
+
+        $path = (string) $payrollAttendanceAdjustment->attachment_path;
+        abort_if($path === '' || ! Storage::disk('local')->exists($path), 404);
+
+        return Storage::disk('local')->response($path, $payrollAttendanceAdjustment->attachment_name ?: basename($path), [
+            'Content-Type' => $payrollAttendanceAdjustment->attachment_mime ?: 'application/octet-stream',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    /** Saves a newly uploaded OT form (replacing the previous one). */
+    private function storeOtForm(Request $request, ?PayrollAttendanceAdjustment $existing = null): array
+    {
+        $file = $request->file('ot_form');
+
+        if (! $file) {
+            return [];
+        }
+
+        $path = $file->store('payroll/ot-forms', 'local');
+
+        if ($existing?->attachment_path && $existing->attachment_path !== $path) {
+            Storage::disk('local')->delete($existing->attachment_path);
+        }
+
+        return [
+            'attachment_path' => $path,
+            'attachment_name' => mb_substr($file->getClientOriginalName(), 0, 255),
+            'attachment_mime' => $file->getMimeType(),
+            'attachment_size' => (int) $file->getSize(),
+        ];
     }
 
     public function offsetProof(Request $request): JsonResponse

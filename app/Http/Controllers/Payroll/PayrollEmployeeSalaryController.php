@@ -137,6 +137,7 @@ class PayrollEmployeeSalaryController extends Controller
                     'employee_no' => $salary->employee_no,
                     'employee_biometric_id' => $salary->employee_biometric_id,
                     'rate_type' => $salary->rate_type,
+                    'paid_day_off' => (bool) ($salary->paid_day_off ?? true),
                     'basic_salary' => (float) $salary->basic_salary,
                     'ot_rate_per_hour' => (float) $salary->ot_rate_per_hour,
                     'late_deduction_per_minute' => (float) $salary->late_deduction_per_minute,
@@ -201,6 +202,7 @@ class PayrollEmployeeSalaryController extends Controller
             'sim_load_allowance' => (string) $field('sim_load_allowance', '0'),
             'sim_load_release_schedule' => (string) $field('sim_load_release_schedule', 'every_cutoff'),
             'paid_night_differential' => (bool) $field('paid_night_differential', false),
+            'paid_day_off' => (bool) $field('paid_day_off', true),
             'sss_contribution_cutoff' => (string) $field('sss_contribution_cutoff', 'first_cutoff'),
             'pagibig_contribution_cutoff' => (string) $field('pagibig_contribution_cutoff', 'second_cutoff'),
             'philhealth_contribution_cutoff' => (string) $field('philhealth_contribution_cutoff', 'second_cutoff'),
@@ -555,6 +557,7 @@ class PayrollEmployeeSalaryController extends Controller
             'sim_load_allowance' => ['nullable', 'numeric', 'min:0'],
             'sim_load_release_schedule' => ['required', $scheduleRule],
             'paid_night_differential' => ['nullable', 'boolean'],
+            'paid_day_off' => ['nullable', 'boolean'],
 
             'sss_contribution_cutoff' => ['required', $scheduleRule],
             'pagibig_contribution_cutoff' => ['required', $scheduleRule],
@@ -618,6 +621,7 @@ class PayrollEmployeeSalaryController extends Controller
             'sim_load_allowance' => $validated['sim_load_allowance'] ?? 0,
             'sim_load_release_schedule' => $validated['sim_load_release_schedule'],
             'paid_night_differential' => (bool) ($validated['paid_night_differential'] ?? false),
+            'paid_day_off' => (bool) ($validated['paid_day_off'] ?? true),
 
             'sss_contribution_cutoff' => $validated['sss_contribution_cutoff'],
             'pagibig_contribution_cutoff' => $validated['pagibig_contribution_cutoff'],
@@ -683,6 +687,7 @@ class PayrollEmployeeSalaryController extends Controller
             'sim_load_allowance' => 0,
             'sim_load_release_schedule' => 'every_cutoff',
             'paid_night_differential' => false,
+            'paid_day_off' => true,
 
             'sss_contribution_cutoff' => 'first_cutoff',
             'pagibig_contribution_cutoff' => 'second_cutoff',

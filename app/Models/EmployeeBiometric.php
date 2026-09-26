@@ -82,6 +82,13 @@ class EmployeeBiometric extends Model
         'total_logs' => 'integer',
     ];
 
+    /** The HR employee (201 file) manually linked to this record. */
+    /** @return HasOne<Employee, $this> */
+    public function hrEmployee(): HasOne
+    {
+        return $this->hasOne(Employee::class, 'employee_biometric_id');
+    }
+
     /** @return BelongsTo<BiometricCompany, $this> */
     public function company(): BelongsTo
     {

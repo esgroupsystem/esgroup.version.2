@@ -39,7 +39,7 @@ class EmployeeBiometricService
         );
 
         return EmployeeBiometric::query()
-            ->with('company')
+            ->with(['company', 'hrEmployee'])
             ->withCount([
                 'attendanceSummaries',
                 'attendanceAdjustments',

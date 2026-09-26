@@ -11,6 +11,7 @@ use App\Models\EmployeeBiometric;
 use App\Services\Biometrics\EmployeeBiometricService;
 use App\Services\Biometrics\EmployeeBiometricSyncService;
 use App\Services\Payroll\PayrollAuditService;
+use App\Support\HR\BiometricLink;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -140,7 +141,7 @@ class EmployeeBiometricController extends Controller
             ->orderBy('name')
             ->get();
 
-        $employeeBiometric->load('company');
+        $employeeBiometric->load(['company', 'hrEmployee']);
 
         return Inertia::render('biometrics/employees/edit', [
             'employee' => [
@@ -173,7 +174,9 @@ class EmployeeBiometricController extends Controller
                 'display_employee_no' => (string) ($employeeBiometric->display_employee_no ?? ''),
                 'display_name' => (string) ($employeeBiometric->display_name ?? ''),
                 'remarks' => (string) ($employeeBiometric->remarks ?? ''),
+                'hr_employee_id' => $employeeBiometric->hrEmployee ? (string) $employeeBiometric->hrEmployee->id : '',
             ],
+            'hrEmployees' => BiometricLink::employeeOptions($employeeBiometric),
             'companies' => $companies->map(fn (BiometricCompany $company): array => ['id' => $company->id, 'name' => $company->name])->values(),
             'groupOptions' => [
                 (string) EmployeeBiometric::PAYROLL_GROUP_MIRASOL => 'Mirasol / Balintawak Payroll',
@@ -209,6 +212,10 @@ class EmployeeBiometricController extends Controller
             'last_check_date' => $employee->last_check_time?->format('M d, Y'),
             'last_check_time' => $employee->last_check_time?->format('h:i A'),
             'total_logs' => (int) ($employee->total_logs ?? 0),
+            'hr_employee' => $employee->hrEmployee ? [
+                'name' => (string) $employee->hrEmployee->full_name,
+                'url' => route('employees.staff.show', $employee->hrEmployee->id),
+            ] : null,
             'edit_url' => route('biometrics.employees.edit', $employee),
         ];
     }
@@ -217,10 +224,16 @@ class EmployeeBiometricController extends Controller
         UpdateEmployeeBiometricRequest $request,
         EmployeeBiometric $employeeBiometric
     ): RedirectResponse {
+        $validated = $request->validated();
+        $hrEmployeeId = $validated['hr_employee_id'] ?? null;
+        unset($validated['hr_employee_id']);
+
         $this->employeeBiometricService->updateManualFields(
             $employeeBiometric,
-            $request->validated()
+            $validated
         );
+
+        BiometricLink::assignEmployee($employeeBiometric, $hrEmployeeId ? (int) $hrEmployeeId : null);
 
         return to_route('biometrics.employees.index')
             ->with(

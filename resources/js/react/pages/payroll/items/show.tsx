@@ -98,6 +98,7 @@ interface Props {
     payroll: { id: number; payroll_number: string; status: string; cutoff_label: string; period_start: string | null; period_end: string | null; period_label: string };
     item: Item;
     attendanceRates: Record<string, number> | null;
+    dayOff: { paid: boolean; days: number; amount: number; daily_rate: number; note: string | null };
     restDay: { qualified: boolean; by_exception: boolean; valid_log_days: number; minimum_valid_log_days: number; unpaid_count: number; deduction: number } | null;
     attendance: { worked_hours: number; late_minutes: number; undertime_minutes: number; holiday_worked: number; rest_day_worked: number };
     allowance: Record<string, number | string>;
@@ -105,7 +106,7 @@ interface Props {
     adjustmentTags: { label: string; paid_this_cutoff: boolean; effect: string; date: string | null; amount: number; reason: string | null }[];
     settlement: Settlement | null;
     auditRows: AuditRow[];
-    fileAdjustment: { people: PersonOption[]; types: Record<string, string>; urls: { submit: string; offsetProof: string } } | null;
+    fileAdjustment: { people: PersonOption[]; types: Record<string, string>; urls: { submit: string; offsetProof: string; overtimeCheck: string } } | null;
     can: { recompute: boolean };
     urls: { back: string; recompute: string; settlement: string };
 }
@@ -207,7 +208,7 @@ function ItemActions(props: Props) {
 }
 
 function ItemContent(props: Props) {
-    const { item, urls, attendanceRates: rates, restDay, allowance } = props;
+    const { item, urls, attendanceRates: rates, restDay, allowance, dayOff } = props;
 
     const attendanceLoss = item.late_deduction + item.undertime_deduction + item.absence_deduction;
     const additions = item.other_additions + item.holiday_pay + item.rest_day_pay + item.leave_pay + item.overtime_pay + item.night_differential_pay;
@@ -242,11 +243,13 @@ function ItemContent(props: Props) {
                     {
                         label: 'Base pay',
                         value: item.regular_pay,
-                        hint: item.monthly_formula
-                            ? `${peso(item.monthly_formula.monthly_rate)} ÷ ${item.monthly_formula.divisor} × ${item.monthly_formula.paid_days} days`
-                            : item.daily_rate
-                              ? `${peso(item.daily_rate)} / day`
-                              : `${item.payable_hours.toFixed(2)} payable hr`,
+                        hint:
+                            (item.monthly_formula
+                                ? `${peso(item.monthly_formula.monthly_rate)} ÷ ${item.monthly_formula.divisor} × ${item.monthly_formula.paid_days} days`
+                                : item.daily_rate
+                                  ? `${peso(item.daily_rate)} / day`
+                                  : `${item.payable_hours.toFixed(2)} payable hr`) +
+                            (dayOff.days > 0 ? ` · incl. ${dayOff.days} paid day off (${peso(dayOff.amount)})` : ''),
                     },
                     { sign: '−', label: 'Attendance loss', value: attendanceLoss, tone: 'negative', muted: !lossDeducted, hint: lossDeducted ? undefined : 'Already in hours' },
                     { sign: '+', label: 'Additions', value: additions, tone: 'positive' },
@@ -276,6 +279,10 @@ function ItemContent(props: Props) {
                         negative={lossDeducted}
                     />
                     <Line label="Absence" hint={rates ? `${rates.absent_days.toFixed(0)} day(s) × ${peso(rates.absence_rate)}` : undefined} amount={item.absence_deduction} negative={lossDeducted} />
+                    <div className="mt-2 rounded-md border bg-muted/40 px-3 py-2 text-xs">
+                        <span className="font-medium">Day off: {dayOff.paid ? 'Paid' : 'Not paid'}</span>
+                        {dayOff.days > 0 ? ` · ${dayOff.days} day(s) × ${peso(dayOff.daily_rate)} = ${peso(dayOff.amount)} in base pay.` : dayOff.note ? ` · ${dayOff.note}` : ''}
+                    </div>
                     {restDay && (
                         <div className={cn('mt-2 rounded-md border px-3 py-2 text-xs', restDay.qualified ? 'bg-muted/40' : 'border-destructive/40 bg-destructive/5 text-destructive')}>
                             <span className="font-medium">Rest day {restDay.qualified ? 'qualified' : 'not qualified'}</span> · {restDay.valid_log_days} / {restDay.minimum_valid_log_days} valid

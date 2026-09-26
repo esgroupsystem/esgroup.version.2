@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { definePage } from '@/lib/define-page';
 
 type Props = Pick<AdjustmentEditorProps, 'adjustment' | 'people' | 'types'> & {
-    urls: { index: string; submit: string; offsetProof: string };
+    urls: { index: string; submit: string; offsetProof: string; overtimeCheck: string };
 };
 
 export default definePage<Props>({

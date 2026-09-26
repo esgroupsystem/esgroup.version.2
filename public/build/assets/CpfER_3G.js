@@ -1,0 +1,1 @@
+import{r as f,j as p,o as u}from"./Bzr90KwP.js";const e=f.forwardRef(function({href:r,mode:a,size:t,onClick:s,...i},l){const n=o=>{s?.(o),!(o.defaultPrevented||o.metaKey||o.ctrlKey||o.shiftKey||o.altKey||o.button!==0)&&(o.preventDefault(),u(r,{mode:a,size:t}))};return p.jsx("a",{ref:l,href:r,onClick:n,...i})});export{e as M};

@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|float|int $sim_load_allowance
  * @property string $sim_load_release_schedule
  * @property bool $paid_night_differential
+ * @property bool $paid_day_off
  * @property string $sss_contribution_cutoff
  * @property string $pagibig_contribution_cutoff
  * @property string $philhealth_contribution_cutoff
@@ -83,6 +84,7 @@ class PayrollEmployeeSalary extends Model
         'sim_load_allowance',
         'sim_load_release_schedule',
         'paid_night_differential',
+        'paid_day_off',
 
         'sss_contribution_cutoff',
         'pagibig_contribution_cutoff',
@@ -135,6 +137,7 @@ class PayrollEmployeeSalary extends Model
         'allowance' => 'decimal:2',
         'sim_load_allowance' => 'decimal:2',
         'paid_night_differential' => 'boolean',
+        'paid_day_off' => 'boolean',
 
         'ot_rate_per_hour' => 'decimal:2',
         'late_deduction_per_minute' => 'decimal:4',

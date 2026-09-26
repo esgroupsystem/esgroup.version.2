@@ -7,6 +7,7 @@ import {
     ClipboardList,
     Eye,
     FileText,
+    Fingerprint,
     FolderOpen,
     Hash,
     History,
@@ -34,8 +35,10 @@ import {
     type ProfileValues,
     type StatusDetailValues,
 } from '@/components/hr/profile-dialogs';
+import { BiometricLinkDialog, type LinkedBiometric } from '@/components/hr/biometric-link-dialog';
 import { emptyViolation, ViolationDialog, type OffenseOption, type ViolationValues } from '@/components/hr/violation-dialog';
 import { useModal } from '@/components/modal/modal-context';
+import type { SearchOption } from '@/components/search-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -102,6 +105,9 @@ interface Log {
 
 interface Props {
     employee: Employee;
+    /** Manually linked biometric record (App\Support\HR\BiometricLink). */
+    biometric: LinkedBiometric | null;
+    biometricOptions: SearchOption[];
     profileValues: ProfileValues;
     assets: { updated: string | null; numbers: AssetNumber[]; files: AssetFile[] };
     statusDetails: StatusDetailValues;
@@ -113,10 +119,10 @@ interface Props {
     offenses: OffenseOption[];
     options: { statuses: string[]; companies: string[]; garages: string[]; statusTypes: string[]; actions: string[] };
     can: { update: boolean };
-    urls: { back: string; show: string; print: string; update: string; assets: string; statusDetails: string; attachments: string; historyStore: string; checkPermanentId: string };
+    urls: { back: string; show: string; print: string; update: string; assets: string; statusDetails: string; attachments: string; historyStore: string; checkPermanentId: string; biometricLink: string };
 }
 
-type EditDialog = 'profile' | '201' | 'status' | 'attachment' | 'addIr' | null;
+type EditDialog = 'profile' | '201' | 'status' | 'attachment' | 'addIr' | 'biometric' | null;
 type Tab = 'overview' | 'ids' | 'status' | 'violations' | 'attachments' | 'activity';
 
 const TONE: Record<string, string> = {
@@ -172,7 +178,7 @@ function HeaderActions({ urls }: Props) {
 }
 
 function EmployeeProfile(props: Props) {
-    const { employee, profileValues, assets, statusDetails, attachments, irGroups, irStats, logs, can, urls } = props;
+    const { employee, biometric, biometricOptions, profileValues, assets, statusDetails, attachments, irGroups, irStats, logs, can, urls } = props;
     const [dialog, setDialog] = useState<EditDialog>(null);
     const [tab, setTab] = useState<Tab>('overview');
     const [viewing, setViewing] = useState<IrGroup | null>(null);
@@ -190,6 +196,7 @@ function EmployeeProfile(props: Props) {
         { label: 'Emergency contact', ok: filled(employee.emergency_name) && filled(employee.emergency_contact), tab: 'overview', edit: 'profile' },
         { label: 'Company', ok: filled(employee.company), tab: 'overview', edit: 'profile' },
         { label: 'Garage', ok: filled(employee.garage), tab: 'overview', edit: 'profile' },
+        { label: 'Biometrics link', ok: biometric !== null, tab: 'overview', edit: 'biometric' },
         ...assets.numbers.map((number) => ({ label: number.label, ok: filled(number.value), tab: 'ids' as Tab, edit: '201' as EditDialog })),
         ...assets.files.map((file) => ({ label: file.label, ok: Boolean(file.url), tab: 'ids' as Tab, edit: '201' as EditDialog })),
     ];
@@ -342,6 +349,35 @@ function EmployeeProfile(props: Props) {
                             <Field label="Company" value={employee.company} />
                             <Field label="Garage" value={employee.garage} />
                         </Section>
+                        <Section
+                            title="Biometrics"
+                            description="The attendance record used for time logs and payroll."
+                            onEdit={can.update ? () => setDialog('biometric') : undefined}
+                        >
+                            <Field
+                                label="Linked record"
+                                value={
+                                    biometric ? (
+                                        <span className="inline-flex items-center gap-1.5">
+                                            <Fingerprint className="size-4 text-muted-foreground" />
+                                            {biometric.name}
+                                        </span>
+                                    ) : null
+                                }
+                                emptyText="Not linked"
+                            />
+                            {biometric && (
+                                <>
+                                    <Field label="Biometric employee no." value={biometric.employee_no} mono optional />
+                                    <Field label="Company" value={biometric.company} optional />
+                                    <Field
+                                        label="Status"
+                                        value={biometric.active ? 'Active' : 'Inactive'}
+                                        hint={`${biometric.total_logs.toLocaleString('en-US')} logs · last ${biometric.last_check ?? '—'}`}
+                                    />
+                                </>
+                            )}
+                        </Section>
                     </div>
                 </TabsContent>
 
@@ -492,6 +528,16 @@ function EmployeeProfile(props: Props) {
             <Edit201Dialog open={dialog === '201'} onClose={close} numbers={assets.numbers} files={assets.files} url={urls.assets} />
             <StatusDetailsDialog open={dialog === 'status'} onClose={close} values={statusDetails} statusTypes={props.options.statusTypes} url={urls.statusDetails} />
             <UploadAttachmentDialog open={dialog === 'attachment'} onClose={close} url={urls.attachments} />
+            {dialog === 'biometric' && (
+                <BiometricLinkDialog
+                    open
+                    onOpenChange={(open) => !open && close()}
+                    employeeName={employee.name}
+                    current={biometric}
+                    options={biometricOptions}
+                    url={urls.biometricLink}
+                />
+            )}
             {dialog === 'addIr' && <ViolationDialog title="Add violation" values={emptyViolation()} offenses={props.offenses} actions={props.options.actions} url={urls.historyStore} method="post" onClose={close} />}
             {editing && <ViolationDialog title={`Edit ${editing.ir_number}`} values={editing.values} offenses={props.offenses} actions={props.options.actions} url={editing.update_url} method="put" onClose={() => setEditing(null)} />}
             {viewing && (

@@ -2,6 +2,7 @@ import { Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Loader2, Lock, Save } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { useModal } from '@/components/modal/modal-context';
+import { SearchSelect, type SearchOption } from '@/components/search-select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,12 +41,15 @@ interface Values {
     display_employee_no: string;
     display_name: string;
     remarks: string;
+    hr_employee_id: string;
 }
 
 interface Props {
     employee: Employee;
     values: Values;
     companies: { id: number; name: string }[];
+    /** HR employees that can be linked (name matches first). */
+    hrEmployees: SearchOption[];
     groupOptions: Record<string, string>;
     can: { update: boolean };
     urls: { index: string; update: string };
@@ -75,7 +79,7 @@ function BackLink({ urls }: Props) {
     );
 }
 
-function BiometricEmployeeEdit({ employee, values, companies, groupOptions, can, urls }: Props) {
+function BiometricEmployeeEdit({ employee, values, companies, hrEmployees, groupOptions, can, urls }: Props) {
     const modal = useModal();
     const form = useForm<Values>(values);
     const errors = form.errors as Partial<Record<keyof Values, string>>;
@@ -190,6 +194,26 @@ function BiometricEmployeeEdit({ employee, values, companies, groupOptions, can,
                                         onChange={(event) => form.setData('display_name', event.target.value)}
                                     />
                                 </Field>
+
+                                <div className="md:col-span-2">
+                                    <Field
+                                        id="hr_employee_id"
+                                        label="Linked HR employee (201 file)"
+                                        error={errors.hr_employee_id}
+                                        hint="Connect this biometric record to the employee's HR profile when the Employee IDs do not match. Name matches are listed first."
+                                    >
+                                        <SearchSelect
+                                            id="hr_employee_id"
+                                            ariaLabel="Linked HR employee"
+                                            options={[{ value: '', label: '— Not linked —' }, ...hrEmployees]}
+                                            value={form.data.hr_employee_id}
+                                            onChange={(value) => form.setData('hr_employee_id', value)}
+                                            placeholder="Not linked"
+                                            searchPlaceholder="Search HR employee..."
+                                            invalid={!!errors.hr_employee_id}
+                                        />
+                                    </Field>
+                                </div>
 
                                 <div className="md:col-span-2">
                                     <Field id="remarks" label="Remarks" error={errors.remarks} hint="Optional internal notes. Do not place passwords or API credentials here.">

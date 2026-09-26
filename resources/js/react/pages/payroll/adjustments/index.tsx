@@ -1,7 +1,9 @@
 import { Link, router } from '@inertiajs/react';
-import { Check, CircleCheck, CircleX, CloudRain, Hourglass, Pencil, Plus, RefreshCw, Trash2, Users, X } from 'lucide-react';
+import { Check, CircleCheck, CircleX, CloudRain, Hourglass, Layers, Paperclip, Pencil, Plus, RefreshCw, Trash2, Users, X } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { ConfirmAction, IconButton } from '@/components/confirm-action';
 import { DataTable, type DataTableColumn } from '@/components/data-table/data-table';
+import { useModal } from '@/components/modal/modal-context';
 import { ModalLink } from '@/components/modal/modal-link';
 import { StatCard } from '@/components/page-header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -10,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { definePage } from '@/lib/define-page';
 import { initials } from '@/lib/format';
+import { cn } from '@/lib/utils';
 import type { Paginated } from '@/types';
 
 interface AdjustmentRow {
@@ -35,6 +38,8 @@ interface AdjustmentRow {
     ignore_undertime: boolean;
     encoder_name: string | null;
     encoded_at: string | null;
+    decision: { by: string; at: string | null; reason?: string | null } | null;
+    attachment: { name: string; url: string } | null;
     can_decide: boolean;
     approve_title: string;
     reject_title: string;
@@ -56,7 +61,7 @@ interface Props {
 const options = (record: Record<string, string>) => Object.entries(record).map(([value, label]) => ({ value, label }));
 
 const STATUS_OPTIONS = [
-    { value: 'pending', label: 'Pending approval' },
+    { value: 'pending', label: 'For approval' },
     { value: 'approved', label: 'Approved' },
     { value: 'rejected', label: 'Rejected' },
 ];
@@ -107,7 +112,36 @@ function AdjustmentsIndex({ adjustments, stats, filters, types, groups, can, url
         {
             key: 'status',
             header: 'Status',
-            cell: (item) => <StatusBadge status={item.status} />,
+            cell: (item) => (
+                <div className="grid gap-1">
+                    <StatusBadge status={item.status} />
+                    {item.decision && (
+                        <div className="text-xs text-muted-foreground" title={item.decision.reason ?? undefined}>
+                            <div className="whitespace-nowrap">
+                                by <span className="font-medium text-foreground">{item.decision.by}</span>
+                            </div>
+                            {item.decision.at && <div className="whitespace-nowrap">{item.decision.at}</div>}
+                        </div>
+                    )}
+                    {item.attachment && (
+                        <a
+                            href={item.attachment.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(event) => event.stopPropagation()}
+                            className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                            title={item.attachment.name}
+                        >
+                            <Paperclip className="size-3" />
+                            OT form
+                        </a>
+                    )}
+                </div>
+            ),
+            exportValue: (item) =>
+                [STATUS_OPTIONS.find((option) => option.value === item.status)?.label ?? item.status, item.decision ? `by ${item.decision.by} ${item.decision.at ?? ''}`.trim() : '']
+                    .filter(Boolean)
+                    .join(' '),
             filter: { type: 'select', param: 'status', options: STATUS_OPTIONS, placeholder: 'All statuses' },
         },
         {
@@ -165,11 +199,43 @@ function AdjustmentsIndex({ adjustments, stats, filters, types, groups, can, url
         },
     ];
 
+    const modal = useModal();
+    const setStatus = (status: string) => modal.get(urls.index, { ...filters, status });
+    const pending = stats.status_pending ?? 0;
+    const approved = stats.status_approved ?? 0;
+    const rejected = stats.status_rejected ?? 0;
+
     return (
         <>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-                <StatCard label="Total adjustments" value={(stats.total ?? 0).toLocaleString()} />
-                <StatCard label="Pending approval" value={(stats.pending ?? 0).toLocaleString()} />
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <StatusCard icon={<Layers />} label="All records" value={pending + approved + rejected} caption="Every status" selected={!filters.status} onClick={() => setStatus('')} />
+                <StatusCard
+                    icon={<Hourglass className="text-amber-600" />}
+                    label="For approval"
+                    value={pending}
+                    caption="Waiting for a payroll approver"
+                    selected={filters.status === 'pending'}
+                    onClick={() => setStatus('pending')}
+                />
+                <StatusCard
+                    icon={<CircleCheck className="text-emerald-600" />}
+                    label="Approved"
+                    value={approved}
+                    caption="Shows who approved and when"
+                    selected={filters.status === 'approved'}
+                    onClick={() => setStatus('approved')}
+                />
+                <StatusCard
+                    icon={<CircleX className="text-destructive" />}
+                    label="Rejected"
+                    value={rejected}
+                    caption="Shows who rejected and when"
+                    selected={filters.status === 'rejected'}
+                    onClick={() => setStatus('rejected')}
+                />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 <StatCard label="Leave adjustments" value={(stats.leaves ?? 0).toLocaleString()} />
                 <StatCard label="Offset requests" value={(stats.offsets ?? 0).toLocaleString()} />
                 <StatCard label="Manual time" value={(stats.manual_time ?? 0).toLocaleString()} />
@@ -190,6 +256,42 @@ function AdjustmentsIndex({ adjustments, stats, filters, types, groups, can, url
                 rowActions={(item) => <RowActions item={item} can={can} />}
             />
         </>
+    );
+}
+
+/** Status count card that doubles as the status filter (active one is ringed). */
+function StatusCard({
+    icon,
+    label,
+    value,
+    caption,
+    selected,
+    onClick,
+}: {
+    icon: ReactNode;
+    label: string;
+    value: number;
+    caption: string;
+    selected: boolean;
+    onClick: () => void;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            aria-pressed={selected}
+            className={cn(
+                'rounded-xl border bg-card p-4 text-left shadow-xs transition-colors hover:bg-accent/50',
+                selected && 'border-primary ring-1 ring-primary',
+            )}
+        >
+            <div className="flex items-center justify-between text-sm text-muted-foreground [&_svg]:size-4">
+                {label}
+                {icon}
+            </div>
+            <div className="mt-1 text-2xl font-semibold tabular-nums">{value.toLocaleString()}</div>
+            <p className="mt-1 text-xs text-muted-foreground">{caption}</p>
+        </button>
     );
 }
 
@@ -230,7 +332,7 @@ function StatusBadge({ status }: { status: AdjustmentRow['status'] }) {
         return (
             <Badge variant="outline" className="border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-400">
                 <Hourglass />
-                Pending
+                For approval
             </Badge>
         );
     }

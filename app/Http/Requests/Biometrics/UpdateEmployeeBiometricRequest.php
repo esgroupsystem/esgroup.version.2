@@ -101,6 +101,13 @@ class UpdateEmployeeBiometricRequest extends FormRequest
                 'string',
                 'max:5000',
             ],
+
+            // Manual link to the HR employee (201 file); empty = unlinked.
+            'hr_employee_id' => [
+                'nullable',
+                'integer',
+                'exists:employees,id',
+            ],
         ];
     }
 

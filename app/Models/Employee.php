@@ -46,6 +46,7 @@ class Employee extends Model
 
     protected $fillable = [
         'employee_id_permanent',
+        'employee_biometric_id',
         'employee_id',
         'full_name',
         'department_id',
@@ -77,6 +78,13 @@ class Employee extends Model
         'clearance_date' => 'date',
         'last_pay_date' => 'date',
     ];
+
+    /** Manually linked biometric record (see App\Support\HR\BiometricLink). */
+    /** @return BelongsTo<EmployeeBiometric, $this> */
+    public function biometric(): BelongsTo
+    {
+        return $this->belongsTo(EmployeeBiometric::class, 'employee_biometric_id');
+    }
 
     /** @return BelongsTo<Department, $this> */
     public function department(): BelongsTo

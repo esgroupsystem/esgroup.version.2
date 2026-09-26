@@ -26,6 +26,7 @@ interface SalaryRow {
     employee_no: string | null;
     employee_biometric_id: number | null;
     rate_type: string;
+    paid_day_off: boolean;
     basic_salary: number;
     ot_rate_per_hour: number;
     late_deduction_per_minute: number;
@@ -129,6 +130,9 @@ function EmployeeSalariesIndex({ salaries, filters, groups, can, urls }: Props) 
                     </div>
                     <div className="text-xs whitespace-nowrap text-muted-foreground tabular-nums">
                         OT {peso(salary.ot_rate_per_hour)}/hr · Late ₱ {salary.late_deduction_per_minute.toFixed(4)}/min
+                    </div>
+                    <div className={cn('text-xs whitespace-nowrap', salary.paid_day_off ? 'text-emerald-700 dark:text-emerald-400' : 'text-muted-foreground')}>
+                        Day off: {salary.paid_day_off ? 'Paid' : 'Not paid'}
                     </div>
                 </>
             ),

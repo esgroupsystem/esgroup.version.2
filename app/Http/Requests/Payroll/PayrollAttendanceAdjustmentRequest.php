@@ -6,6 +6,7 @@ namespace App\Http\Requests\Payroll;
 
 use App\Models\Holiday;
 use App\Models\PayrollAttendanceAdjustment;
+use App\Support\Payroll\OvertimeCheck;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -162,6 +163,15 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
             'ignore_undertime' => ['nullable', 'boolean'],
             'reason' => ['required', 'string', 'max:5000'],
             'remarks' => ['nullable', 'string', 'max:5000'],
+
+            // Overtime needs the signed/approved OT form (a scan, photo or PDF).
+            'ot_form' => [
+                Rule::requiredIf($this->isOvertimeType() && ! $this->existingAttachment()),
+                'nullable',
+                'file',
+                'mimes:pdf,jpg,jpeg,png,webp',
+                'max:5120',
+            ],
         ];
     }
 
@@ -184,6 +194,30 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
                     'adjusted_time_out',
                     'Time out must be different from time in. Overnight ranges are allowed.'
                 );
+            }
+
+            // OT checker: biometric logs must cover the window, max 12 hours, no double filing.
+            if (
+                $this->isOvertimeType()
+                && $timeIn !== $timeOut
+                && $this->employee_biometric_id
+                && $this->work_date
+                && ! $validator->errors()->hasAny(['employee_biometric_id', 'work_date', 'adjusted_time_in', 'adjusted_time_out'])
+            ) {
+                $result = app(OvertimeCheck::class)->check(
+                    (int) $this->employee_biometric_id,
+                    $this->biometric_employee_id ? (string) $this->biometric_employee_id : null,
+                    $this->employee_no ? (string) $this->employee_no : null,
+                    (string) $this->employee_name,
+                    (string) $this->work_date,
+                    $timeIn,
+                    $timeOut,
+                    $this->existingAdjustment()?->id,
+                );
+
+                foreach ($result['errors'] as $message) {
+                    $validator->errors()->add('adjusted_time_out', $message);
+                }
             }
 
             if (
@@ -229,6 +263,9 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
             'amount.min' => 'A salary adjustment deduction cannot exceed ₱1,000,000.',
             'amount.max' => 'A salary adjustment addition cannot exceed ₱1,000,000.',
             'reason.required' => 'Please enter the approved reason or supporting reference for this adjustment.',
+            'ot_form.required' => 'Upload the approved OT form (PDF or photo) to file overtime.',
+            'ot_form.mimes' => 'The OT form must be a PDF, JPG, PNG or WEBP file.',
+            'ot_form.max' => 'The OT form must not be larger than 5 MB.',
         ];
     }
 
@@ -238,6 +275,25 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
             PayrollAttendanceAdjustment::TYPE_SICK_LEAVE,
             PayrollAttendanceAdjustment::TYPE_MEDICAL_LEAVE,
         ], true);
+    }
+
+    private function isOvertimeType(): bool
+    {
+        return $this->adjustment_type === PayrollAttendanceAdjustment::TYPE_OVERTIME;
+    }
+
+    /** The adjustment being edited (null when filing a new one). */
+    private function existingAdjustment(): ?PayrollAttendanceAdjustment
+    {
+        $adjustment = $this->route('payrollAttendanceAdjustment');
+
+        return $adjustment instanceof PayrollAttendanceAdjustment ? $adjustment : null;
+    }
+
+    /** Editing an OT that already has its form: a new upload is optional. */
+    private function existingAttachment(): bool
+    {
+        return filled($this->existingAdjustment()?->attachment_path);
     }
 
     private function isOffsetType(): bool

@@ -121,6 +121,8 @@ final class EmployeePagePresenter
                 'company' => $employee->company,
                 'garage' => $employee->garage,
             ],
+            'biometric' => BiometricLink::biometricSummary($employee->biometric()->with('company')->first()),
+            'biometricOptions' => $user?->can('employees.update') ? BiometricLink::biometricOptions($employee) : [],
             'profileValues' => [
                 'employee_id_permanent' => (string) ($employee->employee_id_permanent ?? ''),
                 'full_name' => (string) ($employee->full_name ?? ''),
@@ -214,6 +216,7 @@ final class EmployeePagePresenter
                 'attachments' => route('employees.staff.attachments.store', $employee->id),
                 'historyStore' => route('employees.staff.history.store', $employee->id),
                 'checkPermanentId' => route('employees.staff.checkPermanentId'),
+                'biometricLink' => route('employees.biometric-link.update', $employee->id),
             ],
         ]);
     }

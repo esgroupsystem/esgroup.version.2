@@ -15,6 +15,7 @@ use App\Http\Controllers\Fleet\ForSaleUnitController;
 use App\Http\Controllers\HR_Department\ConductorLeaveController;
 use App\Http\Controllers\HR_Department\DepartmentController;
 use App\Http\Controllers\HR_Department\DriverLeaveController;
+use App\Http\Controllers\HR_Department\EmployeeBiometricLinkController;
 use App\Http\Controllers\HR_Department\EmployeeController;
 use App\Http\Controllers\HR_Department\EmployeeLeaveController;
 use App\Http\Controllers\HR_Department\HRDashboardController;
@@ -372,6 +373,10 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:employees.update')
                     ->name('update');
 
+                Route::put('/employee/{employee}/biometric-link', [EmployeeBiometricLinkController::class, 'update'])
+                    ->middleware('permission:employees.update')
+                    ->name('biometric-link.update');
+
                 Route::post('/employee/{employee}/201', 'updateAssets')
                     ->middleware('permission:employees.update')
                     ->name('assets.update');
@@ -683,6 +688,14 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         ->name('payroll-attendance-adjustments.')
         ->controller(PayrollAttendanceAdjustmentController::class)
         ->group(function () {
+
+            Route::get('/overtime-check', 'overtimeCheck')
+                ->middleware('permission:payroll-attendance-adjustments.view|payroll-attendance-adjustments.create|payroll-attendance-adjustments.update')
+                ->name('overtime-check');
+
+            Route::get('/{payrollAttendanceAdjustment}/attachment', 'attachment')
+                ->middleware('permission:payroll-attendance-adjustments.view')
+                ->name('attachment');
 
             Route::get('/offset-proof', 'offsetProof')
                 ->middleware('permission:payroll-attendance-adjustments.view|payroll-attendance-adjustments.create|payroll-attendance-adjustments.update')

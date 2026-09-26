@@ -1,6 +1,7 @@
 import { Link, useForm } from '@inertiajs/react';
-import { CircleAlert, Info, LoaderCircle, Plus, Save, Search, X } from 'lucide-react';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { CircleAlert, CircleCheck, Fingerprint, Info, LoaderCircle, Paperclip, Plus, Save, Search, X } from 'lucide-react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { FileDrop } from '@/components/file-drop';
 import { EmployeeCombobox, type PersonOption } from '@/components/employee-combobox';
 import { useModal } from '@/components/modal/modal-context';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -49,13 +50,14 @@ interface AdjustmentData {
     remarks: string;
     status: string | null;
     is_locked: boolean;
+    attachment?: { name: string; url: string } | null;
 }
 
 export interface AdjustmentEditorProps {
     adjustment: AdjustmentData | null;
     people: PersonOption[];
     types: Record<string, string>;
-    urls: { index?: string; submit: string; offsetProof: string };
+    urls: { index?: string; submit: string; offsetProof: string; overtimeCheck?: string };
     /** Lock the editor to one employee and a date window (payroll item "File Adjustment"). */
     lock?: { employeeBiometricId: number; minDate?: string | null; maxDate?: string | null };
     /** Extra fields posted with the form, e.g. recompute_payroll_item_id. */
@@ -65,6 +67,15 @@ export interface AdjustmentEditorProps {
     /** Called after a successful save (e.g. to close a dialog). */
     onSuccess?: () => void;
     layout?: "page" | "dialog";
+}
+
+interface OvertimeCheckResult {
+    ok: boolean;
+    errors: string[];
+    minutes: number;
+    punch_in: string | null;
+    punch_out: string | null;
+    window: string | null;
 }
 
 interface OffsetCheckResult {
@@ -131,6 +142,7 @@ export function AdjustmentEditor({
         ignore_undertime: initialSwitches.ignore_undertime.checked,
         reason: adjustment?.reason ?? '',
         remarks: adjustment?.remarks ?? '',
+        ot_form: null as File | null,
         ...(extraData ?? {}),
     });
 
@@ -146,6 +158,7 @@ export function AdjustmentEditor({
     const switches = effectSwitches(type);
     const disaster = isDisasterType(type);
     const manualText = manualTimeText[type];
+    const overtime = type === 'overtime';
 
     const changeType = (next: string) => {
         const rule = effectSwitches(next);
@@ -172,8 +185,17 @@ export function AdjustmentEditor({
         event.preventDefault();
         // modal.visit(): in a modal page the save stays on the page underneath and the modal closes/refreshes.
         const options = modal.visit({ preserveScroll: true, onSuccess: () => onSuccess?.() });
+        const withFile = overtime && data.ot_form !== null;
 
-        if (isEdit) {
+        // Only Overtime sends the OT form. PHP cannot read files from a real PUT, so an edit
+        // with a new file is posted with _method=put (same update route).
+        form.transform(({ ot_form, ...rest }) => ({
+            ...rest,
+            ...(withFile ? { ot_form } : {}),
+            ...(withFile && isEdit ? { _method: 'put' } : {}),
+        }));
+
+        if (isEdit && !withFile) {
             form.put(urls.submit, options);
         } else {
             form.post(urls.submit, options);
@@ -266,6 +288,57 @@ export function AdjustmentEditor({
                                 </Field>
                                 <Field htmlFor="adj-adjusted_time_out" label={manualText?.outLabel ?? 'Adjusted Time Out'} error={fieldError('adjusted_time_out')}>
                                     <Input id="adj-adjusted_time_out" type="time" required value={data.adjusted_time_out} onChange={(event) => updateField('adjusted_time_out', event.target.value)} />
+                                </Field>
+                            </div>
+                        </SectionCard>
+                    )}
+
+                    {overtime && (
+                        <SectionCard
+                            title="Overtime check and approved OT form"
+                            description="Overtime is only saved when the employee's biometric logs cover the whole OT time, it does not overlap another OT, and the signed OT form is attached."
+                        >
+                            <div className="grid gap-4">
+                                {urls.overtimeCheck && (
+                                    <OvertimeCheckPanel
+                                        url={urls.overtimeCheck}
+                                        params={{
+                                            employee_biometric_id: data.employee_biometric_id ? String(data.employee_biometric_id) : '',
+                                            biometric_employee_id: data.biometric_employee_id ?? '',
+                                            employee_no: data.employee_no ?? '',
+                                            employee_name: data.employee_name ?? '',
+                                            work_date: data.work_date,
+                                            adjusted_time_in: data.adjusted_time_in,
+                                            adjusted_time_out: data.adjusted_time_out,
+                                            adjustment_id: adjustment ? String(adjustment.id) : '',
+                                        }}
+                                    />
+                                )}
+                                <Field
+                                    htmlFor="adj-ot_form"
+                                    label={adjustment?.attachment ? 'Approved OT form (upload to replace)' : 'Approved OT form'}
+                                    error={fieldError('ot_form')}
+                                    help="PDF, JPG, PNG or WEBP, up to 5 MB. A clear photo of the signed form is fine."
+                                >
+                                    {adjustment?.attachment && !data.ot_form && (
+                                        <a
+                                            href={adjustment.attachment.url}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                            className="inline-flex w-fit items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-sm hover:bg-accent"
+                                        >
+                                            <Paperclip className="size-4" />
+                                            {adjustment.attachment.name}
+                                        </a>
+                                    )}
+                                    <FileDrop
+                                        id="adj-ot_form"
+                                        files={data.ot_form ? [data.ot_form] : []}
+                                        onChange={(files) => updateField('ot_form', files.at(-1) ?? null)}
+                                        accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/*"
+                                        label="Drop the signed OT form here or click to browse"
+                                        invalid={Boolean(fieldError('ot_form'))}
+                                    />
                                 </Field>
                             </div>
                         </SectionCard>
@@ -468,6 +541,94 @@ function EffectSwitch({
                 <p className="text-xs text-muted-foreground">{state?.help ?? fallbackHelp}</p>
             </div>
             <Switch id={id} checked={checked} disabled={state?.disabled ?? false} onCheckedChange={onChange} />
+        </div>
+    );
+}
+
+/** Live OT checker: re-checks the biometric logs as the date and times are typed. */
+function OvertimeCheckPanel({ url, params }: { url: string; params: Record<string, string> }) {
+    const [result, setResult] = useState<OvertimeCheckResult | null>(null);
+    const [loading, setLoading] = useState(false);
+    const ready = Boolean(params.employee_biometric_id && params.work_date && params.adjusted_time_in && params.adjusted_time_out);
+    const key = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== '')).toString();
+
+    useEffect(() => {
+        if (!ready) {
+            setResult(null);
+            return;
+        }
+
+        const controller = new AbortController();
+        const timer = window.setTimeout(async () => {
+            setLoading(true);
+            try {
+                const response = await fetch(`${url}?${key}`, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                    signal: controller.signal,
+                });
+                const body = await response.json();
+                setResult(
+                    response.ok
+                        ? (body as OvertimeCheckResult)
+                        : { ok: false, errors: [String(Object.values(body.errors ?? {})[0] ?? body.message ?? 'Unable to check.')], minutes: 0, punch_in: null, punch_out: null, window: null },
+                );
+            } catch (error) {
+                if ((error as Error).name !== 'AbortError') {
+                    setResult({ ok: false, errors: ['Unable to check the biometric logs right now.'], minutes: 0, punch_in: null, punch_out: null, window: null });
+                }
+            } finally {
+                setLoading(false);
+            }
+        }, 400);
+
+        return () => {
+            controller.abort();
+            window.clearTimeout(timer);
+        };
+    }, [url, key, ready]);
+
+    if (!ready) {
+        return (
+            <p className="flex items-center gap-2 rounded-md border border-dashed p-3 text-sm text-muted-foreground">
+                <Fingerprint className="size-4 shrink-0" />
+                Pick the employee, work date, OT start and OT end to check them against the biometric logs.
+            </p>
+        );
+    }
+
+    return (
+        <div
+            className={cn(
+                'grid gap-2 rounded-md border p-3 text-sm',
+                result?.ok && 'border-emerald-500/40 bg-emerald-500/5',
+                result && !result.ok && 'border-destructive/40 bg-destructive/5',
+            )}
+        >
+            <div className="flex items-center gap-2 font-medium">
+                {loading || !result ? (
+                    <LoaderCircle className="size-4 animate-spin" />
+                ) : result.ok ? (
+                    <CircleCheck className="size-4 text-emerald-600" />
+                ) : (
+                    <CircleAlert className="size-4 text-destructive" />
+                )}
+                {!result ? 'Checking biometric logs…' : result.ok ? 'OT is covered by the biometric logs' : 'OT cannot be filed yet'}
+            </div>
+            {result && (
+                <div className="grid gap-x-6 gap-y-1 text-xs text-muted-foreground sm:grid-cols-3">
+                    <span>OT: {result.window ?? '—'}</span>
+                    <span>Hours: {(result.minutes / 60).toFixed(2)}</span>
+                    <span>
+                        Logs: {result.punch_in ?? '—'} – {result.punch_out ?? '—'}
+                    </span>
+                </div>
+            )}
+            {result?.errors.map((message) => (
+                <p key={message} className="text-destructive">
+                    {message}
+                </p>
+            ))}
         </div>
     );
 }

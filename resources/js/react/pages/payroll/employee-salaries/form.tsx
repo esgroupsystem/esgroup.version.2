@@ -221,6 +221,29 @@ function EmployeeSalaryForm({ salary, values, people, workday, scheduleOptions, 
                             </RadioGroup>
                             <p className="text-xs text-muted-foreground">Whether Night Differential (10PM-6AM) pay is computed for this employee during payroll generation.</p>
                         </div>
+                        <div className="grid gap-1.5 md:col-span-2">
+                            <Label>Day off</Label>
+                            <RadioGroup
+                                className="flex gap-4"
+                                value={data.paid_day_off ? '1' : '0'}
+                                onValueChange={(value) => set('paid_day_off', value === '1')}
+                            >
+                                <label className="flex items-center gap-2 text-sm">
+                                    <RadioGroupItem value="1" /> Paid
+                                </label>
+                                <label className="flex items-center gap-2 text-sm">
+                                    <RadioGroupItem value="0" /> Not paid
+                                </label>
+                            </RadioGroup>
+                            <p className="text-xs text-muted-foreground">
+                                {data.paid_day_off
+                                    ? data.rate_type === 'monthly'
+                                        ? 'Paid: fixed monthly salary ÷ 2 per cutoff; the day off is already included.'
+                                        : 'Paid: each unworked day off is paid 1 day when the cutoff has at least 3 days with valid biometric logs (or an approved leave/adjustment).'
+                                    : 'Not paid: paid only for days actually worked (working the 31st counts).' +
+                                      (data.rate_type === 'monthly' ? ' Monthly rate becomes daily rate × days worked (monthly × 12 ÷ 365 per day).' : '')}
+                            </p>
+                        </div>
                     </div>
                 </Section>
 

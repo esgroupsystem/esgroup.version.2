@@ -1,5 +1,5 @@
 import { router, useForm } from '@inertiajs/react';
-import { Building2, CloudDownload, Loader2, Pencil, Plus, Save, UserCheck, UserX, Users } from 'lucide-react';
+import { Building2, CloudDownload, Link2, Loader2, Pencil, Plus, Save, UserCheck, UserX, Users } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { DataTable, type DataTableColumn } from '@/components/data-table/data-table';
 import { FormField } from '@/components/form-field';
@@ -31,6 +31,7 @@ interface EmployeeRow {
     last_check_date: string | null;
     last_check_time: string | null;
     total_logs: number;
+    hr_employee: { name: string; url: string } | null;
     edit_url: string;
 }
 
@@ -112,6 +113,22 @@ function BiometricEmployeesIndex({ employees, companies, counts, groups, filters
                             No. {row.display_no}
                             {row.source_no !== row.display_no && ` · Source ${row.source_no}`}
                         </div>
+                        {row.hr_employee ? (
+                            <button
+                                type="button"
+                                className="inline-flex max-w-56 items-center gap-1 truncate text-xs text-primary hover:underline"
+                                title={`Open HR profile of ${row.hr_employee.name}`}
+                                onClick={(event) => {
+                                    event.stopPropagation();
+                                    openModal(row.hr_employee!.url, { size: 'xl' });
+                                }}
+                            >
+                                <Link2 className="size-3 shrink-0" />
+                                HR: {row.hr_employee.name}
+                            </button>
+                        ) : (
+                            <div className="text-xs text-muted-foreground/70">Not linked to HR</div>
+                        )}
                     </div>
                 </div>
             ),

@@ -98,6 +98,13 @@ final class PayrollItemPresenter
                 'absent_days' => (float) data_get($meta, 'attendance_deductions.absent_days', 0),
                 'absence_rate' => (float) data_get($meta, 'attendance_deductions.absence_rate_per_day', 0),
             ] : null,
+            'dayOff' => [
+                'paid' => (bool) data_get($meta, 'day_off.paid_day_off', true),
+                'days' => (int) data_get($meta, 'day_off.days', 0),
+                'amount' => (float) data_get($meta, 'day_off.amount', 0),
+                'daily_rate' => (float) data_get($meta, 'day_off.daily_rate', 0),
+                'note' => data_get($meta, 'day_off.note'),
+            ],
             'restDay' => $restDay ? [
                 'qualified' => (bool) data_get($restDay, 'qualified', true),
                 'by_exception' => (bool) data_get($restDay, 'qualified_by_exception', false),
@@ -160,6 +167,7 @@ final class PayrollItemPresenter
                 'urls' => [
                     'submit' => route('payroll-attendance-adjustments.store'),
                     'offsetProof' => route('payroll-attendance-adjustments.offset-proof'),
+                    'overtimeCheck' => route('payroll-attendance-adjustments.overtime-check'),
                 ],
             ] : null,
             'can' => [

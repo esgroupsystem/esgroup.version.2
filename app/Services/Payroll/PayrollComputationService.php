@@ -633,6 +633,16 @@ class PayrollComputationService
             );
         }
 
+        // Employee Rates "Day off: Not paid" = paid only for days actually
+        // worked. A monthly employee then drops the fixed half-month salary and
+        // is computed like a daily employee (daily rate = monthly x 12 / 365),
+        // so a worked 31st adds a day of pay.
+        $paidDayOff = (bool) ($rates['paid_day_off'] ?? true);
+        $monthlyRateType = $isMonthlyEmployee;
+        if ($isMonthlyEmployee && ! $paidDayOff) {
+            $isMonthlyEmployee = false;
+        }
+
         $totalWorkedMinutes = (int) $rows->sum(fn ($row): int => (int) ($row->worked_minutes ?? 0));
         $totalWorkedDays = $this->totalWorkedDayEquivalent($rows);
         $totalPayableDays = $this->totalPayableDayEquivalent($rows);
@@ -698,7 +708,12 @@ class PayrollComputationService
             $regularPayableHours
         );
 
-        $regularPay = $baseCutoffPay;
+        // "Day off: Paid" for work-based (daily) pay: each unworked scheduled
+        // day off is paid one daily rate when the cutoff qualifies (minimum
+        // valid biometric log days, or an approved adjustment/leave).
+        $dayOff = $this->computePaidDayOff($restDayQualification, $rates, $isMonthlyEmployee, $paidDayOff);
+
+        $regularPay = round($baseCutoffPay + $dayOff['amount'], 2);
 
         $leavePay = $isMonthlyEmployee
             ? 0.00
@@ -932,6 +947,7 @@ class PayrollComputationService
                     'total_attendance_loss_for_monthly_employee' => $attendanceDeductionForNet,
                 ]),
                 'rest_day_qualification' => $restDayQualification,
+                'day_off' => $dayOff + ['monthly_rate_type' => $monthlyRateType],
                 'holiday_breakdown' => $holiday,
                 'rest_day_breakdown' => $restDay,
                 'overtime_breakdown' => $overtime,
@@ -1079,6 +1095,35 @@ class PayrollComputationService
             'worked_days' => $workedDays,
             'paid_not_worked_days' => $paidNotWorkedDays,
             'details' => $details,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $qualification  computeRestDayQualification()
+     * @return array{paid_day_off: bool, days: int, daily_rate: float, amount: float, dates: list<string>, note: string}
+     */
+    protected function computePaidDayOff(array $qualification, array $rates, bool $isMonthlyEmployee, bool $paidDayOff): array
+    {
+        $dailyRate = round((float) ($rates['daily_rate'] ?? 0), 6);
+        $unworked = (int) ($qualification['scheduled_unworked_rest_days'] ?? 0);
+        $qualified = (bool) ($qualification['qualified'] ?? false);
+
+        // Monthly salary already carries the day off; nothing extra to add.
+        $days = ! $isMonthlyEmployee && $paidDayOff && $qualified ? $unworked : 0;
+
+        return [
+            'paid_day_off' => $paidDayOff,
+            'days' => $days,
+            'daily_rate' => round($dailyRate, 2),
+            'amount' => round($days * $dailyRate, 2),
+            'dates' => $days > 0 ? array_values((array) ($qualification['unworked_rest_day_dates'] ?? [])) : [],
+            'note' => match (true) {
+                ! $paidDayOff => 'Day off not paid: pay is for days actually worked only.',
+                $isMonthlyEmployee => 'Day off paid inside the fixed monthly salary.',
+                $days > 0 => 'Unworked day off paid 1 day each (rest day qualified).',
+                $unworked > 0 => 'Day off not paid this cutoff: fewer than the minimum valid log days.',
+                default => 'No unworked day off this cutoff.',
+            },
         ];
     }
 
@@ -1334,6 +1379,7 @@ class PayrollComputationService
             'sim_load_allowance' => round((float) ($salary->sim_load_allowance ?? 0), 2),
             'sim_load_release_schedule' => (string) ($salary->sim_load_release_schedule ?? 'every_cutoff'),
             'paid_night_differential' => (bool) ($salary->paid_night_differential ?? false),
+            'paid_day_off' => (bool) ($salary->paid_day_off ?? true),
             'ot_rate_per_hour' => round($hourlyRate * (float) config('payroll.overtime.regular_multiplier', 1.25), 6),
             'late_deduction_per_minute' => round($minuteRate, 6),
             'undertime_deduction_per_minute' => round($minuteRate, 6),
@@ -2788,6 +2834,11 @@ class PayrollComputationService
             'qualified_by_exception' => $qualifiedByException,
             'qualified' => $qualified,
             'scheduled_unworked_rest_days' => $otherwiseUnworkedRestRows->count(),
+            'unworked_rest_day_dates' => $otherwiseUnworkedRestRows
+                ->map(fn ($row): string => $this->dateString($row->work_date))
+                ->filter()
+                ->values()
+                ->all(),
             'unpaid_rest_day_count' => $unpaidRestDayCount,
             'unpaid_rest_day_dates' => $qualified
                 ? []

@@ -18,7 +18,9 @@ use App\Services\Payroll\PayrollComputationService;
 use App\Services\Payroll\PayrollPayslipService;
 use Carbon\CarbonPeriod;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -468,6 +470,7 @@ final class ScheduleOffsetAdjustmentPayrollTest extends TestCase
             ])
             ->assertSessionHasNoErrors();
 
+        Storage::fake('local');
         $this->asPayrollUser()
             ->post(route('payroll-attendance-adjustments.store'), $this->offsetIdentity() + [
                 'adjustment_type' => PayrollAttendanceAdjustment::TYPE_OVERTIME,
@@ -475,6 +478,7 @@ final class ScheduleOffsetAdjustmentPayrollTest extends TestCase
                 'adjusted_time_in' => '17:00',
                 'adjusted_time_out' => '19:00',
                 'reason' => 'Month-end inventory',
+                'ot_form' => UploadedFile::fake()->create('ot-form.pdf', 120, 'application/pdf'),
             ])
             ->assertSessionHasNoErrors();
 
@@ -698,6 +702,7 @@ final class ScheduleOffsetAdjustmentPayrollTest extends TestCase
         // Submit exactly what the React form sends, with a raise and one extra deduction.
         $values = $edit->viewData('page')['props']['values'];
         $values['basic_salary'] = '900';
+        $values['paid_day_off'] = true;
         $values['other_deductions'] = [[
             'name' => 'Uniform', 'total_amount' => '1000', 'payment_amount' => '250',
             'deduction_schedule' => 'every_cutoff', 'start_date' => '2026-10-01', 'remarks' => '',
@@ -709,6 +714,7 @@ final class ScheduleOffsetAdjustmentPayrollTest extends TestCase
         $this->assertEquals(900.0, (float) $salary->basic_salary);
         $this->assertEqualsWithDelta(112.5, (float) $salary->ot_rate_per_hour, 0.01, 'OT rate = 900 / 8 paid hours.');
         $this->assertSame(['Uniform'], $salary->otherDeductions->pluck('name')->all());
+        $this->assertTrue($salary->paid_day_off);
     }
 
     public function test_salary_sync_from_biometrics_is_post_only(): void
@@ -720,7 +726,7 @@ final class ScheduleOffsetAdjustmentPayrollTest extends TestCase
             ->post(route('payroll-employee-salaries.sync'))
             ->assertRedirect(route('payroll-employee-salaries.index'));
 
-        $this->assertSame(1, PayrollEmployeeSalary::query()->where('employee_biometric_id', $this->employee->id)->count());
+        $this->assertSame(1, PayrollEmployeeSalary::query()->where('employee_biometric_id', $this->employee->id)->where('paid_day_off', true)->count());
     }
 
     public function test_attendance_summary_page_renders_and_rebuilds(): void
@@ -915,6 +921,280 @@ final class ScheduleOffsetAdjustmentPayrollTest extends TestCase
             ->assertInertia(fn (\Inertia\Testing\AssertableInertia $p) => $p->where('payrolls.total', 0));
     }
 
+    public function test_overtime_needs_the_approved_ot_form_and_biometric_proof(): void
+    {
+        Storage::fake('local');
+        $this->setSchedule(WorkdayType::EightHours, '08:00', '17:00');
+        $this->punch('2026-10-07 08:00:00');
+        $this->punch('2026-10-07 19:00:00');
+        $overtime = fn (array $extra = []) => $extra + $this->offsetIdentity() + [
+            'adjustment_type' => PayrollAttendanceAdjustment::TYPE_OVERTIME,
+            'work_date' => '2026-10-07',
+            'adjusted_time_in' => '17:00',
+            'adjusted_time_out' => '19:00',
+            'reason' => 'Month-end inventory',
+        ];
+
+        // No OT form.
+        $this->asPayrollUser()->post(route('payroll-attendance-adjustments.store'), $overtime())
+            ->assertSessionHasErrors('ot_form');
+
+        // Wrong file type.
+        $this->asPayrollUser()->post(route('payroll-attendance-adjustments.store'), $overtime(['ot_form' => UploadedFile::fake()->create('ot.exe', 10)]))
+            ->assertSessionHasErrors('ot_form');
+
+        // OT past the last biometric punch (19:00) is refused.
+        $this->asPayrollUser()->post(route('payroll-attendance-adjustments.store'), $overtime([
+            'adjusted_time_out' => '21:00',
+            'ot_form' => UploadedFile::fake()->image('ot.jpg'),
+        ]))->assertSessionHasErrors('adjusted_time_out');
+
+        // No logs at all that day.
+        $this->asPayrollUser()->post(route('payroll-attendance-adjustments.store'), $overtime([
+            'work_date' => '2026-10-08',
+            'ot_form' => UploadedFile::fake()->image('ot.jpg'),
+        ]))->assertSessionHasErrors('adjusted_time_out');
+        $this->assertSame(0, PayrollAttendanceAdjustment::query()->count());
+
+        // Covered by logs + form attached: saved, file kept privately.
+        $this->asPayrollUser()->post(route('payroll-attendance-adjustments.store'), $overtime(['ot_form' => UploadedFile::fake()->image('signed-ot.jpg')]))
+            ->assertSessionHasNoErrors();
+        $saved = PayrollAttendanceAdjustment::query()->sole();
+        $this->assertSame('signed-ot.jpg', $saved->attachment_name);
+        Storage::disk('local')->assertExists($saved->attachment_path);
+
+        // The same hours cannot be filed twice.
+        $this->asPayrollUser()->post(route('payroll-attendance-adjustments.store'), $overtime([
+            'adjusted_time_in' => '18:00',
+            'ot_form' => UploadedFile::fake()->image('ot.jpg'),
+        ]))->assertSessionHasErrors('adjusted_time_out');
+
+        // Editing keeps the saved form (no new upload needed) and ignores its own hours.
+        $this->asPayrollUser()->put(route('payroll-attendance-adjustments.update', $saved), $overtime(['adjusted_time_out' => '18:30']))
+            ->assertSessionHasNoErrors();
+        $this->assertSame('18:30', substr((string) $saved->fresh()->adjusted_time_out, 0, 5));
+
+        // Replacing the form via POST + _method=put deletes the old file.
+        $oldPath = $saved->attachment_path;
+        $this->asPayrollUser()->post(route('payroll-attendance-adjustments.update', $saved), $overtime([
+            '_method' => 'put',
+            'ot_form' => UploadedFile::fake()->create('new-ot.pdf', 50, 'application/pdf'),
+        ]))->assertSessionHasNoErrors();
+        $saved->refresh();
+        $this->assertSame('new-ot.pdf', $saved->attachment_name);
+        Storage::disk('local')->assertMissing($oldPath);
+
+        // The form opens for users who can view adjustments, and not for others.
+        $this->asPayrollUser()->get(route('payroll-attendance-adjustments.attachment', $saved))
+            ->assertOk()
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+        $this->actingAs(User::factory()->create(['account_status' => 'active', 'must_change_password' => false]))
+            ->withSession(['unlocked' => true, 'last_activity_time' => now()->timestamp])
+            ->get(route('payroll-attendance-adjustments.attachment', $saved))
+            ->assertForbidden();
+
+        // Live checker returns the same verdict as the save.
+        $this->asPayrollUser()
+            ->getJson(route('payroll-attendance-adjustments.overtime-check', $this->offsetIdentity() + [
+                'work_date' => '2026-10-07',
+                'adjusted_time_in' => '17:00',
+                'adjusted_time_out' => '21:00',
+            ]))
+            ->assertOk()
+            ->assertJsonPath('ok', false)
+            ->assertJsonPath('minutes', 240)
+            ->assertJsonPath('punch_in', '08:00 AM');
+    }
+
+    public function test_adjustment_list_shows_who_approved_and_status_counts(): void
+    {
+        foreach ([PayrollAttendanceAdjustment::STATUS_PENDING, PayrollAttendanceAdjustment::STATUS_PENDING, PayrollAttendanceAdjustment::STATUS_REJECTED] as $status) {
+            PayrollAttendanceAdjustment::query()->create($this->offsetIdentity() + [
+                'adjustment_type' => PayrollAttendanceAdjustment::TYPE_OVERTIME,
+                'work_date' => '2026-10-02',
+                'adjusted_time_in' => '17:00',
+                'adjusted_time_out' => '18:00',
+                'reason' => "OT {$status}",
+                'status' => $status,
+            ]);
+        }
+
+        $pending = PayrollAttendanceAdjustment::query()->where('status', 'pending')->first();
+        $this->asPayrollUser()->post(route('payroll-attendance-adjustments.approve', $pending))->assertSessionHasNoErrors();
+        $approver = $this->user->full_name ?: $this->user->name;
+
+        $this->asPayrollUser()
+            ->get(route('payroll-attendance-adjustments.index', ['status' => 'approved']))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('adjustments.total', 1)
+                ->where('adjustments.data.0.decision.by', $approver)
+                ->where('stats.status_pending', 1)
+                ->where('stats.status_approved', 1)
+                ->where('stats.status_rejected', 1));
+    }
+
+    public function test_hr_employee_links_to_biometric_record_both_ways(): void
+    {
+        $hrUser = $this->makeHrUser();
+        $hr = \App\Models\Employee::query()->create(['employee_id' => 'HR-1', 'full_name' => 'Divina Bartolo', 'status' => 'Active']);
+        $other = \App\Models\Employee::query()->create(['employee_id' => 'HR-2', 'full_name' => 'Someone Else', 'status' => 'Active']);
+        $session = ['unlocked' => true, 'last_activity_time' => now()->timestamp];
+
+        // Profile suggests the name match first.
+        $this->actingAs($hrUser)->withSession($session)
+            ->get(route('employees.staff.show', $hr))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('biometric', null)
+                ->where('biometricOptions.0.value', (string) $this->employee->id));
+
+        $this->actingAs($hrUser)->withSession($session)
+            ->put(route('employees.biometric-link.update', $hr), ['employee_biometric_id' => $this->employee->id])
+            ->assertSessionHasNoErrors();
+        $this->assertSame($this->employee->id, $hr->fresh()->employee_biometric_id);
+
+        // One biometric record belongs to one employee only.
+        $this->actingAs($hrUser)->withSession($session)
+            ->put(route('employees.biometric-link.update', $other), ['employee_biometric_id' => $this->employee->id])
+            ->assertSessionHasErrors('employee_biometric_id');
+
+        $this->actingAs($hrUser)->withSession($session)
+            ->get(route('employees.staff.show', $hr))
+            ->assertInertia(fn (Assert $page) => $page->where('biometric.id', $this->employee->id));
+
+        // Unlink from the profile.
+        $this->actingAs($hrUser)->withSession($session)
+            ->put(route('employees.biometric-link.update', $hr), ['employee_biometric_id' => null])
+            ->assertSessionHasNoErrors();
+        $this->assertNull($hr->fresh()->employee_biometric_id);
+
+        // Link from the Biometric Employees edit form, and see it in the list.
+        $this->actingAs($hrUser)->withSession($session)
+            ->put(route('biometrics.employees.update', $this->employee), [
+                'employment_status' => 'active',
+                'group_name' => (string) $this->employee->group_name,
+                'is_payroll_active' => '1',
+                'display_name' => 'Divina Bartolo',
+                'hr_employee_id' => (string) $other->id,
+            ])
+            ->assertSessionHasNoErrors();
+        $this->assertSame($this->employee->id, $other->fresh()->employee_biometric_id);
+
+        $this->actingAs($hrUser)->withSession($session)
+            ->get(route('biometrics.employees.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('employees.data.0.hr_employee.name', 'Someone Else'));
+
+        $this->actingAs($hrUser)->withSession($session)
+            ->get(route('biometrics.employees.edit', $this->employee))
+            ->assertInertia(fn (Assert $page) => $page->where('values.hr_employee_id', (string) $other->id));
+
+        // Users without employees.update cannot link.
+        $this->asPayrollUser()
+            ->put(route('employees.biometric-link.update', $hr), ['employee_biometric_id' => $this->employee->id])
+            ->assertForbidden();
+    }
+
+    private function makeHrUser(): User
+    {
+        $permissions = ['employees.view', 'employees.update', 'biometrics.view', 'biometrics.edit', 'biometrics.update'];
+        foreach ($permissions as $name) {
+            Permission::findOrCreate($name, 'web');
+        }
+        $user = User::factory()->create(['role' => 'Admin', 'account_status' => 'active', 'must_change_password' => false]);
+        $role = Role::findOrCreate('HR Link Tester', 'web');
+        $role->syncPermissions($permissions);
+        $user->assignRole($role);
+
+        return $user;
+    }
+
+    public function test_paid_day_off_pays_unworked_sundays_for_daily_employees(): void
+    {
+        $this->setSchedule(WorkdayType::EightHours, '08:00', '17:00');
+        $this->createSalary(paidDayOff: true);
+        $this->workWholeCutoff();
+
+        $item = $this->generatePayrollItem();
+
+        // Sep 26 - Oct 10: 13 worked days + 2 unworked Sundays paid 1 day each.
+        $this->assertEqualsWithDelta(15 * self::DAILY_RATE, (float) $item->regular_pay, 0.01);
+        $this->assertSame(2, data_get($item->meta, 'day_off.days'));
+        $this->assertEqualsWithDelta(2 * self::DAILY_RATE, (float) data_get($item->meta, 'day_off.amount'), 0.01);
+    }
+
+    public function test_not_paid_day_off_keeps_daily_pay_to_days_worked(): void
+    {
+        $this->setSchedule(WorkdayType::EightHours, '08:00', '17:00');
+        $this->createSalary(paidDayOff: false);
+        $this->workWholeCutoff();
+
+        $item = $this->generatePayrollItem();
+
+        $this->assertEqualsWithDelta(13 * self::DAILY_RATE, (float) $item->regular_pay, 0.01);
+        $this->assertSame(0, data_get($item->meta, 'day_off.days'));
+    }
+
+    public function test_paid_day_off_needs_minimum_valid_log_days(): void
+    {
+        $this->setSchedule(WorkdayType::EightHours, '08:00', '17:00');
+        $this->createSalary(paidDayOff: true);
+        // Only 2 worked days in the cutoff: below the 3-day minimum.
+        $this->workRange('2026-09-28', '2026-09-29');
+        foreach (CarbonPeriod::create('2026-09-26', '2026-10-10') as $date) {
+            app(DailyAttendanceSummaryService::class)->buildForDate($date->toDateString());
+        }
+
+        $item = $this->generatePayrollItem();
+
+        $this->assertEqualsWithDelta(2 * self::DAILY_RATE, (float) $item->regular_pay, 0.01);
+        $this->assertSame(0, data_get($item->meta, 'day_off.days'));
+    }
+
+    public function test_monthly_employee_with_unpaid_day_off_is_paid_per_day_worked_including_the_31st(): void
+    {
+        $this->setSchedule(WorkdayType::EightHours, '08:00', '17:00');
+        $this->createSalary('monthly', 30000, paidDayOff: false);
+        // Oct 26 - Nov 10, 2026: 14 working days incl. Saturday Oct 31.
+        $this->workRange('2026-10-26', '2026-11-10');
+
+        $item = $this->generateItemFor(11);
+        $daily = 30000 * 12 / 365;
+
+        $this->assertEqualsWithDelta(round(14 * $daily, 2), (float) $item->regular_pay, 0.05);
+        $this->assertFalse((bool) data_get($item->meta, 'attendance_deductions_are_deducted_from_monthly_base'));
+    }
+
+    public function test_monthly_employee_with_paid_day_off_keeps_half_month_salary(): void
+    {
+        $this->setSchedule(WorkdayType::EightHours, '08:00', '17:00');
+        $this->createSalary('monthly', 30000, paidDayOff: true);
+        $this->workRange('2026-10-26', '2026-11-10');
+
+        $item = $this->generateItemFor(11);
+
+        $this->assertEqualsWithDelta(15000, (float) $item->regular_pay, 0.01);
+    }
+
+    public function test_employee_rate_form_saves_day_off_setting(): void
+    {
+        $this->asPayrollUser()
+            ->get(route('payroll-employee-salaries.create'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->where('values.paid_day_off', true));
+
+        $this->createSalary(paidDayOff: true);
+        $salary = PayrollEmployeeSalary::query()->sole();
+
+        $this->asPayrollUser()
+            ->get(route('payroll-employee-salaries.index'))
+            ->assertInertia(fn (Assert $page) => $page->where('salaries.data.0.paid_day_off', true));
+
+        $this->asPayrollUser()
+            ->get(route('payroll-employee-salaries.edit', $salary))
+            ->assertInertia(fn (Assert $page) => $page->where('values.paid_day_off', true));
+    }
+
     private function setSchedule(WorkdayType $type, string $timeIn, string $timeOut): void
     {
         EmployeePlottingSchedule::query()->where('employee_biometric_id', $this->employee->id)->delete();
@@ -938,17 +1218,46 @@ final class ScheduleOffsetAdjustmentPayrollTest extends TestCase
         ]);
     }
 
-    private function createSalary(): void
+    /** Existing daily employees are "Day off: Not paid" (see the paid_day_off migration). */
+    private function createSalary(string $rateType = 'daily', float $basic = self::DAILY_RATE, bool $paidDayOff = false): void
     {
         PayrollEmployeeSalary::query()->create([
             'employee_biometric_id' => $this->employee->id,
             'biometric_employee_id' => '4713002',
             'employee_no' => '4713002',
             'employee_name' => 'Divina Bartolo',
-            'rate_type' => 'daily',
-            'basic_salary' => self::DAILY_RATE,
+            'rate_type' => $rateType,
+            'basic_salary' => $basic,
+            'paid_day_off' => $paidDayOff,
             'is_active' => true,
         ]);
+    }
+
+    /** 08:00-17:00 punches on every non-Sunday from $from to $to, then build the summaries. */
+    private function workRange(string $from, string $to): void
+    {
+        foreach (CarbonPeriod::create($from, $to) as $date) {
+            if (! $date->isSunday()) {
+                $this->punch($date->toDateString().' 08:00:00');
+                $this->punch($date->toDateString().' 17:00:00');
+            }
+        }
+
+        foreach (CarbonPeriod::create($from, $to) as $date) {
+            app(DailyAttendanceSummaryService::class)->buildForDate($date->toDateString());
+        }
+    }
+
+    private function generateItemFor(int $month): PayrollItem
+    {
+        $payroll = app(PayrollComputationService::class)->generate([
+            'cutoff_month' => $month,
+            'cutoff_year' => 2026,
+            'cutoff_type' => 'second',
+            'garage_group' => 1,
+        ], $this->user->id);
+
+        return PayrollItem::query()->where('payroll_id', $payroll->id)->where('employee_biometric_id', $this->employee->id)->sole();
     }
 
     /**
