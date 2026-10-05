@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\HR_Department;
+namespace App\Http\Requests\HR;
 
 use App\Enums\EmployeeStatus;
+use App\Models\Employee;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -25,12 +26,12 @@ final class UpdateEmployeeRequest extends FormRequest
             'full_name' => ['required', 'string', 'max:255'],
             'status' => ['required', Rule::enum(EmployeeStatus::class)],
             'date_hired' => ['nullable', 'date'],
-            'company' => ['required', 'in:Jell Transport,ES Transport,Kellen Transport,Earthstar Transport'],
+            'company' => ['required', Rule::in(Employee::COMPANIES)],
             'department_id' => ['nullable', 'exists:departments,id'],
             'position_id' => ['nullable', 'exists:positions,id'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone_number' => ['nullable', 'digits:11', 'regex:/^[0-9]*$/'],
-            'garage' => ['required', 'in:Mirasol,Balintawak,Gonzales'],
+            'garage' => ['required', Rule::in(Employee::GARAGES)],
             'date_of_birth' => ['nullable', 'date'],
             'address_1' => ['nullable', 'string', 'max:255'],
             'address_2' => ['nullable', 'string', 'max:255'],

@@ -69,6 +69,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class PayrollEmployeeSalary extends Model
 {
+    public const RATE_TYPES = ['daily', 'monthly'];
+
+    /** When a deduction, contribution or allowance applies. */
+    public const SCHEDULES = ['none', 'first_cutoff', 'second_cutoff', 'every_cutoff'];
+
+    /** Loans and cash advance: each has <prefix>_total_amount, _payment_amount, _deduction_schedule, _start_date. */
+    public const LOAN_PREFIXES = ['sss_loan', 'pagibig_loan', 'philhealth_loan', 'cash_advance', 'other_loan'];
+
     protected $fillable = [
         'employee_biometric_id',
         'employee_id',

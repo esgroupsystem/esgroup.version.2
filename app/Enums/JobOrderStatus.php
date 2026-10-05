@@ -21,26 +21,6 @@ enum JobOrderStatus: string
         };
     }
 
-    public function badgeClass(): string
-    {
-        return match ($this) {
-            self::Standby => 'badge-subtle-secondary text-secondary',
-            self::WaitingParts => 'badge-subtle-danger text-danger',
-            self::OnGoingRepair => 'badge-subtle-warning text-warning',
-            self::Operational => 'badge-subtle-success text-success',
-        };
-    }
-
-    public function icon(): string
-    {
-        return match ($this) {
-            self::Standby => 'fas fa-pause-circle',
-            self::WaitingParts => 'fas fa-box-open',
-            self::OnGoingRepair => 'fas fa-tools',
-            self::Operational => 'fas fa-check-circle',
-        };
-    }
-
     public function description(): string
     {
         return match ($this) {

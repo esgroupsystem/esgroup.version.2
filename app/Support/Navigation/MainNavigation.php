@@ -203,7 +203,7 @@ final class MainNavigation
                 'label' => 'Products',
                 'items' => [
                     self::link('Categories', 'category.index', 'category.view', 'tags', ['category.*']),
-                    self::link('Products', 'items.index', 'items.view', 'package', ['items.index', 'items.create', 'items.edit', 'items.show']),
+                    self::link('Products', 'items.index', 'items.view', 'package', ['items.index']),
                 ],
             ],
             [

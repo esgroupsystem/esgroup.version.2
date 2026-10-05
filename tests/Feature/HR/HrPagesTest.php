@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\HRDepartment;
+namespace Tests\Feature\HR;
 
 use App\Models\Claim;
 use App\Models\Department;
@@ -200,7 +200,7 @@ final class HrPagesTest extends TestCase
 
     public function test_profile_of_employee_on_leave_can_be_saved(): void
     {
-        // LeaveRecordService sets "On Leave"; the profile form used to reject it,
+        // LeaveService sets "On Leave"; the profile form used to reject it,
         // so no employee on leave could be edited.
         $employee = $this->employee('Leah Leave');
         $employee->update(['status' => 'On Leave']);

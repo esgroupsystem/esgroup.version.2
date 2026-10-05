@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\HR_Department;
+namespace App\Http\Requests\HR;
 
+use App\Models\Employee;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 final class StoreEmployeeRequest extends FormRequest
 {
@@ -23,8 +25,8 @@ final class StoreEmployeeRequest extends FormRequest
             'position_id' => ['nullable', 'exists:positions,id'],
             'email' => ['nullable', 'email', 'max:255'],
             'phone_number' => ['nullable', 'digits:11', 'regex:/^[0-9]*$/'],
-            'company' => ['required', 'in:Jell Transport,ES Transport,Earthstar Transport,Kellen Transport'],
-            'garage' => ['required', 'in:Mirasol,Balintawak,Gonzales'],
+            'company' => ['required', Rule::in(Employee::COMPANIES)],
+            'garage' => ['required', Rule::in(Employee::GARAGES)],
         ];
     }
 }

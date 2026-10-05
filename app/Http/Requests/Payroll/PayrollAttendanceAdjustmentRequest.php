@@ -6,7 +6,7 @@ namespace App\Http\Requests\Payroll;
 
 use App\Models\Holiday;
 use App\Models\PayrollAttendanceAdjustment;
-use App\Support\Payroll\OvertimeCheck;
+use App\Services\Payroll\OvertimeCheckService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -204,7 +204,7 @@ class PayrollAttendanceAdjustmentRequest extends FormRequest
                 && $this->work_date
                 && ! $validator->errors()->hasAny(['employee_biometric_id', 'work_date', 'adjusted_time_in', 'adjusted_time_out'])
             ) {
-                $result = app(OvertimeCheck::class)->check(
+                $result = app(OvertimeCheckService::class)->check(
                     (int) $this->employee_biometric_id,
                     $this->biometric_employee_id ? (string) $this->biometric_employee_id : null,
                     $this->employee_no ? (string) $this->employee_no : null,

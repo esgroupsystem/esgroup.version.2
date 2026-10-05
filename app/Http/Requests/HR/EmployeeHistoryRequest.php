@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\HR_Department;
+namespace App\Http\Requests\HR;
 
+use App\Models\Employee;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -27,7 +28,7 @@ final class EmployeeHistoryRequest extends FormRequest
             'description.*' => ['nullable', 'string'],
             'remarks' => ['nullable', 'string', 'max:5000'],
             'disciplinary_action' => ['nullable', 'array'],
-            'disciplinary_action.*' => ['string', Rule::in(['Salary Deduction Authorization', 'Suspension', 'Final Warning'])],
+            'disciplinary_action.*' => ['string', Rule::in(Employee::DISCIPLINARY_ACTIONS)],
             'sda_amount' => ['nullable', 'numeric', 'min:0'],
             'sda_terms' => ['nullable', 'numeric', 'min:0'],
             'sda_start_date' => ['nullable', 'date'],

@@ -13,66 +13,55 @@ use App\Services\Fleet\FleetFolderDashboardService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class BusController extends Controller
+/** Fleet → Bus Analytics (fleet.buses.*). */
+final class BusController extends Controller
 {
     public function __construct(
         private readonly BusService $busService,
-        private readonly FleetFolderDashboardService $fleetFolderDashboardService
+        private readonly FleetFolderDashboardService $folderService,
     ) {}
 
     public function index(Request $request): Response
     {
-        $filters = $request->only([
-            'search',
-            'garage',
-            'company',
-            'operational_status',
-            'sale_status',
+        $data = $this->busService->getMonitoringDashboard($request->only(['search', 'garage', 'company', 'operational_status', 'sale_status']));
+        $folders = $this->folderService->getFolderDashboardData([
+            'search' => trim((string) $request->query('search', '')),
+            'company' => trim((string) $request->query('company', '')),
+            'operational_status' => trim((string) $request->query('operational_status', '')),
         ]);
-
-        $dashboardData = $this->busService->getMonitoringDashboard($filters);
-        $folderData = $this->fleetFolderDashboardService->getFolderDashboardData($request);
         $user = $request->user();
         $query = $request->query();
 
         $summaryRows = fn (Collection $summary): array => $summary
-            ->map(fn (array $data, int|string $name): array => ['name' => (string) $name, ...$data])
+            ->map(fn (array $row, int|string $name): array => ['name' => (string) $name, ...$row])
             ->values()
             ->all();
 
         return Inertia::render('dashboards/fleet/index', [
-            'filters' => [
-                'search' => (string) ($dashboardData['filters']['search'] ?? ''),
-                'garage' => (string) ($dashboardData['filters']['garage'] ?? ''),
-                'company' => (string) ($dashboardData['filters']['company'] ?? ''),
-                'operational_status' => (string) ($dashboardData['filters']['operational_status'] ?? ''),
-                'sale_status' => (string) ($dashboardData['filters']['sale_status'] ?? ''),
-            ],
+            'filters' => collect(['search', 'garage', 'company', 'operational_status', 'sale_status'])
+                ->mapWithKeys(fn (string $key): array => [$key => (string) ($data['filters'][$key] ?? '')])
+                ->all(),
             'options' => [
-                'garages' => collect($dashboardData['garages'])->values(),
-                'companies' => collect($dashboardData['companies'])->values(),
+                'garages' => $data['garages']->values(),
+                'companies' => $data['companies']->values(),
                 'operational_statuses' => $this->options(Bus::operationalStatusOptions()),
                 'sale_statuses' => $this->options(Bus::saleStatusOptions()),
             ],
-            'totals' => $dashboardData['totals'],
-            'filteredCount' => $dashboardData['filtered_count'],
-            'garageSummary' => $summaryRows($dashboardData['garage_summary']),
-            'companySummary' => $summaryRows($dashboardData['company_summary']),
+            'totals' => $data['totals'],
+            'filteredCount' => $data['filtered_count'],
+            'garageSummary' => $summaryRows($data['garage_summary']),
+            'companySummary' => $summaryRows($data['company_summary']),
             'forSaleSummary' => [
-                ...collect($dashboardData['for_sale_summary'])->except('rows')->all(),
-                'rows' => collect($dashboardData['for_sale_summary']['rows'])
-                    ->map(fn (array $data, int|string $company): array => ['name' => (string) $company, ...$data])
+                ...collect($data['for_sale_summary'])->except('rows')->all(),
+                'rows' => collect($data['for_sale_summary']['rows'])
+                    ->map(fn (array $row, int|string $company): array => ['name' => (string) $company, ...$row])
                     ->values(),
             ],
-            'folders' => collect($folderData['tabs'] ?? [])->map(fn (array $tab): array => $this->folderTab($tab, $query))->values(),
-            'folderTotals' => [
-                'units' => (int) ($folderData['total_units'] ?? 0),
-                'for_sale' => (int) ($folderData['total_for_sale'] ?? 0),
-            ],
+            'folders' => $folders['tabs']->map(fn (array $tab): array => $this->folderTab($tab, $query))->values(),
+            'folderTotals' => ['units' => $folders['total_units'], 'for_sale' => $folders['total_for_sale']],
             'can' => [
                 'create' => (bool) $user?->can('fleet.manage.create.view'),
                 'edit' => (bool) $user?->can('fleet.manage.edit'),
@@ -100,13 +89,9 @@ class BusController extends Controller
 
     public function store(StoreBusRequest $request): RedirectResponse
     {
-        $bus = $this->busService->createBus(
-            data: $request->validated()
-        );
+        $bus = $this->busService->createBus($request->validated());
 
-        return redirect()
-            ->route('fleet.buses.index')
-            ->with('success', "Bus {$bus->bus_no} added successfully.");
+        return redirect()->route('fleet.buses.index')->with('success', "Bus {$bus->bus_no} added successfully.");
     }
 
     public function edit(Request $request, Bus $bus): Response
@@ -116,14 +101,9 @@ class BusController extends Controller
 
     public function update(UpdateBusRequest $request, Bus $bus): RedirectResponse
     {
-        $this->busService->updateBus(
-            bus: $bus,
-            data: $request->validated()
-        );
+        $this->busService->updateBus($bus, $request->validated());
 
-        return redirect()
-            ->route('fleet.buses.index', $request->query())
-            ->with('success', "Bus {$bus->bus_no} updated successfully.");
+        return redirect()->route('fleet.buses.index', $request->query())->with('success', "Bus {$bus->bus_no} updated successfully.");
     }
 
     private function form(Request $request, ?Bus $bus): Response
@@ -148,20 +128,20 @@ class BusController extends Controller
             'options' => [
                 'operational_statuses' => $this->options(Bus::operationalStatusOptions()),
                 'sale_statuses' => $this->options(Bus::saleStatusOptions()),
-                // Suggestions only; the fields stay free text like before.
-                'garages' => Bus::query()->whereNotNull('garage')->where('garage', '!=', '')->distinct()->orderBy('garage')->pluck('garage'),
-                'companies' => Bus::query()->whereNotNull('company')->where('company', '!=', '')->distinct()->orderBy('company')->pluck('company'),
+                // Suggestions only; the fields stay free text.
+                ...$this->busService->formOptions(),
             ],
             'urls' => [
-                'submit' => $bus
-                    ? route('fleet.buses.update', ['bus' => $bus->id, ...$query])
-                    : route('fleet.buses.store'),
+                'submit' => $bus ? route('fleet.buses.update', ['bus' => $bus->id, ...$query]) : route('fleet.buses.store'),
                 'back' => route('fleet.buses.index', $query),
             ],
         ]);
     }
 
-    /** @param array<string, string> $options @return list<array{value: string, label: string}> */
+    /**
+     * @param  array<string, string>  $options
+     * @return list<array{value: string, label: string}>
+     */
     private function options(array $options): array
     {
         return collect($options)
@@ -171,7 +151,7 @@ class BusController extends Controller
     }
 
     /**
-     * One folder tab from FleetFolderDashboardService as plain rows.
+     * One folder tab as plain rows.
      *
      * @param  array<string, mixed>  $tab
      * @param  array<string, mixed>  $query
@@ -185,55 +165,51 @@ class BusController extends Controller
                 'key' => $tab['key'],
                 'label' => $tab['label'],
                 'count' => (int) $tab['count'],
-                'groups' => collect($tab['records'])->map(fn (Collection $records, int|string $company): array => [
+                'groups' => $tab['records']->map(fn (Collection $rows, int|string $company): array => [
                     'name' => (string) $company,
-                    'rows' => $records->map(fn ($record): array => [
-                        'id' => (int) $record->id,
-                        'bus_no' => (string) $record->bus_no,
-                        'plate_no' => $record->plate_no,
-                        'company' => $record->company,
-                        'garage' => $record->garage,
-                        'status' => $record->status,
-                        'status_label' => $record->status_label,
-                        'storage_area' => $record->storage_area,
-                        'breakdown_start' => $record->breakdown_start_date ? \Carbon\Carbon::parse($record->breakdown_start_date)->format('M d, Y') : null,
-                        'breakdown_end' => $record->breakdown_end_date ? \Carbon\Carbon::parse($record->breakdown_end_date)->format('M d, Y') : null,
-                        'days' => (int) $record->live_days_in_breakdown,
-                        'unit_location' => $record->unit_location,
-                        'progress' => $record->progress,
-                        'remarks' => $record->remarks,
-                        'edit_url' => route('fleet.for-sale-units.edit', $record->id),
+                    'rows' => $rows->map(fn (array $row): array => [
+                        'id' => (int) $row['record']->id,
+                        'bus_no' => (string) $row['record']->bus_no,
+                        'plate_no' => $row['record']->plate_no,
+                        'company' => $row['record']->company,
+                        'garage' => $row['record']->garage,
+                        'status' => $row['record']->status,
+                        'status_label' => $row['status_label'],
+                        'storage_area' => $row['record']->storage_area,
+                        'breakdown_start' => $row['record']->breakdown_start_date?->format('M d, Y'),
+                        'breakdown_end' => $row['record']->breakdown_end_date?->format('M d, Y'),
+                        'days' => $row['days'],
+                        'unit_location' => $row['record']->unit_location,
+                        'progress' => $row['record']->progress,
+                        'remarks' => $row['record']->remarks,
+                        'edit_url' => route('fleet.for-sale-units.edit', $row['record']->id),
                     ])->values(),
                 ])->values(),
             ];
         }
-
-        $forSaleIds = collect($tab['for_sale_bus_ids'] ?? [])->map(fn ($id): int => (int) $id);
-        $forSaleNumbers = collect($tab['for_sale_bus_numbers'] ?? []);
 
         return [
             'type' => 'garage',
             'key' => $tab['key'],
             'label' => $tab['label'],
             'count' => (int) $tab['count'],
-            'groups' => collect($tab['companies'])->map(fn (Collection $buses, int|string $company): array => [
+            'groups' => $tab['companies']->map(fn (Collection $rows, int|string $company): array => [
                 'name' => (string) $company,
-                'rows' => $buses->map(fn (Bus $bus): array => [
-                    'id' => $bus->id,
-                    'bus_no' => (string) $bus->bus_no,
-                    'plate_no' => $bus->plate_no,
-                    'company' => $bus->company,
-                    'garage' => $bus->garage,
-                    'operational_status' => (string) $bus->operational_status,
-                    'operational_status_label' => $bus->operational_status_label,
-                    // Same rule as the Blade folder view: linked by id, or by bus number.
-                    'for_sale' => $forSaleIds->contains((int) $bus->id) || $forSaleNumbers->contains(Str::upper(trim((string) $bus->bus_no))),
-                    'sale_status_label' => $bus->sale_status_label,
-                    'chassis_number' => $bus->chassis_number,
-                    'engine_number' => $bus->engine_number,
-                    'case_number' => $bus->case_number,
-                    'remarks' => $bus->monitoring_remarks,
-                    'edit_url' => route('fleet.buses.edit', ['bus' => $bus->id, ...$query]),
+                'rows' => $rows->map(fn (array $row): array => [
+                    'id' => $row['bus']->id,
+                    'bus_no' => (string) $row['bus']->bus_no,
+                    'plate_no' => $row['bus']->plate_no,
+                    'company' => $row['bus']->company,
+                    'garage' => $row['bus']->garage,
+                    'operational_status' => (string) $row['bus']->operational_status,
+                    'operational_status_label' => $row['bus']->operational_status_label,
+                    'for_sale' => $row['for_sale'],
+                    'sale_status_label' => $row['bus']->sale_status_label,
+                    'chassis_number' => $row['bus']->chassis_number,
+                    'engine_number' => $row['bus']->engine_number,
+                    'case_number' => $row['bus']->case_number,
+                    'remarks' => $row['bus']->monitoring_remarks,
+                    'edit_url' => route('fleet.buses.edit', ['bus' => $row['bus']->id, ...$query]),
                 ])->values(),
             ])->values(),
         ];

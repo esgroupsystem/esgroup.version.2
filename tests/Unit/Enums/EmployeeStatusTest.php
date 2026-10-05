@@ -14,7 +14,7 @@ final class EmployeeStatusTest extends TestCase
         $this->assertSame([
             'Active',
             'Active(Re-Entry)',
-            // Written by LeaveRecordService; must be accepted by the profile form.
+            // Written by LeaveService; must be accepted by the profile form.
             'On Leave',
             'Inactive',
             'Suspended',

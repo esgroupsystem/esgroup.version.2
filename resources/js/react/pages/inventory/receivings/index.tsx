@@ -85,14 +85,14 @@ export default function ReceivingsIndex({ records, filters, can, urls }: Props) 
                         <CardTitle>Receiving records</CardTitle>
                         <CardDescription>Results update automatically after typing.</CardDescription>
                     </div>
-                    <div className="flex gap-2">
-                        <div className="relative">
+                    <div className="flex w-full gap-2 md:w-auto">
+                        <div className="relative min-w-0 flex-1 sm:flex-none">
                             <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 type="search"
                                 aria-label="Search receiving records"
                                 placeholder="Search receiving no., delivered by, remarks, garage..."
-                                className="w-96 pl-8"
+                                className="w-full pl-8 sm:w-96"
                                 value={search}
                                 onChange={(event) => setSearch(event.target.value)}
                             />

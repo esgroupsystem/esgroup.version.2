@@ -4,75 +4,34 @@ declare(strict_types=1);
 
 namespace App\Services\Maintenance;
 
-use App\Enums\InventoryTransactionStatus;
 use App\Models\BusDetail;
 use App\Models\PartsOut;
-use App\Models\PartsOutItem;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
+use App\Repositories\Contracts\Fleet\BusDetailRepositoryInterface;
+use App\Repositories\Contracts\Maintenance\PartsOutRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
+/** Vehicle History: the parts issued to each vehicle (posted Parts Issuance records only). */
 final class VehicleHistoryService
 {
+    public function __construct(
+        private readonly BusDetailRepositoryInterface $vehicles,
+        private readonly PartsOutRepositoryInterface $partsOuts,
+    ) {}
+
+    /** @return LengthAwarePaginator<int, BusDetail> by plate number */
     public function buses(string $search): LengthAwarePaginator
     {
-        return BusDetail::query()
-            ->when(trim($search) !== '', function ($query) use ($search): void {
-                $query->where(function ($query) use ($search): void {
-                    $query->where('plate_number', 'like', "%{$search}%")
-                        ->orWhere('body_number', 'like', "%{$search}%")
-                        ->orWhere('name', 'like', "%{$search}%")
-                        ->orWhere('garage', 'like', "%{$search}%");
-                });
-            })
-            ->orderBy('plate_number')
-            ->paginate(10)
-            ->withQueryString();
+        return $this->vehicles->paginate(trim($search), 'plate');
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @return array{records: LengthAwarePaginator<int, PartsOut>, transactions: int, parts_used: int, latest: ?string, most_used: ?\App\Models\PartsOutItem}
+     */
     public function history(BusDetail $bus, string $search): array
     {
-        $posted = InventoryTransactionStatus::Posted->value;
-        $partsOuts = PartsOut::query()
-            ->with(['creator', 'items.product'])
-            ->where('vehicle_id', $bus->id)
-            ->where('status', $posted)
-            ->when(trim($search) !== '', function ($query) use ($search): void {
-                $query->where(function ($query) use ($search): void {
-                    $query->where('parts_out_number', 'like', "%{$search}%")
-                        ->orWhere('mechanic_name', 'like', "%{$search}%")
-                        ->orWhere('requested_by', 'like', "%{$search}%")
-                        ->orWhere('job_order_no', 'like', "%{$search}%")
-                        ->orWhere('odometer', 'like', "%{$search}%")
-                        ->orWhere('purpose', 'like', "%{$search}%")
-                        ->orWhere('remarks', 'like', "%{$search}%")
-                        ->orWhereHas('items.product', function ($productQuery) use ($search): void {
-                            $productQuery->where('product_name', 'like', "%{$search}%")
-                                ->orWhere('part_number', 'like', "%{$search}%")
-                                ->orWhere('supplier_name', 'like', "%{$search}%");
-                        });
-                });
-            })
-            ->orderByDesc('issued_date')
-            ->orderByDesc('id')
-            ->paginate(10)
-            ->withQueryString();
-
-        $base = PartsOut::query()->where('vehicle_id', $bus->id)->where('status', $posted);
-        $mostUsedPart = PartsOutItem::query()
-            ->select('product_id', DB::raw('SUM(qty_used) as total_used'))
-            ->whereHas('partsOut', fn ($query) => $query->where('vehicle_id', $bus->id)->where('status', $posted))
-            ->with('product')
-            ->groupBy('product_id')
-            ->orderByDesc('total_used')
-            ->first();
-
         return [
-            'partsOuts' => $partsOuts,
-            'totalTransactions' => (clone $base)->count(),
-            'totalPartsUsed' => PartsOutItem::query()->whereHas('partsOut', fn ($query) => $query->where('vehicle_id', $bus->id)->where('status', $posted))->sum('qty_used'),
-            'latestMaintenanceDate' => (clone $base)->max('issued_date'),
-            'mostUsedPart' => $mostUsedPart,
+            'records' => $this->partsOuts->paginatePostedForVehicle($bus, trim($search)),
+            ...$this->partsOuts->vehicleTotals($bus),
         ];
     }
 }

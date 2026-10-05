@@ -9,7 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\StoreOdometerSubmissionRequest;
 use App\Http\Resources\Api\OdometerSubmissionResource;
 use App\Models\BusDetail;
-use App\Models\OdometerSubmission;
+use App\Services\Fleet\OdometerService;
 use Illuminate\Http\JsonResponse;
 
 final class OdometerController extends Controller
@@ -31,15 +31,8 @@ final class OdometerController extends Controller
         ]);
     }
 
-    public function lastOdometer(BusDetail $busDetail): JsonResponse
+    public function lastOdometer(BusDetail $busDetail, OdometerService $odometers): JsonResponse
     {
-        $last = OdometerSubmission::query()
-            ->where('bus_detail_id', $busDetail->getKey())
-            ->latest()
-            ->first();
-
-        return response()->json([
-            'last_odometer' => $last->new_odometer ?? 0,
-        ]);
+        return response()->json(['last_odometer' => $odometers->latestReading($busDetail)]);
     }
 }

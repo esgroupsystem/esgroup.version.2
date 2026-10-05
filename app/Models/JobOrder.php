@@ -31,6 +31,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class JobOrder extends Model
 {
+    /** Issue types a ticket job order can be filed under. */
+    public const CATEGORIES = [
+        'ACCIDENT',
+        'COLLECTING FARE',
+        'CUTTING FARE',
+        'RE- ISSUEING TICKET',
+        'TAMPERING TICKET',
+        'UNREGISTERED TICKET',
+        'DELAYING ISSUANCE OF TICKET',
+        'ROLLING TICKETS',
+        'REMOVING HEADSTAB OF TICKET',
+        'USING STUB TICKET',
+        'WRONG CLOSING / OPEN',
+        'OTHERS',
+    ];
+
+    public const NOTE_REASONS = ['Defective DVR', 'Camera not working', 'Weak signal / interference', 'Other'];
+
     protected $fillable = [
         'bus_detail_id',
         'created_by',
@@ -65,6 +83,14 @@ class JobOrder extends Model
             'approved_by' => 'integer',
             'approved_at' => 'datetime',
         ];
+    }
+
+    /** "Bus name - body number" (plate number when there is no body number); load `bus` first. */
+    public function busLabel(): string
+    {
+        $number = $this->bus?->body_number ?? $this->bus?->plate_number;
+
+        return trim(($this->bus?->name ?? 'ES Transport').($number ? ' - '.$number : ''));
     }
 
     /** @return BelongsTo<BusDetail, $this> */

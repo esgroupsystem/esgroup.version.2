@@ -11,7 +11,7 @@ use App\Models\ProductStock;
 use App\Services\Maintenance\PartsOutService;
 use App\Services\Maintenance\ProductCatalogService;
 use App\Services\Maintenance\ReceivingService;
-use App\Services\Maintenance\StockTransferCreationService;
+use App\Services\Maintenance\StockTransferService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -77,7 +77,7 @@ final class MaintenanceInventoryArchitectureTest extends TestCase
         [$product, $from] = $this->makeStockedProduct(8);
         $to = Location::query()->whereKeyNot($from->id)->firstOrFail();
 
-        $transfer = app(StockTransferCreationService::class)->create([
+        $transfer = app(StockTransferService::class)->create([
             'from_location_id' => $from->id,
             'to_location_id' => $to->id,
             'transfer_date' => '2026-08-31',

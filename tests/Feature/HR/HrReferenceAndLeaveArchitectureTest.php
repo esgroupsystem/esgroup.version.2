@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\HRDepartment;
+namespace Tests\Feature\HR;
 
+use App\Enums\LeaveKind;
 use App\Models\Department;
 use App\Models\DriverLeave;
 use App\Models\Employee;
 use App\Models\Position;
-use App\Services\HR_Department\DepartmentService;
-use App\Services\HR_Department\LeaveRecordService;
+use App\Services\HR\DepartmentService;
+use App\Services\HR\LeaveService;
 use DomainException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -33,7 +34,7 @@ final class HrReferenceAndLeaveArchitectureTest extends TestCase
     {
         [$employee] = $this->makeEmployee('Driver');
 
-        $leave = app(LeaveRecordService::class)->createDriverLeave([
+        $leave = app(LeaveService::class)->create(LeaveKind::Driver, [
             'employee_id' => $employee->id,
             'leave_type' => 'Vacation',
             'start_date' => '2026-09-01',
@@ -52,7 +53,7 @@ final class HrReferenceAndLeaveArchitectureTest extends TestCase
         [$employee] = $this->makeEmployee('Conductor');
 
         $this->expectException(DomainException::class);
-        app(LeaveRecordService::class)->createDriverLeave([
+        app(LeaveService::class)->create(LeaveKind::Driver, [
             'employee_id' => $employee->id,
             'leave_type' => 'Vacation',
             'start_date' => '2026-09-01',
@@ -66,7 +67,7 @@ final class HrReferenceAndLeaveArchitectureTest extends TestCase
         [$employee] = $this->makeEmployee('Driver');
 
         $this->expectException(DomainException::class);
-        app(LeaveRecordService::class)->createEmployeeLeave([
+        app(LeaveService::class)->create(LeaveKind::Employee, [
             'employee_id' => $employee->id,
             'leave_type' => 'Vacation',
             'start_date' => '2026-09-01',

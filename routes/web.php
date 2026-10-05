@@ -2,48 +2,49 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\AllBusController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Biometrics\BiometricCompanyController;
-use App\Http\Controllers\Biometrics\EmployeeBiometricController;
-use App\Http\Controllers\BusDetailController;
-use App\Http\Controllers\Chairman\HrDataController;
-use App\Http\Controllers\ClaimController;
-use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Biometrics\BiometricsSyncController;
+use App\Http\Controllers\Biometrics\ManualBiometricsController;
 use App\Http\Controllers\Fleet\BusController;
 use App\Http\Controllers\Fleet\ForSaleUnitController;
-use App\Http\Controllers\HR_Department\ConductorLeaveController;
-use App\Http\Controllers\HR_Department\DepartmentController;
-use App\Http\Controllers\HR_Department\DriverLeaveController;
-use App\Http\Controllers\HR_Department\EmployeeBiometricLinkController;
-use App\Http\Controllers\HR_Department\EmployeeController;
-use App\Http\Controllers\HR_Department\EmployeeLeaveController;
-use App\Http\Controllers\HR_Department\HRDashboardController;
-use App\Http\Controllers\HR_Department\HrOffenseController;
-use App\Http\Controllers\HR_Department\MirasolBiometricsLogController;
+use App\Http\Controllers\Fleet\OdometerMonitoringController;
+use App\Http\Controllers\General\DashboardController;
+use App\Http\Controllers\General\HrDashboardController;
+use App\Http\Controllers\General\HrDataController;
+use App\Http\Controllers\HR\ClaimController;
+use App\Http\Controllers\HR\ConductorLeaveController;
+use App\Http\Controllers\HR\DepartmentController;
+use App\Http\Controllers\HR\DriverLeaveController;
+use App\Http\Controllers\HR\EmployeeAttachmentController;
+use App\Http\Controllers\HR\EmployeeController;
+use App\Http\Controllers\HR\EmployeeHistoryController;
+use App\Http\Controllers\HR\EmployeeLeaveController;
+use App\Http\Controllers\HR\HrOffenseController;
+use App\Http\Controllers\IT\BusDashboardController;
+use App\Http\Controllers\IT\CctvConcernController;
 use App\Http\Controllers\IT\ItInventoryItemController;
-use App\Http\Controllers\IT_Department\CctvController;
-use App\Http\Controllers\IT_Department\TicketController;
+use App\Http\Controllers\IT\TicketController;
+use App\Http\Controllers\Maintenance\BusListController;
 use App\Http\Controllers\Maintenance\CategoryController;
 use App\Http\Controllers\Maintenance\ItemsController;
 use App\Http\Controllers\Maintenance\JobOrderMaintenanceController;
-use App\Http\Controllers\Maintenance\OdometerReportController;
 use App\Http\Controllers\Maintenance\PartsOutController;
 use App\Http\Controllers\Maintenance\ReceivingController;
 use App\Http\Controllers\Maintenance\StockTransferController;
+use App\Http\Controllers\Maintenance\VehicleHistoryController;
 use App\Http\Controllers\Payroll\AttendanceSummaryController;
 use App\Http\Controllers\Payroll\BenefitsRecordController;
-use App\Http\Controllers\Payroll\EmployeePlottingScheduleController;
-use App\Http\Controllers\Payroll\HolidayController;
-use App\Http\Controllers\Payroll\ManualBiometricsEncodingController;
 use App\Http\Controllers\Payroll\PayrollAttendanceAdjustmentController;
 use App\Http\Controllers\Payroll\PayrollAuditLogController;
 use App\Http\Controllers\Payroll\PayrollBenefitSettlementController;
 use App\Http\Controllers\Payroll\PayrollController;
-use App\Http\Controllers\Payroll\PayrollEmployeeSalaryController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\SecureFileController;
-use App\Http\Controllers\UserManagementController;
+use App\Http\Controllers\Scheduling\BiometricEmployeeController;
+use App\Http\Controllers\Scheduling\EmployeeRateController;
+use App\Http\Controllers\Scheduling\HolidayController;
+use App\Http\Controllers\Scheduling\WorkScheduleController;
+use App\Http\Controllers\Security\RoleController;
+use App\Http\Controllers\Security\UserManagementController;
 use App\Http\Middleware\ForceLockscreen;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -240,7 +241,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     Route::middleware(['auth'])
         ->prefix('concern')
         ->name('concern.')
-        ->controller(CctvController::class)
+        ->controller(CctvConcernController::class)
         ->group(function () {
 
             Route::get('/cctv', 'index')
@@ -263,40 +264,28 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->middleware('permission:cctv.delete')
                 ->name('cctv.destroy');
 
-            Route::post('/cctv/{id}/accept', 'acceptTask')
-                ->middleware('permission:cctv.update')
-                ->name('cctv.accept');
-
-            Route::post('/cctv/{id}/done', 'markAsDone')
-                ->middleware('permission:cctv.update')
-                ->name('cctv.done');
-
-            Route::post('/cctv/{id}/note', 'addNote')
-                ->middleware('permission:cctv.update')
-                ->name('cctv.addnote');
-
-            Route::post('/cctv/{id}/files', 'addFiles')
-                ->middleware('permission:cctv.update')
-                ->name('cctv.addfile');
-
             Route::get('/export/{type}', 'export')
                 ->middleware('permission:cctv.export')
                 ->name('export');
-
-            Route::get('/cctv/bus-status', 'busStatus')
-                ->middleware('permission:cctv.view')
-                ->name('bus-status');
-
-            Route::get('/cctv/bus-status/{bodyNumber}', 'busStatusShow')
-                ->middleware('permission:cctv.view')
-                ->name('bus-status.show');
         });
 
-    Route::resource('cctv-parts', CctvController::class)
-        ->middleware([
-            'auth',
-            'permission:cctv.view',
-        ]);
+    /*
+    |--------------------------------------------------------------------------
+    | Bus Dashboard (CCTV concerns per bus)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['auth', 'permission:cctv.view'])
+        ->prefix('concern/cctv/bus-status')
+        ->name('concern.')
+        ->controller(BusDashboardController::class)
+        ->group(function () {
+
+            Route::get('/', 'index')
+                ->name('bus-status');
+
+            Route::get('/{bodyNumber}', 'show')
+                ->name('bus-status.show');
+        });
 
     /*
     |--------------------------------------------------------------------------
@@ -306,7 +295,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     Route::middleware(['auth'])
         ->prefix('hr')
         ->name('hr.')
-        ->controller(HRDashboardController::class)
+        ->controller(HrDashboardController::class)
         ->group(function () {
 
             Route::get('/dashboard', 'index')
@@ -344,11 +333,11 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:employees.view')
                     ->name('staff.index');
 
-                Route::get('/{employee}/profile-picture', [SecureFileController::class, 'employeeProfile'])
+                Route::get('/{employee}/profile-picture', 'profilePicture')
                     ->middleware('permission:employees.view')
                     ->name('staff.profile-picture');
 
-                Route::get('/{employee}/asset-file/{type}', [SecureFileController::class, 'employeeAssetFile'])
+                Route::get('/{employee}/asset-file/{type}', 'document')
                     ->middleware('permission:employees.view')
                     ->whereIn('type', ['birth_certificate', 'resume', 'contract'])
                     ->name('staff.asset-file');
@@ -373,7 +362,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:employees.update')
                     ->name('update');
 
-                Route::put('/employee/{employee}/biometric-link', [EmployeeBiometricLinkController::class, 'update'])
+                Route::put('/employee/{employee}/biometric-link', 'updateBiometricLink')
                     ->middleware('permission:employees.update')
                     ->name('biometric-link.update');
 
@@ -381,23 +370,23 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:employees.update')
                     ->name('assets.update');
 
-                Route::post('/{employee}/history', 'storeHistory')
+                Route::post('/{employee}/history', [EmployeeHistoryController::class, 'store'])
                     ->middleware('permission:employees.update')
                     ->name('staff.history.store');
 
-                Route::delete('/{employee}/history/{history}', 'destroyHistory')
+                Route::delete('/{employee}/history/{history}', [EmployeeHistoryController::class, 'destroy'])
                     ->middleware('permission:employees.update')
                     ->name('staff.history.destroy');
 
-                Route::post('/{employee}/attachments', 'storeAttachment')
+                Route::post('/{employee}/attachments', [EmployeeAttachmentController::class, 'store'])
                     ->middleware('permission:employees.update')
                     ->name('staff.attachments.store');
 
-                Route::delete('/{employee}/attachments/{attachment}', 'destroyAttachment')
+                Route::delete('/{employee}/attachments/{attachment}', [EmployeeAttachmentController::class, 'destroy'])
                     ->middleware('permission:employees.update')
                     ->name('staff.attachments.destroy');
 
-                Route::get('/{employee}/attachments/{attachment}/download', 'downloadAttachment')
+                Route::get('/{employee}/attachments/{attachment}/download', [EmployeeAttachmentController::class, 'download'])
                     ->middleware('permission:employees.view')
                     ->name('staff.attachments.download');
 
@@ -409,15 +398,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:employees.view')
                     ->name('staff.print');
 
-                Route::get('/departments/{id}/positions', 'getPositions')
-                    ->middleware('permission:employees.view')
-                    ->name('positions');
-
-                Route::get('/{employee}/history/{history}/edit', 'editHistory')
-                    ->middleware('permission:employees.update')
-                    ->name('staff.history.edit');
-
-                Route::put('/{employee}/history/{history}', 'updateHistory')
+                Route::put('/{employee}/history/{history}', [EmployeeHistoryController::class, 'update'])
                     ->middleware('permission:employees.update')
                     ->name('staff.history.update');
             });
@@ -448,10 +429,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::delete('/positions/{position}', 'destroyPosition')
                     ->middleware('permission:departments.delete')
                     ->name('positions.destroy');
-
-                Route::get('/departments/{id}/positions', 'positions')
-                    ->middleware('permission:departments.view')
-                    ->name('departments.positions');
             });
 
         });
@@ -494,6 +471,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         ->middleware(['auth'])
         ->name('driver-leave.')
         ->controller(DriverLeaveController::class)
+        ->whereNumber('leave')
         ->group(function () {
 
             Route::get('driver', 'index')
@@ -520,7 +498,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->middleware('permission:driver-leave.update')
                 ->name('driver.action');
 
-            Route::get('{leave}/proof/{type}', [SecureFileController::class, 'driverLeaveProof'])
+            Route::get('{leave}/proof/{type}', 'proof')
                 ->middleware('permission:driver-leave.view')
                 ->whereIn('type', ['first', 'second', 'final'])
                 ->name('driver.proof');
@@ -535,6 +513,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         ->middleware(['auth'])
         ->name('conductor-leave.')
         ->controller(ConductorLeaveController::class)
+        ->whereNumber('leave')
         ->group(function () {
 
             Route::get('conductor', 'index')
@@ -561,7 +540,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->middleware('permission:conductor-leave.update')
                 ->name('conductor.action');
 
-            Route::get('{leave}/proof/{type}', [SecureFileController::class, 'conductorLeaveProof'])
+            Route::get('{leave}/proof/{type}', 'proof')
                 ->middleware('permission:conductor-leave.view')
                 ->whereIn('type', ['first', 'second', 'final'])
                 ->name('conductor.proof');
@@ -576,6 +555,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         ->middleware(['auth'])
         ->name('employee-leave.')
         ->controller(EmployeeLeaveController::class)
+        ->whereNumber('leave')
         ->group(function () {
 
             Route::get('employee', 'index')
@@ -602,7 +582,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->middleware('permission:employee-leave.update')
                 ->name('employee.action');
 
-            Route::get('{leave}/proof/{type}', [SecureFileController::class, 'employeeLeaveProof'])
+            Route::get('{leave}/proof/{type}', 'proof')
                 ->middleware('permission:employee-leave.view')
                 ->whereIn('type', ['first', 'second', 'final'])
                 ->name('employee.proof');
@@ -618,6 +598,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     Route::middleware(['auth'])->group(function () {
 
         Route::resource('holidays', HolidayController::class)
+            ->except(['show'])
             ->middleware([
                 'index' => 'permission:holidays.view',
                 'create' => 'permission:holidays.create',
@@ -625,7 +606,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 'edit' => 'permission:holidays.update',
                 'update' => 'permission:holidays.update',
                 'destroy' => 'permission:holidays.delete',
-                'show' => 'permission:holidays.view',
             ]);
     });
 
@@ -638,7 +618,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     Route::prefix('payroll-plotting')
         ->middleware(['auth'])
         ->name('payroll-plotting.')
-        ->controller(EmployeePlottingScheduleController::class)
+        ->controller(WorkScheduleController::class)
         ->group(function () {
 
             // Display permanent plotting schedule
@@ -661,7 +641,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     Route::prefix('manual-biometrics')
         ->middleware(['auth'])
         ->name('manual-biometrics.')
-        ->controller(ManualBiometricsEncodingController::class)
+        ->controller(ManualBiometricsController::class)
         ->group(function () {
 
             Route::get('/', 'index')
@@ -773,7 +753,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
             Route::post(
                 'employee-salaries/sync',
                 [
-                    PayrollEmployeeSalaryController::class,
+                    EmployeeRateController::class,
                     'syncFromBiometrics',
                 ]
             )
@@ -782,7 +762,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
             Route::resource(
                 'employee-salaries',
-                PayrollEmployeeSalaryController::class
+                EmployeeRateController::class
             )
                 ->except(['show'])
                 ->parameters([
@@ -978,7 +958,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     Route::middleware(['auth'])
         ->prefix('mirasol-logs')
         ->name('mirasol-logs.')
-        ->controller(MirasolBiometricsLogController::class)
+        ->controller(BiometricsSyncController::class)
         ->group(function () {
 
             Route::get('/', 'index')
@@ -1015,17 +995,9 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:users.view')
                     ->name('users.index');
 
-                Route::get('/users/create', 'create')
-                    ->middleware('permission:users.create')
-                    ->name('users.create');
-
                 Route::post('/users/store', 'store')
                     ->middleware('permission:users.create')
                     ->name('users.store');
-
-                Route::get('/users/edit/{id}', 'edit')
-                    ->middleware('permission:users.update')
-                    ->name('users.edit');
 
                 Route::post('/users/update/{id}', 'update')
                     ->middleware('permission:users.update')
@@ -1077,7 +1049,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
         Route::prefix('allbus')
             ->name('allbus.')
-            ->controller(AllBusController::class)
+            ->controller(BusListController::class)
             ->group(function () {
                 Route::get('/', 'index')
                     ->name('index')
@@ -1090,10 +1062,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::post('/', 'store')
                     ->name('store')
                     ->middleware('permission:allbus.create');
-
-                Route::get('/{bus}', 'show')
-                    ->name('show')
-                    ->middleware('permission:allbus.view');
 
                 Route::get('/{bus}/edit', 'edit')
                     ->name('edit')
@@ -1125,10 +1093,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                     ->middleware('permission:category.create')
                     ->name('store');
 
-                Route::get('/edit/{id}', 'edit')
-                    ->middleware('permission:category.update')
-                    ->name('edit');
-
                 Route::post('/update/{id}', 'update')
                     ->middleware('permission:category.update')
                     ->name('update');
@@ -1150,10 +1114,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::post('/store', 'store')
                     ->middleware('permission:items.create')
                     ->name('store');
-
-                Route::get('/edit/{id}', 'edit')
-                    ->middleware('permission:items.update')
-                    ->name('edit');
 
                 Route::post('/update/{id}', 'update')
                     ->middleware('permission:items.update')
@@ -1191,22 +1151,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::get('/{partsOut}', 'show')
                     ->middleware('permission:parts-out.view')
                     ->name('show');
-
-                Route::get('/{partsOut}/edit', 'edit')
-                    ->middleware('permission:parts-out.update')
-                    ->name('edit');
-
-                Route::put('/{partsOut}', 'update')
-                    ->middleware('permission:parts-out.update')
-                    ->name('update');
-
-                Route::patch('/{partsOut}/cancel', 'cancel')
-                    ->middleware('permission:parts-out.cancel')
-                    ->name('cancel');
-
-                Route::get('/{partsOut}/print', 'print')
-                    ->middleware('permission:parts-out.view')
-                    ->name('print');
 
                 Route::patch('/{partsOut}/rollback', 'rollback')
                     ->middleware('permission:parts-out.rollback')
@@ -1248,7 +1192,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
         Route::prefix('buses')
             ->name('buses.')
-            ->controller(BusDetailController::class)
+            ->controller(VehicleHistoryController::class)
             ->group(function () {
 
                 Route::get('/', 'index')
@@ -1258,10 +1202,6 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 Route::get('/{busDetail}', 'show')
                     ->middleware('permission:buses.view')
                     ->name('show');
-
-                Route::get('/{busDetail}/maintenance-history', 'maintenanceHistory')
-                    ->middleware('permission:buses.view')
-                    ->name('maintenance-history');
             });
 
     });
@@ -1299,7 +1239,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     Route::middleware(['auth'])
         ->prefix('odometer')
         ->name('odometer.')
-        ->controller(OdometerReportController::class)
+        ->controller(OdometerMonitoringController::class)
         ->group(function () {
 
             Route::get('/index', 'index')
@@ -1391,7 +1331,7 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
     Route::middleware(['auth'])
         ->prefix('biometrics')
         ->name('biometrics.')
-        ->controller(EmployeeBiometricController::class)
+        ->controller(BiometricEmployeeController::class)
         ->group(function (): void {
             Route::get('/employees', 'index')
                 ->middleware('permission:biometrics.view')

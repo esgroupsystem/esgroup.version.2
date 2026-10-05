@@ -7,252 +7,106 @@ namespace App\Services\Payroll;
 use App\Enums\BenefitProgram;
 use App\Models\BenefitContributionRecord;
 use App\Models\EmployeeBiometric;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Repositories\Contracts\Payroll\BenefitRecordRepositoryInterface;
 use Illuminate\Support\Collection;
 
+/**
+ * Payroll → Benefits Records / Benefits Overall: each person's posted monthly government
+ * contributions (SSS, PhilHealth, Pag-IBIG), totals per company, and the KPI counts.
+ */
 class BenefitRecordsService
 {
+    public function __construct(
+        private readonly BenefitRecordRepositoryInterface $records,
+    ) {}
+
+    /**
+     * Benefits Records page: a page of people with their month's records and summary.
+     *
+     * @param  array<string, mixed>  $filters  month, year, search, garage_group
+     * @param  string|list<int|string>|null  $allowedGroups
+     * @return array<string, mixed>
+     */
     public function buildIndex(array $filters, string|array|null $allowedGroups): array
     {
-        $month = (int) $filters['month'];
-        $year = (int) $filters['year'];
-        $search = trim((string) ($filters['search'] ?? ''));
-        $garageGroup = isset($filters['garage_group']) ? (int) $filters['garage_group'] : null;
+        [$month, $year, $search, $group] = $this->scope($filters);
 
-        $employeeQuery = EmployeeBiometric::query()
-            ->with([
-                'company',
-                'activeSalaryProfile.employee.asset',
-            ]);
+        $people = $this->records->paginatePeople($month, $year, $search, $group, $allowedGroups);
+        $ids = $people->getCollection()->pluck('id')->map(fn ($id): int => (int) $id)->values();
+        $byPerson = $this->records->recordsFor($month, $year, $ids, 'posted')->groupBy('employee_biometric_id');
 
-        $this->applyGroupAccess($employeeQuery, $allowedGroups, $garageGroup);
-        $this->applySearch($employeeQuery, $search);
+        $people->setCollection($people->getCollection()->map(function (EmployeeBiometric $person) use ($byPerson): array {
+            /** @var Collection<int, BenefitContributionRecord> $records */
+            $records = $byPerson->get($person->id, collect());
 
-        // Keep resigned/inactive employees visible for any month in which a
-        // finalized Benefits Record exists. Otherwise separation cases can
-        // disappear from the ledger immediately after Payroll Inclusion is
-        // switched off even though the contribution/settlement still exists.
-        $activeEmployeeCount = (clone $employeeQuery)
-            ->payrollActive()
-            ->count();
+            return [
+                'employee' => $person,
+                'records' => $records,
+                'summary' => $this->summarize($records),
+                'identifiers' => $this->identifiers($person, $records, [
+                    BenefitProgram::Sss->value => 'sss',
+                    BenefitProgram::PhilHealth->value => 'philhealth',
+                    BenefitProgram::PagIbig->value => 'pagibig',
+                ]),
+            ];
+        }));
 
-        $employeeQuery->where(function (Builder $query) use ($month, $year): void {
-            $query
-                ->where(function (Builder $active): Builder {
-                    /** @var Builder<EmployeeBiometric> $active */
-                    return $active->payrollActive();
-                })
-                ->orWhereHas('benefitContributionRecords', function (Builder $records) use ($month, $year): void {
-                    $records
-                        ->where('contribution_month', $month)
-                        ->where('contribution_year', $year);
-                });
-        });
-
-        $employeeQuery->payrollDirectoryOrder();
-
-        /** @var LengthAwarePaginator $employees */
-        $employees = (clone $employeeQuery)
-            ->paginate(25)
-            ->withQueryString();
-
-        $pageEmployeeIds = $employees->getCollection()
-            ->pluck('id')
-            ->map(fn ($id): int => (int) $id)
-            ->values();
-
-        $recordsByEmployee = BenefitContributionRecord::query()
-            ->with('payroll:id,payroll_number,status,finalized_at')
-            ->where('contribution_month', $month)
-            ->where('contribution_year', $year)
-            ->whereIn('employee_biometric_id', $pageEmployeeIds)
-            ->orderBy('posted_at')
-            ->get()
-            ->groupBy('employee_biometric_id');
-
-        $employees->setCollection(
-            $employees->getCollection()->map(function (EmployeeBiometric $employee) use ($recordsByEmployee): array {
-                /** @var Collection<int, BenefitContributionRecord> $records */
-                $records = $recordsByEmployee->get($employee->id, collect());
-                $asset = $employee->activeSalaryProfile?->employee?->asset;
-
-                return [
-                    'employee' => $employee,
-                    'records' => $records,
-                    'summary' => $this->summarize($records),
-                    'identifiers' => [
-                        BenefitProgram::Sss->value => $records->pluck('sss_number')->filter()->last() ?: $asset?->sss_number,
-                        BenefitProgram::PhilHealth->value => $records->pluck('philhealth_number')->filter()->last() ?: $asset?->philhealth_number,
-                        BenefitProgram::PagIbig->value => $records->pluck('pagibig_number')->filter()->last() ?: $asset?->pagibig_number,
-                    ],
-                ];
-            })
-        );
-
-        $filteredEmployeeIds = (clone $employeeQuery)
-            ->reorder()
-            ->select('employee_biometrics.id');
-
-        $recordTotalsQuery = BenefitContributionRecord::query()
-            ->where('contribution_month', $month)
-            ->where('contribution_year', $year)
-            ->whereIn('employee_biometric_id', $filteredEmployeeIds);
-
-        $totals = (clone $recordTotalsQuery)
-            ->selectRaw('COALESCE(SUM(sss_employee_total), 0) as sss_employee')
-            ->selectRaw('COALESCE(SUM(sss_employee_collected), 0) as sss_employee_collected')
-            ->selectRaw('COALESCE(SUM(sss_employer_total), 0) as sss_employer')
-            ->selectRaw('COALESCE(SUM(sss_total_contribution), 0) as sss_total')
-            ->selectRaw('COALESCE(SUM(philhealth_employee), 0) as philhealth_employee')
-            ->selectRaw('COALESCE(SUM(philhealth_employee_collected), 0) as philhealth_employee_collected')
-            ->selectRaw('COALESCE(SUM(philhealth_employer), 0) as philhealth_employer')
-            ->selectRaw('COALESCE(SUM(philhealth_total), 0) as philhealth_total')
-            ->selectRaw('COALESCE(SUM(pagibig_employee), 0) as pagibig_employee')
-            ->selectRaw('COALESCE(SUM(pagibig_employee_collected), 0) as pagibig_employee_collected')
-            ->selectRaw('COALESCE(SUM(pagibig_employer), 0) as pagibig_employer')
-            ->selectRaw('COALESCE(SUM(pagibig_total), 0) as pagibig_total')
-            ->selectRaw('COALESCE(SUM(employee_total), 0) as employee_total')
-            ->selectRaw('COALESCE(SUM(employer_total), 0) as employer_total')
-            ->selectRaw('COALESCE(SUM(grand_total), 0) as grand_total')
-            ->selectRaw('COALESCE(SUM(employee_share_unrecovered), 0) as employee_share_unrecovered')
-            ->first();
-
-        $postedEmployeeCount = (clone $recordTotalsQuery)
-            ->distinct('employee_biometric_id')
-            ->count('employee_biometric_id');
-
-        $activeEmployeeIds = (clone $employeeQuery)
-            ->reorder()
-            ->payrollActive()
-            ->select('employee_biometrics.id');
-
-        $postedActiveEmployeeCount = BenefitContributionRecord::query()
-            ->where('contribution_month', $month)
-            ->where('contribution_year', $year)
-            ->whereIn('employee_biometric_id', $activeEmployeeIds)
-            ->distinct('employee_biometric_id')
-            ->count('employee_biometric_id');
+        $active = $this->records->countActivePeople($search, $group, $allowedGroups);
+        $postedActive = $this->records->countPostedPeople($month, $year, $search, $group, $allowedGroups, true);
 
         return [
-            'employees' => $employees,
-            'totals' => $totals,
-            'activeEmployeeCount' => $activeEmployeeCount,
-            'postedEmployeeCount' => $postedEmployeeCount,
-            'notPostedEmployeeCount' => max(0, $activeEmployeeCount - $postedActiveEmployeeCount),
+            'employees' => $people,
+            'totals' => $this->records->totals($month, $year, $search, $group, $allowedGroups),
+            'activeEmployeeCount' => $active,
+            'postedEmployeeCount' => $this->records->countPostedPeople($month, $year, $search, $group, $allowedGroups, false),
+            'notPostedEmployeeCount' => max(0, $active - $postedActive),
             'groupOptions' => $this->groupOptions($allowedGroups),
         ];
     }
 
+    /**
+     * Benefits Overall page / print: every person, company totals and grand totals.
+     *
+     * @param  array<string, mixed>  $filters  month, year, search, garage_group
+     * @param  string|list<int|string>|null  $allowedGroups
+     * @return array<string, mixed>
+     */
     public function buildOverall(array $filters, string|array|null $allowedGroups): array
     {
-        $month = (int) $filters['month'];
-        $year = (int) $filters['year'];
-        $search = trim((string) ($filters['search'] ?? ''));
-        $garageGroup = isset($filters['garage_group']) ? (int) $filters['garage_group'] : null;
+        [$month, $year, $search, $group] = $this->scope($filters);
 
-        $employeeQuery = EmployeeBiometric::query()
-            ->with([
-                'company',
-                'activeSalaryProfile.employee.asset',
-            ]);
+        $people = $this->records->people($month, $year, $search, $group, $allowedGroups);
+        $records = $this->records->recordsFor($month, $year, $people->pluck('id')->map(fn ($id): int => (int) $id)->values(), 'company');
+        $byPerson = $records->groupBy('employee_biometric_id');
 
-        $this->applyGroupAccess($employeeQuery, $allowedGroups, $garageGroup);
-        $this->applySearch($employeeQuery, $search);
-
-        $activeEmployeeCount = (clone $employeeQuery)
-            ->payrollActive()
-            ->count();
-
-        $employeeQuery->where(function (Builder $query) use ($month, $year): void {
-            $query
-                ->where(function (Builder $active): Builder {
-                    /** @var Builder<EmployeeBiometric> $active */
-                    return $active->payrollActive();
-                })
-                ->orWhereHas('benefitContributionRecords', function (Builder $records) use ($month, $year): void {
-                    $records
-                        ->where('contribution_month', $month)
-                        ->where('contribution_year', $year);
-                });
-        });
-
-        $employeeQuery->payrollDirectoryOrder();
-
-        $employees = (clone $employeeQuery)->get();
-        $employeeIds = $employees->pluck('id')->map(fn ($id): int => (int) $id)->values();
-
-        $records = BenefitContributionRecord::query()
-            ->with('payroll:id,payroll_number,status,finalized_at')
-            ->where('contribution_month', $month)
-            ->where('contribution_year', $year)
-            ->when(
-                $employeeIds->isNotEmpty(),
-                fn (Builder $query) => $query->whereIn('employee_biometric_id', $employeeIds),
-                fn (Builder $query) => $query->whereRaw('1 = 0')
-            )
-            ->orderBy('company_name')
-            ->orderBy('employee_name')
-            ->orderBy('period_end')
-            ->get();
-
-        $recordsByEmployee = $records->groupBy('employee_biometric_id');
-
-        $rows = $employees->map(function (EmployeeBiometric $employee) use ($recordsByEmployee): array {
-            /** @var Collection<int, BenefitContributionRecord> $employeeRecords */
-            $employeeRecords = $recordsByEmployee->get($employee->id, collect());
-            $asset = $employee->activeSalaryProfile?->employee?->asset;
+        $rows = $people->map(function (EmployeeBiometric $person) use ($byPerson): array {
+            /** @var Collection<int, BenefitContributionRecord> $personRecords */
+            $personRecords = $byPerson->get($person->id, collect());
 
             return [
-                'employee' => $employee,
-                'records' => $employeeRecords,
-                'summary' => $this->summarize($employeeRecords),
-                'identifiers' => [
-                    'sss' => $employeeRecords->pluck('sss_number')->filter()->last() ?: $asset?->sss_number,
-                    'philhealth' => $employeeRecords->pluck('philhealth_number')->filter()->last() ?: $asset?->philhealth_number,
-                    'pagibig' => $employeeRecords->pluck('pagibig_number')->filter()->last() ?: $asset?->pagibig_number,
-                ],
-                'company_name' => $employeeRecords->pluck('company_name')->filter()->last()
-                    ?: $employee->company?->name
-                    ?: 'No company',
+                'employee' => $person,
+                'records' => $personRecords,
+                'summary' => $this->summarize($personRecords),
+                'identifiers' => $this->identifiers($person, $personRecords, ['sss' => 'sss', 'philhealth' => 'philhealth', 'pagibig' => 'pagibig']),
+                'company_name' => $personRecords->pluck('company_name')->filter()->last() ?: $person->company?->name ?: 'No company',
             ];
         });
 
-        $postedEmployeeCount = $records
-            ->pluck('employee_biometric_id')
-            ->filter()
-            ->unique()
-            ->count();
-
-        $activeDisplayedEmployeeIds = $employees
-            ->filter(fn (EmployeeBiometric $employee): bool => ($employee->is_payroll_active === null || (bool) $employee->is_payroll_active)
-                && ($employee->employment_status === null || $employee->employment_status === EmployeeBiometric::STATUS_ACTIVE)
-            )
+        $activeIds = $people
+            ->filter(fn (EmployeeBiometric $person): bool => ($person->is_payroll_active === null || (bool) $person->is_payroll_active)
+                && ($person->employment_status === null || $person->employment_status === EmployeeBiometric::STATUS_ACTIVE))
             ->pluck('id')
             ->map(fn ($id): int => (int) $id);
-
-        $postedActiveEmployeeCount = $records
-            ->whereIn('employee_biometric_id', $activeDisplayedEmployeeIds)
-            ->pluck('employee_biometric_id')
-            ->filter()
-            ->unique()
-            ->count();
+        $postedIds = fn (Collection $set): int => $set->pluck('employee_biometric_id')->filter()->unique()->count();
+        $active = $this->records->countActivePeople($search, $group, $allowedGroups);
 
         $companyTotals = $records
-            ->groupBy(fn (BenefitContributionRecord $record): string => trim((string) $record->company_name) !== ''
-                ? (string) $record->company_name
-                : 'No company')
-            ->map(function (Collection $companyRecords, string $companyName): array {
-                return [
-                    'company_name' => $companyName,
-                    'employee_count' => $companyRecords
-                        ->pluck('employee_biometric_id')
-                        ->filter()
-                        ->unique()
-                        ->count(),
-                    'totals' => $this->aggregateTotals($companyRecords),
-                ];
-            })
+            ->groupBy(fn (BenefitContributionRecord $record): string => trim((string) $record->company_name) !== '' ? (string) $record->company_name : 'No company')
+            ->map(fn (Collection $companyRecords, string $company): array => [
+                'company_name' => $company,
+                'employee_count' => $postedIds($companyRecords),
+                'totals' => $this->aggregateTotals($companyRecords),
+            ])
             ->sortBy('company_name', SORT_NATURAL | SORT_FLAG_CASE)
             ->values();
 
@@ -261,12 +115,42 @@ class BenefitRecordsService
             'records' => $records,
             'totals' => $this->aggregateTotals($records),
             'companyTotals' => $companyTotals,
-            'activeEmployeeCount' => $activeEmployeeCount,
-            'postedEmployeeCount' => $postedEmployeeCount,
-            'notPostedEmployeeCount' => max(0, $activeEmployeeCount - $postedActiveEmployeeCount),
+            'activeEmployeeCount' => $active,
+            'postedEmployeeCount' => $postedIds($records),
+            'notPostedEmployeeCount' => max(0, $active - $postedIds($records->whereIn('employee_biometric_id', $activeIds))),
             'groupOptions' => $this->groupOptions($allowedGroups),
             'payrollNumbers' => $records->pluck('payroll_number')->filter()->unique()->sort()->values(),
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     * @return array{0: int, 1: int, 2: string, 3: int|null}
+     */
+    private function scope(array $filters): array
+    {
+        return [
+            (int) $filters['month'],
+            (int) $filters['year'],
+            trim((string) ($filters['search'] ?? '')),
+            isset($filters['garage_group']) ? (int) $filters['garage_group'] : null,
+        ];
+    }
+
+    /**
+     * Government ID numbers from the latest record, else the 201 file.
+     *
+     * @param  Collection<int, BenefitContributionRecord>  $records
+     * @param  array<string, string>  $keys  output key => program prefix
+     * @return array<string, mixed>
+     */
+    private function identifiers(EmployeeBiometric $person, Collection $records, array $keys): array
+    {
+        $asset = $person->activeSalaryProfile?->employee?->asset;
+
+        return collect($keys)
+            ->map(fn (string $program): mixed => $records->pluck("{$program}_number")->filter()->last() ?: $asset?->{"{$program}_number"})
+            ->all();
     }
 
     private function aggregateTotals(Collection $records): array
@@ -370,70 +254,14 @@ class BenefitRecordsService
         ];
     }
 
-    private function applyGroupAccess(
-        Builder $query,
-        string|array|null $allowedGroups,
-        ?int $requestedGroup
-    ): void {
-        if ($allowedGroups !== 'all') {
-            $allowedGroups = collect($allowedGroups ?? [])
-                ->map(fn ($group): int => (int) $group)
-                ->filter(fn (int $group): bool => in_array($group, [1, 2], true))
-                ->unique()
-                ->values()
-                ->all();
-
-            if ($allowedGroups === []) {
-                $query->whereRaw('1 = 0');
-
-                return;
-            }
-
-            $query->whereIn('group_name', $allowedGroups);
-        }
-
-        if ($requestedGroup !== null) {
-            if ($allowedGroups !== 'all' && ! in_array($requestedGroup, $allowedGroups, true)) {
-                $query->whereRaw('1 = 0');
-
-                return;
-            }
-
-            $query->where('group_name', $requestedGroup);
-        }
-    }
-
-    private function applySearch(Builder $query, string $search): void
-    {
-        if ($search === '') {
-            return;
-        }
-
-        $query->where(function (Builder $query) use ($search): void {
-            $query
-                ->where('display_name', 'like', "%{$search}%")
-                ->orWhere('source_employee_name', 'like', "%{$search}%")
-                ->orWhere('source_crosschex_account_name', 'like', "%{$search}%")
-                ->orWhere('display_employee_no', 'like', "%{$search}%")
-                ->orWhere('source_employee_no', 'like', "%{$search}%")
-                ->orWhere('source_employee_id', 'like', "%{$search}%")
-                ->orWhereHas('company', fn (Builder $company) => $company->where('name', 'like', "%{$search}%"));
-        });
-    }
-
+    /**
+     * @param  string|list<int|string>|null  $allowedGroups
+     * @return array<int, string> group => label, only the allowed groups
+     */
     private function groupOptions(string|array|null $allowedGroups): array
     {
-        $all = [
-            1 => 'Mirasol / Balintawak Payroll',
-            2 => 'Gonzales Payroll',
-        ];
-
-        if ($allowedGroups === 'all') {
-            return $all;
-        }
-
-        return collect($all)
-            ->only($allowedGroups ?? [])
-            ->all();
+        return $allowedGroups === 'all'
+            ? EmployeeBiometric::GROUP_LABELS
+            : collect(EmployeeBiometric::GROUP_LABELS)->only($allowedGroups ?? [])->all();
     }
 }

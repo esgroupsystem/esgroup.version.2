@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\Biometrics;
+namespace App\Http\Requests\Scheduling;
 
 use App\Models\EmployeeBiometric;
 use Illuminate\Foundation\Http\FormRequest;

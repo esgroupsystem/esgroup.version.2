@@ -94,10 +94,10 @@ export default function VehicleHistoryShow({ bus, records, summary, filters, url
                         <CardTitle>Maintenance records</CardTitle>
                         <CardDescription>All active posted parts-out records for this vehicle.</CardDescription>
                     </div>
-                    <form onSubmit={submit} className="flex gap-2">
-                        <div className="relative">
+                    <form onSubmit={submit} className="flex w-full gap-2 md:w-auto">
+                        <div className="relative min-w-0 flex-1 sm:flex-none">
                             <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input aria-label="Search records" placeholder="Search part, mechanic, JO no..." className="w-72 pl-8" value={search} onChange={(event) => setSearch(event.target.value)} />
+                            <Input aria-label="Search records" placeholder="Search part, mechanic, JO no..." className="w-full pl-8 sm:w-72" value={search} onChange={(event) => setSearch(event.target.value)} />
                         </div>
                         {filters.search && (
                             <Button type="button" variant="outline" onClick={() => router.get(urls.self)}>

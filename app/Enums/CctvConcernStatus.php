@@ -22,15 +22,15 @@ enum CctvConcernStatus: string
         return array_map(static fn (self $status): string => $status->value, self::cases());
     }
 
-    /** @return array<string, string> */
-    public static function options(): array
+    /** @return list<string> Open and In Progress */
+    public static function activeValues(): array
     {
-        $options = ['' => 'All'];
+        return [self::Open->value, self::InProgress->value];
+    }
 
-        foreach (self::cases() as $status) {
-            $options[$status->value] = $status->value;
-        }
-
-        return $options;
+    /** @return list<string> Fixed and Closed */
+    public static function completedValues(): array
+    {
+        return [self::Fixed->value, self::Closed->value];
     }
 }

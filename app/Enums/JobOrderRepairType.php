@@ -23,28 +23,6 @@ enum JobOrderRepairType: string
         };
     }
 
-    public function icon(): string
-    {
-        return match ($this) {
-            self::Mechanical => 'fas fa-gears',
-            self::Electrical => 'fas fa-bolt',
-            self::Aircon => 'fas fa-snowflake',
-            self::BodyRepair => 'fas fa-car-burst',
-            self::Repainting => 'fas fa-spray-can-sparkles',
-        };
-    }
-
-    public function badgeClass(): string
-    {
-        return match ($this) {
-            self::Mechanical => 'badge-subtle-primary text-primary',
-            self::Electrical => 'badge-subtle-warning text-warning',
-            self::Aircon => 'badge-subtle-info text-info',
-            self::BodyRepair => 'badge-subtle-danger text-danger',
-            self::Repainting => 'badge-subtle-success text-success',
-        };
-    }
-
     public static function options(): array
     {
         return collect(self::cases())

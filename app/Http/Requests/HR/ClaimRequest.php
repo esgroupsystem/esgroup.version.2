@@ -2,8 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\HR;
 
+use App\Models\Claim;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -43,26 +44,13 @@ class ClaimRequest extends FormRequest
             'claim_type' => [
                 'required',
                 'string',
-                Rule::in([
-                    'SSS',
-                    'MATERNITY',
-                    'PATERNITY',
-                    'SICKNESS',
-                    'RETIREMENT',
-                ]),
+                Rule::in(Claim::TYPES),
             ],
 
             'status' => [
                 'required',
                 'string',
-                Rule::in([
-                    'Draft',
-                    'Ongoing',
-                    'Approved',
-                    'Requested',
-                    'Released',
-                    'Rejected',
-                ]),
+                Rule::in(Claim::STATUSES),
             ],
 
             'reference_no' => [

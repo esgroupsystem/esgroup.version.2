@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Support\Payroll;
+namespace App\Http\Resources\Payroll;
 
 use App\Models\Payroll;
 use App\Models\PayrollAttendanceAdjustment;
@@ -10,20 +10,42 @@ use App\Models\PayrollItem;
 use App\Models\User;
 use App\Support\PayrollEmployeeNameFormatter;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 /**
  * Props for the payroll item detail page (React). Carries over every value
  * and audit rule the former Blade page (payroll/items/show + partials)
- * computed, so the screen shows the same numbers.
+ * computed, so the screen shows the same numbers. Built from PayrollService::itemDetail().
+ *
+ * @property-read PayrollItem $resource
  */
-final class PayrollItemPresenter
+final class PayrollItemDetailResource extends JsonResource
 {
+    /** @param Collection<int, \App\Models\DailyAttendanceSummary> $summaries the item's daily attendance rows */
+    public function __construct(
+        PayrollItem $item,
+        private readonly Payroll $payroll,
+        private readonly Collection $summaries,
+    ) {
+        parent::__construct($item);
+    }
+
+    /** @return array<string, mixed> */
+    public function toArray(Request $request): array
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 401);
+
+        return $this->present($this->payroll, $this->resource, $this->summaries, $user);
+    }
+
     /**
      * @param  Collection<int, \App\Models\DailyAttendanceSummary>  $summaries
      */
-    public function present(Payroll $payroll, PayrollItem $item, Collection $summaries, User $user): array
+    private function present(Payroll $payroll, PayrollItem $item, Collection $summaries, User $user): array
     {
         $meta = $item->meta ?? [];
         $divisor = data_get($meta, 'pay_architecture.monthly_divisor_meta');

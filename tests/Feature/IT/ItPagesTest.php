@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\ITDepartment;
+namespace Tests\Feature\IT;
 
 use App\Models\BusDetail;
 use App\Models\CctvConcern;

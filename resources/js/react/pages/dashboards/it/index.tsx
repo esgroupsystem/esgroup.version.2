@@ -50,14 +50,14 @@ export default function ItDashboard({ stats, weekly, categories, agents, unresol
                 }
             />
 
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <KpiCard label="New today" value={number.format(stats.new)} hint="Tickets filed today" icon={<Ticket />} />
                 <KpiCard label="Pending" value={number.format(stats.pending)} hint="Waiting for approval or pickup" icon={<Hourglass />} tone="text-amber-600 dark:text-amber-400" />
                 <KpiCard label="In progress" value={number.format(stats.progress)} hint="Currently being worked on" icon={<Wrench />} tone="text-sky-600 dark:text-sky-400" />
                 <KpiCard label="Completed" value={number.format(stats.completed)} hint={`${completionRate}% of all tickets`} icon={<CheckCircle2 />} tone="text-emerald-600 dark:text-emerald-400" />
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-3">
                 <DashboardCard title="Tickets per week" description="Last 6 weeks, by date filed and current status" className="lg:col-span-2">
                     <SeriesChart
                         categories={weekly.labels}
@@ -74,7 +74,7 @@ export default function ItDashboard({ stats, weekly, categories, agents, unresol
                 </DashboardCard>
             </div>
 
-            <div className="grid gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-3">
                 <DashboardCard title="Unresolved tickets" description="Latest pending and in-progress tickets" className="gap-0 pb-0 lg:col-span-2" contentClassName="px-0 pt-4">
                     <Table className="min-w-[720px]">
                         <TableHeader>

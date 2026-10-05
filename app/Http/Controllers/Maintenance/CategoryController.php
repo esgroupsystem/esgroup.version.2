@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Maintenance;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Maintenance\StoreCategoryRequest;
 use App\Http\Requests\Maintenance\UpdateCategoryRequest;
+use App\Http\Resources\Maintenance\CategoryResource;
 use App\Models\Category;
 use App\Services\Maintenance\CategoryService;
 use Illuminate\Http\RedirectResponse;
@@ -23,14 +24,9 @@ final class CategoryController extends Controller
         $user = $request->user();
 
         return Inertia::render('products/categories/index', [
-            'categories' => Category::query()->withCount('products')->orderBy('name')->get()
-                ->map(fn (Category $category): array => [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'products_count' => (int) $category->products_count,
-                    'update_url' => route('category.update', $category->id),
-                    'destroy_url' => route('category.destroy', $category->id),
-                ])->values(),
+            'categories' => $this->categoryService->list()
+                ->map(fn (Category $category): array => CategoryResource::make($category)->resolve($request))
+                ->values(),
             'can' => [
                 'create' => (bool) $user?->can('category.create'),
                 'update' => (bool) $user?->can('category.update'),
@@ -50,7 +46,7 @@ final class CategoryController extends Controller
 
     public function update(UpdateCategoryRequest $request, int $id): RedirectResponse
     {
-        $this->categoryService->update(Category::query()->findOrFail($id), $request->validated('name'));
+        $this->categoryService->update($id, $request->validated('name'));
         flash('Category updated successfully!')->success();
 
         return back();
@@ -58,7 +54,7 @@ final class CategoryController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        $this->categoryService->delete(Category::query()->findOrFail($id));
+        $this->categoryService->delete($id);
         flash('Category deleted successfully!')->success();
 
         return back();

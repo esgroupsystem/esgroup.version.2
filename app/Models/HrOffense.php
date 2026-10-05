@@ -16,6 +16,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class HrOffense extends Model
 {
+    public const TYPES = ['A', 'B', 'C', 'D', 'E', 'F'];
+
+    public const GRAVITIES = ['CAPITAL', 'GRAVE', 'SEVERE', 'MINOR', 'LIGHT', 'SERIOUS', 'FALSE'];
+
     protected $fillable = [
         'employee_id',
         'section',

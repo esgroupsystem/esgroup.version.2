@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\ITDepartment;
+namespace App\Http\Requests\IT;
 
 use App\Support\IT\SeatNumbers;
 use Illuminate\Contracts\Validation\Validator;

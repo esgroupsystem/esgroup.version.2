@@ -6,187 +6,102 @@ namespace App\Services\Fleet;
 
 use App\Models\Bus;
 use App\Models\BusForSaleRecord;
-use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Builder;
+use App\Repositories\Contracts\Fleet\BusForSaleRecordRepositoryInterface;
+use App\Repositories\Contracts\Fleet\BusRepositoryInterface;
+use App\Support\Fleet\FleetValue;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-class ForSaleUnitService
+/** Fleet → For Sale Units: the list, its status summary, and create / edit / delete (synced to the bus). */
+final class ForSaleUnitService
 {
     public function __construct(
-        private readonly BusForSaleSyncService $busForSaleSyncService
+        private readonly BusForSaleRecordRepositoryInterface $records,
+        private readonly BusRepositoryInterface $buses,
+        private readonly BusForSaleSyncService $sync,
     ) {}
 
+    /**
+     * @param  array<string, mixed>  $filters  search, company, garage, status
+     * @return array{records: LengthAwarePaginator<int, BusForSaleRecord>, summary: array<string, int>, companies: Collection<int, string>, garages: Collection<int, string>}
+     */
     public function getIndexData(array $filters = []): array
     {
-        $records = $this->filteredQuery($filters)
-            ->with('bus')
-            ->orderByDesc('days_in_breakdown')
-            ->orderBy('company')
-            ->orderBy('garage')
-            ->orderBy('bus_no')
-            ->paginate(25)
-            ->withQueryString();
+        $text = fn (string $key): string => trim((string) ($filters[$key] ?? ''));
 
         return [
-            'filters' => $filters,
-            'records' => $records,
+            'records' => $this->records->paginate([
+                'search' => $text('search'),
+                'company' => (string) FleetValue::upper($text('company')),
+                'garage' => (string) FleetValue::upper($text('garage')),
+                'status' => $text('status'),
+            ]),
             'summary' => $this->summary(),
-            'companies' => $this->getCompanies(),
-            'garages' => $this->getGarages(),
-            'status_options' => BusForSaleRecord::statusOptions(),
+            'companies' => $this->records->companies(),
+            'garages' => $this->records->garages(),
         ];
     }
 
-    public function getFormData(): array
+    /** @return Collection<int, Bus> buses for the form picker */
+    public function busOptions(): Collection
     {
-        $buses = Bus::query()
-            ->orderBy('bus_no')
-            ->orderBy('plate_no')
-            ->orderBy('company')
-            ->orderBy('garage')
-            ->get([
-                'id',
-                'bus_no',
-                'plate_no',
-                'company',
-                'garage',
-            ]);
-
-        return [
-            'buses_json' => $buses->mapWithKeys(function (Bus $bus): array {
-                return [
-                    (string) $bus->id => [
-                        'id' => $bus->id,
-                        'bus_no' => $bus->bus_no,
-                        'plate_no' => $bus->plate_no,
-                        'company' => $bus->company,
-                        'garage' => $bus->garage,
-                    ],
-                ];
-            })->toArray(),
-
-            'status_options' => BusForSaleRecord::statusOptions(),
-            'buses' => $buses,
-        ];
+        return $this->buses->pickerOptions();
     }
 
+    /** @param array<string, mixed> $validated ForSaleUnitRequest */
     public function create(array $validated): BusForSaleRecord
     {
         return DB::transaction(function () use ($validated): BusForSaleRecord {
-            $data = $this->normalizeData($validated);
-            $data['days_in_breakdown'] = $this->computeDaysInBreakdown($data);
+            $data = $this->normalize($validated);
+            // One record per bus: picking a bus that already has one updates it.
+            $record = ($data['bus_id'] ? $this->records->forBus($data['bus_id']) : null) ?? new BusForSaleRecord;
 
-            $record = $this->existingRecordForData($data) ?? new BusForSaleRecord;
-
-            $record->fill($data);
-            $record->save();
-
-            $this->busForSaleSyncService->syncFromForSaleRecord($record);
-
-            return $record->fresh(['bus']);
+            return $this->saveAndSync($record, $data);
         });
     }
 
+    /** @param array<string, mixed> $validated ForSaleUnitRequest */
     public function update(BusForSaleRecord $record, array $validated): BusForSaleRecord
     {
-        return DB::transaction(function () use ($record, $validated): BusForSaleRecord {
-            $data = $this->normalizeData($validated);
-            $data['days_in_breakdown'] = $this->computeDaysInBreakdown($data);
-
-            $record->fill($data);
-            $record->save();
-
-            $this->busForSaleSyncService->syncFromForSaleRecord($record);
-
-            return $record->fresh(['bus']);
-        });
+        return DB::transaction(fn (): BusForSaleRecord => $this->saveAndSync($record, $this->normalize($validated)));
     }
 
+    /** Deletes the record; its bus goes back to "not for sale" when no other record points to it. */
     public function delete(BusForSaleRecord $record): void
     {
         DB::transaction(function () use ($record): void {
             $bus = $record->bus;
+            $this->records->delete($record);
 
-            if ($bus === null) {
-                $record->delete();
-
-                return;
-            }
-
-            $record->delete();
-
-            /** @var Bus $bus */
-            $stillForSale = BusForSaleRecord::query()
-                ->where('bus_id', $bus->id)
-                ->exists();
-
-            if (! $stillForSale) {
-                $bus->update([
-                    'sale_status' => Bus::SALE_NOT_FOR_SALE,
-                    'status_updated_at' => now(),
-                ]);
+            if ($bus !== null && ! $this->records->existsForBus((int) $bus->id)) {
+                $bus->fill(['sale_status' => Bus::SALE_NOT_FOR_SALE, 'status_updated_at' => now()]);
+                $this->buses->save($bus);
             }
         });
     }
 
-    private function existingRecordForData(array $data): ?BusForSaleRecord
+    /** @param array<string, mixed> $data */
+    private function saveAndSync(BusForSaleRecord $record, array $data): BusForSaleRecord
     {
-        if (empty($data['bus_id'])) {
-            return null;
-        }
+        $record->fill([...$data, 'days_in_breakdown' => FleetValue::breakdownDays($data['breakdown_start_date'], $data['breakdown_end_date'])]);
+        $this->records->save($record);
+        $this->sync->syncFromForSaleRecord($record);
 
-        return BusForSaleRecord::query()
-            ->where('bus_id', $data['bus_id'])
-            ->first();
+        return $record->fresh(['bus']);
     }
 
-    private function filteredQuery(array $filters): Builder
-    {
-        return BusForSaleRecord::query()
-            ->when($this->filled($filters, 'search'), function (Builder $query) use ($filters): void {
-                $search = trim((string) $filters['search']);
-
-                $query->where(function (Builder $query) use ($search): void {
-                    $query->where('bus_no', 'like', "%{$search}%")
-                        ->orWhere('plate_no', 'like', "%{$search}%")
-                        ->orWhere('company', 'like', "%{$search}%")
-                        ->orWhere('garage', 'like', "%{$search}%")
-                        ->orWhere('storage_area', 'like', "%{$search}%")
-                        ->orWhere('unit_location', 'like', "%{$search}%")
-                        ->orWhere('progress', 'like', "%{$search}%")
-                        ->orWhere('remarks', 'like', "%{$search}%");
-                });
-            })
-            ->when($this->filled($filters, 'company'), function (Builder $query) use ($filters): void {
-                $query->where('company', $this->uppercase($filters['company']));
-            })
-            ->when($this->filled($filters, 'garage'), function (Builder $query) use ($filters): void {
-                $query->where('garage', $this->uppercase($filters['garage']));
-            })
-            ->when($this->filled($filters, 'status'), function (Builder $query) use ($filters): void {
-                $query->where('status', trim((string) $filters['status']));
-            });
-    }
-
+    /** @return array{total: int, running_condition: int, mechanical_breakdown: int, accident_related: int, on_hold: int, breakdown_total: int} */
     private function summary(): array
     {
-        $statusCounts = BusForSaleRecord::query()
-            ->selectRaw('status')
-            ->selectRaw('COUNT(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
-
-        $total = BusForSaleRecord::query()->count();
-
-        $mechanical = (int) ($statusCounts[Bus::STATUS_MECHANICAL_BREAKDOWN] ?? 0);
-        $accident = (int) ($statusCounts[Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN] ?? 0);
-        $onHold = (int) ($statusCounts[Bus::STATUS_ON_HOLD_PLATE_REGISTRATION] ?? 0);
-        $running = (int) ($statusCounts[Bus::STATUS_ACTIVE] ?? 0);
+        $counts = $this->records->countByStatus();
+        $mechanical = (int) ($counts[Bus::STATUS_MECHANICAL_BREAKDOWN] ?? 0);
+        $accident = (int) ($counts[Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN] ?? 0);
+        $onHold = (int) ($counts[Bus::STATUS_ON_HOLD_PLATE_REGISTRATION] ?? 0);
 
         return [
-            'total' => $total,
-            'running_condition' => $running,
+            'total' => $this->records->count(),
+            'running_condition' => (int) ($counts[Bus::STATUS_ACTIVE] ?? 0),
             'mechanical_breakdown' => $mechanical,
             'accident_related' => $accident,
             'on_hold' => $onHold,
@@ -194,100 +109,26 @@ class ForSaleUnitService
         ];
     }
 
-    private function normalizeData(array $data): array
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function normalize(array $data): array
     {
         return [
-            'bus_id' => $this->nullableInteger($data['bus_id'] ?? null),
-            'bus_no' => $this->uppercase($data['bus_no'] ?? null),
-            'plate_no' => $this->uppercase($data['plate_no'] ?? null),
-            'company' => $this->uppercase($data['company'] ?? null),
-            'garage' => $this->uppercase($data['garage'] ?? null),
+            'bus_id' => ($data['bus_id'] ?? null) === null || $data['bus_id'] === '' ? null : (int) $data['bus_id'],
+            'bus_no' => FleetValue::upper($data['bus_no'] ?? null),
+            'plate_no' => FleetValue::upper($data['plate_no'] ?? null),
+            'company' => FleetValue::upper($data['company'] ?? null),
+            'garage' => FleetValue::upper($data['garage'] ?? null),
             'status' => trim((string) ($data['status'] ?? Bus::STATUS_ACTIVE)),
-            'storage_area' => $this->nullableString($data['storage_area'] ?? null),
-            'breakdown_start_date' => $this->nullableDate($data['breakdown_start_date'] ?? null),
-            'breakdown_end_date' => $this->nullableDate($data['breakdown_end_date'] ?? null),
-            'column_11' => $this->nullableString($data['column_11'] ?? null),
-            'unit_location' => $this->nullableString($data['unit_location'] ?? null),
-            'progress' => $this->nullableString($data['progress'] ?? null),
-            'remarks' => $this->nullableString($data['remarks'] ?? null),
+            'storage_area' => FleetValue::text($data['storage_area'] ?? null),
+            'breakdown_start_date' => FleetValue::text($data['breakdown_start_date'] ?? null),
+            'breakdown_end_date' => FleetValue::text($data['breakdown_end_date'] ?? null),
+            'column_11' => FleetValue::text($data['column_11'] ?? null),
+            'unit_location' => FleetValue::text($data['unit_location'] ?? null),
+            'progress' => FleetValue::text($data['progress'] ?? null),
+            'remarks' => FleetValue::text($data['remarks'] ?? null),
         ];
-    }
-
-    private function computeDaysInBreakdown(array $data): int
-    {
-        if (empty($data['breakdown_start_date'])) {
-            return 0;
-        }
-
-        $startDate = Carbon::parse($data['breakdown_start_date'])->startOfDay();
-
-        $endDate = ! empty($data['breakdown_end_date'])
-            ? Carbon::parse($data['breakdown_end_date'])->startOfDay()
-            : now()->startOfDay();
-
-        if ($endDate->lessThan($startDate)) {
-            return 0;
-        }
-
-        return (int) $startDate->diffInDays($endDate);
-    }
-
-    private function getCompanies(): Collection
-    {
-        return BusForSaleRecord::query()
-            ->whereNotNull('company')
-            ->where('company', '!=', '')
-            ->distinct()
-            ->orderBy('company')
-            ->pluck('company');
-    }
-
-    private function getGarages(): Collection
-    {
-        return BusForSaleRecord::query()
-            ->whereNotNull('garage')
-            ->where('garage', '!=', '')
-            ->distinct()
-            ->orderBy('garage')
-            ->pluck('garage');
-    }
-
-    private function uppercase(?string $value): ?string
-    {
-        $value = trim((string) $value);
-
-        if ($value === '') {
-            return null;
-        }
-
-        return mb_strtoupper($value);
-    }
-
-    private function nullableString(?string $value): ?string
-    {
-        $value = trim((string) $value);
-
-        return $value === '' ? null : $value;
-    }
-
-    private function nullableDate(?string $value): ?string
-    {
-        $value = trim((string) $value);
-
-        return $value === '' ? null : $value;
-    }
-
-    private function nullableInteger(mixed $value): ?int
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        return (int) $value;
-    }
-
-    private function filled(array $filters, string $key): bool
-    {
-        return isset($filters[$key]) && trim((string) $filters[$key]) !== '';
     }
 }

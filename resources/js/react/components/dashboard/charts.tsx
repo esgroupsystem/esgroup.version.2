@@ -37,7 +37,7 @@ export function DashboardCard({
     children: ReactNode;
 }) {
     return (
-        <Card className={cn('gap-4', className)}>
+        <Card className={cn('min-w-0 gap-4', className)}>
             <CardHeader>
                 <CardTitle>{title}</CardTitle>
                 {description && <CardDescription>{description}</CardDescription>}

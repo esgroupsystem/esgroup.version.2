@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Feature\HRDepartment;
+namespace Tests\Feature\HR;
 
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;

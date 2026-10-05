@@ -18,13 +18,14 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $source_proclamation
  * @property string|null $notes
  * @property bool|null $is_active
- * @property-read mixed $type_badge_class
  */
 class Holiday extends Model
 {
     public const TYPE_REGULAR = 'regular';
 
     public const TYPE_SPECIAL = 'special';
+
+    public const TYPES = [self::TYPE_REGULAR, self::TYPE_SPECIAL];
 
     public const STANDARD_MULTIPLIERS = [
         self::TYPE_REGULAR => [
@@ -75,12 +76,5 @@ class Holiday extends Model
     {
         return self::STANDARD_MULTIPLIERS[$type]
             ?? self::STANDARD_MULTIPLIERS[self::TYPE_REGULAR];
-    }
-
-    public function getTypeBadgeClassAttribute(): string
-    {
-        return $this->holiday_type === self::TYPE_REGULAR
-            ? 'badge bg-danger-subtle text-danger'
-            : 'badge bg-warning-subtle text-warning';
     }
 }

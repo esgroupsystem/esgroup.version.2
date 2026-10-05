@@ -14,7 +14,8 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class ForSaleUnitController extends Controller
+/** Fleet → For Sale Units (fleet.for-sale-units.*), opened from Bus Analytics. */
+final class ForSaleUnitController extends Controller
 {
     public function __construct(
         private readonly ForSaleUnitService $forSaleUnitService
@@ -60,8 +61,8 @@ class ForSaleUnitController extends Controller
             ]),
             'summary' => $data['summary'],
             'options' => [
-                'companies' => collect($data['companies'])->values(),
-                'garages' => collect($data['garages'])->values(),
+                'companies' => $data['companies']->values(),
+                'garages' => $data['garages']->values(),
                 'statuses' => $this->options(BusForSaleRecord::statusOptions()),
             ],
             // Mirrors the route middleware on each for-sale-units.* route.
@@ -119,7 +120,6 @@ class ForSaleUnitController extends Controller
 
     private function form(BusForSaleRecord $record): Response
     {
-        $formData = $this->forSaleUnitService->getFormData();
         $user = request()->user();
 
         return Inertia::render('dashboards/fleet/for-sale-form', [
@@ -141,7 +141,7 @@ class ForSaleUnitController extends Controller
                 'days' => (int) $record->live_days_in_breakdown,
                 'destroy_url' => route('fleet.for-sale-units.destroy', $record),
             ] : null,
-            'buses' => collect($formData['buses'])->map(fn (Bus $bus): array => [
+            'buses' => $this->forSaleUnitService->busOptions()->map(fn (Bus $bus): array => [
                 'value' => (string) $bus->id,
                 'label' => collect([$bus->bus_no, $bus->plate_no, $bus->company, $bus->garage])->filter()->implode(' | '),
                 'bus_no' => (string) $bus->bus_no,

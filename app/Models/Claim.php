@@ -24,6 +24,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class Claim extends Model
 {
+    public const TYPES = ['SSS', 'MATERNITY', 'PATERNITY', 'SICKNESS', 'RETIREMENT'];
+
+    public const STATUSES = ['Draft', 'Ongoing', 'Approved', 'Requested', 'Released', 'Rejected'];
+
+    /** Date columns the list can filter on => label. */
+    public const DATE_FIELDS = [
+        'date_of_notification' => 'Notification',
+        'date_filed' => 'Filed',
+        'approval_date' => 'Approval',
+        'fund_request_date' => 'Fund request',
+        'fund_released_date' => 'Fund released',
+    ];
+
     protected $fillable = [
         'employee_id',
         'claim_type',

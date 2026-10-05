@@ -12,14 +12,22 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $name
  * @property string|null $body_number
  * @property string|null $plate_number
- * @property string|null $display_name
- * @property string|null $status_summary
- * @property int $total_issues
- * @property int $completed_count
+ * @property int|null $active_concerns_count
  */
 class BusDetail extends Model
 {
     protected $fillable = ['garage', 'name', 'body_number', 'plate_number'];
+
+    /** "Body - Plate - Name - Garage", skipping blanks; pass false to leave out the garage. */
+    public function displayName(bool $withGarage = true): string
+    {
+        return implode(' - ', array_filter([
+            $this->body_number,
+            $this->plate_number,
+            $this->name,
+            $withGarage ? $this->garage : null,
+        ]));
+    }
 
     /** @return HasMany<JobOrder, $this> */
     public function joborders(): HasMany

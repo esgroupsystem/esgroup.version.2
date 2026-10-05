@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\HR_Department;
+namespace App\Http\Requests\HR;
 
 use App\Enums\LeaveActionType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class EmployeeLeaveActionRequest extends FormRequest
+final class LeaveActionRequest extends FormRequest
 {
     public function authorize(): bool
     {

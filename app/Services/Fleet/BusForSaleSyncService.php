@@ -6,131 +6,67 @@ namespace App\Services\Fleet;
 
 use App\Models\Bus;
 use App\Models\BusForSaleRecord;
-use Carbon\Carbon;
+use App\Repositories\Contracts\Fleet\BusForSaleRecordRepositoryInterface;
+use App\Repositories\Contracts\Fleet\BusRepositoryInterface;
+use App\Support\Fleet\FleetValue;
 
-class BusForSaleSyncService
+/**
+ * Keeps a bus and its for-sale record in step: a bus marked "for sale" gets a record, a record
+ * marks its bus "for sale" (creating the bus when no single bus matches).
+ */
+final class BusForSaleSyncService
 {
+    public function __construct(
+        private readonly BusRepositoryInterface $buses,
+        private readonly BusForSaleRecordRepositoryInterface $records,
+    ) {}
+
     public function syncFromBus(Bus $bus): ?BusForSaleRecord
     {
         if ($bus->sale_status !== Bus::SALE_FOR_SALE) {
-            BusForSaleRecord::query()
-                ->where('bus_id', $bus->id)
-                ->delete();
+            $this->records->deleteForBus((int) $bus->id);
 
             return null;
         }
 
-        $record = BusForSaleRecord::query()
-            ->firstOrNew([
-                'bus_id' => $bus->id,
-            ]);
-
+        $record = $this->records->forBus((int) $bus->id) ?? new BusForSaleRecord(['bus_id' => $bus->id]);
         $record->fill([
             'bus_id' => $bus->id,
-            'bus_no' => $this->uppercase($bus->bus_no),
-            'plate_no' => $this->uppercase($bus->plate_no),
-            'company' => $this->uppercase($bus->company),
-            'garage' => $this->uppercase($bus->garage),
+            'bus_no' => FleetValue::upper($bus->bus_no),
+            'plate_no' => FleetValue::upper($bus->plate_no),
+            'company' => FleetValue::upper($bus->company),
+            'garage' => FleetValue::upper($bus->garage),
             'status' => $bus->operational_status ?: Bus::STATUS_ACTIVE,
             'remarks' => $bus->monitoring_remarks,
         ]);
-
-        $record->days_in_breakdown = $this->computeDaysInBreakdown([
-            'breakdown_start_date' => $record->breakdown_start_date,
-            'breakdown_end_date' => $record->breakdown_end_date,
-        ]);
-
-        $record->save();
+        $record->days_in_breakdown = FleetValue::breakdownDays($record->breakdown_start_date, $record->breakdown_end_date);
+        $this->records->save($record);
 
         return $record->fresh(['bus']);
     }
 
     public function syncFromForSaleRecord(BusForSaleRecord $record): Bus
     {
-        $bus = $this->resolveBus($record) ?? new Bus;
+        $bus = ($record->bus_id ? $this->buses->find((int) $record->bus_id) : $this->buses->findUnique($record->bus_no, $record->plate_no, $record->company, $record->garage))
+            ?? new Bus;
 
         $bus->fill([
-            'bus_no' => $this->uppercase($record->bus_no),
-            'plate_no' => $this->uppercase($record->plate_no),
-            'company' => $this->uppercase($record->company),
-            'garage' => $this->uppercase($record->garage),
+            'bus_no' => FleetValue::upper($record->bus_no),
+            'plate_no' => FleetValue::upper($record->plate_no),
+            'company' => FleetValue::upper($record->company),
+            'garage' => FleetValue::upper($record->garage),
             'operational_status' => $record->status ?: Bus::STATUS_ACTIVE,
             'sale_status' => Bus::SALE_FOR_SALE,
             'monitoring_remarks' => $record->remarks,
             'status_updated_at' => now(),
         ]);
+        $this->buses->save($bus);
 
-        $bus->save();
-
-        BusForSaleRecord::query()
-            ->where('bus_id', $bus->id)
-            ->whereKeyNot($record->id)
-            ->delete();
-
+        $this->records->deleteForBus((int) $bus->id, (int) $record->id);
         if ((int) $record->bus_id !== (int) $bus->id) {
-            $record->updateQuietly([
-                'bus_id' => $bus->id,
-            ]);
+            $this->records->linkBus($record, (int) $bus->id);
         }
 
         return $bus->fresh(['currentForSaleRecord']);
-    }
-
-    private function resolveBus(BusForSaleRecord $record): ?Bus
-    {
-        if ($record->bus_id) {
-            return Bus::query()->find($record->bus_id);
-        }
-
-        $query = Bus::query()
-            ->where('bus_no', $record->bus_no);
-
-        if ($record->plate_no) {
-            $query->where('plate_no', $record->plate_no);
-        }
-
-        if ($record->company) {
-            $query->where('company', $record->company);
-        }
-
-        if ($record->garage) {
-            $query->where('garage', $record->garage);
-        }
-
-        if ($query->count() !== 1) {
-            return null;
-        }
-
-        return $query->first();
-    }
-
-    private function computeDaysInBreakdown(array $data): int
-    {
-        if (empty($data['breakdown_start_date'])) {
-            return 0;
-        }
-
-        $startDate = Carbon::parse($data['breakdown_start_date'])->startOfDay();
-
-        $endDate = ! empty($data['breakdown_end_date'])
-            ? Carbon::parse($data['breakdown_end_date'])->startOfDay()
-            : now()->startOfDay();
-
-        if ($endDate->lessThan($startDate)) {
-            return 0;
-        }
-
-        return (int) $startDate->diffInDays($endDate);
-    }
-
-    private function uppercase(?string $value): ?string
-    {
-        $value = trim((string) $value);
-
-        if ($value === '') {
-            return null;
-        }
-
-        return mb_strtoupper($value);
     }
 }

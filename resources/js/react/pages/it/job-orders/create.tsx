@@ -17,8 +17,6 @@ interface Props {
     buses: SearchOption[];
     issueTypes: string[];
     reporter: string;
-    /** Old seat plan image; the animated seat map replaces it. */
-    seatLayout?: string;
     urls: { index: string; store: string };
 }
 

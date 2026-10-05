@@ -428,7 +428,7 @@ function EmployeeSalaryForm({ salary, values, people, workday, scheduleOptions, 
 
 function Section({ title, description, action, children }: { title: string; description?: string; action?: ReactNode; children: ReactNode }) {
     return (
-        <Card>
+        <Card className="min-w-0">
             <CardHeader className="flex flex-row items-start justify-between gap-4">
                 <div className="grid gap-1.5">
                     <CardTitle>{title}</CardTitle>

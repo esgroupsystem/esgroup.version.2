@@ -6,15 +6,21 @@ namespace App\Http\Controllers\Payroll;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Payroll\BenefitsRecordIndexRequest;
+use App\Http\Resources\Payroll\BenefitsRecordRowResource;
 use App\Services\Payroll\BenefitRecordsService;
+use App\Services\Payroll\PayrollGroupAccessService;
 use Carbon\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class BenefitsRecordController extends Controller
+/**
+ * Payroll → Benefits Records and Benefits Overall (and its print view).
+ */
+final class BenefitsRecordController extends Controller
 {
     public function __construct(
-        private readonly BenefitRecordsService $benefitRecordsService
+        private readonly BenefitRecordsService $benefitRecordsService,
+        private readonly PayrollGroupAccessService $groups,
     ) {}
 
     public function index(BenefitsRecordIndexRequest $request): Response
@@ -23,33 +29,13 @@ class BenefitsRecordController extends Controller
 
         $data = $this->benefitRecordsService->buildIndex(
             $filters,
-            session('payroll_allowed_groups')
+            $this->groups->allowed()
         );
 
         $totals = $data['totals'];
 
         return Inertia::render('payroll/benefits-records/index', [
-            'employees' => $data['employees']->through(fn (array $row): array => [
-                'id' => $row['employee']->id,
-                'name' => $row['employee']->payroll_display_name,
-                'employee_no' => $row['employee']->effective_employee_no,
-                'company' => $row['employee']->company?->name,
-                'group_label' => $row['employee']->payroll_group_label,
-                'posted' => (bool) $row['summary']['posted'],
-                'settlement_status' => (string) ($row['summary']['settlement_status'] ?? 'not_posted'),
-                'settlement_mode' => (string) data_get($row['summary'], 'settlement_meta.mode', ''),
-                'payroll_numbers' => $row['summary']['payroll_numbers'],
-                'programs' => [
-                    $this->program('SSS', $row['identifiers']['sss'] ?? null, $row['summary'], 'sss_employee_total', 'sss_employee_collected', 'sss_employer_total', 'sss_total_contribution'),
-                    $this->program('PhilHealth', $row['identifiers']['philhealth'] ?? null, $row['summary'], 'philhealth_employee', 'philhealth_employee_collected', 'philhealth_employer', 'philhealth_total'),
-                    $this->program('Pag-IBIG', $row['identifiers']['pagibig'] ?? null, $row['summary'], 'pagibig_employee', 'pagibig_employee_collected', 'pagibig_employer', 'pagibig_total'),
-                ],
-                'employee_total' => (float) $row['summary']['employee_total'],
-                'employee_collected_total' => (float) $row['summary']['employee_collected_total'],
-                'employer_total' => (float) $row['summary']['employer_total'],
-                'grand_total' => (float) $row['summary']['grand_total'],
-                'unrecovered' => (float) $row['summary']['employee_share_unrecovered'],
-            ]),
+            'employees' => $data['employees']->through(fn (array $row): array => BenefitsRecordRowResource::make($row)->resolve($request)),
             'kpis' => [
                 'active' => (int) $data['activeEmployeeCount'],
                 'posted' => (int) $data['postedEmployeeCount'],
@@ -69,7 +55,7 @@ class BenefitsRecordController extends Controller
 
         $data = $this->benefitRecordsService->buildOverall(
             $filters,
-            session('payroll_allowed_groups')
+            $this->groups->allowed()
         );
 
         return Inertia::render('payroll/benefits-records/overall', [
@@ -100,7 +86,7 @@ class BenefitsRecordController extends Controller
 
         $data = $this->benefitRecordsService->buildOverall(
             $filters,
-            session('payroll_allowed_groups')
+            $this->groups->allowed()
         );
         $shared = $this->sharedProps($filters, $data['groupOptions']);
         $number = fn (mixed $value): mixed => is_numeric($value) ? (float) $value : $value;
@@ -130,18 +116,6 @@ class BenefitsRecordController extends Controller
             ])->values(),
             'urls' => ['back' => $shared['urls']['overallWithFilters']],
         ]);
-    }
-
-    private function program(string $name, ?string $id, array $summary, string $due, string $collected, string $employer, string $total): array
-    {
-        return [
-            'name' => $name,
-            'id' => $id,
-            'due' => (float) ($summary[$due] ?? 0),
-            'collected' => (float) ($summary[$collected] ?? 0),
-            'employer' => (float) ($summary[$employer] ?? 0),
-            'total' => (float) ($summary[$total] ?? 0),
-        ];
     }
 
     private function sharedProps(array $filters, $groupOptions): array

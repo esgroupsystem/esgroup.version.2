@@ -30,8 +30,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string|null $case_number
  * @property string|null $monitoring_remarks
  * @property \Carbon\CarbonInterface|null $status_updated_at
- * @property-read mixed $operational_status_badge_class
- * @property-read mixed $sale_status_badge_class
  */
 class Bus extends Model
 {
@@ -116,27 +114,6 @@ class Bus extends Model
     public function getSaleStatusLabelAttribute(): string
     {
         return self::saleStatusOptions()[$this->sale_status] ?? 'Unknown';
-    }
-
-    public function getOperationalStatusBadgeClassAttribute(): string
-    {
-        return match ($this->operational_status) {
-            self::STATUS_ACTIVE => 'badge-subtle-success text-success',
-            self::STATUS_MECHANICAL_BREAKDOWN => 'badge-subtle-warning text-warning',
-            self::STATUS_ACCIDENT_RELATED_BREAKDOWN => 'badge-subtle-danger text-danger',
-            self::STATUS_ON_HOLD_PLATE_REGISTRATION => 'badge-subtle-info text-info',
-            self::STATUS_FOR_RENTAL_CHARTER => 'badge-subtle-primary text-primary',
-            self::STATUS_INACTIVE => 'badge-subtle-secondary text-secondary',
-            default => 'badge-subtle-secondary text-secondary',
-        };
-    }
-
-    public function getSaleStatusBadgeClassAttribute(): string
-    {
-        return match ($this->sale_status) {
-            self::SALE_FOR_SALE => 'badge-subtle-danger text-danger',
-            default => 'badge-subtle-secondary text-secondary',
-        };
     }
 
     /** @return HasMany<JobOrderMaintenance, $this> */

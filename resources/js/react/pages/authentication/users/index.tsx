@@ -91,10 +91,10 @@ export default function UsersIndex({ users, roles, locations, filters, temporary
                         <CardTitle>User list</CardTitle>
                         <CardDescription>{users.total.toLocaleString()} user(s)</CardDescription>
                     </div>
-                    <form onSubmit={submitSearch} className="flex gap-2">
-                        <div className="relative">
+                    <form onSubmit={submitSearch} className="flex w-full gap-2 md:w-auto">
+                        <div className="relative min-w-0 flex-1 sm:flex-none">
                             <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input aria-label="Search users" placeholder="Search name, username, email, role..." className="w-72 pl-8" value={search} onChange={(event) => setSearch(event.target.value)} />
+                            <Input aria-label="Search users" placeholder="Search name, username, email, role..." className="w-full pl-8 sm:w-72" value={search} onChange={(event) => setSearch(event.target.value)} />
                         </div>
                         <Button type="submit" variant="outline">
                             Search

@@ -916,7 +916,7 @@ final class ScheduleOffsetAdjustmentPayrollTest extends TestCase
         ]);
 
         $page()->get(route('payroll.index', ['garage_group' => '1']))
-            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $p) => $p->where('payrolls.total', 1)->where('filters.garage_group', '1')->has('payrollGroups.2'));
+            ->assertInertia(fn (\Inertia\Testing\AssertableInertia $p) => $p->where('payrolls.total', 1)->where('filters.garage_group', '1')->has('payrollGroups.1')->missing('payrollGroups.2')); // only the user's own payroll groups are offered
         $page()->get(route('payroll.index', ['garage_group' => '2']))
             ->assertInertia(fn (\Inertia\Testing\AssertableInertia $p) => $p->where('payrolls.total', 0));
     }

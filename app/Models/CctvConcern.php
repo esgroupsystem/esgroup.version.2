@@ -27,6 +27,17 @@ class CctvConcern extends Model
 {
     use HasFactory;
 
+    public const ISSUE_TYPES = ['Camera', 'Monitor', 'DVR', 'Wiring', 'Power', 'Other'];
+
+    /** Bus Dashboard columns => the issue types counted in each. */
+    public const DASHBOARD_COLUMNS = [
+        'CCTV' => ['Camera', 'Wiring'],
+        'DVR' => ['DVR'],
+        'Monitor' => ['Monitor'],
+        'Power Supply' => ['Power Supply', 'Power'],
+        'Other' => ['Other'],
+    ];
+
     protected $table = 'cctv_job_orders';
 
     protected $fillable = [

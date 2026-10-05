@@ -49,8 +49,12 @@ final class AuthenticationPagesTest extends TestCase
         ])->assertRedirect(route('authentication.users.index'));
         $carla = User::query()->where('username', 'carla')->sole();
 
+        // The temporary password is random (no longer initials + "123456") and is the one stored.
         $this->as($admin)->get(route('authentication.users.index'))
-            ->assertInertia(fn (Assert $page) => $page->where('temporaryPassword.username', 'carla')->where('temporaryPassword.password', 'cc123456'));
+            ->assertInertia(fn (Assert $page) => $page->where('temporaryPassword.username', 'carla')
+                ->where('temporaryPassword.password', fn (string $password): bool => strlen($password) === 12
+                    && $password !== 'cc123456'
+                    && Hash::check($password, (string) $carla->password)));
         $this->as($admin)->get(route('authentication.users.index'))
             ->assertInertia(fn (Assert $page) => $page->where('temporaryPassword', null));
 

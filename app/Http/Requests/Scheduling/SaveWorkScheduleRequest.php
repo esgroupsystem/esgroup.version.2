@@ -2,26 +2,17 @@
 
 declare(strict_types=1);
 
-namespace App\Http\Requests\Payroll;
+namespace App\Http\Requests\Scheduling;
 
 use App\Enums\WorkdayType;
+use App\Models\EmployeePlottingSchedule;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
-class SaveEmployeePlottingScheduleRequest extends FormRequest
+final class SaveWorkScheduleRequest extends FormRequest
 {
-    private const WEEKDAYS = [
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-        'Friday',
-        'Saturday',
-        'Sunday',
-    ];
-
     public function authorize(): bool
     {
         return true;
@@ -65,8 +56,8 @@ class SaveEmployeePlottingScheduleRequest extends FormRequest
                 'exists:employee_biometrics,id',
                 'distinct',
             ],
-            'schedule.*.status' => ['required', 'string', 'in:scheduled,rest_day,inactive'],
-            'schedule.*.shift_name' => ['required', 'string', 'in:Regular Shift,Flexible Shift'],
+            'schedule.*.status' => ['required', 'string', Rule::in(EmployeePlottingSchedule::STATUSES)],
+            'schedule.*.shift_name' => ['required', 'string', Rule::in(EmployeePlottingSchedule::SHIFTS)],
             'schedule.*.workday_type' => ['required', Rule::enum(WorkdayType::class)],
             'schedule.*.time_in' => ['nullable', 'date_format:H:i'],
             'schedule.*.time_out' => ['nullable', 'date_format:H:i'],
@@ -75,7 +66,7 @@ class SaveEmployeePlottingScheduleRequest extends FormRequest
             // No 'distinct' here: with the nested wildcard Laravel compares day-offs
             // across every employee row, so two employees could not share a day off.
             // Duplicates within one row are already removed in prepareForValidation().
-            'schedule.*.day_offs.*' => ['required', 'string', Rule::in(self::WEEKDAYS)],
+            'schedule.*.day_offs.*' => ['required', 'string', Rule::in(EmployeePlottingSchedule::WEEKDAYS)],
             'schedule.*.remarks' => ['nullable', 'string', 'max:255'],
         ];
     }

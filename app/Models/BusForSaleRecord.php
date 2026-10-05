@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use Carbon\Carbon;
+use App\Support\Fleet\FleetValue;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int|null $days_in_breakdown
  * @property int|null $total
  * @property-read string $status_label
- * @property-read string $status_badge_class
  * @property-read int $live_days_in_breakdown
  * @property string|null $company_name
  * @property int|float|string|null $total
@@ -57,7 +56,6 @@ class BusForSaleRecord extends Model
 
     protected $appends = [
         'status_label',
-        'status_badge_class',
         'live_days_in_breakdown',
     ];
 
@@ -84,33 +82,8 @@ class BusForSaleRecord extends Model
         return self::statusOptions()[$this->status] ?? 'Unknown';
     }
 
-    public function getStatusBadgeClassAttribute(): string
-    {
-        return match ($this->status) {
-            Bus::STATUS_ACTIVE => 'badge-subtle-success text-success',
-            Bus::STATUS_MECHANICAL_BREAKDOWN => 'badge-subtle-warning text-warning',
-            Bus::STATUS_ACCIDENT_RELATED_BREAKDOWN => 'badge-subtle-danger text-danger',
-            Bus::STATUS_ON_HOLD_PLATE_REGISTRATION => 'badge-subtle-info text-info',
-            default => 'badge-subtle-secondary text-secondary',
-        };
-    }
-
     public function getLiveDaysInBreakdownAttribute(): int
     {
-        if (! $this->breakdown_start_date) {
-            return 0;
-        }
-
-        $startDate = Carbon::parse($this->breakdown_start_date)->startOfDay();
-
-        $endDate = $this->breakdown_end_date
-            ? Carbon::parse($this->breakdown_end_date)->startOfDay()
-            : now()->startOfDay();
-
-        if ($endDate->lessThan($startDate)) {
-            return 0;
-        }
-
-        return (int) $startDate->diffInDays($endDate);
+        return FleetValue::breakdownDays($this->breakdown_start_date, $this->breakdown_end_date);
     }
 }

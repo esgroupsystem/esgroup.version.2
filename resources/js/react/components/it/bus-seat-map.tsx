@@ -1,5 +1,5 @@
 import { RotateCcw, X } from 'lucide-react';
-import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
+import { Fragment, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -213,10 +213,10 @@ export function BusSeatMap({ value, onChange, disabled: disabledProp, readOnly, 
     };
 
     const column = (col: Column, gridColumn: number) => (
-        <>
+        <Fragment key={gridColumn}>
             {col.upper.map((seat, row) => (seat === null ? null : seatButton(seat, { gridColumn, gridRow: row + 1 })))}
             {col.lower.map((seat, row) => seatButton(seat, { gridColumn, gridRow: row + 5 }))}
-        </>
+        </Fragment>
     );
 
     return (

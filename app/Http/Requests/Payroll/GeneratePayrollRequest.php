@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Payroll;
 
+use App\Services\Payroll\PayrollGroupAccessService;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-class GeneratePayrollRequest extends FormRequest
+final class GeneratePayrollRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -24,8 +26,14 @@ class GeneratePayrollRequest extends FormRequest
             'garage_group' => [
                 'required',
                 'integer',
-                'in:1,2',
+                Rule::in(array_keys(app(PayrollGroupAccessService::class)->options())),
             ],
         ];
+    }
+
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return ['garage_group.in' => 'You are not allowed to generate payroll for the selected payroll group.'];
     }
 }

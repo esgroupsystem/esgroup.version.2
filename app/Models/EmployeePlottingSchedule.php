@@ -37,6 +37,20 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class EmployeePlottingSchedule extends Model
 {
+    public const STATUSES = ['scheduled', 'rest_day', 'inactive'];
+
+    public const DEFAULT_STATUS = 'scheduled';
+
+    public const SHIFTS = ['Regular Shift', 'Flexible Shift'];
+
+    public const REGULAR_SHIFT = 'Regular Shift';
+
+    public const FLEXIBLE_SHIFT = 'Flexible Shift';
+
+    public const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+    public const DEFAULT_GRACE_MINUTES = 15;
+
     protected $fillable = [
         'employee_biometric_id',
         'crosschex_id',
@@ -165,15 +179,7 @@ class EmployeePlottingSchedule extends Model
 
     private function normalizeDayOffs(array $dayOffs): array
     {
-        $validDays = [
-            'Monday',
-            'Tuesday',
-            'Wednesday',
-            'Thursday',
-            'Friday',
-            'Saturday',
-            'Sunday',
-        ];
+        $validDays = self::WEEKDAYS;
 
         return collect($dayOffs)
             ->map(fn (mixed $day): string => ucfirst(strtolower(trim((string) $day))))

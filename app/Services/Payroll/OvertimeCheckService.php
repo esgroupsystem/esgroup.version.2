@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Support\Payroll;
+namespace App\Services\Payroll;
 
 use App\Models\PayrollAttendanceAdjustment;
-use App\Services\Payroll\BiometricsProofService;
+use App\Repositories\Contracts\Payroll\AttendanceAdjustmentRepositoryInterface;
 use Carbon\Carbon;
 
 /**
@@ -17,13 +17,16 @@ use Carbon\Carbon;
  * Used by PayrollAttendanceAdjustmentRequest (blocks the save) and by the
  * form's live "OT check" panel.
  */
-final class OvertimeCheck
+final class OvertimeCheckService
 {
     public const MAX_MINUTES = 12 * 60;
 
     public const GRACE_MINUTES = 5;
 
-    public function __construct(private readonly BiometricsProofService $proofs) {}
+    public function __construct(
+        private readonly BiometricsProofService $proofs,
+        private readonly AttendanceAdjustmentRepositoryInterface $adjustments,
+    ) {}
 
     /**
      * @return array{ok: bool, errors: list<string>, minutes: int, punch_in: ?string, punch_out: ?string, window: ?string}
@@ -73,13 +76,7 @@ final class OvertimeCheck
         }
 
         // No double filing of the same hours.
-        $others = PayrollAttendanceAdjustment::query()
-            ->where('adjustment_type', PayrollAttendanceAdjustment::TYPE_OVERTIME)
-            ->where('employee_biometric_id', $employeeBiometricId)
-            ->whereDate('work_date', $date->toDateString())
-            ->whereIn('status', [PayrollAttendanceAdjustment::STATUS_PENDING, PayrollAttendanceAdjustment::STATUS_APPROVED])
-            ->when($ignoreAdjustmentId, fn ($query) => $query->whereKeyNot($ignoreAdjustmentId))
-            ->get(['id', 'adjusted_time_in', 'adjusted_time_out', 'status']);
+        $others = $this->adjustments->overtimeFilingsOn($employeeBiometricId, $date->toDateString(), $ignoreAdjustmentId ?: null);
 
         foreach ($others as $other) {
             if (! $other->adjusted_time_in || ! $other->adjusted_time_out) {

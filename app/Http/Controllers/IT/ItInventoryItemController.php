@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers\IT;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\ITDepartment\StoreItInventoryItemRequest;
-use App\Http\Requests\ITDepartment\UpdateItInventoryItemRequest;
+use App\Http\Requests\IT\StoreItInventoryItemRequest;
+use App\Http\Requests\IT\UpdateItInventoryItemRequest;
+use App\Http\Resources\IT\ItInventoryItemRowResource;
 use App\Models\ItInventoryItem;
 use App\Services\IT\ItInventoryService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -29,22 +29,7 @@ final class ItInventoryItemController extends Controller
 
         return Inertia::render('it/inventory/index', [
             'items' => $this->inventoryService->paginate($search, $category)
-                ->through(fn (ItInventoryItem $item): array => [
-                    'id' => $item->id,
-                    'item_name' => $item->item_name,
-                    'description' => $item->description ? Str::limit($item->description, 65) : null,
-                    'category' => $item->category ?: 'Uncategorized',
-                    'brand' => $item->brand,
-                    'model' => $item->model,
-                    'part_number' => $item->part_number,
-                    'stock_qty' => (int) $item->stock_qty,
-                    'minimum_stock' => (int) $item->minimum_stock,
-                    'unit' => $item->unit,
-                    'location' => $item->location,
-                    'is_active' => (bool) $item->is_active,
-                    'edit_url' => route('it-inventory.edit', $item->id),
-                    'destroy_url' => route('it-inventory.destroy', $item->id),
-                ]),
+                ->through(fn (ItInventoryItem $item): array => ItInventoryItemRowResource::make($item)->resolve($request)),
             'filters' => ['search' => $search, 'category' => $category],
             'categories' => collect($this->inventoryService->categories())->values(),
             'can' => [
@@ -75,7 +60,7 @@ final class ItInventoryItemController extends Controller
 
     public function edit(int $id): Response
     {
-        return $this->form(ItInventoryItem::query()->findOrFail($id));
+        return $this->form($this->inventoryService->find($id));
     }
 
     private function form(?ItInventoryItem $item): Response
@@ -105,7 +90,7 @@ final class ItInventoryItemController extends Controller
 
     public function update(UpdateItInventoryItemRequest $request, int $id): RedirectResponse
     {
-        $item = ItInventoryItem::query()->findOrFail($id);
+        $item = $this->inventoryService->find($id);
         $this->inventoryService->update($item, $request->validated());
 
         return redirect()
@@ -115,7 +100,7 @@ final class ItInventoryItemController extends Controller
 
     public function destroy(int $id): RedirectResponse
     {
-        $this->inventoryService->delete(ItInventoryItem::query()->findOrFail($id));
+        $this->inventoryService->delete($this->inventoryService->find($id));
 
         return back()->with('success', 'Deleted successfully.');
     }

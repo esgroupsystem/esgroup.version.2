@@ -50,6 +50,12 @@ class EmployeeBiometric extends Model
 
     public const PAYROLL_GROUP_GONZALES = 2;
 
+    /** Payroll group => label (the select on the Biometric Employees edit form). */
+    public const GROUP_LABELS = [
+        self::PAYROLL_GROUP_MIRASOL => 'Mirasol / Balintawak Payroll',
+        self::PAYROLL_GROUP_GONZALES => 'Gonzales Payroll',
+    ];
+
     protected $fillable = [
         'source_key',
         'employee_identity_hash',
@@ -111,6 +117,14 @@ class EmployeeBiometric extends Model
     public function plottingSchedules(): HasMany
     {
         return $this->hasMany(EmployeePlottingSchedule::class, 'employee_biometric_id');
+    }
+
+    /** The permanent (no work_date) row of the Work Schedule page. @return HasOne<EmployeePlottingSchedule, $this> */
+    public function permanentSchedule(): HasOne
+    {
+        return $this->hasOne(EmployeePlottingSchedule::class, 'employee_biometric_id')
+            ->whereNull('work_date')
+            ->latestOfMany();
     }
 
     /** @return HasMany<PayrollEmployeeSalary, $this> */
@@ -296,10 +310,6 @@ class EmployeeBiometric extends Model
 
     public function getPayrollGroupLabelAttribute(): string
     {
-        return match ($this->group_name) {
-            self::PAYROLL_GROUP_MIRASOL => 'Mirasol / Balintawak Payroll',
-            self::PAYROLL_GROUP_GONZALES => 'Gonzales Payroll',
-            default => 'No Payroll Group',
-        };
+        return self::GROUP_LABELS[(int) $this->group_name] ?? 'No Payroll Group';
     }
 }

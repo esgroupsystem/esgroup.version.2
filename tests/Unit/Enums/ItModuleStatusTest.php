@@ -19,6 +19,8 @@ final class ItModuleStatusTest extends TestCase
         );
         self::assertTrue(CctvConcernStatus::Fixed->isCompleted());
         self::assertFalse(CctvConcernStatus::InProgress->isCompleted());
+        self::assertSame(['Open', 'In Progress'], CctvConcernStatus::activeValues());
+        self::assertSame(['Fixed', 'Closed'], CctvConcernStatus::completedValues());
     }
 
     public function test_it_ticket_status_transition_helpers_are_explicit(): void

@@ -6,103 +6,79 @@ namespace App\Services\Maintenance;
 
 use App\Models\BusDetail;
 use App\Models\Location;
-use App\Models\PartsOut;
-use App\Models\Product;
-use App\Models\Receiving;
-use App\Models\StockTransfer;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\Repositories\Contracts\Fleet\BusDetailRepositoryInterface;
+use App\Repositories\Contracts\Maintenance\LocationRepositoryInterface;
+use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
+/**
+ * Shared look-ups of the inventory pages (Parts Issuance, Receiving Area, Stock Transfer):
+ * the stockrooms a user may use and the vehicle list.
+ */
 final class InventoryDirectoryService
 {
-    public function partsOuts(string $search, ?int $locationId): LengthAwarePaginator
+    public function __construct(
+        private readonly LocationRepositoryInterface $locations,
+        private readonly BusDetailRepositoryInterface $vehicles,
+    ) {}
+
+    /** The stockroom the user is tied to (`users.location_id`), or null when they see every stockroom. */
+    public function userLocationId(Request $request): ?int
     {
-        return PartsOut::query()
-            ->with(['vehicle', 'creator', 'location'])
-            ->withCount('items')
-            ->when($locationId, fn (Builder $query) => $query->where('location_id', $locationId))
-            ->when(trim($search) !== '', function (Builder $query) use ($search): void {
-                $query->where(function (Builder $query) use ($search): void {
-                    $query->where('parts_out_number', 'like', "%{$search}%")
-                        ->orWhere('mechanic_name', 'like', "%{$search}%")
-                        ->orWhere('requested_by', 'like', "%{$search}%")
-                        ->orWhere('job_order_no', 'like', "%{$search}%")
-                        ->orWhere('issued_date', 'like', "%{$search}%")
-                        ->orWhereHas('location', fn (Builder $locationQuery) => $locationQuery->where('name', 'like', "%{$search}%"))
-                        ->orWhereHas('vehicle', function (Builder $vehicleQuery) use ($search): void {
-                            $vehicleQuery->where('plate_number', 'like', "%{$search}%")
-                                ->orWhere('body_number', 'like', "%{$search}%")
-                                ->orWhere('name', 'like', "%{$search}%")
-                                ->orWhere('garage', 'like', "%{$search}%");
-                        });
-                });
-            })
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+        $locationId = $request->user()?->location_id;
+
+        return $locationId ? (int) $locationId : null;
     }
 
-    public function receivings(string $search, ?int $locationId): LengthAwarePaginator
+    /** 403 when the user is tied to another stockroom than the record's. */
+    public function assertLocationAccess(Request $request, int $locationId, string $message): void
     {
-        return Receiving::query()
-            ->with(['location', 'receiver'])
-            ->withCount('items')
-            ->when($locationId, fn (Builder $query) => $query->where('location_id', $locationId))
-            ->when(trim($search) !== '', function (Builder $query) use ($search): void {
-                $query->where(function (Builder $query) use ($search): void {
-                    $query->where('receiving_number', 'like', "%{$search}%")
-                        ->orWhere('delivered_by', 'like', "%{$search}%")
-                        ->orWhere('remarks', 'like', "%{$search}%")
-                        ->orWhereHas('location', fn (Builder $locationQuery) => $locationQuery->where('name', 'like', "%{$search}%"));
-                });
-            })
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+        $userLocationId = $this->userLocationId($request);
+        abort_if($userLocationId !== null && $userLocationId !== $locationId, 403, $message);
     }
 
-    public function stockTransfers(string $search): LengthAwarePaginator
+    /**
+     * Product ids already picked in a form (`exclude_ids=1,2,3` or `exclude_ids[]=1`), left out
+     * of the product search.
+     *
+     * @return list<int>
+     */
+    public function excludeIds(Request $request): array
     {
-        return StockTransfer::query()
-            ->with(['fromLocation', 'toLocation', 'creator'])
-            ->withCount('items')
-            ->when(trim($search) !== '', function (Builder $query) use ($search): void {
-                $query->where(function (Builder $query) use ($search): void {
-                    $query->where('transfer_number', 'like', "%{$search}%")
-                        ->orWhere('requested_by', 'like', "%{$search}%")
-                        ->orWhere('received_by', 'like', "%{$search}%")
-                        ->orWhere('remarks', 'like', "%{$search}%");
-                });
-            })
-            ->latest()
-            ->paginate(10)
-            ->withQueryString();
+        $raw = $request->input('exclude_ids', '');
+
+        return collect(is_array($raw) ? Arr::flatten($raw) : explode(',', (string) $raw))
+            ->filter(fn (mixed $id): bool => is_numeric($id))
+            ->map(fn (mixed $id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
     }
 
-    /** @return Collection<int, Location> */
+    /** @return Collection<int, Location> active stockrooms by name, only $locationId when given */
     public function activeLocations(?int $locationId = null): Collection
     {
-        return Location::query()
-            ->where('is_active', true)
-            ->when($locationId, fn (Builder $query) => $query->whereKey($locationId))
-            ->orderBy('name')
-            ->get();
+        return $this->locations->active($locationId);
     }
 
-    /** @return Collection<int, BusDetail> */
-    public function vehicles(): Collection
+    /** @return Collection<int, array{value: string, label: string}> */
+    public function locationOptions(?int $locationId = null): Collection
     {
-        return BusDetail::query()->orderBy('plate_number')->get();
+        return $this->activeLocations($locationId)
+            ->map(fn (Location $location): array => ['value' => (string) $location->id, 'label' => (string) $location->name])
+            ->values();
     }
 
-    /** @return Collection<int, Product> */
-    public function products(): Collection
+    /** @return Collection<int, array{value: string, label: string, hint: string}> */
+    public function vehicleOptions(): Collection
     {
-        return Product::query()
-            ->with('category')
-            ->select(['id', 'category_id', 'product_name', 'supplier_name', 'unit', 'part_number', 'details', 'stock_qty'])
-            ->orderBy('product_name')
-            ->get();
+        return $this->vehicles->allByPlate()
+            ->map(fn (BusDetail $vehicle): array => [
+                'value' => (string) $vehicle->id,
+                'label' => ($vehicle->plate_number ?? 'N/A').' — '.($vehicle->body_number ?? 'No Body No.'),
+                'hint' => trim(($vehicle->name ?? '').($vehicle->garage ? ' · '.$vehicle->garage : '')),
+            ])
+            ->values();
     }
 }

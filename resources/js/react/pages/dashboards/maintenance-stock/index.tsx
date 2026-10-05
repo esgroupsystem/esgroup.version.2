@@ -146,7 +146,7 @@ export default function MaintenanceStockDashboard({ filters, locationNames, tota
 
                 <div className="border-t px-6 pt-4">
                     <Tabs value={filters.tab} onValueChange={(tab) => router.get(urls.index, query({ tab: tab as TabKey }), { preserveScroll: true, preserveState: true })}>
-                        <TabsList>
+                        <TabsList className="max-w-full justify-start overflow-x-auto">
                             <TabsTrigger value="main">
                                 {locationNames.main} <Badge variant="secondary">{main.total}</Badge>
                             </TabsTrigger>
