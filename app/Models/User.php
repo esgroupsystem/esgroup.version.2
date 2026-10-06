@@ -125,4 +125,15 @@ class User extends Authenticatable
     {
         return $this->getRoleNames()->first();
     }
+
+    /**
+     * Display name. The users table has no `name` column (it is `full_name`), so every
+     * `$user->name` used to be null and showed "N/A" / "System" instead of the person.
+     */
+    public function getNameAttribute(): ?string
+    {
+        $fullName = trim((string) ($this->attributes['full_name'] ?? ''));
+
+        return $fullName !== '' ? $fullName : ($this->attributes['username'] ?? null);
+    }
 }

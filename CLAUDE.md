@@ -275,6 +275,7 @@ Rules:
 
 - The user's long-running `npm run dev` can serve a stale `react.css` that lacks newly used arbitrary classes (e.g. `max-h-[90vh]`). The production build is correct. For browser checks, route `react.css` to the built CSS file in `public/build/assets/`, and tell the user to restart `npm run dev`.
 - The shadcn CLI here writes `import { cn } from "cn"` and installs a bogus `cn` package. After any `shadcn add`: fix imports to `@/lib/utils`, then `npm uninstall cn next-themes`. Prefer copying the registry file over overwriting existing components.
+- The `users` table has **no `name` column** (it is `full_name`, plus `username`). `User::getNameAttribute()` returns `full_name`, else `username`, so `$user->name` is safe; prefer `full_name` in new code. Before this, every `->name` on a user relation was null ("Encoded by: N/A", "Created by: System").
 - Lazy loading is disabled outside production (`Model::preventLazyLoading()`), so eager-load relations.
 - `Collection::groupBy` keys that look numeric become ints. Under `strict_types`, type such map callbacks as `int|string`.
 - Shell: heredocs and `sed` with backslashes or `$` often break. Prefer the Edit/Write tools, or a small `node -e` script, for code edits.

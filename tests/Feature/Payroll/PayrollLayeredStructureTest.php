@@ -167,6 +167,26 @@ final class PayrollLayeredStructureTest extends TestCase
         $this->assertDatabaseHas('payroll_attendance_adjustments', ['id' => $ot->id]);
     }
 
+    public function test_adjustment_list_shows_who_encoded_each_record(): void
+    {
+        $user = $this->userWith([...self::PERMISSIONS, 'payroll.all-access']);
+        $user->update(['full_name' => 'Kazaira Biaco']);
+        $noFullName = User::factory()->create(['full_name' => '', 'username' => 'clerk01']);
+        $person = $this->person('5002');
+        $base = [
+            'employee_biometric_id' => $person->id, 'employee_name' => 'Person 5002', 'adjustment_type' => PayrollAttendanceAdjustment::TYPE_OVERTIME,
+            'status' => PayrollAttendanceAdjustment::STATUS_PENDING, 'adjusted_time_in' => '17:00', 'adjusted_time_out' => '19:00', 'reason' => 'Rush',
+        ];
+        PayrollAttendanceAdjustment::query()->create([...$base, 'work_date' => '2026-10-15', 'encoded_by' => $user->id, 'encoded_at' => '2026-10-15 09:00:00']);
+        PayrollAttendanceAdjustment::query()->create([...$base, 'work_date' => '2026-10-14', 'encoded_by' => $noFullName->id]);
+        PayrollAttendanceAdjustment::query()->create([...$base, 'work_date' => '2026-10-13']);
+
+        // "N/A" used to show for everyone: the resource read users.name, a column that does not exist.
+        $this->as($user)->get(route('payroll-attendance-adjustments.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
+            ->where('adjustments.data', fn ($rows) => collect($rows)->pluck('encoder_name')->map(fn ($name) => $name ?? '(none)')->sort()->values()->all() === ['(none)', 'Kazaira Biaco', 'clerk01']));
+        $this->assertSame('Kazaira Biaco', $user->fresh()->name);
+    }
+
     private function payroll(string $group, string $number, string $status): Payroll
     {
         return Payroll::query()->create([

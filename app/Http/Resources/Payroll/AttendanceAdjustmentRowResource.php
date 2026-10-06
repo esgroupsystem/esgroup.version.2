@@ -59,7 +59,7 @@ final class AttendanceAdjustmentRowResource extends JsonResource
             'effect_positive' => ! ($isOvertime && ! $approved),
             'ignore_late' => (bool) $this->ignore_late,
             'ignore_undertime' => (bool) $this->ignore_undertime,
-            'encoder_name' => $this->encoder?->name,
+            'encoder_name' => $this->encoder?->name ?: ($this->encoded_by ? 'Unknown user' : null),
             'decision' => match (true) {
                 $approved && $this->approved_by => [
                     'by' => $this->approver?->full_name ?: ($this->approver?->name ?: 'Unknown user'),
