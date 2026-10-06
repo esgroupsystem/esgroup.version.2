@@ -328,7 +328,8 @@ class PayrollComputationService
                 ->groupBy(fn ($row): int => (int) $row->employee_biometric_id);
 
             return $employees->map(function (EmployeeBiometric $employee) use ($payroll, $summaries, $startDate, $endDate, $cutoffType): PayrollItem {
-                $payroll->garage_group = (string) $employee->group_name;
+                // In memory only (never saved): the custom rules read the group of the employee being tested.
+                $payroll->setAttribute('garage_group', (string) $employee->group_name);
                 $rows = $summaries->get((int) $employee->id, collect());
 
                 $item = $rows->isEmpty()
@@ -458,7 +459,7 @@ class PayrollComputationService
             ->where('payroll_id', $closingPayroll->id)
             ->get();
 
-        /** @var \Illuminate\Support\Collection<string, bool> $existingKeys */
+        /** @var Collection<string, bool> $existingKeys */
         $existingKeys = $existingItems
             ->map(fn (PayrollItem $item): ?string => $this->payrollItemIdentityKey($item))
             ->filter()
@@ -1112,7 +1113,10 @@ class PayrollComputationService
                 'overtime_breakdown' => $overtime,
                 'night_differential' => $nightDifferential,
                 'adjustment_tags' => $this->buildAdjustmentTags($manualAdjustments, $overtime, $holiday, $rows),
-                'daily_status_breakdown' => $rows->groupBy(fn ($row) => strtolower((string) ($row->attendance_status ?? 'none')))->map->count()->toArray(),
+                'daily_status_breakdown' => $rows
+                    ->groupBy(fn ($row): string => strtolower((string) ($row->attendance_status ?? 'none')))
+                    ->map(fn (Collection $group): int => $group->count())
+                    ->all(),
             ],
         ]);
 

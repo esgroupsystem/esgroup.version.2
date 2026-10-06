@@ -43,7 +43,9 @@ final class EmployeeRateService
     public function paginate(string $search, string $group, string $employmentStatus, string|array|null $allowedGroups): LengthAwarePaginator
     {
         $page = $this->salaries->paginateDirectory($search, $group, $employmentStatus, $allowedGroups);
-        $page->getCollection()->each(fn (PayrollEmployeeSalary $salary) => $salary->setAttribute('payroll_preview', $this->deductions->salaryPreview($salary)));
+        foreach ($page->items() as $salary) {
+            $salary->setAttribute('payroll_preview', $this->deductions->salaryPreview($salary));
+        }
 
         return $page;
     }

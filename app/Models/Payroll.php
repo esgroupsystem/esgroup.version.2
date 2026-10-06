@@ -21,7 +21,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property \Carbon\CarbonInterface|null $period_start
  * @property \Carbon\CarbonInterface|null $period_end
  * @property string|null $status
- * @property-read int|string|null $garage_group
  * @property-read string $cutoff_label
  * @property-read string $contribution_label
  * @property-read string $garage_group_label
