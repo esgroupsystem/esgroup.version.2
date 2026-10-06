@@ -91,6 +91,9 @@ return [
          */
         'undertime_grace_minutes' => 5,
         'undertime_deduction_block_minutes' => 30,
+
+        // Punches this close to the first time-in are a double scan, not a time-out.
+        'duplicate_punch_window_minutes' => 30,
     ],
 
     /*
@@ -165,6 +168,15 @@ return [
         'special_not_worked_multiplier' => 0.00,
     ],
 
+    /*
+    | Total day rate used as the statutory floor for holiday / rest-day work,
+    | overtime and night differential when a holiday falls on a rest day.
+    */
+    'day_multipliers' => [
+        'regular_holiday_rest_day' => 2.60,
+        'special_holiday_rest_day' => 1.50,
+    ],
+
     'premiums' => [
         'standard_daily_hours' => 8,
         'overtime_multiplier' => 1.25,
@@ -209,5 +221,25 @@ return [
         'sss' => 'first_cutoff',
         'philhealth' => 'first_cutoff',
         'pagibig' => 'first_cutoff',
+    ],
+
+    /*
+    | PhilHealth and Pag-IBIG rates. Payroll Settings can override every value
+    | from the database with an effective date; these are the starting values.
+    */
+    'government' => [
+        'philhealth' => [
+            'premium_rate' => 0.05,
+            'employee_share' => 0.50,
+            'income_floor' => 10000.00,
+            'income_ceiling' => 100000.00,
+        ],
+        'pagibig' => [
+            'low_employee_rate' => 0.01,
+            'regular_employee_rate' => 0.02,
+            'employer_rate' => 0.02,
+            'low_salary_threshold' => 1500.00,
+            'maximum_fund_salary' => 10000.00,
+        ],
     ],
 ];

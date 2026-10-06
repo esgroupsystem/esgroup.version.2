@@ -18,6 +18,8 @@ use App\Models\PayrollEmployeeSalary;
 use App\Models\PayrollEmployeeSalaryOtherDeduction;
 use App\Models\PayrollItem;
 use App\Models\PayrollReportLog;
+use App\Models\PayrollRule;
+use App\Models\PayrollSettingVersion;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
@@ -144,6 +146,8 @@ class PayrollAuditService
             PaymentLog::class,
             PayrollReportLog::class,
             Holiday::class,
+            PayrollSettingVersion::class,
+            PayrollRule::class,
         ], true);
     }
 
@@ -161,6 +165,7 @@ class PayrollAuditService
             $model instanceof PayrollEmployeeSalaryOtherDeduction => 'employee_rate',
             $model instanceof EmployeePlottingSchedule => 'schedule',
             $model instanceof Holiday => 'holiday',
+            $model instanceof PayrollSettingVersion, $model instanceof PayrollRule => 'settings',
             default => 'payroll',
         };
     }
@@ -303,6 +308,7 @@ class PayrollAuditService
                 ?: data_get($model, 'name'),
             'schedule' => data_get($model, 'employee_name'),
             'holiday' => data_get($model, 'name'),
+            'settings' => data_get($model, 'label') ?: data_get($model, 'name'),
             default => null,
         };
 

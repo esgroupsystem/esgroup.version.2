@@ -151,6 +151,11 @@ final class PayrollItemDetailResource extends JsonResource
                 'sim_load_per_cutoff' => (float) data_get($allowance, 'sim_load_per_cutoff', 0),
                 'total_per_cutoff' => (float) data_get($allowance, 'allowance_per_cutoff', 0),
             ],
+            'customRules' => [
+                'earnings' => self::ruleLines(data_get($meta, 'custom_rules.earnings', [])),
+                'deductions' => self::ruleLines(data_get($meta, 'custom_rules.deductions', [])),
+            ],
+            'settingsVersion' => data_get($meta, 'settings_version.label'),
             'salaryDeductions' => collect(data_get($meta, 'salary_deductions', []))->map(fn ($row): array => [
                 'name' => (string) data_get($row, 'name', 'Deduction'),
                 'schedule' => str_replace('_', ' ', (string) data_get($row, 'deduction_schedule', '—')),
@@ -315,5 +320,23 @@ final class PayrollItemDetailResource extends JsonResource
             'payable_hours' => (float) ($row->payable_hours ?? 0),
             'remarks' => filled($row->remarks) ? (string) $row->remarks : null,
         ];
+    }
+
+    /**
+     * Payroll Rules lines stored on the item (meta.custom_rules.*).
+     *
+     * @return list<array{name: string, description: string, amount: float, error: string|null}>
+     */
+    private static function ruleLines(mixed $lines): array
+    {
+        return collect(is_array($lines) ? $lines : [])
+            ->map(fn ($line): array => [
+                'name' => (string) data_get($line, 'name', 'Rule'),
+                'description' => (string) data_get($line, 'description', ''),
+                'amount' => (float) data_get($line, 'amount', 0),
+                'error' => data_get($line, 'error'),
+            ])
+            ->values()
+            ->all();
     }
 }

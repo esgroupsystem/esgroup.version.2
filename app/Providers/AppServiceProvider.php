@@ -17,8 +17,11 @@ use App\Models\PayrollEmployeeSalary;
 use App\Models\PayrollEmployeeSalaryOtherDeduction;
 use App\Models\PayrollItem;
 use App\Models\PayrollReportLog;
+use App\Models\PayrollRule;
+use App\Models\PayrollSettingVersion;
 use App\Models\User;
 use App\Observers\PayrollAuditObserver;
+use App\Services\Payroll\PayrollSettingsService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -29,6 +32,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Throwable;
 
 final class AppServiceProvider extends ServiceProvider
 {
@@ -37,7 +41,8 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // One instance per request, so the settings applied for a payroll run are the ones it reports.
+        $this->app->singleton(PayrollSettingsService::class);
     }
 
     /**
@@ -96,9 +101,21 @@ final class AppServiceProvider extends ServiceProvider
             PayrollReportLog::class,
             Holiday::class,
             MirasolBiometricsLog::class,
+            PayrollSettingVersion::class,
+            PayrollRule::class,
         ] as $auditedModel) {
             $auditedModel::observe(PayrollAuditObserver::class);
         }
+
+        // Payroll Settings: rates in effect today replace the config file values. A payroll
+        // run re-applies the version of its own period (PayrollSettingsService::using()).
+        $this->app->booted(function (): void {
+            try {
+                $this->app->make(PayrollSettingsService::class)->apply();
+            } catch (Throwable) {
+                // Table not migrated yet (fresh install, early migrations): keep the config files.
+            }
+        });
 
         Blade::if('role', function (...$roles) {
             return Auth::check() && Auth::user()->hasAnyRole($roles);

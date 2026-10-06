@@ -42,4 +42,11 @@ interface PayrollRepositoryInterface
 
     /** Item with employee (company), payment logs and benefit settlement, for the item page. */
     public function loadItemForShow(PayrollItem $item): PayrollItem;
+
+    /**
+     * How many payrolls were computed with each Payroll Settings version (meta.settings.version_id).
+     *
+     * @return array<int, array{total: int, finalized: int}> version id => counts
+     */
+    public function settingsVersionUsage(): array;
 }

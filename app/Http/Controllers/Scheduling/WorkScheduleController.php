@@ -55,6 +55,11 @@ final class WorkScheduleController extends Controller
     {
         $this->schedules->savePermanentSchedules($request->validated('schedule', []));
 
+        if ($profile = $request->integer('return_profile')) {
+            return to_route('biometrics.employees.show', $profile)
+                ->with('success', 'Work schedule saved. Rebuild Attendance Summary before payroll checking.');
+        }
+
         return redirect()
             ->route('payroll-plotting.index', $request->only(self::FILTERS))
             ->with('success', 'Permanent schedule saved successfully. Rebuild Attendance Summary before payroll checking.');

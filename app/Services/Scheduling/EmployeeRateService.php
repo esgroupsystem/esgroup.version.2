@@ -62,22 +62,38 @@ final class EmployeeRateService
      */
     public function people(string|array|null $allowedGroups): Collection
     {
-        return $this->biometrics->payrollActiveWithSchedule($allowedGroups)->map(function (EmployeeBiometric $employee): array {
-            $snapshot = $this->identity->snapshot($employee);
-            $schedule = $employee->permanentSchedule;
+        return $this->biometrics->payrollActiveWithSchedule($allowedGroups)
+            ->map(fn (EmployeeBiometric $employee): array => $this->person($employee))
+            ->values();
+    }
 
-            return [
-                'employee_biometric_id' => (int) $employee->id,
-                'biometric_employee_id' => $snapshot['biometric_employee_id'],
-                'employee_no' => $snapshot['employee_no'],
-                'employee_name' => $snapshot['employee_name'],
-                'display_name' => PayrollEmployeeNameFormatter::display($snapshot['employee_name']),
-                'crosschex_id' => $snapshot['crosschex_id'],
-                'group_name' => $employee->group_name !== null ? (string) $employee->group_name : null,
-                'paid_work_hours' => (float) ($schedule?->paidWorkHours() ?? 8.0),
-                'workday_label' => $schedule?->resolvedWorkdayType()->shortLabel() ?? '8 hrs + 1 hr lunch',
-            ];
-        })->values();
+    /**
+     * One entry of people() for a single employee (the employee profile).
+     *
+     * @return array<string, mixed>
+     */
+    public function person(EmployeeBiometric $employee): array
+    {
+        $snapshot = $this->identity->snapshot($employee);
+        $schedule = $employee->permanentSchedule;
+
+        return [
+            'employee_biometric_id' => (int) $employee->id,
+            'biometric_employee_id' => $snapshot['biometric_employee_id'],
+            'employee_no' => $snapshot['employee_no'],
+            'employee_name' => $snapshot['employee_name'],
+            'display_name' => PayrollEmployeeNameFormatter::display($snapshot['employee_name']),
+            'crosschex_id' => $snapshot['crosschex_id'],
+            'group_name' => $employee->group_name !== null ? (string) $employee->group_name : null,
+            'paid_work_hours' => (float) ($schedule?->paidWorkHours() ?? 8.0),
+            'workday_label' => $schedule?->resolvedWorkdayType()->shortLabel() ?? '8 hrs + 1 hr lunch',
+        ];
+    }
+
+    /** The rate the employee profile shows and edits (active first, newest), or null. */
+    public function forEmployee(EmployeeBiometric $employee): ?PayrollEmployeeSalary
+    {
+        return $this->salaries->forEmployee((int) $employee->id);
     }
 
     /** Rate with its other deductions and the person's permanent schedule, for the edit form. */

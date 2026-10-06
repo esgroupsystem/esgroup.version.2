@@ -39,6 +39,9 @@ use App\Http\Controllers\Payroll\PayrollAttendanceAdjustmentController;
 use App\Http\Controllers\Payroll\PayrollAuditLogController;
 use App\Http\Controllers\Payroll\PayrollBenefitSettlementController;
 use App\Http\Controllers\Payroll\PayrollController;
+use App\Http\Controllers\Payroll\PayrollRuleController;
+use App\Http\Controllers\Payroll\PayrollSettingController;
+use App\Http\Controllers\Payroll\PayrollSimulationController;
 use App\Http\Controllers\Scheduling\BiometricEmployeeController;
 use App\Http\Controllers\Scheduling\EmployeeRateController;
 use App\Http\Controllers\Scheduling\HolidayController;
@@ -46,6 +49,7 @@ use App\Http\Controllers\Scheduling\WorkScheduleController;
 use App\Http\Controllers\Security\RoleController;
 use App\Http\Controllers\Security\UserManagementController;
 use App\Http\Middleware\ForceLockscreen;
+use App\Support\Navigation\MainNavigation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -825,6 +829,84 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
+    | Payroll Settings (rates by effective date, custom rules, test computation)
+    |--------------------------------------------------------------------------
+    */
+
+    Route::prefix('payroll-settings')
+        ->middleware(['auth', 'payroll.group'])
+        ->name('payroll-settings.')
+        ->group(function (): void {
+            Route::controller(PayrollSettingController::class)->group(function (): void {
+                Route::get('/', 'index')
+                    ->middleware('permission:payroll-settings.view')
+                    ->name('index');
+                Route::get('/versions/create', 'create')
+                    ->middleware('permission:payroll-settings.manage')
+                    ->name('versions.create');
+                Route::post('/versions', 'store')
+                    ->middleware('permission:payroll-settings.manage')
+                    ->name('versions.store');
+                Route::get('/versions/{version}/edit', 'edit')
+                    ->middleware('permission:payroll-settings.manage')
+                    ->whereNumber('version')
+                    ->name('versions.edit');
+                Route::put('/versions/{version}', 'update')
+                    ->middleware('permission:payroll-settings.manage')
+                    ->whereNumber('version')
+                    ->name('versions.update');
+                Route::delete('/versions/{version}', 'destroy')
+                    ->middleware('permission:payroll-settings.manage')
+                    ->whereNumber('version')
+                    ->name('versions.destroy');
+            });
+
+            Route::controller(PayrollRuleController::class)->group(function (): void {
+                Route::get('/rules', 'index')
+                    ->middleware('permission:payroll-settings.view')
+                    ->name('rules.index');
+                Route::post('/rules/check-formula', 'checkFormula')
+                    ->middleware('permission:payroll-settings.view')
+                    ->name('rules.check');
+                Route::get('/rules/create', 'create')
+                    ->middleware('permission:payroll-settings.manage')
+                    ->name('rules.create');
+                Route::post('/rules', 'store')
+                    ->middleware('permission:payroll-settings.manage')
+                    ->name('rules.store');
+                Route::get('/rules/{rule}/edit', 'edit')
+                    ->middleware('permission:payroll-settings.manage')
+                    ->whereNumber('rule')
+                    ->name('rules.edit');
+                Route::put('/rules/{rule}', 'update')
+                    ->middleware('permission:payroll-settings.manage')
+                    ->whereNumber('rule')
+                    ->name('rules.update');
+                Route::put('/rules/{rule}/active', 'active')
+                    ->middleware('permission:payroll-settings.manage')
+                    ->whereNumber('rule')
+                    ->name('rules.active');
+                Route::delete('/rules/{rule}', 'destroy')
+                    ->middleware('permission:payroll-settings.manage')
+                    ->whereNumber('rule')
+                    ->name('rules.destroy');
+            });
+
+            Route::controller(PayrollSimulationController::class)->group(function (): void {
+                Route::get('/test', 'index')
+                    ->middleware('permission:payroll-settings.view')
+                    ->name('test.index');
+                Route::post('/test/run', 'run')
+                    ->middleware(['permission:payroll-settings.view', 'throttle:expensive'])
+                    ->name('test.run');
+                Route::post('/test/contributions', 'contributions')
+                    ->middleware('permission:payroll-settings.view')
+                    ->name('test.contributions');
+            });
+        });
+
+    /*
+    |--------------------------------------------------------------------------
     | Payroll
     |--------------------------------------------------------------------------
     */
@@ -1334,8 +1416,14 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
         ->controller(BiometricEmployeeController::class)
         ->group(function (): void {
             Route::get('/employees', 'index')
-                ->middleware('permission:biometrics.view')
+                ->middleware(['payroll.group', 'permission:'.MainNavigation::EMPLOYEE_PERMISSIONS])
                 ->name('employees.index');
+
+            // Employee profile: Details, Work schedule and Rates tabs (each tab checks its own permission).
+            Route::get('/employees/{employeeBiometric}', 'show')
+                ->middleware(['payroll.group', 'permission:'.MainNavigation::EMPLOYEE_PERMISSIONS])
+                ->whereNumber('employeeBiometric')
+                ->name('employees.show');
 
             Route::post('/employees/sync', 'sync')
                 ->middleware('permission:biometrics.sync')

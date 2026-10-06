@@ -1076,8 +1076,8 @@ class DailyAttendanceSummaryService
 
         $minutesBetweenFirstAndLast = (int) $actualTimeIn->diffInMinutes($candidateTimeOut);
 
-        if ($minutesBetweenFirstAndLast <= self::DUPLICATE_PUNCH_WINDOW_MINUTES) {
-            $remarks[] = 'Biometric punches within 30 minutes from first time in were treated as duplicate scans, not time out.';
+        if ($minutesBetweenFirstAndLast <= (int) config('payroll.attendance.duplicate_punch_window_minutes', self::DUPLICATE_PUNCH_WINDOW_MINUTES)) {
+            $remarks[] = 'Biometric punches within '.(int) config('payroll.attendance.duplicate_punch_window_minutes', self::DUPLICATE_PUNCH_WINDOW_MINUTES).' minutes from first time in were treated as duplicate scans, not time out.';
 
             return [$actualTimeIn, null];
         }

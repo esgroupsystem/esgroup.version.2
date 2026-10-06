@@ -121,6 +121,10 @@ class PermissionSeeder extends Seeder
             // Payroll audit trail
             'payroll-audit-logs.view',
 
+            // Payroll Settings (rates, custom rules, test computation)
+            'payroll-settings.view',
+            'payroll-settings.manage',
+
             // Claims
             'claims.view',
             'claims.create',

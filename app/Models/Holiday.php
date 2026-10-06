@@ -72,9 +72,19 @@ class Holiday extends Model
         return $query->whereDate('observed_date', $date);
     }
 
+    /**
+     * Starting multipliers for a new holiday of this type, from Payroll Settings
+     * (config payroll.holiday.*); STANDARD_MULTIPLIERS is the fallback.
+     */
     public static function standardMultipliers(string $type): array
     {
-        return self::STANDARD_MULTIPLIERS[$type]
-            ?? self::STANDARD_MULTIPLIERS[self::TYPE_REGULAR];
+        $type = $type === self::TYPE_SPECIAL ? self::TYPE_SPECIAL : self::TYPE_REGULAR;
+        $standard = self::STANDARD_MULTIPLIERS[$type];
+        $prefix = $type === self::TYPE_SPECIAL ? 'special' : 'regular';
+
+        return [
+            'not_worked_multiplier' => (float) config("payroll.holiday.{$prefix}_not_worked_multiplier", $standard['not_worked_multiplier']),
+            'worked_multiplier' => (float) config("payroll.holiday.{$prefix}_worked_multiplier", $standard['worked_multiplier']),
+        ];
     }
 }

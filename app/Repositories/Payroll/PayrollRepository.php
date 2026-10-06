@@ -104,4 +104,24 @@ final class PayrollRepository implements PayrollRepositoryInterface
     {
         return $item->load(['employeeBiometric.company', 'paymentLogs', 'benefitSettlement']);
     }
+
+    public function settingsVersionUsage(): array
+    {
+        $usage = [];
+
+        Payroll::query()
+            ->whereNotNull('meta->settings->version_id')
+            ->get(['id', 'status', 'meta'])
+            ->each(function (Payroll $payroll) use (&$usage): void {
+                $id = (int) data_get($payroll->meta, 'settings.version_id');
+                $usage[$id] ??= ['total' => 0, 'finalized' => 0];
+                $usage[$id]['total']++;
+
+                if ($payroll->status === 'finalized') {
+                    $usage[$id]['finalized']++;
+                }
+            });
+
+        return $usage;
+    }
 }

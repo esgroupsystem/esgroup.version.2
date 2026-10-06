@@ -20,6 +20,9 @@ interface EmployeeSalaryRepositoryInterface
      */
     public function paginateDirectory(string $search, string $group, string $employmentStatus, string|array|null $allowedGroups, int $perPage = 15): LengthAwarePaginator;
 
+    /** The rate payroll uses for a person (active first, newest), for the employee profile. */
+    public function forEmployee(int $employeeBiometricId): ?PayrollEmployeeSalary;
+
     /** The person's latest rate, locked. */
     public function latestForEmployeeForUpdate(int $employeeBiometricId): ?PayrollEmployeeSalary;
 

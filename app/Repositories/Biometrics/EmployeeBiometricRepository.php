@@ -30,7 +30,7 @@ final class EmployeeBiometricRepository implements EmployeeBiometricRepositoryIn
         $status = $filters['employment_status'];
 
         return EmployeeBiometric::query()
-            ->with(['company', 'hrEmployee'])
+            ->with(['company', 'hrEmployee', 'permanentSchedule', 'activeSalaryProfile'])
             ->tap(fn (Builder $query) => $this->search($query, $filters['search'], self::DIRECTORY_SEARCH))
             ->when($status !== '', fn (Builder $query) => match ($status) {
                 EmployeeBiometric::STATUS_ACTIVE => $query->payrollActive(),

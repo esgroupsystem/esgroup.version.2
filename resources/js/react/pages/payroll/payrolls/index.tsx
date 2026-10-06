@@ -61,7 +61,7 @@ function PayrollIndex({ payrolls, filters, cutoffTypes, payrollGroups, can, urls
                     <ModalLink href={row.urls.show} className="font-medium hover:underline" onClick={(event) => event.stopPropagation()}>
                         {row.payroll_number}
                     </ModalLink>
-                    <div className="max-w-56 text-xs text-muted-foreground">{row.cutoff_label}</div>
+                    <div className="w-56 text-xs whitespace-normal text-muted-foreground">{row.cutoff_label}</div>
                 </>
             ),
             filter: { type: 'select', param: 'cutoff_type', options: options(cutoffTypes), placeholder: 'All cutoffs' },

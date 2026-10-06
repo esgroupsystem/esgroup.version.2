@@ -1,5 +1,5 @@
-import { router, useForm } from '@inertiajs/react';
-import { Building2, CloudDownload, Link2, Loader2, Pencil, Plus, Save, UserCheck, UserX, Users } from 'lucide-react';
+import { Link, router, useForm } from '@inertiajs/react';
+import { Banknote, Building2, CalendarClock, CloudDownload, Link2, Loader2, Pencil, Plus, Save, UserCheck, UserX, Users } from 'lucide-react';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { DataTable, type DataTableColumn } from '@/components/data-table/data-table';
 import { FormField } from '@/components/form-field';
@@ -33,6 +33,9 @@ interface EmployeeRow {
     total_logs: number;
     hr_employee: { name: string; url: string } | null;
     edit_url: string;
+    show_url: string;
+    schedule: { label: string; hours: string | null } | null;
+    rate: { visible: boolean; label: string | null };
 }
 
 interface Filters {
@@ -49,18 +52,19 @@ interface Props {
     counts: { total: number; active: number; payroll_active: number; inactive: number; without_company: number };
     groups: string[];
     filters: Filters;
-    can: { sync: boolean; edit: boolean; createCompany: boolean };
-    urls: { index: string; sync: string; companyStore: string };
+    can: { sync: boolean; edit: boolean; createCompany: boolean; bulkSchedule: boolean; ratesList: boolean };
+    urls: { index: string; sync: string; companyStore: string; bulkSchedule: string; ratesList: string };
 }
 
 const GROUP_LABELS: Record<string, string> = { '1': 'Mirasol / Balintawak Payroll', '2': 'Gonzales Payroll' };
 const pct = (value: number, total: number) => (total > 0 ? Math.round((value / total) * 100) : 0);
 const ACTIVE_CLASS = 'border-emerald-300 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400';
+const NOT_SET_CLASS = 'border-amber-300 text-amber-700 dark:border-amber-800 dark:text-amber-400';
 
 export default definePage<Props>({
-    title: () => 'Employee Biometrics',
+    title: () => 'Employees',
     description: () =>
-        'One clean employee record per person, built from every CrossChex source. Sync merges by employee ID, number or name and keeps your manual display fields.',
+        'One record per person with their details, work schedule and rates. Click an employee to open everything in one place. Sync merges CrossChex records by employee ID, number or name and keeps your manual fields.',
     actions: (props) => <Actions {...props} />,
     size: 'xl',
     Content: BiometricEmployeesIndex,
@@ -69,6 +73,22 @@ export default definePage<Props>({
 function Actions({ can, urls }: Props) {
     return (
         <>
+            {can.bulkSchedule && (
+                <Button variant="outline" asChild>
+                    <Link href={urls.bulkSchedule}>
+                        <CalendarClock />
+                        Bulk schedule
+                    </Link>
+                </Button>
+            )}
+            {can.ratesList && (
+                <Button variant="outline" asChild>
+                    <Link href={urls.ratesList}>
+                        <Banknote />
+                        Rates list
+                    </Link>
+                </Button>
+            )}
             {can.createCompany && <CompanyTagDialog url={urls.companyStore} />}
             {can.sync && <SyncButton url={urls.sync} />}
         </>
@@ -188,9 +208,42 @@ function BiometricEmployeesIndex({ employees, companies, counts, groups, filters
             },
         },
         {
+            key: 'work_schedule',
+            header: 'Work schedule',
+            hideBelow: 'md',
+            exportValue: (row) => (row.schedule ? [row.schedule.label, row.schedule.hours].filter(Boolean).join(' · ') : 'Not set'),
+            cell: (row) =>
+                row.schedule ? (
+                    <>
+                        <div className="text-sm whitespace-nowrap">{row.schedule.label}</div>
+                        {row.schedule.hours && <div className="text-xs whitespace-nowrap text-muted-foreground">{row.schedule.hours}</div>}
+                    </>
+                ) : (
+                    <Badge variant="outline" className={NOT_SET_CLASS}>
+                        Not set
+                    </Badge>
+                ),
+        },
+        {
+            key: 'rate',
+            header: 'Rate',
+            hideBelow: 'md',
+            exportValue: (row) => (row.rate.visible ? (row.rate.label ?? 'Not set') : ''),
+            cell: (row) =>
+                !row.rate.visible ? (
+                    <span className="text-xs text-muted-foreground">—</span>
+                ) : row.rate.label ? (
+                    <span className="text-sm whitespace-nowrap tabular-nums">{row.rate.label}</span>
+                ) : (
+                    <Badge variant="outline" className={NOT_SET_CLASS}>
+                        Not set
+                    </Badge>
+                ),
+        },
+        {
             key: 'device',
             header: 'Device',
-            hideBelow: 'xl',
+            hideBelow: '2xl',
             cell: (row) => (
                 <>
                     <div className="max-w-44 truncate text-sm" title={row.device_name}>
@@ -203,7 +256,7 @@ function BiometricEmployeesIndex({ employees, companies, counts, groups, filters
         {
             key: 'activity',
             header: 'Last check / logs',
-            hideBelow: 'lg',
+            hideBelow: 'xl',
             cell: (row) =>
                 row.last_check_date ? (
                     <>
@@ -260,8 +313,8 @@ function BiometricEmployeesIndex({ employees, companies, counts, groups, filters
             </div>
 
             <DataTable
-                title="Biometric employees"
-                description={`${employees.total.toLocaleString()} unique record${employees.total === 1 ? '' : 's'} · edit company, display name, number, status and remarks; source fields stay read-only.`}
+                title="Employees"
+                description={`${employees.total.toLocaleString()} unique record${employees.total === 1 ? '' : 's'} · click a row for details, work schedule and rates.`}
                 noun="record"
                 paginator={employees}
                 url={urls.index}
@@ -272,7 +325,7 @@ function BiometricEmployeesIndex({ employees, companies, counts, groups, filters
                 searchPlaceholder="Name, employee no. or CrossChex ID..."
                 emptyText="No biometric employees found. Sync from the Biometrics Sync logs to generate records."
                 minWidth={640}
-                onRowClick={can.edit ? (row) => openModal(row.edit_url, { mode: 'form' }) : undefined}
+                onRowClick={(row) => openModal(row.show_url, { size: 'xl' })}
                 rowActions={
                     can.edit
                         ? (row) => (
@@ -285,7 +338,7 @@ function BiometricEmployeesIndex({ employees, companies, counts, groups, filters
                                               </ModalLink>
                                           </Button>
                                       </TooltipTrigger>
-                                      <TooltipContent>Edit employee</TooltipContent>
+                                      <TooltipContent>Edit details only</TooltipContent>
                                   </Tooltip>
                               </span>
                           )

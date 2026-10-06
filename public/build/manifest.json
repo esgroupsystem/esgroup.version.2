@@ -1,76 +1,56 @@
 {
-  "_4hYwuuPd.js": {
-    "file": "assets/4hYwuuPd.js",
-    "name": "detail-dialog",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_CrTgKcAJ.js"
-    ]
-  },
-  "_8UhF34TT.js": {
-    "file": "assets/8UhF34TT.js",
-    "name": "save",
+  "_-x8hSDsh.js": {
+    "file": "assets/-x8hSDsh.js",
+    "name": "textarea",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_9W5GBpcB.js": {
-    "file": "assets/9W5GBpcB.js",
-    "name": "hourglass",
+  "_B6l2LjMa.js": {
+    "file": "assets/B6l2LjMa.js",
+    "name": "link-2",
     "imports": [
       "resources/js/react/app.tsx"
-    ]
-  },
-  "_AVFSBxLY.js": {
-    "file": "assets/AVFSBxLY.js",
-    "name": "user-x",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_B6NhanuA.js": {
-    "file": "assets/B6NhanuA.js",
-    "name": "arrow-right",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_BD7bq_wi.js": {
-    "file": "assets/BD7bq_wi.js",
-    "name": "copy",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_BDZQaRNA.js": {
-    "file": "assets/BDZQaRNA.js",
-    "name": "alert",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BnwjAuN-.js"
     ]
   },
   "_BICC2V_X.js": {
     "file": "assets/BICC2V_X.js",
     "name": "bus-status"
   },
-  "_BQ40-xUA.js": {
-    "file": "assets/BQ40-xUA.js",
-    "name": "label",
+  "_BIwv4NyT.js": {
+    "file": "assets/BIwv4NyT.js",
+    "name": "eye-off",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_BRmmJUeU.js": {
-    "file": "assets/BRmmJUeU.js",
-    "name": "undo-2",
+  "_BJkDdjnk.js": {
+    "file": "assets/BJkDdjnk.js",
+    "name": "switch",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_BSdxV9dU.js": {
-    "file": "assets/BSdxV9dU.js",
-    "name": "key-round",
+  "_BNWmg0h1.js": {
+    "file": "assets/BNWmg0h1.js",
+    "name": "settings-tabs",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_DVNUbKyE.js",
+      "_gh64BC7a.js",
+      "_CFsIhbwE.js"
+    ]
+  },
+  "_BSHVIKrj.js": {
+    "file": "assets/BSHVIKrj.js",
+    "name": "format",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_BTK0z-XT.js": {
+    "file": "assets/BTK0z-XT.js",
+    "name": "circle-alert",
     "imports": [
       "resources/js/react/app.tsx"
     ]
@@ -79,579 +59,677 @@
     "file": "assets/BTth_6r3.js",
     "name": "it-status"
   },
-  "_BUm40G1D.js": {
-    "file": "assets/BUm40G1D.js",
-    "name": "folder-open",
+  "_BfeU7vQQ.js": {
+    "file": "assets/BfeU7vQQ.js",
+    "name": "label",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_BWSVOmoA.js": {
-    "file": "assets/BWSVOmoA.js",
-    "name": "fleet-status",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_CeftEtSP.js"
-    ]
-  },
-  "_BXKdF2-J.js": {
-    "file": "assets/BXKdF2-J.js",
-    "name": "printer",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_Bbrpv1GX.js": {
-    "file": "assets/Bbrpv1GX.js",
-    "name": "file-text",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_Bf2F9k_9.js": {
-    "file": "assets/Bf2F9k_9.js",
-    "name": "link-2",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_BnwjAuN-.js": {
-    "file": "assets/BnwjAuN-.js",
-    "name": "button",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_BsdE0U4c.js": {
-    "file": "assets/BsdE0U4c.js",
-    "name": "cutoff-picker",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BQ40-xUA.js",
-      "_DMdEY9kn.js"
-    ]
-  },
-  "_BsvG-G5F.js": {
-    "file": "assets/BsvG-G5F.js",
-    "name": "check",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_C-zvx5nC.js": {
-    "file": "assets/C-zvx5nC.js",
-    "name": "chevron-left",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_C3mCdBt4.js": {
-    "file": "assets/C3mCdBt4.js",
-    "name": "inbox",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_C4RO2wXd.js": {
-    "file": "assets/C4RO2wXd.js",
-    "name": "textarea",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_C7WqDVPK.js": {
-    "file": "assets/C7WqDVPK.js",
-    "name": "boxes",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_C9vtNALK.js": {
-    "file": "assets/C9vtNALK.js",
-    "name": "form-field",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BQ40-xUA.js"
-    ]
-  },
-  "_CD0RDDVa.js": {
-    "file": "assets/CD0RDDVa.js",
+  "_BlLxgqul.js": {
+    "file": "assets/BlLxgqul.js",
     "name": "shield-alert",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_CES2EAle.js": {
-    "file": "assets/CES2EAle.js",
-    "name": "checkbox",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BsvG-G5F.js"
-    ]
-  },
-  "_CGHVSXkJ.js": {
-    "file": "assets/CGHVSXkJ.js",
-    "name": "job-order-parts",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_CES2EAle.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DHgzJ7kT.js",
-      "_CrTgKcAJ.js",
-      "_CiwBBtU3.js"
-    ]
-  },
-  "_CGIxwpha.js": {
-    "file": "assets/CGIxwpha.js",
-    "name": "print-shell",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BnwjAuN-.js",
-      "_BXKdF2-J.js"
-    ]
-  },
-  "_CJrjo6im.js": {
-    "file": "assets/CJrjo6im.js",
-    "name": "radio-group",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_CrTgKcAJ.js"
-    ]
-  },
-  "_CJrkWS1s.js": {
-    "file": "assets/CJrkWS1s.js",
-    "name": "eye-off",
+  "_Bn415zkp.js": {
+    "file": "assets/Bn415zkp.js",
+    "name": "rotate-ccw-clock",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_CL9rtUpn.js": {
-    "file": "assets/CL9rtUpn.js",
-    "name": "alert-dialog",
+  "_BsEQ_Ug7.js": {
+    "file": "assets/BsEQ_Ug7.js",
+    "name": "contribution-calculator",
     "imports": [
       "resources/js/react/app.tsx",
-      "_BnwjAuN-.js",
-      "_CrTgKcAJ.js"
+      "_Dlx0PNGo.js",
+      "_DVNUbKyE.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_DIj3nUv7.js",
+      "_BSHVIKrj.js",
+      "_DFPi7NHx.js",
+      "_CFsIhbwE.js",
+      "_CKRf_Um8.js"
     ]
   },
-  "_CLUFUizu.js": {
-    "file": "assets/CLUFUizu.js",
+  "_BuX3dBQN.js": {
+    "file": "assets/BuX3dBQN.js",
+    "name": "undo-2",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_Bw01BgqE.js": {
+    "file": "assets/Bw01BgqE.js",
+    "name": "boxes",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_BwMNkdg4.js": {
+    "file": "assets/BwMNkdg4.js",
+    "name": "save",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_ByiJ0XjR.js": {
+    "file": "assets/ByiJ0XjR.js",
+    "name": "schedule-fields",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_CKRf_Um8.js"
+    ]
+  },
+  "_C5na8yVM.js": {
+    "file": "assets/C5na8yVM.js",
+    "name": "paperclip",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_C6AiIuU-.js": {
+    "file": "assets/C6AiIuU-.js",
+    "name": "trash",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_CC6ywJ0Z.js": {
+    "file": "assets/CC6ywJ0Z.js",
+    "name": "employee-combobox",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_Dlx0PNGo.js",
+      "_eLESx6Po.js",
+      "_DVNUbKyE.js",
+      "_CVF-bng6.js"
+    ]
+  },
+  "_CFsIhbwE.js": {
+    "file": "assets/CFsIhbwE.js",
+    "name": "calculator",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_CH2bxpgu.js": {
+    "file": "assets/CH2bxpgu.js",
+    "name": "folder-open",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_CJlFg3Wu.js": {
+    "file": "assets/CJlFg3Wu.js",
+    "name": "clock",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_CK4AIYcn.js": {
+    "file": "assets/CK4AIYcn.js",
+    "name": "rollback-dialog",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_CKVnsjbv.js",
+      "_kilOfOaW.js",
+      "_Dlx0PNGo.js",
+      "_DVNUbKyE.js",
+      "_-x8hSDsh.js",
+      "_BuX3dBQN.js"
+    ]
+  },
+  "_CKRf_Um8.js": {
+    "file": "assets/CKRf_Um8.js",
+    "name": "select",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_CVF-bng6.js",
+      "_DVNUbKyE.js"
+    ]
+  },
+  "_CKVnsjbv.js": {
+    "file": "assets/CKVnsjbv.js",
+    "name": "form-field",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_BfeU7vQQ.js"
+    ]
+  },
+  "_CNMjSm22.js": {
+    "file": "assets/CNMjSm22.js",
+    "name": "bus-seat-map",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_Dlx0PNGo.js",
+      "_DNbYt_Uc.js"
+    ]
+  },
+  "_CU7WzvNa.js": {
+    "file": "assets/CU7WzvNa.js",
+    "name": "job-order-parts",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_a6kQKoi-.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_q-oreVr4.js",
+      "_DVNUbKyE.js",
+      "_C6AiIuU-.js"
+    ]
+  },
+  "_CV1ie7ma.js": {
+    "file": "assets/CV1ie7ma.js",
+    "name": "key-round",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_CVF-bng6.js": {
+    "file": "assets/CVF-bng6.js",
+    "name": "check",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_CVpnuNdr.js": {
+    "file": "assets/CVpnuNdr.js",
     "name": "building-complex",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_CLdD3jGm.js": {
-    "file": "assets/CLdD3jGm.js",
-    "name": "badge",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BnwjAuN-.js"
-    ]
-  },
-  "_CYceCrXy.js": {
-    "file": "assets/CYceCrXy.js",
-    "name": "popover",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_CrTgKcAJ.js",
-      "_N3yOfwgG.js"
-    ]
-  },
-  "_CboUIskd.js": {
-    "file": "assets/CboUIskd.js",
-    "name": "circle-alert",
+  "_CYb4Czn3.js": {
+    "file": "assets/CYb4Czn3.js",
+    "name": "eye",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_CeTW9_uy.js": {
-    "file": "assets/CeTW9_uy.js",
-    "name": "refresh-cw",
+  "_CZKoNpmJ.js": {
+    "file": "assets/CZKoNpmJ.js",
+    "name": "ellipsis",
     "imports": [
       "resources/js/react/app.tsx"
+    ]
+  },
+  "_C_sAIL8y.js": {
+    "file": "assets/C_sAIL8y.js",
+    "name": "alert-dialog",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_Dlx0PNGo.js",
+      "_DVNUbKyE.js"
+    ]
+  },
+  "_CcvuIyAc.js": {
+    "file": "assets/CcvuIyAc.js",
+    "name": "tabs",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_Dlx0PNGo.js",
+      "_DVNUbKyE.js"
     ]
   },
   "_CeftEtSP.js": {
     "file": "assets/CeftEtSP.js",
     "name": "dashboard-tones"
   },
-  "_CfXiUtWD.js": {
-    "file": "assets/CfXiUtWD.js",
-    "name": "timer",
+  "_Cmqtbx0l.js": {
+    "file": "assets/Cmqtbx0l.js",
+    "name": "chevron-left",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_CiwBBtU3.js": {
-    "file": "assets/CiwBBtU3.js",
-    "name": "trash",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_Ck_Ilcvs.js": {
-    "file": "assets/Ck_Ilcvs.js",
-    "name": "ellipsis",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_CmCcobAn.js": {
-    "file": "assets/CmCcobAn.js",
-    "name": "rollback-dialog",
+  "_CpfewOPh.js": {
+    "file": "assets/CpfewOPh.js",
+    "name": "cutoff-picker",
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_BDZQaRNA.js",
-      "_BnwjAuN-.js",
-      "_CrTgKcAJ.js",
-      "_C4RO2wXd.js",
-      "_BRmmJUeU.js"
+      "_BfeU7vQQ.js",
+      "_CKRf_Um8.js"
     ]
   },
-  "_CmrxdnVg.js": {
-    "file": "assets/CmrxdnVg.js",
+  "_Cr8JXzCS.js": {
+    "file": "assets/Cr8JXzCS.js",
+    "name": "search",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_CrO8m15j.js": {
+    "file": "assets/CrO8m15j.js",
+    "name": "circle-dashed",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_CtLdL4aX.js": {
+    "file": "assets/CtLdL4aX.js",
+    "name": "hourglass",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_CtfTognO.js": {
+    "file": "assets/CtfTognO.js",
+    "name": "refresh-cw",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_CvGahRkj.js": {
+    "file": "assets/CvGahRkj.js",
+    "name": "cloud-download",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_CvO76Y8n.js": {
+    "file": "assets/CvO76Y8n.js",
+    "name": "user-x",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_Cwu6ag_e.js": {
+    "file": "assets/Cwu6ag_e.js",
+    "name": "types"
+  },
+  "_Cz6gOUQn.js": {
+    "file": "assets/Cz6gOUQn.js",
+    "name": "chart-pie",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_CzlglhFj.js": {
+    "file": "assets/CzlglhFj.js",
+    "name": "data-pagination",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_Dlx0PNGo.js",
+      "_Cmqtbx0l.js",
+      "_DVNUbKyE.js"
+    ]
+  },
+  "_D3BH76Mx.js": {
+    "file": "assets/D3BH76Mx.js",
+    "name": "month-year-picker",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_DVNUbKyE.js",
+      "_CKRf_Um8.js"
+    ]
+  },
+  "_D8qoIVZR.js": {
+    "file": "assets/D8qoIVZR.js",
+    "name": "arrow-right",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_D9gSX1kQ.js": {
+    "file": "assets/D9gSX1kQ.js",
     "name": "data-table",
     "imports": [
       "resources/js/react/app.tsx",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js"
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js"
     ],
     "dynamicImports": [
-      "_DgIdR9sb.js",
+      "_ersMtS51.js",
       "node_modules/write-excel-file/index.js"
     ]
   },
-  "_Co1Zehl_.js": {
-    "file": "assets/Co1Zehl_.js",
-    "name": "user",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_Cq4CF1o7.js": {
-    "file": "assets/Cq4CF1o7.js",
-    "name": "hash",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_Cr3Kd7XC.js": {
-    "file": "assets/Cr3Kd7XC.js",
+  "_DBx-XDXW.js": {
+    "file": "assets/DBx-XDXW.js",
     "name": "sparkles",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_CrTgKcAJ.js": {
-    "file": "assets/CrTgKcAJ.js",
-    "name": "app-layout",
+  "_DD2MY35P.js": {
+    "file": "assets/DD2MY35P.js",
+    "name": "badge",
     "imports": [
       "resources/js/react/app.tsx",
-      "_BnwjAuN-.js",
-      "_DZQNrNoH.js"
-    ]
-  },
-  "_D2e1fO8y.js": {
-    "file": "assets/D2e1fO8y.js",
-    "name": "user-check",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_D4XR4vOf.js": {
-    "file": "assets/D4XR4vOf.js",
-    "name": "pencil",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_D87Ln0P9.js": {
-    "file": "assets/D87Ln0P9.js",
-    "name": "eye",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_D8ID-ewd.js": {
-    "file": "assets/D8ID-ewd.js",
-    "name": "file-drop",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BnwjAuN-.js"
-    ]
-  },
-  "_DAjkuwpZ.js": {
-    "file": "assets/DAjkuwpZ.js",
-    "name": "layers",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_DB1c-uEz.js": {
-    "file": "assets/DB1c-uEz.js",
-    "name": "confirm-action",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_CL9rtUpn.js",
-      "_BnwjAuN-.js"
-    ]
-  },
-  "_DBc57ZYX.js": {
-    "file": "assets/DBc57ZYX.js",
-    "name": "charts",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_CrTgKcAJ.js"
-    ]
-  },
-  "_DDhjM8El.js": {
-    "file": "assets/DDhjM8El.js",
-    "name": "bus-seat-map",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BnwjAuN-.js",
-      "_sYg3cUKT.js"
+      "_Dlx0PNGo.js"
     ]
   },
   "_DFJxDN6Y.js": {
     "file": "assets/DFJxDN6Y.js",
     "name": "employee-status"
   },
-  "_DHgzJ7kT.js": {
-    "file": "assets/DHgzJ7kT.js",
-    "name": "plus",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_DKA5DUiI.js": {
-    "file": "assets/DKA5DUiI.js",
-    "name": "cloud-download",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_DLg83oml.js": {
-    "file": "assets/DLg83oml.js",
-    "name": "clock",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_DMdEY9kn.js": {
-    "file": "assets/DMdEY9kn.js",
-    "name": "select",
+  "_DFPi7NHx.js": {
+    "file": "assets/DFPi7NHx.js",
+    "name": "test-panel",
     "imports": [
       "resources/js/react/app.tsx",
-      "_BsvG-G5F.js",
-      "_CrTgKcAJ.js"
+      "_CpfewOPh.js",
+      "_D9gSX1kQ.js",
+      "_CKVnsjbv.js",
+      "_KdzEVHOw.js",
+      "_UnN6kuFR.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_DVNUbKyE.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_BSHVIKrj.js",
+      "_DVVwZPCT.js"
     ]
   },
-  "_DMnMLu_z.js": {
-    "file": "assets/DMnMLu_z.js",
-    "name": "paperclip",
+  "_DIj3nUv7.js": {
+    "file": "assets/DIj3nUv7.js",
+    "name": "table",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_DXOmdz0T.js": {
-    "file": "assets/DXOmdz0T.js",
+  "_DNbYt_Uc.js": {
+    "file": "assets/DNbYt_Uc.js",
+    "name": "rotate-ccw",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_DVNUbKyE.js": {
+    "file": "assets/DVNUbKyE.js",
+    "name": "app-layout",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_Dlx0PNGo.js",
+      "_BSHVIKrj.js"
+    ]
+  },
+  "_DVVwZPCT.js": {
+    "file": "assets/DVVwZPCT.js",
+    "name": "user",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_DWrMze7j.js": {
+    "file": "assets/DWrMze7j.js",
+    "name": "confirm-action",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_C_sAIL8y.js",
+      "_Dlx0PNGo.js"
+    ]
+  },
+  "_DWyYOyJO.js": {
+    "file": "assets/DWyYOyJO.js",
+    "name": "print-shell",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_Dlx0PNGo.js",
+      "_DZGNNlfH.js"
+    ]
+  },
+  "_DXcedixo.js": {
+    "file": "assets/DXcedixo.js",
+    "name": "charts",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_DVNUbKyE.js"
+    ]
+  },
+  "_DZBkAGgS.js": {
+    "file": "assets/DZBkAGgS.js",
+    "name": "adjustment-editor",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_De2yewMa.js",
+      "_CC6ywJ0Z.js",
+      "_DVNUbKyE.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_CKRf_Um8.js",
+      "_BJkDdjnk.js",
+      "_DIj3nUv7.js",
+      "_-x8hSDsh.js",
+      "_BTK0z-XT.js",
+      "_C5na8yVM.js",
+      "_BwMNkdg4.js",
+      "_q-oreVr4.js",
+      "_Cr8JXzCS.js"
+    ]
+  },
+  "_DZDDUjjl.js": {
+    "file": "assets/DZDDUjjl.js",
+    "name": "radio-group",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_DVNUbKyE.js"
+    ]
+  },
+  "_DZGNNlfH.js": {
+    "file": "assets/DZGNNlfH.js",
+    "name": "printer",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_Dc1oN8KD.js": {
+    "file": "assets/Dc1oN8KD.js",
+    "name": "hash",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_De2yewMa.js": {
+    "file": "assets/De2yewMa.js",
+    "name": "file-drop",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_Dlx0PNGo.js"
+    ]
+  },
+  "_DhgpGzod.js": {
+    "file": "assets/DhgpGzod.js",
+    "name": "download",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_Dlx0PNGo.js": {
+    "file": "assets/Dlx0PNGo.js",
+    "name": "button",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_Dt6_L3G0.js": {
+    "file": "assets/Dt6_L3G0.js",
+    "name": "copy",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_DzAhyKNV.js": {
+    "file": "assets/DzAhyKNV.js",
+    "name": "user-check",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_EV6UfTaU.js": {
+    "file": "assets/EV6UfTaU.js",
+    "name": "product-line-items",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_Dlx0PNGo.js",
+      "_eLESx6Po.js",
+      "_GKF6Ez0I.js",
+      "_DIj3nUv7.js",
+      "_C6AiIuU-.js",
+      "_q-oreVr4.js",
+      "_DVNUbKyE.js",
+      "_CVF-bng6.js"
+    ]
+  },
+  "_EePyuNt1.js": {
+    "file": "assets/EePyuNt1.js",
+    "name": "modal-link",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_GKF6Ez0I.js": {
+    "file": "assets/GKF6Ez0I.js",
     "name": "input",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_DZQNrNoH.js": {
-    "file": "assets/DZQNrNoH.js",
-    "name": "format",
+  "_K_PxpXbg.js": {
+    "file": "assets/K_PxpXbg.js",
+    "name": "layers",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_Dfvh3nt-.js": {
-    "file": "assets/Dfvh3nt-.js",
+  "_KdzEVHOw.js": {
+    "file": "assets/KdzEVHOw.js",
+    "name": "detail-dialog",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_DVNUbKyE.js"
+    ]
+  },
+  "_Lefj7MeV.js": {
+    "file": "assets/Lefj7MeV.js",
+    "name": "pencil",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_M9eFZEKJ.js": {
+    "file": "assets/M9eFZEKJ.js",
+    "name": "arrow-left",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_O4JaliPB.js": {
+    "file": "assets/O4JaliPB.js",
+    "name": "fleet-status",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_CeftEtSP.js"
+    ]
+  },
+  "_SGcIWTOE.js": {
+    "file": "assets/SGcIWTOE.js",
+    "name": "file-text",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_UnN6kuFR.js": {
+    "file": "assets/UnN6kuFR.js",
+    "name": "search-select",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_Dlx0PNGo.js",
+      "_eLESx6Po.js",
+      "_DVNUbKyE.js",
+      "_CVF-bng6.js"
+    ]
+  },
+  "_Y81pEmm1.js": {
+    "file": "assets/Y81pEmm1.js",
     "name": "zap",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_DgIdR9sb.js": {
-    "file": "assets/DgIdR9sb.js",
+  "_a6kQKoi-.js": {
+    "file": "assets/a6kQKoi-.js",
+    "name": "checkbox",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_CVF-bng6.js"
+    ]
+  },
+  "_dZiuwI6a.js": {
+    "file": "assets/dZiuwI6a.js",
+    "name": "inbox",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_eLESx6Po.js": {
+    "file": "assets/eLESx6Po.js",
+    "name": "popover",
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_DVNUbKyE.js",
+      "_Cr8JXzCS.js"
+    ]
+  },
+  "_ersMtS51.js": {
+    "file": "assets/ersMtS51.js",
     "name": "server.browser",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_DpJrqVNh.js": {
-    "file": "assets/DpJrqVNh.js",
-    "name": "adjustment-editor",
+  "_gh64BC7a.js": {
+    "file": "assets/gh64BC7a.js",
+    "name": "list-checks",
+    "imports": [
+      "resources/js/react/app.tsx"
+    ]
+  },
+  "_kilOfOaW.js": {
+    "file": "assets/kilOfOaW.js",
+    "name": "alert",
     "imports": [
       "resources/js/react/app.tsx",
-      "_D8ID-ewd.js",
-      "_mvPY5i5Y.js",
-      "_CrTgKcAJ.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DMdEY9kn.js",
-      "_DyB4330y.js",
-      "_cPB_XTDk.js",
-      "_C4RO2wXd.js",
-      "_CboUIskd.js",
-      "_DMnMLu_z.js",
-      "_8UhF34TT.js",
-      "_DHgzJ7kT.js",
-      "_N3yOfwgG.js"
+      "_Dlx0PNGo.js"
     ]
   },
-  "_DyB4330y.js": {
-    "file": "assets/DyB4330y.js",
-    "name": "switch",
+  "_oLQeNjEa.js": {
+    "file": "assets/oLQeNjEa.js",
+    "name": "timer",
     "imports": [
       "resources/js/react/app.tsx"
     ]
   },
-  "_JusihpXU.js": {
-    "file": "assets/JusihpXU.js",
-    "name": "tabs",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BnwjAuN-.js",
-      "_CrTgKcAJ.js"
-    ]
-  },
-  "_N3yOfwgG.js": {
-    "file": "assets/N3yOfwgG.js",
-    "name": "search",
+  "_q-oreVr4.js": {
+    "file": "assets/q-oreVr4.js",
+    "name": "plus",
     "imports": [
       "resources/js/react/app.tsx"
-    ]
-  },
-  "_Nl4liRyw.js": {
-    "file": "assets/Nl4liRyw.js",
-    "name": "product-line-items",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BnwjAuN-.js",
-      "_CYceCrXy.js",
-      "_DXOmdz0T.js",
-      "_cPB_XTDk.js",
-      "_CiwBBtU3.js",
-      "_DHgzJ7kT.js",
-      "_CrTgKcAJ.js",
-      "_BsvG-G5F.js"
-    ]
-  },
-  "__kcB5M3q.js": {
-    "file": "assets/_kcB5M3q.js",
-    "name": "month-year-picker",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_CrTgKcAJ.js",
-      "_DMdEY9kn.js"
-    ]
-  },
-  "_cPB_XTDk.js": {
-    "file": "assets/cPB_XTDk.js",
-    "name": "table",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_h8jA8cqn.js": {
-    "file": "assets/h8jA8cqn.js",
-    "name": "data-pagination",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BnwjAuN-.js",
-      "_C-zvx5nC.js",
-      "_CrTgKcAJ.js"
-    ]
-  },
-  "_hQDNd6Y8.js": {
-    "file": "assets/hQDNd6Y8.js",
-    "name": "chart-pie",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_mvPY5i5Y.js": {
-    "file": "assets/mvPY5i5Y.js",
-    "name": "employee-combobox",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BnwjAuN-.js",
-      "_CYceCrXy.js",
-      "_CrTgKcAJ.js",
-      "_BsvG-G5F.js"
-    ]
-  },
-  "_qTq-J83H.js": {
-    "file": "assets/qTq-J83H.js",
-    "name": "modal-link",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_sYg3cUKT.js": {
-    "file": "assets/sYg3cUKT.js",
-    "name": "rotate-ccw",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_uDcd-Xno.js": {
-    "file": "assets/uDcd-Xno.js",
-    "name": "rotate-ccw-clock",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_uwBWLKQn.js": {
-    "file": "assets/uwBWLKQn.js",
-    "name": "download",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_xcEhfnSJ.js": {
-    "file": "assets/xcEhfnSJ.js",
-    "name": "arrow-left",
-    "imports": [
-      "resources/js/react/app.tsx"
-    ]
-  },
-  "_zqGBOWBQ.js": {
-    "file": "assets/zqGBOWBQ.js",
-    "name": "search-select",
-    "imports": [
-      "resources/js/react/app.tsx",
-      "_BnwjAuN-.js",
-      "_CYceCrXy.js",
-      "_CrTgKcAJ.js",
-      "_BsvG-G5F.js"
     ]
   },
   "node_modules/write-excel-file/index.js": {
-    "file": "assets/CJ_snsTV.js",
+    "file": "assets/AnalcPIA.js",
     "name": "index",
     "src": "node_modules/write-excel-file/index.js",
     "isDynamicEntry": true,
@@ -660,7 +738,7 @@
     ]
   },
   "resources/css/react.css": {
-    "file": "assets/Bgs08lFG.css",
+    "file": "assets/mrP6rd5Y.css",
     "src": "resources/css/react.css",
     "isEntry": true,
     "name": "react",
@@ -669,7 +747,7 @@
     ]
   },
   "resources/js/react/app.tsx": {
-    "file": "assets/CYA6k38p.js",
+    "file": "assets/C5ncUSlF.js",
     "name": "app",
     "src": "resources/js/react/app.tsx",
     "isEntry": true,
@@ -681,6 +759,7 @@
       "resources/js/react/pages/authentication/users/index.tsx",
       "resources/js/react/pages/biometrics/employees/edit.tsx",
       "resources/js/react/pages/biometrics/employees/index.tsx",
+      "resources/js/react/pages/biometrics/employees/show.tsx",
       "resources/js/react/pages/biometrics/sync/index.tsx",
       "resources/js/react/pages/dashboard/index.tsx",
       "resources/js/react/pages/dashboards/fleet/for-sale-form.tsx",
@@ -746,6 +825,11 @@
       "resources/js/react/pages/payroll/payrolls/index.tsx",
       "resources/js/react/pages/payroll/payrolls/show.tsx",
       "resources/js/react/pages/payroll/plotting/index.tsx",
+      "resources/js/react/pages/payroll/settings/form.tsx",
+      "resources/js/react/pages/payroll/settings/index.tsx",
+      "resources/js/react/pages/payroll/settings/rule-form.tsx",
+      "resources/js/react/pages/payroll/settings/rules.tsx",
+      "resources/js/react/pages/payroll/settings/test.tsx",
       "resources/js/react/pages/products/categories/index.tsx",
       "resources/js/react/pages/products/items/index.tsx",
       "resources/js/react/pages/auth/change-password.tsx",
@@ -755,6 +839,7 @@
       "resources/js/react/pages/authentication/users/index.tsx",
       "resources/js/react/pages/biometrics/employees/edit.tsx",
       "resources/js/react/pages/biometrics/employees/index.tsx",
+      "resources/js/react/pages/biometrics/employees/show.tsx",
       "resources/js/react/pages/biometrics/sync/index.tsx",
       "resources/js/react/pages/dashboard/index.tsx",
       "resources/js/react/pages/dashboards/fleet/for-sale-form.tsx",
@@ -820,44 +905,49 @@
       "resources/js/react/pages/payroll/payrolls/index.tsx",
       "resources/js/react/pages/payroll/payrolls/show.tsx",
       "resources/js/react/pages/payroll/plotting/index.tsx",
+      "resources/js/react/pages/payroll/settings/form.tsx",
+      "resources/js/react/pages/payroll/settings/index.tsx",
+      "resources/js/react/pages/payroll/settings/rule-form.tsx",
+      "resources/js/react/pages/payroll/settings/rules.tsx",
+      "resources/js/react/pages/payroll/settings/test.tsx",
       "resources/js/react/pages/products/categories/index.tsx",
       "resources/js/react/pages/products/items/index.tsx"
     ]
   },
   "resources/js/react/pages/auth/change-password.tsx": {
-    "file": "assets/PTCbPTl_.js",
+    "file": "assets/swPKoeKN.js",
     "name": "change-password",
     "src": "resources/js/react/pages/auth/change-password.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_BSdxV9dU.js",
-      "_CJrkWS1s.js",
-      "_D87Ln0P9.js",
-      "_BsvG-G5F.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js"
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CV1ie7ma.js",
+      "_BIwv4NyT.js",
+      "_CYb4Czn3.js",
+      "_CVF-bng6.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/auth/lock.tsx": {
-    "file": "assets/nTOezuC6.js",
+    "file": "assets/evR3PTN4.js",
     "name": "lock",
     "src": "resources/js/react/pages/auth/lock.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DZQNrNoH.js",
-      "_CJrkWS1s.js",
-      "_D87Ln0P9.js",
-      "_B6NhanuA.js"
+      "_BSHVIKrj.js",
+      "_BIwv4NyT.js",
+      "_CYb4Czn3.js",
+      "_D8qoIVZR.js"
     ]
   },
   "resources/js/react/pages/auth/login.tsx": {
-    "file": "assets/Cz4BhXhL.js",
+    "file": "assets/DN-A-dhV.js",
     "name": "login",
     "src": "resources/js/react/pages/auth/login.tsx",
     "isDynamicEntry": true,
@@ -869,1864 +959,2079 @@
     ]
   },
   "resources/js/react/pages/authentication/roles/index.tsx": {
-    "file": "assets/BiiEaYgj.js",
+    "file": "assets/BmVxIrsa.js",
     "name": "index",
     "src": "resources/js/react/pages/authentication/roles/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_CES2EAle.js",
-      "_DXOmdz0T.js",
-      "_cPB_XTDk.js",
-      "_CeTW9_uy.js",
-      "_DHgzJ7kT.js",
-      "_N3yOfwgG.js",
-      "_D4XR4vOf.js",
-      "_CiwBBtU3.js",
-      "_CD0RDDVa.js",
-      "_BSdxV9dU.js",
-      "_DAjkuwpZ.js",
-      "_8UhF34TT.js",
-      "_CL9rtUpn.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js"
+      "_DWrMze7j.js",
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_a6kQKoi-.js",
+      "_GKF6Ez0I.js",
+      "_DIj3nUv7.js",
+      "_CtfTognO.js",
+      "_q-oreVr4.js",
+      "_Cr8JXzCS.js",
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_BlLxgqul.js",
+      "_CV1ie7ma.js",
+      "_K_PxpXbg.js",
+      "_BwMNkdg4.js",
+      "_C_sAIL8y.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/authentication/users/index.tsx": {
-    "file": "assets/BBTMo4Ws.js",
+    "file": "assets/CktGjAaB.js",
     "name": "index",
     "src": "resources/js/react/pages/authentication/users/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_h8jA8cqn.js",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_CL9rtUpn.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_DZQNrNoH.js",
-      "_N3yOfwgG.js",
-      "_Ck_Ilcvs.js",
-      "_D4XR4vOf.js",
-      "_BSdxV9dU.js",
-      "_BsvG-G5F.js",
-      "_BD7bq_wi.js",
-      "_C-zvx5nC.js",
-      "_BQ40-xUA.js"
+      "_CzlglhFj.js",
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_C_sAIL8y.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_BSHVIKrj.js",
+      "_Cr8JXzCS.js",
+      "_CZKoNpmJ.js",
+      "_Lefj7MeV.js",
+      "_CV1ie7ma.js",
+      "_CVF-bng6.js",
+      "_Dt6_L3G0.js",
+      "_Cmqtbx0l.js",
+      "_BfeU7vQQ.js"
     ]
   },
   "resources/js/react/pages/biometrics/employees/edit.tsx": {
-    "file": "assets/CwMNdgu9.js",
+    "file": "assets/ClQND4gi.js",
     "name": "edit",
     "src": "resources/js/react/pages/biometrics/employees/edit.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CrTgKcAJ.js",
-      "_zqGBOWBQ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DMdEY9kn.js",
-      "_DyB4330y.js",
-      "_C4RO2wXd.js",
-      "_8UhF34TT.js",
-      "_DZQNrNoH.js",
-      "_xcEhfnSJ.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js",
-      "_BsvG-G5F.js"
+      "_DVNUbKyE.js",
+      "_UnN6kuFR.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_CKRf_Um8.js",
+      "_BJkDdjnk.js",
+      "_-x8hSDsh.js",
+      "_BwMNkdg4.js",
+      "_BSHVIKrj.js",
+      "_M9eFZEKJ.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/biometrics/employees/index.tsx": {
-    "file": "assets/4dFXpp_b.js",
+    "file": "assets/BTZseLuk.js",
     "name": "index",
     "src": "resources/js/react/pages/biometrics/employees/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CmrxdnVg.js",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_qTq-J83H.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DZQNrNoH.js",
-      "_Bf2F9k_9.js",
-      "_D2e1fO8y.js",
-      "_AVFSBxLY.js",
-      "_CLUFUizu.js",
-      "_D4XR4vOf.js",
-      "_DHgzJ7kT.js",
-      "_8UhF34TT.js",
-      "_DKA5DUiI.js",
-      "_DMdEY9kn.js",
-      "_BsvG-G5F.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_BQ40-xUA.js"
+      "_D9gSX1kQ.js",
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_EePyuNt1.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_BSHVIKrj.js",
+      "_B6l2LjMa.js",
+      "_DzAhyKNV.js",
+      "_CvO76Y8n.js",
+      "_CVpnuNdr.js",
+      "_Lefj7MeV.js",
+      "_q-oreVr4.js",
+      "_BwMNkdg4.js",
+      "_CvGahRkj.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BfeU7vQQ.js"
+    ]
+  },
+  "resources/js/react/pages/biometrics/employees/show.tsx": {
+    "file": "assets/C4RZiv3F.js",
+    "name": "show",
+    "src": "resources/js/react/pages/biometrics/employees/show.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_KdzEVHOw.js",
+      "_DVNUbKyE.js",
+      "_CKVnsjbv.js",
+      "_ByiJ0XjR.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CcvuIyAc.js",
+      "_BSHVIKrj.js",
+      "resources/js/react/pages/biometrics/employees/edit.tsx",
+      "resources/js/react/pages/payroll/employee-salaries/form.tsx",
+      "_B6l2LjMa.js",
+      "_CrO8m15j.js",
+      "_gh64BC7a.js",
+      "_M9eFZEKJ.js",
+      "_BwMNkdg4.js",
+      "_BfeU7vQQ.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_UnN6kuFR.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js",
+      "_BJkDdjnk.js",
+      "_-x8hSDsh.js",
+      "_CC6ywJ0Z.js",
+      "_a6kQKoi-.js",
+      "_DZDDUjjl.js",
+      "_DIj3nUv7.js",
+      "_C6AiIuU-.js",
+      "_q-oreVr4.js"
     ]
   },
   "resources/js/react/pages/biometrics/sync/index.tsx": {
-    "file": "assets/BDT_BmIP.js",
+    "file": "assets/DJs9hIjT.js",
     "name": "index",
     "src": "resources/js/react/pages/biometrics/sync/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_CrTgKcAJ.js",
-      "_CES2EAle.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js",
-      "_Dfvh3nt-.js",
-      "_BD7bq_wi.js",
-      "_CeTW9_uy.js",
-      "_DKA5DUiI.js",
-      "_h8jA8cqn.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_BsvG-G5F.js",
-      "_C-zvx5nC.js"
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_DVNUbKyE.js",
+      "_a6kQKoi-.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js",
+      "_Y81pEmm1.js",
+      "_Dt6_L3G0.js",
+      "_CtfTognO.js",
+      "_CvGahRkj.js",
+      "_CrO8m15j.js",
+      "_CzlglhFj.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_CVF-bng6.js",
+      "_Cmqtbx0l.js"
     ]
   },
   "resources/js/react/pages/dashboard/index.tsx": {
-    "file": "assets/ClzsPPim.js",
+    "file": "assets/DJ_fML0V.js",
     "name": "index",
     "src": "resources/js/react/pages/dashboard/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_CrTgKcAJ.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js",
-      "_Cr3Kd7XC.js",
-      "_DLg83oml.js",
-      "_D2e1fO8y.js",
-      "_BSdxV9dU.js"
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_DVNUbKyE.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js",
+      "_DBx-XDXW.js",
+      "_CJlFg3Wu.js",
+      "_DzAhyKNV.js",
+      "_CV1ie7ma.js"
     ]
   },
   "resources/js/react/pages/dashboards/fleet/for-sale-form.tsx": {
-    "file": "assets/Cc5zzzeK.js",
+    "file": "assets/CnPj0W1x.js",
     "name": "for-sale-form",
     "src": "resources/js/react/pages/dashboards/fleet/for-sale-form.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_zqGBOWBQ.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_C4RO2wXd.js",
-      "_xcEhfnSJ.js",
-      "_CiwBBtU3.js",
-      "_8UhF34TT.js",
-      "_CL9rtUpn.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js",
-      "_BsvG-G5F.js"
+      "_DWrMze7j.js",
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_UnN6kuFR.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_-x8hSDsh.js",
+      "_M9eFZEKJ.js",
+      "_C6AiIuU-.js",
+      "_BwMNkdg4.js",
+      "_C_sAIL8y.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/dashboards/fleet/for-sale-index.tsx": {
-    "file": "assets/TlOny7P4.js",
+    "file": "assets/Bs1On7ZX.js",
     "name": "for-sale-index",
     "src": "resources/js/react/pages/dashboards/fleet/for-sale-index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DBc57ZYX.js",
-      "_DB1c-uEz.js",
-      "_h8jA8cqn.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_BWSVOmoA.js",
-      "_xcEhfnSJ.js",
-      "_DHgzJ7kT.js",
-      "_N3yOfwgG.js",
-      "_D4XR4vOf.js",
-      "_CiwBBtU3.js",
-      "_CL9rtUpn.js",
-      "_C-zvx5nC.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js",
+      "_DXcedixo.js",
+      "_DWrMze7j.js",
+      "_CzlglhFj.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_O4JaliPB.js",
+      "_M9eFZEKJ.js",
+      "_q-oreVr4.js",
+      "_Cr8JXzCS.js",
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_C_sAIL8y.js",
+      "_Cmqtbx0l.js",
+      "_BSHVIKrj.js",
+      "_CVF-bng6.js",
       "_CeftEtSP.js"
     ]
   },
   "resources/js/react/pages/dashboards/fleet/form.tsx": {
-    "file": "assets/o6T-hDwA.js",
+    "file": "assets/xjHO251K.js",
     "name": "form",
     "src": "resources/js/react/pages/dashboards/fleet/form.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_C4RO2wXd.js",
-      "_xcEhfnSJ.js",
-      "_8UhF34TT.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js"
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_-x8hSDsh.js",
+      "_M9eFZEKJ.js",
+      "_BwMNkdg4.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/dashboards/fleet/index.tsx": {
-    "file": "assets/DinptMcV.js",
+    "file": "assets/DZ3fMLvW.js",
     "name": "index",
     "src": "resources/js/react/pages/dashboards/fleet/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DBc57ZYX.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_JusihpXU.js",
-      "_BWSVOmoA.js",
+      "_DXcedixo.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_CcvuIyAc.js",
+      "_O4JaliPB.js",
       "_CeftEtSP.js",
-      "_BUm40G1D.js",
-      "_DHgzJ7kT.js",
-      "_CLUFUizu.js",
-      "_N3yOfwgG.js",
-      "_D4XR4vOf.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js"
+      "_CH2bxpgu.js",
+      "_q-oreVr4.js",
+      "_CVpnuNdr.js",
+      "_Cr8JXzCS.js",
+      "_Lefj7MeV.js",
+      "_BSHVIKrj.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/dashboards/hr-data/index.tsx": {
-    "file": "assets/Cc7cbX-o.js",
+    "file": "assets/F2tQbuXc.js",
     "name": "index",
     "src": "resources/js/react/pages/dashboards/hr-data/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DBc57ZYX.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BQ40-xUA.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_JusihpXU.js",
+      "_DXcedixo.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_BfeU7vQQ.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_CcvuIyAc.js",
       "_CeftEtSP.js",
-      "_D2e1fO8y.js",
-      "_CLUFUizu.js",
-      "_BnwjAuN-.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js"
+      "_DzAhyKNV.js",
+      "_CVpnuNdr.js",
+      "_Dlx0PNGo.js",
+      "_BSHVIKrj.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/dashboards/hr/index.tsx": {
-    "file": "assets/B-IsY-1F.js",
+    "file": "assets/DRwU5sbB.js",
     "name": "index",
     "src": "resources/js/react/pages/dashboards/hr/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DBc57ZYX.js",
-      "_h8jA8cqn.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
+      "_DXcedixo.js",
+      "_CzlglhFj.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
       "_CeftEtSP.js",
       "_DFJxDN6Y.js",
-      "_DZQNrNoH.js",
-      "_D2e1fO8y.js",
-      "_CLUFUizu.js",
-      "_N3yOfwgG.js",
-      "_C-zvx5nC.js",
-      "_BsvG-G5F.js"
+      "_BSHVIKrj.js",
+      "_DzAhyKNV.js",
+      "_CVpnuNdr.js",
+      "_Cr8JXzCS.js",
+      "_Cmqtbx0l.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/dashboards/it/index.tsx": {
-    "file": "assets/BdWEJi1N.js",
+    "file": "assets/Cd1ssnHJ.js",
     "name": "index",
     "src": "resources/js/react/pages/dashboards/it/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DBc57ZYX.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_cPB_XTDk.js",
-      "_DZQNrNoH.js",
+      "_DXcedixo.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_DIj3nUv7.js",
+      "_BSHVIKrj.js",
       "_BTth_6r3.js",
-      "_DHgzJ7kT.js",
-      "_9W5GBpcB.js",
-      "_DLg83oml.js"
+      "_q-oreVr4.js",
+      "_CtLdL4aX.js",
+      "_CJlFg3Wu.js"
     ]
   },
   "resources/js/react/pages/dashboards/maintenance-stock/index.tsx": {
-    "file": "assets/Cjqfiv4g.js",
+    "file": "assets/BNNU7j2u.js",
     "name": "index",
     "src": "resources/js/react/pages/dashboards/maintenance-stock/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DBc57ZYX.js",
-      "_h8jA8cqn.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_JusihpXU.js",
+      "_DXcedixo.js",
+      "_CzlglhFj.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_CcvuIyAc.js",
       "_CeftEtSP.js",
-      "_C7WqDVPK.js",
-      "_N3yOfwgG.js",
-      "_C-zvx5nC.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js"
+      "_Bw01BgqE.js",
+      "_Cr8JXzCS.js",
+      "_Cmqtbx0l.js",
+      "_BSHVIKrj.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/dashboards/odometer/index.tsx": {
-    "file": "assets/CALncZ6p.js",
+    "file": "assets/zQqzFjXT.js",
     "name": "index",
     "src": "resources/js/react/pages/dashboards/odometer/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DBc57ZYX.js",
-      "_DB1c-uEz.js",
-      "_h8jA8cqn.js",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_zqGBOWBQ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_CES2EAle.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_C4RO2wXd.js",
+      "_DXcedixo.js",
+      "_DWrMze7j.js",
+      "_CzlglhFj.js",
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_UnN6kuFR.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_a6kQKoi-.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_-x8hSDsh.js",
       "_CeftEtSP.js",
-      "_Bbrpv1GX.js",
-      "_DHgzJ7kT.js",
-      "_D4XR4vOf.js",
-      "_CiwBBtU3.js",
-      "_CL9rtUpn.js",
-      "_C-zvx5nC.js",
-      "_DZQNrNoH.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js",
-      "_BsvG-G5F.js"
+      "_SGcIWTOE.js",
+      "_q-oreVr4.js",
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_C_sAIL8y.js",
+      "_Cmqtbx0l.js",
+      "_BSHVIKrj.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/errors/show.tsx": {
-    "file": "assets/I_9ZGhPT.js",
+    "file": "assets/jH7mF7o_.js",
     "name": "show",
     "src": "resources/js/react/pages/errors/show.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_xcEhfnSJ.js"
+      "_M9eFZEKJ.js"
     ]
   },
   "resources/js/react/pages/fleet/all-bus/form.tsx": {
-    "file": "assets/Bjajiy4b.js",
+    "file": "assets/DfovoMFN.js",
     "name": "form",
     "src": "resources/js/react/pages/fleet/all-bus/form.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_xcEhfnSJ.js",
-      "_8UhF34TT.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js"
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_M9eFZEKJ.js",
+      "_BwMNkdg4.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/fleet/all-bus/index.tsx": {
-    "file": "assets/Cnzf3y94.js",
+    "file": "assets/DahgkOXC.js",
     "name": "index",
     "src": "resources/js/react/pages/fleet/all-bus/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_h8jA8cqn.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_cPB_XTDk.js",
-      "_DHgzJ7kT.js",
-      "_N3yOfwgG.js",
-      "_D4XR4vOf.js",
-      "_CiwBBtU3.js",
-      "_CL9rtUpn.js",
-      "_C-zvx5nC.js",
-      "_DZQNrNoH.js"
+      "_DWrMze7j.js",
+      "_CzlglhFj.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_DIj3nUv7.js",
+      "_q-oreVr4.js",
+      "_Cr8JXzCS.js",
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_C_sAIL8y.js",
+      "_Cmqtbx0l.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/fleet/vehicle-history/index.tsx": {
-    "file": "assets/DfvjPhvV.js",
+    "file": "assets/BstdgtK2.js",
     "name": "index",
     "src": "resources/js/react/pages/fleet/vehicle-history/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_h8jA8cqn.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_cPB_XTDk.js",
+      "_CzlglhFj.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_DIj3nUv7.js",
       "_BICC2V_X.js",
-      "_N3yOfwgG.js",
-      "_C-zvx5nC.js",
-      "_DZQNrNoH.js"
+      "_Cr8JXzCS.js",
+      "_Cmqtbx0l.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/fleet/vehicle-history/show.tsx": {
-    "file": "assets/B2FzIbp8.js",
+    "file": "assets/rRTY303h.js",
     "name": "show",
     "src": "resources/js/react/pages/fleet/vehicle-history/show.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_h8jA8cqn.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_cPB_XTDk.js",
+      "_CzlglhFj.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_DIj3nUv7.js",
       "_BICC2V_X.js",
-      "_xcEhfnSJ.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_DZQNrNoH.js"
+      "_M9eFZEKJ.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/hr/claims/index.tsx": {
-    "file": "assets/CqHzwIRj.js",
+    "file": "assets/Dx8ONyks.js",
     "name": "index",
     "src": "resources/js/react/pages/hr/claims/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_CmrxdnVg.js",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_zqGBOWBQ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_C4RO2wXd.js",
-      "_D4XR4vOf.js",
-      "_CiwBBtU3.js",
-      "_DHgzJ7kT.js",
-      "_8UhF34TT.js",
-      "_CL9rtUpn.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js",
-      "_CYceCrXy.js",
-      "_BsvG-G5F.js"
+      "_DWrMze7j.js",
+      "_D9gSX1kQ.js",
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_UnN6kuFR.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_-x8hSDsh.js",
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_q-oreVr4.js",
+      "_BwMNkdg4.js",
+      "_C_sAIL8y.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js",
+      "_eLESx6Po.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/hr/departments/index.tsx": {
-    "file": "assets/CcySdz5H.js",
+    "file": "assets/m0B7S61P.js",
     "name": "index",
     "src": "resources/js/react/pages/hr/departments/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_CmrxdnVg.js",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_CiwBBtU3.js",
-      "_DHgzJ7kT.js",
-      "_CLUFUizu.js",
-      "_CL9rtUpn.js",
-      "_DMdEY9kn.js",
-      "_BsvG-G5F.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js"
+      "_DWrMze7j.js",
+      "_D9gSX1kQ.js",
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_C6AiIuU-.js",
+      "_q-oreVr4.js",
+      "_CVpnuNdr.js",
+      "_C_sAIL8y.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/hr/employees/index.tsx": {
-    "file": "assets/mABN_bPO.js",
+    "file": "assets/DJbvbU6Q.js",
     "name": "index",
     "src": "resources/js/react/pages/hr/employees/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_CmrxdnVg.js",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_qTq-J83H.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
+      "_DWrMze7j.js",
+      "_D9gSX1kQ.js",
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_EePyuNt1.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
       "_DFJxDN6Y.js",
-      "_DZQNrNoH.js",
-      "_D2e1fO8y.js",
-      "_AVFSBxLY.js",
-      "_CLUFUizu.js",
-      "_D87Ln0P9.js",
-      "_CiwBBtU3.js",
-      "_DHgzJ7kT.js",
-      "_CL9rtUpn.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_BQ40-xUA.js",
-      "_BsvG-G5F.js"
+      "_BSHVIKrj.js",
+      "_DzAhyKNV.js",
+      "_CvO76Y8n.js",
+      "_CVpnuNdr.js",
+      "_CYb4Czn3.js",
+      "_C6AiIuU-.js",
+      "_q-oreVr4.js",
+      "_C_sAIL8y.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BfeU7vQQ.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/hr/employees/show.tsx": {
-    "file": "assets/Drjn2qWB.js",
+    "file": "assets/DDY2EGh5.js",
     "name": "show",
     "src": "resources/js/react/pages/hr/employees/show.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_C9vtNALK.js",
-      "_BQ40-xUA.js",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_CES2EAle.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_D87Ln0P9.js",
-      "_8UhF34TT.js",
-      "_zqGBOWBQ.js",
-      "_Bf2F9k_9.js",
-      "_C4RO2wXd.js",
-      "_DHgzJ7kT.js",
-      "_CLdD3jGm.js",
-      "_cPB_XTDk.js",
-      "_JusihpXU.js",
+      "_DWrMze7j.js",
+      "_CKVnsjbv.js",
+      "_BfeU7vQQ.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_a6kQKoi-.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_CYb4Czn3.js",
+      "_BwMNkdg4.js",
+      "_UnN6kuFR.js",
+      "_B6l2LjMa.js",
+      "_-x8hSDsh.js",
+      "_q-oreVr4.js",
+      "_DD2MY35P.js",
+      "_DIj3nUv7.js",
+      "_CcvuIyAc.js",
       "_DFJxDN6Y.js",
-      "_DZQNrNoH.js",
-      "_D4XR4vOf.js",
-      "_BUm40G1D.js",
-      "_Co1Zehl_.js",
-      "_CD0RDDVa.js",
-      "_DMnMLu_z.js",
-      "_uDcd-Xno.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_xcEhfnSJ.js",
-      "_Cq4CF1o7.js",
-      "_CiwBBtU3.js",
-      "_B6NhanuA.js",
-      "_C-zvx5nC.js",
-      "_CL9rtUpn.js",
-      "_BsvG-G5F.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js"
+      "_BSHVIKrj.js",
+      "_Lefj7MeV.js",
+      "_CH2bxpgu.js",
+      "_DVVwZPCT.js",
+      "_BlLxgqul.js",
+      "_C5na8yVM.js",
+      "_Bn415zkp.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_M9eFZEKJ.js",
+      "_Dc1oN8KD.js",
+      "_C6AiIuU-.js",
+      "_D8qoIVZR.js",
+      "_Cmqtbx0l.js",
+      "_C_sAIL8y.js",
+      "_CVF-bng6.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js"
     ]
   },
   "resources/js/react/pages/hr/leaves/form.tsx": {
-    "file": "assets/DxefRdyX.js",
+    "file": "assets/DTL8gQWl.js",
     "name": "form",
     "src": "resources/js/react/pages/hr/leaves/form.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_zqGBOWBQ.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_C4RO2wXd.js",
-      "_8UhF34TT.js",
-      "_Co1Zehl_.js",
-      "_xcEhfnSJ.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js",
-      "_BsvG-G5F.js"
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_UnN6kuFR.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_-x8hSDsh.js",
+      "_BwMNkdg4.js",
+      "_DVVwZPCT.js",
+      "_M9eFZEKJ.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/hr/leaves/index.tsx": {
-    "file": "assets/dJgJ9cuT.js",
+    "file": "assets/DSyBytFa.js",
     "name": "index",
     "src": "resources/js/react/pages/hr/leaves/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CmrxdnVg.js",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_qTq-J83H.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_C4RO2wXd.js",
-      "_DZQNrNoH.js",
-      "_DHgzJ7kT.js",
-      "_D2e1fO8y.js",
-      "_AVFSBxLY.js",
-      "_Ck_Ilcvs.js",
-      "_D4XR4vOf.js",
-      "_DLg83oml.js",
-      "_DMdEY9kn.js",
-      "_BsvG-G5F.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_BQ40-xUA.js"
+      "_D9gSX1kQ.js",
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_EePyuNt1.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_-x8hSDsh.js",
+      "_BSHVIKrj.js",
+      "_q-oreVr4.js",
+      "_DzAhyKNV.js",
+      "_CvO76Y8n.js",
+      "_CZKoNpmJ.js",
+      "_Lefj7MeV.js",
+      "_CJlFg3Wu.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BfeU7vQQ.js"
     ]
   },
   "resources/js/react/pages/hr/offenses/index.tsx": {
-    "file": "assets/DhrTbsxl.js",
+    "file": "assets/pQ06lauI.js",
     "name": "index",
     "src": "resources/js/react/pages/hr/offenses/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CmrxdnVg.js",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_C4RO2wXd.js",
-      "_DHgzJ7kT.js",
-      "_8UhF34TT.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js"
+      "_D9gSX1kQ.js",
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_-x8hSDsh.js",
+      "_q-oreVr4.js",
+      "_BwMNkdg4.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/inventory/parts-out/create.tsx": {
-    "file": "assets/Ck5X0aJ8.js",
+    "file": "assets/VidkL6QM.js",
     "name": "create",
     "src": "resources/js/react/pages/inventory/parts-out/create.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_Nl4liRyw.js",
-      "_CrTgKcAJ.js",
-      "_zqGBOWBQ.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_C4RO2wXd.js",
-      "_xcEhfnSJ.js",
-      "_8UhF34TT.js",
-      "_BQ40-xUA.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js",
-      "_cPB_XTDk.js",
-      "_CiwBBtU3.js",
-      "_DHgzJ7kT.js",
-      "_BsvG-G5F.js",
-      "_DZQNrNoH.js"
+      "_CKVnsjbv.js",
+      "_EV6UfTaU.js",
+      "_DVNUbKyE.js",
+      "_UnN6kuFR.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_-x8hSDsh.js",
+      "_M9eFZEKJ.js",
+      "_BwMNkdg4.js",
+      "_BfeU7vQQ.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js",
+      "_DIj3nUv7.js",
+      "_C6AiIuU-.js",
+      "_q-oreVr4.js",
+      "_CVF-bng6.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/inventory/parts-out/index.tsx": {
-    "file": "assets/BVme0Z9W.js",
+    "file": "assets/C-U4CgLK.js",
     "name": "index",
     "src": "resources/js/react/pages/inventory/parts-out/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_h8jA8cqn.js",
-      "_CmCcobAn.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_cPB_XTDk.js",
-      "_hQDNd6Y8.js",
-      "_DHgzJ7kT.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_D87Ln0P9.js",
-      "_C-zvx5nC.js",
-      "_C9vtNALK.js",
-      "_BQ40-xUA.js",
-      "_BDZQaRNA.js",
-      "_C4RO2wXd.js",
-      "_BRmmJUeU.js",
-      "_DZQNrNoH.js"
+      "_CzlglhFj.js",
+      "_CK4AIYcn.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_DIj3nUv7.js",
+      "_Cz6gOUQn.js",
+      "_q-oreVr4.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_CYb4Czn3.js",
+      "_Cmqtbx0l.js",
+      "_CKVnsjbv.js",
+      "_BfeU7vQQ.js",
+      "_kilOfOaW.js",
+      "_-x8hSDsh.js",
+      "_BuX3dBQN.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/inventory/parts-out/show.tsx": {
-    "file": "assets/BsB52A_Z.js",
+    "file": "assets/0RTPeayu.js",
     "name": "show",
     "src": "resources/js/react/pages/inventory/parts-out/show.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CmCcobAn.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_cPB_XTDk.js",
-      "_BRmmJUeU.js",
-      "_xcEhfnSJ.js",
-      "_C9vtNALK.js",
-      "_BQ40-xUA.js",
-      "_BDZQaRNA.js",
-      "_C4RO2wXd.js",
-      "_DZQNrNoH.js"
+      "_CK4AIYcn.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_DIj3nUv7.js",
+      "_BuX3dBQN.js",
+      "_M9eFZEKJ.js",
+      "_CKVnsjbv.js",
+      "_BfeU7vQQ.js",
+      "_kilOfOaW.js",
+      "_-x8hSDsh.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/inventory/receivings/create.tsx": {
-    "file": "assets/C19QMfqQ.js",
+    "file": "assets/Tp5HS3CC.js",
     "name": "create",
     "src": "resources/js/react/pages/inventory/receivings/create.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_Nl4liRyw.js",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_C4RO2wXd.js",
-      "_xcEhfnSJ.js",
-      "_8UhF34TT.js",
-      "_BQ40-xUA.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js",
-      "_cPB_XTDk.js",
-      "_CiwBBtU3.js",
-      "_DHgzJ7kT.js",
-      "_BsvG-G5F.js",
-      "_DZQNrNoH.js"
+      "_CKVnsjbv.js",
+      "_EV6UfTaU.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_-x8hSDsh.js",
+      "_M9eFZEKJ.js",
+      "_BwMNkdg4.js",
+      "_BfeU7vQQ.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js",
+      "_DIj3nUv7.js",
+      "_C6AiIuU-.js",
+      "_q-oreVr4.js",
+      "_CVF-bng6.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/inventory/receivings/index.tsx": {
-    "file": "assets/BKmATP6x.js",
+    "file": "assets/B5uiZsSf.js",
     "name": "index",
     "src": "resources/js/react/pages/inventory/receivings/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_h8jA8cqn.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_cPB_XTDk.js",
-      "_hQDNd6Y8.js",
-      "_DHgzJ7kT.js",
-      "_N3yOfwgG.js",
-      "_D87Ln0P9.js",
-      "_C-zvx5nC.js",
-      "_DZQNrNoH.js"
+      "_CzlglhFj.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_DIj3nUv7.js",
+      "_Cz6gOUQn.js",
+      "_q-oreVr4.js",
+      "_Cr8JXzCS.js",
+      "_CYb4Czn3.js",
+      "_Cmqtbx0l.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/inventory/receivings/show.tsx": {
-    "file": "assets/ZMCirb11.js",
+    "file": "assets/CGQumj20.js",
     "name": "show",
     "src": "resources/js/react/pages/inventory/receivings/show.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_cPB_XTDk.js",
-      "_xcEhfnSJ.js",
-      "_BsvG-G5F.js",
-      "_BRmmJUeU.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js"
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_DIj3nUv7.js",
+      "_M9eFZEKJ.js",
+      "_CVF-bng6.js",
+      "_BuX3dBQN.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/inventory/stock-transfers/create.tsx": {
-    "file": "assets/C55L1JhE.js",
+    "file": "assets/g6r5IbJ-.js",
     "name": "create",
     "src": "resources/js/react/pages/inventory/stock-transfers/create.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_Nl4liRyw.js",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_C4RO2wXd.js",
-      "_xcEhfnSJ.js",
-      "_B6NhanuA.js",
-      "_8UhF34TT.js",
-      "_BQ40-xUA.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js",
-      "_cPB_XTDk.js",
-      "_CiwBBtU3.js",
-      "_DHgzJ7kT.js",
-      "_BsvG-G5F.js",
-      "_DZQNrNoH.js"
+      "_CKVnsjbv.js",
+      "_EV6UfTaU.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_-x8hSDsh.js",
+      "_M9eFZEKJ.js",
+      "_D8qoIVZR.js",
+      "_BwMNkdg4.js",
+      "_BfeU7vQQ.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js",
+      "_DIj3nUv7.js",
+      "_C6AiIuU-.js",
+      "_q-oreVr4.js",
+      "_CVF-bng6.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/inventory/stock-transfers/index.tsx": {
-    "file": "assets/BHDx_ovk.js",
+    "file": "assets/DJNq_3KN.js",
     "name": "index",
     "src": "resources/js/react/pages/inventory/stock-transfers/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_h8jA8cqn.js",
-      "_CmCcobAn.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_cPB_XTDk.js",
-      "_DHgzJ7kT.js",
-      "_N3yOfwgG.js",
-      "_D87Ln0P9.js",
-      "_BRmmJUeU.js",
-      "_C-zvx5nC.js",
-      "_C9vtNALK.js",
-      "_BQ40-xUA.js",
-      "_BDZQaRNA.js",
-      "_C4RO2wXd.js",
-      "_DZQNrNoH.js"
+      "_CzlglhFj.js",
+      "_CK4AIYcn.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_DIj3nUv7.js",
+      "_q-oreVr4.js",
+      "_Cr8JXzCS.js",
+      "_CYb4Czn3.js",
+      "_BuX3dBQN.js",
+      "_Cmqtbx0l.js",
+      "_CKVnsjbv.js",
+      "_BfeU7vQQ.js",
+      "_kilOfOaW.js",
+      "_-x8hSDsh.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/inventory/stock-transfers/show.tsx": {
-    "file": "assets/DdyyLTaf.js",
+    "file": "assets/CVTkMgLg.js",
     "name": "show",
     "src": "resources/js/react/pages/inventory/stock-transfers/show.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CmCcobAn.js",
-      "_CrTgKcAJ.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_cPB_XTDk.js",
-      "_xcEhfnSJ.js",
-      "_DHgzJ7kT.js",
-      "_BRmmJUeU.js",
-      "_B6NhanuA.js",
-      "_C9vtNALK.js",
-      "_BQ40-xUA.js",
-      "_C4RO2wXd.js",
-      "_DZQNrNoH.js"
+      "_CK4AIYcn.js",
+      "_DVNUbKyE.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_DIj3nUv7.js",
+      "_M9eFZEKJ.js",
+      "_q-oreVr4.js",
+      "_BuX3dBQN.js",
+      "_D8qoIVZR.js",
+      "_CKVnsjbv.js",
+      "_BfeU7vQQ.js",
+      "_-x8hSDsh.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/it/cctv/bus-status-show.tsx": {
-    "file": "assets/DhFqdmOA.js",
+    "file": "assets/Bg9myMpA.js",
     "name": "bus-status-show",
     "src": "resources/js/react/pages/it/cctv/bus-status-show.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DMdEY9kn.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_CKRf_Um8.js",
       "_BTth_6r3.js",
-      "_uDcd-Xno.js",
-      "_xcEhfnSJ.js",
-      "_DLg83oml.js",
-      "_C-zvx5nC.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js"
+      "_Bn415zkp.js",
+      "_M9eFZEKJ.js",
+      "_CJlFg3Wu.js",
+      "_Cmqtbx0l.js",
+      "_BSHVIKrj.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/it/cctv/bus-status.tsx": {
-    "file": "assets/Bsoa__9r.js",
+    "file": "assets/BeMxanvV.js",
     "name": "bus-status",
     "src": "resources/js/react/pages/it/cctv/bus-status.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CmrxdnVg.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_BsvG-G5F.js",
-      "_xcEhfnSJ.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_DZQNrNoH.js"
+      "_D9gSX1kQ.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_CVF-bng6.js",
+      "_M9eFZEKJ.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/it/cctv/index.tsx": {
-    "file": "assets/DjeYKDS5.js",
+    "file": "assets/0NET5mhy.js",
     "name": "index",
     "src": "resources/js/react/pages/it/cctv/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_CmrxdnVg.js",
-      "_CrTgKcAJ.js",
-      "_zqGBOWBQ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DMdEY9kn.js",
-      "_C4RO2wXd.js",
+      "_DWrMze7j.js",
+      "_D9gSX1kQ.js",
+      "_DVNUbKyE.js",
+      "_UnN6kuFR.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_CKRf_Um8.js",
+      "_-x8hSDsh.js",
       "_BTth_6r3.js",
-      "_D4XR4vOf.js",
-      "_CiwBBtU3.js",
-      "_BXKdF2-J.js",
-      "_DHgzJ7kT.js",
-      "_DZQNrNoH.js",
-      "_8UhF34TT.js",
-      "_CL9rtUpn.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_CYceCrXy.js",
-      "_BsvG-G5F.js"
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_DZGNNlfH.js",
+      "_q-oreVr4.js",
+      "_BSHVIKrj.js",
+      "_BwMNkdg4.js",
+      "_C_sAIL8y.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_eLESx6Po.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/it/cctv/print.tsx": {
-    "file": "assets/C2fzMrGt.js",
+    "file": "assets/Dxq5gnVa.js",
     "name": "print",
     "src": "resources/js/react/pages/it/cctv/print.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CGIxwpha.js",
-      "_BnwjAuN-.js",
-      "_BXKdF2-J.js"
+      "_DWyYOyJO.js",
+      "_Dlx0PNGo.js",
+      "_DZGNNlfH.js"
     ]
   },
   "resources/js/react/pages/it/inventory/form.tsx": {
-    "file": "assets/DVVFQQ2V.js",
+    "file": "assets/DTttxbrS.js",
     "name": "form",
     "src": "resources/js/react/pages/it/inventory/form.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DyB4330y.js",
-      "_C4RO2wXd.js",
-      "_8UhF34TT.js",
-      "_xcEhfnSJ.js",
-      "_DZQNrNoH.js"
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_BJkDdjnk.js",
+      "_-x8hSDsh.js",
+      "_BwMNkdg4.js",
+      "_M9eFZEKJ.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/it/inventory/index.tsx": {
-    "file": "assets/DPx6Nkzh.js",
+    "file": "assets/BKSZZUEZ.js",
     "name": "index",
     "src": "resources/js/react/pages/it/inventory/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_CmrxdnVg.js",
-      "_CrTgKcAJ.js",
-      "_qTq-J83H.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DHgzJ7kT.js",
-      "_D4XR4vOf.js",
-      "_CiwBBtU3.js",
-      "_CL9rtUpn.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_BsvG-G5F.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_DZQNrNoH.js"
+      "_DWrMze7j.js",
+      "_D9gSX1kQ.js",
+      "_DVNUbKyE.js",
+      "_EePyuNt1.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_q-oreVr4.js",
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_C_sAIL8y.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/it/job-orders/create.tsx": {
-    "file": "assets/BqPFOTbg.js",
+    "file": "assets/CikgfV1n.js",
     "name": "create",
     "src": "resources/js/react/pages/it/job-orders/create.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_D8ID-ewd.js",
-      "_C9vtNALK.js",
-      "_DDhjM8El.js",
-      "_CrTgKcAJ.js",
-      "_zqGBOWBQ.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_C4RO2wXd.js",
-      "_8UhF34TT.js",
-      "_xcEhfnSJ.js",
-      "_BQ40-xUA.js",
-      "_sYg3cUKT.js",
-      "_DZQNrNoH.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js",
-      "_BsvG-G5F.js"
+      "_De2yewMa.js",
+      "_CKVnsjbv.js",
+      "_CNMjSm22.js",
+      "_DVNUbKyE.js",
+      "_UnN6kuFR.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_-x8hSDsh.js",
+      "_BwMNkdg4.js",
+      "_M9eFZEKJ.js",
+      "_BfeU7vQQ.js",
+      "_DNbYt_Uc.js",
+      "_BSHVIKrj.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/it/job-orders/index.tsx": {
-    "file": "assets/BfpGr7jq.js",
+    "file": "assets/Q6VZrNGa.js",
     "name": "index",
     "src": "resources/js/react/pages/it/job-orders/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_CmrxdnVg.js",
-      "_CrTgKcAJ.js",
-      "_qTq-J83H.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
+      "_DWrMze7j.js",
+      "_D9gSX1kQ.js",
+      "_DVNUbKyE.js",
+      "_EePyuNt1.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
       "_BTth_6r3.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_DHgzJ7kT.js",
-      "_Cr3Kd7XC.js",
-      "_DLg83oml.js",
-      "_BsvG-G5F.js",
-      "_D87Ln0P9.js",
-      "_CiwBBtU3.js",
-      "_CL9rtUpn.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_BXKdF2-J.js",
-      "_DZQNrNoH.js"
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_q-oreVr4.js",
+      "_DBx-XDXW.js",
+      "_CJlFg3Wu.js",
+      "_gh64BC7a.js",
+      "_CVF-bng6.js",
+      "_CYb4Czn3.js",
+      "_C6AiIuU-.js",
+      "_C_sAIL8y.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DZGNNlfH.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/it/job-orders/print.tsx": {
-    "file": "assets/DAabt8Cw.js",
+    "file": "assets/DUY3yzIG.js",
     "name": "print",
     "src": "resources/js/react/pages/it/job-orders/print.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CGIxwpha.js",
-      "_BnwjAuN-.js",
-      "_BXKdF2-J.js"
+      "_DWyYOyJO.js",
+      "_Dlx0PNGo.js",
+      "_DZGNNlfH.js"
     ]
   },
   "resources/js/react/pages/it/job-orders/show.tsx": {
-    "file": "assets/BxFB2XnT.js",
+    "file": "assets/Cl4s20KY.js",
     "name": "show",
     "src": "resources/js/react/pages/it/job-orders/show.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_D8ID-ewd.js",
-      "_DDhjM8El.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_CJrjo6im.js",
-      "_DMdEY9kn.js",
-      "_C4RO2wXd.js",
+      "_De2yewMa.js",
+      "_CNMjSm22.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_DZDDUjjl.js",
+      "_CKRf_Um8.js",
+      "_-x8hSDsh.js",
       "_BTth_6r3.js",
-      "_DHgzJ7kT.js",
-      "_Bbrpv1GX.js",
-      "_uwBWLKQn.js",
-      "_BXKdF2-J.js",
-      "_xcEhfnSJ.js",
-      "_8UhF34TT.js",
-      "_D4XR4vOf.js",
-      "_BsvG-G5F.js",
-      "_B6NhanuA.js",
-      "_sYg3cUKT.js",
-      "_DZQNrNoH.js"
+      "_q-oreVr4.js",
+      "_SGcIWTOE.js",
+      "_DhgpGzod.js",
+      "_DZGNNlfH.js",
+      "_M9eFZEKJ.js",
+      "_BwMNkdg4.js",
+      "_Lefj7MeV.js",
+      "_CVF-bng6.js",
+      "_D8qoIVZR.js",
+      "_DNbYt_Uc.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/maintenance/job-orders/create.tsx": {
-    "file": "assets/DfGsXocs.js",
+    "file": "assets/BcdZtDgD.js",
     "name": "create",
     "src": "resources/js/react/pages/maintenance/job-orders/create.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_CGHVSXkJ.js",
-      "_CrTgKcAJ.js",
-      "_zqGBOWBQ.js",
-      "_BDZQaRNA.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_C4RO2wXd.js",
-      "_xcEhfnSJ.js",
-      "_8UhF34TT.js",
-      "_BQ40-xUA.js",
-      "_CLdD3jGm.js",
-      "_CES2EAle.js",
-      "_BsvG-G5F.js",
-      "_DHgzJ7kT.js",
-      "_CiwBBtU3.js",
-      "_DZQNrNoH.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js"
+      "_CKVnsjbv.js",
+      "_CU7WzvNa.js",
+      "_DVNUbKyE.js",
+      "_UnN6kuFR.js",
+      "_kilOfOaW.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_-x8hSDsh.js",
+      "_M9eFZEKJ.js",
+      "_BwMNkdg4.js",
+      "_BfeU7vQQ.js",
+      "_DD2MY35P.js",
+      "_a6kQKoi-.js",
+      "_CVF-bng6.js",
+      "_q-oreVr4.js",
+      "_C6AiIuU-.js",
+      "_BSHVIKrj.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js"
     ]
   },
   "resources/js/react/pages/maintenance/job-orders/edit-number.tsx": {
-    "file": "assets/tTxMy8pQ.js",
+    "file": "assets/D_KAvn_X.js",
     "name": "edit-number",
     "src": "resources/js/react/pages/maintenance/job-orders/edit-number.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_CGHVSXkJ.js",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_C4RO2wXd.js",
-      "_xcEhfnSJ.js",
-      "_8UhF34TT.js",
-      "_BQ40-xUA.js",
-      "_CLdD3jGm.js",
-      "_CES2EAle.js",
-      "_BsvG-G5F.js",
-      "_DHgzJ7kT.js",
-      "_CiwBBtU3.js",
-      "_DZQNrNoH.js"
+      "_CKVnsjbv.js",
+      "_CU7WzvNa.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_-x8hSDsh.js",
+      "_M9eFZEKJ.js",
+      "_BwMNkdg4.js",
+      "_BfeU7vQQ.js",
+      "_DD2MY35P.js",
+      "_a6kQKoi-.js",
+      "_CVF-bng6.js",
+      "_q-oreVr4.js",
+      "_C6AiIuU-.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/maintenance/job-orders/edit-status.tsx": {
-    "file": "assets/DysVJ8r-.js",
+    "file": "assets/CWeJwzHn.js",
     "name": "edit-status",
     "src": "resources/js/react/pages/maintenance/job-orders/edit-status.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_CGHVSXkJ.js",
-      "_CrTgKcAJ.js",
-      "_BDZQaRNA.js",
-      "_BnwjAuN-.js",
-      "_C4RO2wXd.js",
-      "_xcEhfnSJ.js",
-      "_BsvG-G5F.js",
-      "_8UhF34TT.js",
-      "_BQ40-xUA.js",
-      "_CLdD3jGm.js",
-      "_CES2EAle.js",
-      "_DXOmdz0T.js",
-      "_DHgzJ7kT.js",
-      "_CiwBBtU3.js",
-      "_DZQNrNoH.js"
+      "_CKVnsjbv.js",
+      "_CU7WzvNa.js",
+      "_DVNUbKyE.js",
+      "_kilOfOaW.js",
+      "_Dlx0PNGo.js",
+      "_-x8hSDsh.js",
+      "_M9eFZEKJ.js",
+      "_CVF-bng6.js",
+      "_BwMNkdg4.js",
+      "_BfeU7vQQ.js",
+      "_DD2MY35P.js",
+      "_a6kQKoi-.js",
+      "_GKF6Ez0I.js",
+      "_q-oreVr4.js",
+      "_C6AiIuU-.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/maintenance/job-orders/index.tsx": {
-    "file": "assets/wUmk4l7-.js",
+    "file": "assets/mwSuPJx5.js",
     "name": "index",
     "src": "resources/js/react/pages/maintenance/job-orders/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_h8jA8cqn.js",
-      "_C9vtNALK.js",
-      "_CGHVSXkJ.js",
-      "_CrTgKcAJ.js",
-      "_zqGBOWBQ.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_DHgzJ7kT.js",
-      "_N3yOfwgG.js",
-      "_sYg3cUKT.js",
-      "_Bbrpv1GX.js",
-      "_CfXiUtWD.js",
-      "_D87Ln0P9.js",
-      "_D4XR4vOf.js",
-      "_C-zvx5nC.js",
-      "_BQ40-xUA.js",
-      "_CLdD3jGm.js",
-      "_CES2EAle.js",
-      "_BsvG-G5F.js",
-      "_CiwBBtU3.js",
-      "_DZQNrNoH.js",
-      "_CYceCrXy.js"
+      "_CzlglhFj.js",
+      "_CKVnsjbv.js",
+      "_CU7WzvNa.js",
+      "_DVNUbKyE.js",
+      "_UnN6kuFR.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_q-oreVr4.js",
+      "_Cr8JXzCS.js",
+      "_DNbYt_Uc.js",
+      "_SGcIWTOE.js",
+      "_oLQeNjEa.js",
+      "_CYb4Czn3.js",
+      "_Lefj7MeV.js",
+      "_Cmqtbx0l.js",
+      "_BfeU7vQQ.js",
+      "_DD2MY35P.js",
+      "_a6kQKoi-.js",
+      "_CVF-bng6.js",
+      "_C6AiIuU-.js",
+      "_BSHVIKrj.js",
+      "_eLESx6Po.js"
     ]
   },
   "resources/js/react/pages/maintenance/job-orders/show.tsx": {
-    "file": "assets/BizGbZfT.js",
+    "file": "assets/BhvFrXk5.js",
     "name": "show",
     "src": "resources/js/react/pages/maintenance/job-orders/show.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CGHVSXkJ.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_CrTgKcAJ.js",
-      "_cPB_XTDk.js",
-      "_CfXiUtWD.js",
-      "_xcEhfnSJ.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_Cq4CF1o7.js",
-      "_D4XR4vOf.js",
-      "_D2e1fO8y.js",
-      "_uDcd-Xno.js",
-      "_B6NhanuA.js",
-      "_CES2EAle.js",
-      "_BsvG-G5F.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DHgzJ7kT.js",
-      "_CiwBBtU3.js",
-      "_DZQNrNoH.js"
+      "_CU7WzvNa.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_DVNUbKyE.js",
+      "_DIj3nUv7.js",
+      "_oLQeNjEa.js",
+      "_M9eFZEKJ.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_Dc1oN8KD.js",
+      "_Lefj7MeV.js",
+      "_DzAhyKNV.js",
+      "_Bn415zkp.js",
+      "_D8qoIVZR.js",
+      "_a6kQKoi-.js",
+      "_CVF-bng6.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_q-oreVr4.js",
+      "_C6AiIuU-.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/payroll/adjustments/form.tsx": {
-    "file": "assets/B-femA1j.js",
+    "file": "assets/BgkjOiyC.js",
     "name": "form",
     "src": "resources/js/react/pages/payroll/adjustments/form.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DpJrqVNh.js",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_xcEhfnSJ.js",
-      "_D8ID-ewd.js",
-      "_mvPY5i5Y.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js",
-      "_BsvG-G5F.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DMdEY9kn.js",
-      "_DyB4330y.js",
-      "_cPB_XTDk.js",
-      "_C4RO2wXd.js",
-      "_CboUIskd.js",
-      "_DMnMLu_z.js",
-      "_8UhF34TT.js",
-      "_DHgzJ7kT.js",
-      "_DZQNrNoH.js"
+      "_DZBkAGgS.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_M9eFZEKJ.js",
+      "_De2yewMa.js",
+      "_CC6ywJ0Z.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js",
+      "_CVF-bng6.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_CKRf_Um8.js",
+      "_BJkDdjnk.js",
+      "_DIj3nUv7.js",
+      "_-x8hSDsh.js",
+      "_BTK0z-XT.js",
+      "_C5na8yVM.js",
+      "_BwMNkdg4.js",
+      "_q-oreVr4.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/payroll/adjustments/index.tsx": {
-    "file": "assets/CZdSkJY0.js",
+    "file": "assets/PfF9vjAk.js",
     "name": "index",
     "src": "resources/js/react/pages/payroll/adjustments/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_CmrxdnVg.js",
-      "_CrTgKcAJ.js",
-      "_qTq-J83H.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DZQNrNoH.js",
-      "_CeTW9_uy.js",
-      "_DHgzJ7kT.js",
-      "_DMnMLu_z.js",
-      "_DAjkuwpZ.js",
-      "_9W5GBpcB.js",
-      "_BsvG-G5F.js",
-      "_D4XR4vOf.js",
-      "_CiwBBtU3.js",
-      "_CL9rtUpn.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js"
+      "_DWrMze7j.js",
+      "_D9gSX1kQ.js",
+      "_DVNUbKyE.js",
+      "_EePyuNt1.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_BSHVIKrj.js",
+      "_CtfTognO.js",
+      "_q-oreVr4.js",
+      "_C5na8yVM.js",
+      "_K_PxpXbg.js",
+      "_CtLdL4aX.js",
+      "_CVF-bng6.js",
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_C_sAIL8y.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js"
     ]
   },
   "resources/js/react/pages/payroll/attendance-summary/export.tsx": {
-    "file": "assets/o1Mo2xCr.js",
+    "file": "assets/BK29mitN.js",
     "name": "export",
     "src": "resources/js/react/pages/payroll/attendance-summary/export.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CGIxwpha.js",
-      "_BnwjAuN-.js",
-      "_BXKdF2-J.js"
+      "_DWyYOyJO.js",
+      "_Dlx0PNGo.js",
+      "_DZGNNlfH.js"
     ]
   },
   "resources/js/react/pages/payroll/attendance-summary/index.tsx": {
-    "file": "assets/CcQBmmv4.js",
+    "file": "assets/DiX-LRfZ.js",
     "name": "index",
     "src": "resources/js/react/pages/payroll/attendance-summary/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_BsdE0U4c.js",
-      "_CrTgKcAJ.js",
-      "_DMdEY9kn.js",
-      "_CmrxdnVg.js",
-      "_4hYwuuPd.js",
-      "_BDZQaRNA.js",
-      "_CL9rtUpn.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_BXKdF2-J.js",
-      "_AVFSBxLY.js",
-      "_CboUIskd.js",
-      "_D87Ln0P9.js",
-      "_CeTW9_uy.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js",
-      "_DXOmdz0T.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js"
+      "_CpfewOPh.js",
+      "_DVNUbKyE.js",
+      "_CKRf_Um8.js",
+      "_D9gSX1kQ.js",
+      "_KdzEVHOw.js",
+      "_kilOfOaW.js",
+      "_C_sAIL8y.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_DZGNNlfH.js",
+      "_CvO76Y8n.js",
+      "_BTK0z-XT.js",
+      "_CYb4Czn3.js",
+      "_CtfTognO.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js",
+      "_CVF-bng6.js",
+      "_GKF6Ez0I.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js"
     ]
   },
   "resources/js/react/pages/payroll/audit-logs/index.tsx": {
-    "file": "assets/COWTyzCh.js",
+    "file": "assets/BJDFZR7B.js",
     "name": "index",
     "src": "resources/js/react/pages/payroll/audit-logs/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CmrxdnVg.js",
-      "_4hYwuuPd.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_CrTgKcAJ.js",
-      "_D87Ln0P9.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_BsvG-G5F.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_DZQNrNoH.js"
+      "_D9gSX1kQ.js",
+      "_KdzEVHOw.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_DVNUbKyE.js",
+      "_CYb4Czn3.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/payroll/benefits-records/index.tsx": {
-    "file": "assets/CRJzZLEq.js",
+    "file": "assets/ConR4TXH.js",
     "name": "index",
     "src": "resources/js/react/pages/payroll/benefits-records/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CmrxdnVg.js",
-      "__kcB5M3q.js",
-      "_4hYwuuPd.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_cPB_XTDk.js",
-      "_CrTgKcAJ.js",
-      "_DZQNrNoH.js",
-      "_D87Ln0P9.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_BsvG-G5F.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js"
+      "_D9gSX1kQ.js",
+      "_D3BH76Mx.js",
+      "_KdzEVHOw.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_DIj3nUv7.js",
+      "_DVNUbKyE.js",
+      "_BSHVIKrj.js",
+      "_CYb4Czn3.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js"
     ]
   },
   "resources/js/react/pages/payroll/benefits-records/overall.tsx": {
-    "file": "assets/Cm-iba0b.js",
+    "file": "assets/BTxn-Jo_.js",
     "name": "overall",
     "src": "resources/js/react/pages/payroll/benefits-records/overall.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CmrxdnVg.js",
-      "__kcB5M3q.js",
-      "_4hYwuuPd.js",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_BXKdF2-J.js",
-      "_D87Ln0P9.js",
-      "_CLdD3jGm.js",
-      "_DXOmdz0T.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js"
+      "_D9gSX1kQ.js",
+      "_D3BH76Mx.js",
+      "_KdzEVHOw.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_DZGNNlfH.js",
+      "_CYb4Czn3.js",
+      "_DD2MY35P.js",
+      "_GKF6Ez0I.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_BSHVIKrj.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/payroll/benefits-records/print.tsx": {
-    "file": "assets/C5Y0m_Ln.js",
+    "file": "assets/Bx3vuZ2g.js",
     "name": "print",
     "src": "resources/js/react/pages/payroll/benefits-records/print.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CGIxwpha.js",
-      "_BnwjAuN-.js",
-      "_BXKdF2-J.js"
+      "_DWyYOyJO.js",
+      "_Dlx0PNGo.js",
+      "_DZGNNlfH.js"
     ]
   },
   "resources/js/react/pages/payroll/employee-salaries/form.tsx": {
-    "file": "assets/BEc3IZfb.js",
+    "file": "assets/B34Kd0vS.js",
     "name": "form",
     "src": "resources/js/react/pages/payroll/employee-salaries/form.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_mvPY5i5Y.js",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_CES2EAle.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_CJrjo6im.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_C4RO2wXd.js",
-      "_DZQNrNoH.js",
-      "_CiwBBtU3.js",
-      "_DHgzJ7kT.js",
-      "_8UhF34TT.js",
-      "_xcEhfnSJ.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js",
-      "_BsvG-G5F.js"
+      "_CC6ywJ0Z.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_a6kQKoi-.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_DZDDUjjl.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_-x8hSDsh.js",
+      "_BSHVIKrj.js",
+      "_C6AiIuU-.js",
+      "_q-oreVr4.js",
+      "_BwMNkdg4.js",
+      "_M9eFZEKJ.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/payroll/employee-salaries/index.tsx": {
-    "file": "assets/BobCeQRx.js",
+    "file": "assets/DJfVjuEf.js",
     "name": "index",
     "src": "resources/js/react/pages/payroll/employee-salaries/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_CmrxdnVg.js",
-      "_qTq-J83H.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DZQNrNoH.js",
-      "_D4XR4vOf.js",
-      "_CiwBBtU3.js",
-      "_CeTW9_uy.js",
-      "_DHgzJ7kT.js",
-      "_CL9rtUpn.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_BsvG-G5F.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js"
+      "_DWrMze7j.js",
+      "_D9gSX1kQ.js",
+      "_EePyuNt1.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_BSHVIKrj.js",
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_CtfTognO.js",
+      "_q-oreVr4.js",
+      "_C_sAIL8y.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js"
     ]
   },
   "resources/js/react/pages/payroll/holidays/form.tsx": {
-    "file": "assets/DRXVvANk.js",
+    "file": "assets/A90XabTm.js",
     "name": "form",
     "src": "resources/js/react/pages/payroll/holidays/form.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_CES2EAle.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DMdEY9kn.js",
-      "_DyB4330y.js",
-      "_C4RO2wXd.js",
-      "_8UhF34TT.js",
-      "_xcEhfnSJ.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js"
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_a6kQKoi-.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_CKRf_Um8.js",
+      "_BJkDdjnk.js",
+      "_-x8hSDsh.js",
+      "_BwMNkdg4.js",
+      "_M9eFZEKJ.js",
+      "_BSHVIKrj.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/payroll/holidays/index.tsx": {
-    "file": "assets/CizYMYrH.js",
+    "file": "assets/Csa1t9Q0.js",
     "name": "index",
     "src": "resources/js/react/pages/payroll/holidays/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_CmrxdnVg.js",
-      "__kcB5M3q.js",
-      "_qTq-J83H.js",
-      "_CrTgKcAJ.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DHgzJ7kT.js",
-      "_D4XR4vOf.js",
-      "_CiwBBtU3.js",
-      "_CL9rtUpn.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_BsvG-G5F.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_DZQNrNoH.js"
+      "_DWrMze7j.js",
+      "_D9gSX1kQ.js",
+      "_D3BH76Mx.js",
+      "_EePyuNt1.js",
+      "_DVNUbKyE.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_q-oreVr4.js",
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_C_sAIL8y.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/payroll/items/show.tsx": {
-    "file": "assets/n4JamTaI.js",
+    "file": "assets/BJ8faxoW.js",
     "name": "show",
     "src": "resources/js/react/pages/payroll/items/show.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DpJrqVNh.js",
-      "_DB1c-uEz.js",
-      "_CrTgKcAJ.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DMdEY9kn.js",
-      "_cPB_XTDk.js",
-      "_C4RO2wXd.js",
-      "_DZQNrNoH.js",
-      "_CeTW9_uy.js",
-      "_xcEhfnSJ.js",
-      "_8UhF34TT.js",
-      "_D8ID-ewd.js",
-      "_mvPY5i5Y.js",
-      "_CYceCrXy.js",
-      "_N3yOfwgG.js",
-      "_BsvG-G5F.js",
-      "_DyB4330y.js",
-      "_CboUIskd.js",
-      "_DMnMLu_z.js",
-      "_DHgzJ7kT.js",
-      "_CL9rtUpn.js"
+      "_DZBkAGgS.js",
+      "_DWrMze7j.js",
+      "_DVNUbKyE.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_CKRf_Um8.js",
+      "_DIj3nUv7.js",
+      "_-x8hSDsh.js",
+      "_BSHVIKrj.js",
+      "_CtfTognO.js",
+      "_M9eFZEKJ.js",
+      "_BwMNkdg4.js",
+      "_De2yewMa.js",
+      "_CC6ywJ0Z.js",
+      "_eLESx6Po.js",
+      "_Cr8JXzCS.js",
+      "_CVF-bng6.js",
+      "_BJkDdjnk.js",
+      "_BTK0z-XT.js",
+      "_C5na8yVM.js",
+      "_q-oreVr4.js",
+      "_C_sAIL8y.js"
     ]
   },
   "resources/js/react/pages/payroll/manual-biometrics/index.tsx": {
-    "file": "assets/-7XE-wct.js",
+    "file": "assets/GU2c1zFD.js",
     "name": "index",
     "src": "resources/js/react/pages/payroll/manual-biometrics/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_BsdE0U4c.js",
-      "_CmrxdnVg.js",
-      "_CrTgKcAJ.js",
-      "_BnwjAuN-.js",
-      "_CYceCrXy.js",
-      "_BsvG-G5F.js",
-      "_CLdD3jGm.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_BD7bq_wi.js",
-      "_Dfvh3nt-.js",
-      "_8UhF34TT.js",
-      "_DMdEY9kn.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_DZQNrNoH.js"
+      "_CpfewOPh.js",
+      "_D9gSX1kQ.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_eLESx6Po.js",
+      "_CVF-bng6.js",
+      "_DD2MY35P.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_Dt6_L3G0.js",
+      "_Y81pEmm1.js",
+      "_BwMNkdg4.js",
+      "_CKRf_Um8.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/payroll/payrolls/create.tsx": {
-    "file": "assets/DVWxhf1t.js",
+    "file": "assets/DdvhBC8p.js",
     "name": "create",
     "src": "resources/js/react/pages/payroll/payrolls/create.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_BsdE0U4c.js",
-      "_CrTgKcAJ.js",
-      "_BDZQaRNA.js",
-      "_BnwjAuN-.js",
-      "_BQ40-xUA.js",
-      "_DMdEY9kn.js",
-      "_DyB4330y.js",
-      "_C4RO2wXd.js",
-      "_xcEhfnSJ.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js"
+      "_CpfewOPh.js",
+      "_DVNUbKyE.js",
+      "_kilOfOaW.js",
+      "_Dlx0PNGo.js",
+      "_BfeU7vQQ.js",
+      "_CKRf_Um8.js",
+      "_BJkDdjnk.js",
+      "_-x8hSDsh.js",
+      "_CFsIhbwE.js",
+      "_M9eFZEKJ.js",
+      "_BSHVIKrj.js",
+      "_CVF-bng6.js"
     ]
   },
   "resources/js/react/pages/payroll/payrolls/index.tsx": {
-    "file": "assets/DEFXHQSk.js",
+    "file": "assets/CMiqd1Qy.js",
     "name": "index",
     "src": "resources/js/react/pages/payroll/payrolls/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_CmrxdnVg.js",
-      "_qTq-J83H.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_CrTgKcAJ.js",
+      "_DWrMze7j.js",
+      "_D9gSX1kQ.js",
+      "_EePyuNt1.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_DVNUbKyE.js",
       "_CeftEtSP.js",
-      "_DHgzJ7kT.js",
-      "_B6NhanuA.js",
-      "_D87Ln0P9.js",
-      "_DZQNrNoH.js",
-      "_CiwBBtU3.js",
-      "_CL9rtUpn.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_BsvG-G5F.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js"
+      "_q-oreVr4.js",
+      "_D8qoIVZR.js",
+      "_CYb4Czn3.js",
+      "_BSHVIKrj.js",
+      "_C6AiIuU-.js",
+      "_C_sAIL8y.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js"
     ]
   },
   "resources/js/react/pages/payroll/payrolls/show.tsx": {
-    "file": "assets/Dtnl_QVb.js",
+    "file": "assets/b1KQqi_V.js",
     "name": "show",
     "src": "resources/js/react/pages/payroll/payrolls/show.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_DB1c-uEz.js",
-      "_CmrxdnVg.js",
-      "_CrTgKcAJ.js",
-      "_qTq-J83H.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DZQNrNoH.js",
-      "_AVFSBxLY.js",
-      "_xcEhfnSJ.js",
-      "_Bbrpv1GX.js",
-      "_CL9rtUpn.js",
-      "_DXOmdz0T.js",
-      "_DMdEY9kn.js",
-      "_BsvG-G5F.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_BXKdF2-J.js"
+      "_DWrMze7j.js",
+      "_D9gSX1kQ.js",
+      "_DVNUbKyE.js",
+      "_EePyuNt1.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_BSHVIKrj.js",
+      "_CvO76Y8n.js",
+      "_M9eFZEKJ.js",
+      "_SGcIWTOE.js",
+      "_C_sAIL8y.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_DZGNNlfH.js"
     ]
   },
   "resources/js/react/pages/payroll/plotting/index.tsx": {
-    "file": "assets/B5POTGYH.js",
+    "file": "assets/BHGqlTu3.js",
     "name": "index",
     "src": "resources/js/react/pages/payroll/plotting/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_CmrxdnVg.js",
-      "_CrTgKcAJ.js",
-      "_BDZQaRNA.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_BQ40-xUA.js",
-      "_DMdEY9kn.js",
-      "_8UhF34TT.js",
-      "_cPB_XTDk.js",
-      "_N3yOfwgG.js",
-      "_C3mCdBt4.js",
-      "_C-zvx5nC.js",
-      "_uwBWLKQn.js",
-      "_Bbrpv1GX.js",
-      "_BXKdF2-J.js",
-      "_DZQNrNoH.js",
-      "_BsvG-G5F.js"
+      "_D9gSX1kQ.js",
+      "_DVNUbKyE.js",
+      "_ByiJ0XjR.js",
+      "_kilOfOaW.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_BwMNkdg4.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BSHVIKrj.js"
+    ]
+  },
+  "resources/js/react/pages/payroll/settings/form.tsx": {
+    "file": "assets/D3ExYTZk.js",
+    "name": "form",
+    "src": "resources/js/react/pages/payroll/settings/form.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_CKVnsjbv.js",
+      "_KdzEVHOw.js",
+      "_DVNUbKyE.js",
+      "_BsEQ_Ug7.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_Cwu6ag_e.js",
+      "_DFPi7NHx.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_CcvuIyAc.js",
+      "_-x8hSDsh.js",
+      "_DNbYt_Uc.js",
+      "_CFsIhbwE.js",
+      "_BwMNkdg4.js",
+      "_M9eFZEKJ.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js",
+      "_DIj3nUv7.js",
+      "_CVF-bng6.js",
+      "_CpfewOPh.js",
+      "_D9gSX1kQ.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_UnN6kuFR.js",
+      "_eLESx6Po.js",
+      "_DVVwZPCT.js"
+    ]
+  },
+  "resources/js/react/pages/payroll/settings/index.tsx": {
+    "file": "assets/BtptlFsp.js",
+    "name": "index",
+    "src": "resources/js/react/pages/payroll/settings/index.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_DWrMze7j.js",
+      "_EePyuNt1.js",
+      "_DVNUbKyE.js",
+      "_BNWmg0h1.js",
+      "_Cwu6ag_e.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_q-oreVr4.js",
+      "_Lefj7MeV.js",
+      "_Dt6_L3G0.js",
+      "_C6AiIuU-.js",
+      "_C_sAIL8y.js",
+      "_BSHVIKrj.js",
+      "_gh64BC7a.js",
+      "_CFsIhbwE.js"
+    ]
+  },
+  "resources/js/react/pages/payroll/settings/rule-form.tsx": {
+    "file": "assets/BGEcsVNC.js",
+    "name": "rule-form",
+    "src": "resources/js/react/pages/payroll/settings/rule-form.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_DFPi7NHx.js",
+      "_UnN6kuFR.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_a6kQKoi-.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_CKRf_Um8.js",
+      "_BJkDdjnk.js",
+      "_-x8hSDsh.js",
+      "_BSHVIKrj.js",
+      "_BwMNkdg4.js",
+      "_M9eFZEKJ.js",
+      "_BTK0z-XT.js",
+      "_CpfewOPh.js",
+      "_D9gSX1kQ.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_KdzEVHOw.js",
+      "_DVVwZPCT.js",
+      "_eLESx6Po.js",
+      "_CVF-bng6.js"
+    ]
+  },
+  "resources/js/react/pages/payroll/settings/rules.tsx": {
+    "file": "assets/C7sJe6tr.js",
+    "name": "rules",
+    "src": "resources/js/react/pages/payroll/settings/rules.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_DWrMze7j.js",
+      "_D9gSX1kQ.js",
+      "_EePyuNt1.js",
+      "_DVNUbKyE.js",
+      "_BNWmg0h1.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_BJkDdjnk.js",
+      "_q-oreVr4.js",
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_C_sAIL8y.js",
+      "_GKF6Ez0I.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_DIj3nUv7.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_BSHVIKrj.js",
+      "_gh64BC7a.js",
+      "_CFsIhbwE.js"
+    ]
+  },
+  "resources/js/react/pages/payroll/settings/test.tsx": {
+    "file": "assets/D7KIZeTM.js",
+    "name": "test",
+    "src": "resources/js/react/pages/payroll/settings/test.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/react/app.tsx",
+      "_BsEQ_Ug7.js",
+      "_BNWmg0h1.js",
+      "_DFPi7NHx.js",
+      "_DVNUbKyE.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_BfeU7vQQ.js",
+      "_DIj3nUv7.js",
+      "_BSHVIKrj.js",
+      "_CFsIhbwE.js",
+      "_CKRf_Um8.js",
+      "_CVF-bng6.js",
+      "_gh64BC7a.js",
+      "_CpfewOPh.js",
+      "_D9gSX1kQ.js",
+      "_DD2MY35P.js",
+      "_Cr8JXzCS.js",
+      "_dZiuwI6a.js",
+      "_Cmqtbx0l.js",
+      "_DhgpGzod.js",
+      "_SGcIWTOE.js",
+      "_DZGNNlfH.js",
+      "_CKVnsjbv.js",
+      "_KdzEVHOw.js",
+      "_UnN6kuFR.js",
+      "_eLESx6Po.js",
+      "_DVVwZPCT.js"
     ]
   },
   "resources/js/react/pages/products/categories/index.tsx": {
-    "file": "assets/Z4u_HGj1.js",
+    "file": "assets/JBz5GWjl.js",
     "name": "index",
     "src": "resources/js/react/pages/products/categories/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_CL9rtUpn.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_cPB_XTDk.js",
-      "_DHgzJ7kT.js",
-      "_N3yOfwgG.js",
-      "_Ck_Ilcvs.js",
-      "_D4XR4vOf.js",
-      "_CiwBBtU3.js",
-      "_C-zvx5nC.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js"
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_C_sAIL8y.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_DIj3nUv7.js",
+      "_q-oreVr4.js",
+      "_Cr8JXzCS.js",
+      "_CZKoNpmJ.js",
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_Cmqtbx0l.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js"
     ]
   },
   "resources/js/react/pages/products/items/index.tsx": {
-    "file": "assets/DoD-XYif.js",
+    "file": "assets/0H16pvon.js",
     "name": "index",
     "src": "resources/js/react/pages/products/items/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/react/app.tsx",
-      "_h8jA8cqn.js",
-      "_C9vtNALK.js",
-      "_CrTgKcAJ.js",
-      "_zqGBOWBQ.js",
-      "_CL9rtUpn.js",
-      "_CLdD3jGm.js",
-      "_BnwjAuN-.js",
-      "_DXOmdz0T.js",
-      "_cPB_XTDk.js",
-      "_C4RO2wXd.js",
-      "_C7WqDVPK.js",
-      "_DHgzJ7kT.js",
-      "_N3yOfwgG.js",
-      "_Ck_Ilcvs.js",
-      "_D4XR4vOf.js",
-      "_CiwBBtU3.js",
-      "_8UhF34TT.js",
-      "_C-zvx5nC.js",
-      "_BQ40-xUA.js",
-      "_DZQNrNoH.js",
-      "_CYceCrXy.js",
-      "_BsvG-G5F.js"
+      "_CzlglhFj.js",
+      "_CKVnsjbv.js",
+      "_DVNUbKyE.js",
+      "_UnN6kuFR.js",
+      "_C_sAIL8y.js",
+      "_DD2MY35P.js",
+      "_Dlx0PNGo.js",
+      "_GKF6Ez0I.js",
+      "_DIj3nUv7.js",
+      "_-x8hSDsh.js",
+      "_Bw01BgqE.js",
+      "_q-oreVr4.js",
+      "_Cr8JXzCS.js",
+      "_CZKoNpmJ.js",
+      "_Lefj7MeV.js",
+      "_C6AiIuU-.js",
+      "_BwMNkdg4.js",
+      "_Cmqtbx0l.js",
+      "_BfeU7vQQ.js",
+      "_BSHVIKrj.js",
+      "_eLESx6Po.js",
+      "_CVF-bng6.js"
     ]
   }
 }

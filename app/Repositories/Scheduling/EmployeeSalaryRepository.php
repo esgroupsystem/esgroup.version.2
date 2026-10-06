@@ -54,6 +54,16 @@ final class EmployeeSalaryRepository implements EmployeeSalaryRepositoryInterfac
             ->withQueryString();
     }
 
+    public function forEmployee(int $employeeBiometricId): ?PayrollEmployeeSalary
+    {
+        return PayrollEmployeeSalary::query()
+            ->with(['otherDeductions', 'employeeBiometric.permanentSchedule'])
+            ->where('employee_biometric_id', $employeeBiometricId)
+            ->orderByDesc('is_active')
+            ->latest('id')
+            ->first();
+    }
+
     public function latestForEmployeeForUpdate(int $employeeBiometricId): ?PayrollEmployeeSalary
     {
         return PayrollEmployeeSalary::query()

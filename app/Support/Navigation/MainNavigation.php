@@ -23,6 +23,9 @@ final class MainNavigation
      *
      * @var list<string>
      */
+    /** Any of these opens Scheduling & Rates → Employees (each profile tab checks its own). */
+    public const EMPLOYEE_PERMISSIONS = 'biometrics.view|payroll-plotting.view|employee-salaries.view';
+
     public const INERTIA_ROUTES = [
         'dashboard.index',
         'chairman.hr-data.index',
@@ -53,9 +56,17 @@ final class MainNavigation
         'benefits-records.index',
         'benefits-records.overall',
         'payroll-audit-logs.index',
+        'payroll-settings.index',
+        'payroll-settings.versions.create',
+        'payroll-settings.versions.edit',
+        'payroll-settings.rules.index',
+        'payroll-settings.rules.create',
+        'payroll-settings.rules.edit',
+        'payroll-settings.test.index',
         'manual-biometrics.index',
         'mirasol-logs.index',
         'biometrics.employees.index',
+        'biometrics.employees.show',
         'biometrics.employees.edit',
         'tickets.joborder.index',
         'tickets.createjoborder.index',
@@ -165,9 +176,9 @@ final class MainNavigation
             [
                 'label' => 'Scheduling & Rates',
                 'items' => [
-                    self::link('Employees', 'biometrics.employees.index', 'biometrics.view', 'id-card', ['biometrics.employees.*']),
-                    self::link('Work Schedule', 'payroll-plotting.index', 'payroll-plotting.view', 'calendar-clock', ['payroll-plotting.*']),
-                    self::link('Employee Rates', 'payroll-employee-salaries.index', 'employee-salaries.view', 'banknote', ['payroll-employee-salaries.*']),
+                    // One profile per person: details, work schedule and rates. The bulk Work Schedule
+                    // grid and the Employee Rates list open from buttons on that page.
+                    self::link('Employees', 'biometrics.employees.index', self::EMPLOYEE_PERMISSIONS, 'id-card', ['biometrics.employees.*', 'payroll-plotting.*', 'payroll-employee-salaries.*']),
                     self::link('Holiday Calendar', 'holidays.index', 'holidays.view', 'calendar-heart', ['holidays.*']),
                 ],
             ],
@@ -180,6 +191,7 @@ final class MainNavigation
                     self::link('Benefits Records', 'benefits-records.index', 'benefits-records.view', 'shield-check', ['benefits-records.index', 'benefits-records.show']),
                     self::link('Benefits Overall', 'benefits-records.overall', 'benefits-records.view', 'file-spreadsheet', ['benefits-records.overall']),
                     self::link('Payroll Transaction Logs', 'payroll-audit-logs.index', 'payroll-audit-logs.view', 'history', ['payroll-audit-logs.*']),
+                    self::link('Payroll Settings', 'payroll-settings.index', 'payroll-settings.view', 'sliders', ['payroll-settings.*']),
                 ],
             ],
             [
@@ -279,7 +291,7 @@ final class MainNavigation
             ];
         }
 
-        if (! $user->can($item['permission']) || ! Route::has($item['route'])) {
+        if (! $user->canAny(explode('|', $item['permission'])) || ! Route::has($item['route'])) {
             return null;
         }
 

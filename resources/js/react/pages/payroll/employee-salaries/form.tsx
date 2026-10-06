@@ -54,6 +54,8 @@ interface Props {
     sssRules: SssRules;
     sssCircular: { number: string; effective: string };
     urls: { index: string; submit: string };
+    /** Set when shown inside the employee profile: the save returns to that profile and Cancel is hidden. */
+    returnProfile?: number;
 }
 
 const LOANS = [
@@ -89,7 +91,7 @@ function BackLink({ urls }: Props) {
     );
 }
 
-function EmployeeSalaryForm({ salary, values, people, workday, scheduleOptions, cutoffLabels, sssRules, sssCircular, urls }: Props) {
+export function EmployeeSalaryForm({ salary, values, people, workday, scheduleOptions, cutoffLabels, sssRules, sssCircular, urls, returnProfile }: Props) {
     const isEdit = salary !== null;
     const modal = useModal();
     const form = useForm<Values>(values);
@@ -148,6 +150,7 @@ function EmployeeSalaryForm({ salary, values, people, workday, scheduleOptions, 
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
+        if (returnProfile) form.transform((current) => ({ ...current, return_profile: returnProfile }));
         if (isEdit) {
             form.put(urls.submit, modal.visit({ preserveScroll: true }));
         } else {
@@ -408,15 +411,16 @@ function EmployeeSalaryForm({ salary, values, people, workday, scheduleOptions, 
                 </Section>
 
                 <div className="flex justify-end gap-2">
-                    {modal.inModal ? (
-                        <Button type="button" variant="outline" onClick={modal.close}>
-                            Cancel
-                        </Button>
-                    ) : (
-                        <Button type="button" variant="outline" asChild>
-                            <Link href={urls.index}>Cancel</Link>
-                        </Button>
-                    )}
+                    {!returnProfile &&
+                        (modal.inModal ? (
+                            <Button type="button" variant="outline" onClick={modal.close}>
+                                Cancel
+                            </Button>
+                        ) : (
+                            <Button type="button" variant="outline" asChild>
+                                <Link href={urls.index}>Cancel</Link>
+                            </Button>
+                        ))}
                     <Button type="submit" disabled={processing}>
                         {processing ? <LoaderCircle className="animate-spin" /> : <Save />}
                         {isEdit ? 'Update salary' : 'Save salary'}
@@ -539,3 +543,5 @@ function CutoffPreview({ title, values }: { title: string; values: { gross: numb
         </div>
     );
 }
+
+export type EmployeeSalaryFormProps = Props;

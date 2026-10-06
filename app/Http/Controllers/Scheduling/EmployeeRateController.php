@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Scheduling;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Scheduling\Concerns\BuildsEmployeeRateForm;
 use App\Http\Requests\Scheduling\EmployeeRateRequest;
 use App\Http\Resources\Scheduling\EmployeeRateFormResource;
 use App\Http\Resources\Scheduling\EmployeeRateRowResource;
 use App\Models\PayrollEmployeeSalary;
 use App\Services\Scheduling\EmployeeRateService;
-use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -24,6 +24,8 @@ use Throwable;
  */
 final class EmployeeRateController extends Controller
 {
+    use BuildsEmployeeRateForm;
+
     public function __construct(
         private readonly EmployeeRateService $rates,
     ) {}
@@ -60,7 +62,11 @@ final class EmployeeRateController extends Controller
 
     public function store(EmployeeRateRequest $request): RedirectResponse
     {
-        $this->rates->create($request->validated());
+        $salary = $this->rates->create($request->validated());
+
+        if ($request->integer('return_profile') === (int) $salary->employee_biometric_id) {
+            return to_route('biometrics.employees.show', $salary->employee_biometric_id)->with('success', 'Salary record created successfully.');
+        }
 
         return redirect()->route('payroll-employee-salaries.index')->with('success', 'Salary record created successfully.');
     }
@@ -73,6 +79,10 @@ final class EmployeeRateController extends Controller
     public function update(EmployeeRateRequest $request, PayrollEmployeeSalary $payrollEmployeeSalary): RedirectResponse
     {
         $this->rates->update($payrollEmployeeSalary, $request->validated());
+
+        if ($payrollEmployeeSalary->employee_biometric_id && $request->integer('return_profile') === (int) $payrollEmployeeSalary->employee_biometric_id) {
+            return to_route('biometrics.employees.show', $payrollEmployeeSalary->employee_biometric_id)->with('success', 'Salary record updated successfully.');
+        }
 
         return redirect()->route('payroll-employee-salaries.index')->with('success', 'Salary record updated successfully.');
     }
@@ -105,40 +115,12 @@ final class EmployeeRateController extends Controller
 
     private function form(Request $request, ?PayrollEmployeeSalary $salary): Response
     {
-        $schedule = $salary?->employeeBiometric?->permanentSchedule;
-        $first = config('payroll.cutoff_display.first.label', '2nd Cutoff');
-        $firstRange = config('payroll.cutoff_display.first.range', '11-25');
-        $second = config('payroll.cutoff_display.second.label', '1st Cutoff');
-        $secondRange = config('payroll.cutoff_display.second.range', '26-10');
-
-        return Inertia::render('payroll/employee-salaries/form', [
-            'salary' => $salary ? ['id' => $salary->id, 'name' => $salary->payroll_display_name] : null,
-            'values' => EmployeeRateFormResource::make($salary)->resolve($request),
-            'people' => $this->rates->people($this->allowedGroups()),
-            'workday' => [
-                'paid_hours' => (float) ($schedule?->paidWorkHours() ?? 8.0),
-                'label' => $schedule?->resolvedWorkdayType()->shortLabel() ?? '8 hrs + 1 hr lunch',
-            ],
-            'scheduleOptions' => [
-                'none' => 'No Deduction / Not Applicable',
-                'second_cutoff' => "{$second} Only ({$secondRange})",
-                'first_cutoff' => "{$first} Only ({$firstRange})",
-                'every_cutoff' => 'Every Cutoff',
-            ],
-            'cutoffLabels' => [
-                'first' => "{$first} ({$firstRange})",
-                'second' => "{$second} ({$secondRange})",
-            ],
-            'sssRules' => config('sss.business_employee'),
-            'sssCircular' => [
-                'number' => config('sss.business_employee.circular_number', '2024-006'),
-                'effective' => Carbon::parse(config('sss.business_employee.effective_from', '2025-01-01'))->format('F Y'),
-            ],
-            'urls' => [
-                'index' => route('payroll-employee-salaries.index'),
-                'submit' => $salary ? route('payroll-employee-salaries.update', $salary) : route('payroll-employee-salaries.store'),
-            ],
-        ]);
+        return Inertia::render('payroll/employee-salaries/form', $this->rateFormProps(
+            $request,
+            $salary,
+            $this->rates->people($this->allowedGroups()),
+            EmployeeRateFormResource::make($salary)->resolve($request),
+        ));
     }
 
     /** @return string|list<int|string>|null */

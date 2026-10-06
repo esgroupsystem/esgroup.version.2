@@ -88,6 +88,12 @@ final class BiometricEmployeeService
         return $this->biometrics->load($employee, ['company', 'hrEmployee']);
     }
 
+    /** The employee profile: details plus the saved permanent schedule. */
+    public function forProfile(EmployeeBiometric $employee): EmployeeBiometric
+    {
+        return $this->biometrics->load($employee, ['company', 'hrEmployee', 'permanentSchedule']);
+    }
+
     /** @return list<array{value: string, label: string, hint: string}> */
     public function hrEmployeeOptions(EmployeeBiometric $employee): array
     {

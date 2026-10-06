@@ -13,6 +13,7 @@ use App\Models\PayrollAttendanceAdjustment;
 use App\Models\PayrollEmployeeSalary;
 use App\Models\PayrollItem;
 use App\Models\PayrollReportLog;
+use App\Models\PayrollRule;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -28,9 +29,31 @@ class PayrollComputationService
         protected PayrollEmployeeRosterService $employeeRosterService,
         protected PayrollPremiumService $premiumService,
         protected PayrollDeductionService $deductionService,
+        protected PayrollSettingsService $settings,
+        protected PayrollRuleService $ruleService,
     ) {}
 
+    /** @var array<string, Collection<int, PayrollRule>> active Payroll Rules per period */
+    protected array $periodRules = [];
+
+    /** @var Collection<int, PayrollRule>|null rules used instead of the saved ones (simulator) */
+    protected ?Collection $ruleOverride = null;
+
+    /**
+     * Generate a draft payroll with the Payroll Settings version in effect on the period start.
+     */
     public function generate(array $data, ?int $userId = null): Payroll
+    {
+        [$startDate] = $this->periodService->resolveCutoffRange(
+            (int) $data['cutoff_month'],
+            (int) $data['cutoff_year'],
+            (string) $data['cutoff_type']
+        );
+
+        return $this->settings->using($startDate, fn (): Payroll => $this->generateWithActiveSettings($data, $userId));
+    }
+
+    protected function generateWithActiveSettings(array $data, ?int $userId = null): Payroll
     {
         [$startDate, $endDate] = $this->periodService->resolveCutoffRange(
             (int) $data['cutoff_month'],
@@ -181,6 +204,7 @@ class PayrollComputationService
                     'late_grace_minutes' => (int) config('payroll.attendance.late_grace_minutes', 15),
                     'contribution_cycle_start' => $contribution['cycle_start']->toDateString(),
                     'contribution_cycle_end' => $contribution['cycle_end']->toDateString(),
+                    'settings' => $this->settings->activeSummary() + ['values' => $this->settings->activeValues()],
                     'roster_audit' => [
                         'source' => 'employee_biometrics',
                         'rule' => 'employment_status=active AND payroll_inclusion=on AND selected_payroll_group',
@@ -254,6 +278,71 @@ class PayrollComputationService
     }
 
     /**
+     * Compute employees for a cutoff exactly like Generate, for the Payroll Settings test page.
+     *
+     * Uses whatever settings are applied right now (wrap it in PayrollSettingsService::using()
+     * or usingValues()). It writes a throw-away payroll, so the caller MUST run it inside a
+     * database transaction that it rolls back. Generate's checks (1st cutoff finalized,
+     * duplicate payroll) are skipped on purpose so any cutoff can be tested.
+     *
+     * @param  Collection<int, EmployeeBiometric>  $employees
+     * @param  Collection<int, PayrollRule>|null  $rules  use these instead of the saved rules
+     * @return Collection<int, PayrollItem> one item per employee, in the given order
+     */
+    public function simulateItems(Collection $employees, int $month, int $year, string $cutoffType, ?Collection $rules = null): Collection
+    {
+        [$startDate, $endDate] = $this->periodService->resolveCutoffRange($month, $year, $cutoffType);
+        $contribution = $this->periodService->contributionMonth($month, $year, $cutoffType);
+        $previousOverride = $this->ruleOverride;
+        $this->ruleOverride = $rules;
+
+        try {
+            $payroll = Payroll::create([
+                'payroll_number' => 'TEST-'.strtoupper(bin2hex(random_bytes(5))),
+                'cutoff_month' => $month,
+                'cutoff_year' => $year,
+                'cutoff_type' => $cutoffType,
+                'garage_group' => (string) ($employees->first()?->group_name ?? ''),
+                'contribution_month' => $contribution['month'],
+                'contribution_year' => $contribution['year'],
+                'period_start' => $startDate->toDateString(),
+                'period_end' => $endDate->toDateString(),
+                'remarks' => 'Payroll Settings test run (never saved).',
+                'status' => 'draft',
+                'generated_at' => now('Asia/Manila'),
+                'meta' => [
+                    'contribution_cycle_start' => $contribution['cycle_start']->toDateString(),
+                    'contribution_cycle_end' => $contribution['cycle_end']->toDateString(),
+                    'settings' => $this->settings->activeSummary(),
+                    'simulation' => true,
+                ],
+            ]);
+
+            $summaries = DailyAttendanceSummary::query()
+                ->with('employeeBiometric.company')
+                ->whereBetween('work_date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->whereIn('employee_biometric_id', $employees->pluck('id')->map(fn ($id): int => (int) $id)->all())
+                ->orderBy('employee_biometric_id')
+                ->orderBy('work_date')
+                ->get()
+                ->groupBy(fn ($row): int => (int) $row->employee_biometric_id);
+
+            return $employees->map(function (EmployeeBiometric $employee) use ($payroll, $summaries, $startDate, $endDate, $cutoffType): PayrollItem {
+                $payroll->garage_group = (string) $employee->group_name;
+                $rows = $summaries->get((int) $employee->id, collect());
+
+                $item = $rows->isEmpty()
+                    ? $this->createMissingSummaryPayrollItem($payroll, $employee, $startDate, $endDate, null)
+                    : $this->createPayrollItem($payroll, $rows, $startDate, $endDate, $cutoffType, null);
+
+                return $item->setRelation('payroll', $payroll);
+            })->values();
+        } finally {
+            $this->ruleOverride = $previousOverride;
+        }
+    }
+
+    /**
      * Recompute a single PayrollItem in place from the current Attendance
      * Summary and approved-adjustment data, without touching any other
      * employee's item in the same payroll. Used when the user files or edits
@@ -262,6 +351,14 @@ class PayrollComputationService
      * and regenerating the whole draft.
      */
     public function recomputeItem(Payroll $payroll, PayrollItem $item, ?int $userId = null): PayrollItem
+    {
+        return $this->settings->using(
+            Carbon::parse($payroll->period_start),
+            fn (): PayrollItem => $this->recomputeItemWithActiveSettings($payroll, $item, $userId)
+        );
+    }
+
+    protected function recomputeItemWithActiveSettings(Payroll $payroll, PayrollItem $item, ?int $userId = null): PayrollItem
     {
         if ((int) $item->payroll_id !== (int) $payroll->id) {
             throw ValidationException::withMessages([
@@ -746,7 +843,7 @@ class PayrollComputationService
             ? round($attendanceLoss + $restDayQualificationDeduction, 2)
             : 0.00;
 
-        $grossPay = round(
+        $grossBeforeRules = round(
             $regularPay
             - $attendanceDeductionForNet
             + $holiday['holiday_pay']
@@ -757,6 +854,52 @@ class PayrollComputationService
             + $otherAdditions,
             2
         );
+
+        // Payroll Rules (Payroll Settings): custom earnings are part of gross pay,
+        // so they also count toward the SSS basis like the other additions.
+        $periodRules = $this->rulesForPayroll($payroll);
+        $ruleContext = [
+            'cutoff_type' => $cutoffType,
+            'rate_type' => $monthlyRateType ? 'monthly' : 'daily',
+            'garage_group' => $payroll->garage_group,
+            'employee_biometric_id' => isset($first->employee_biometric_id) ? (int) $first->employee_biometric_id : null,
+        ];
+        $ruleValues = [
+            'basic_pay' => $regularPay,
+            'gross_pay' => $grossBeforeRules,
+            'net_pay' => 0,
+            'monthly_rate' => (float) $rates['monthly_rate'],
+            'daily_rate' => (float) $rates['daily_rate'],
+            'hourly_rate' => (float) $rates['hourly_rate'],
+            'minute_rate' => (float) $rates['minute_rate'],
+            'overtime_pay' => $overtimePay,
+            'night_diff_pay' => $nightDifferentialPay,
+            'holiday_pay' => (float) $holiday['holiday_pay'],
+            'rest_day_pay' => (float) $restDay['rest_day_pay'],
+            'leave_pay' => $leavePay,
+            'allowance' => $allowancePerCutoff,
+            'attendance_loss' => round($attendanceLoss + $restDayQualificationDeduction, 2),
+            'government_deductions' => 0,
+            'days_worked' => $totalWorkedDays,
+            'payable_days' => $totalPayableDays,
+            'payable_hours' => $totalSummaryPayableHours,
+            'scheduled_days' => $this->scheduledWorkingDays($rows),
+            'days_absent' => $totalAbsentDays,
+            'leave_days' => $totalLeaveDays,
+            'minutes_late' => $totalLateMinutes,
+            'minutes_undertime' => $totalUndertimeMinutes,
+            'ot_hours' => round($totalOvertimeMinutes / 60, 4),
+            'night_hours' => round($totalNightDifferentialMinutes / 60, 4),
+            'holidays_worked' => (int) $holiday['worked_days'],
+            'rest_days_worked' => (int) $restDay['worked_days'],
+            'is_monthly' => $monthlyRateType ? 1 : 0,
+            'cutoff' => $cutoffType === 'second' ? 1 : 2,
+            'month' => (int) $payroll->cutoff_month,
+        ];
+        $customEarnings = $this->ruleService->run($periodRules, PayrollRule::KIND_EARNING, $ruleValues, $ruleContext);
+
+        $otherAdditions = round($otherAdditions + $customEarnings['total'], 2);
+        $grossPay = round($grossBeforeRules + $customEarnings['total'], 2);
 
         $taxableCompensation = $grossPay;
 
@@ -836,12 +979,21 @@ class PayrollComputationService
         $government = $this->applyEmployeeGovernmentProfileIfConfigured($government, $governmentRaw, $rates, $cutoffType);
         $government = $this->refreshGovernmentTotals($government);
 
-        $netPay = round(
+        $netBeforeRules = round(
             $grossPay
             - $otherDeductions
             - $government['total_employee_government_deductions'],
             2
         );
+
+        $customDeductions = $this->ruleService->run($periodRules, PayrollRule::KIND_DEDUCTION, array_merge($customEarnings['values'], [
+            'gross_pay' => $grossPay,
+            'net_pay' => $netBeforeRules,
+            'government_deductions' => (float) $government['total_employee_government_deductions'],
+        ]), $ruleContext);
+
+        $otherDeductions = round($otherDeductions + $customDeductions['total'], 2);
+        $netPay = round($netBeforeRules - $customDeductions['total'], 2);
 
         $item = $this->saveItem($existingItem, [
             'payroll_id' => $payroll->id,
@@ -933,6 +1085,13 @@ class PayrollComputationService
                 'government_monthly_cycle_basis' => $monthlyCycleBasis,
                 'salary_deductions' => $salaryDeductions,
                 'manual_adjustments' => $manualAdjustments,
+                'settings_version' => $this->settings->activeSummary(),
+                'custom_rules' => [
+                    'earnings' => $customEarnings['lines'],
+                    'deductions' => $customDeductions['lines'],
+                    'earnings_total' => $customEarnings['total'],
+                    'deductions_total' => $customDeductions['total'],
+                ],
                 'allowance' => [
                     'monthly_allowance' => round((float) ($rates['allowance'] ?? 0), 2),
                     'allowance_release_schedule' => $rates['allowance_release_schedule'] ?? null,
@@ -1147,7 +1306,7 @@ class PayrollComputationService
                 'hours' => round($hours, 2),
                 'multiplier' => $multiplier,
                 'amount' => $amount,
-                'formula' => 'rest_day_hours * hourly_rate * 1.30',
+                'formula' => 'rest_day_hours * hourly_rate * '.number_format($multiplier, 2),
             ];
         }
 
@@ -1173,7 +1332,7 @@ class PayrollComputationService
             (int) ($scheduledClockMinutesPerDay ?? $this->scheduledClockMinutesPerDay())
         );
 
-        $dailyRate = $monthlyRate > 0 ? ($monthlyRate * 12) / 365 : 0.0;
+        $dailyRate = $monthlyRate > 0 ? ($monthlyRate * $this->annualMonths()) / $this->annualDays() : 0.0;
         $hourlyRate = $dailyRate > 0 ? $dailyRate / $paidHoursPerDay : 0.0;
         $minuteRate = $hourlyRate > 0 ? $hourlyRate / 60 : 0.0;
 
@@ -1191,7 +1350,7 @@ class PayrollComputationService
 
         $rates['monthly_divisor_meta'] = [
             'monthly_rate' => round($monthlyRate, 2),
-            'cutoff_basic_pay' => round($monthlyRate / 2, 2),
+            'cutoff_basic_pay' => round($monthlyRate / $this->monthlyCutoffDivisor(), 2),
             'daily_rate' => round($dailyRate, 6),
             'daily_rate_display' => round($dailyRate, 2),
             'hourly_rate' => round($hourlyRate, 6),
@@ -1200,12 +1359,20 @@ class PayrollComputationService
             'minute_rate_display' => round($minuteRate, 2),
             'paid_hours_per_day' => $paidHoursPerDay,
             'scheduled_clock_hours_per_day' => round($scheduledClockMinutesPerDay / 60, 2),
-            'daily_rate_formula' => 'monthly_salary * 12 / 365',
+            'daily_rate_formula' => sprintf('monthly_salary * %s / %s', $this->annualMonths() + 0, $this->annualDays() + 0),
             'hourly_rate_formula' => 'daily_rate / paid_hours_per_day',
             'minute_rate_formula' => 'hourly_rate / 60',
-            'overtime_rate_formula' => 'daily_rate / 8 * 125% on ordinary day; statutory premium-day multiplier applies on rest/holiday',
-            'night_differential_rate_formula' => 'daily_rate / 8 * applicable day multiplier * 10%',
-            'cutoff_base_formula' => 'monthly_salary / 2',
+            'overtime_rate_formula' => sprintf(
+                'daily_rate / %s * %s%% on ordinary day; statutory premium-day multiplier applies on rest/holiday',
+                $this->premiumService->standardDailyHours() + 0,
+                round((float) config('payroll.premiums.overtime_multiplier', 1.25) * 100, 2)
+            ),
+            'night_differential_rate_formula' => sprintf(
+                'daily_rate / %s * applicable day multiplier * %s%%',
+                $this->premiumService->standardDailyHours() + 0,
+                round($this->premiumService->nightDifferentialPercent() * 100, 2)
+            ),
+            'cutoff_base_formula' => 'monthly_salary / '.($this->monthlyCutoffDivisor() + 0),
         ];
 
         return $rates;
@@ -1218,7 +1385,7 @@ class PayrollComputationService
             // 31-day month therefore does not increase ordinary basic salary.
             // Each business cutoff carries exactly one-half of the monthly
             // basic, before attendance deductions and statutory premiums.
-            return round((float) ($rates['monthly_rate'] ?? 0) / 2, 2);
+            return round((float) ($rates['monthly_rate'] ?? 0) / $this->monthlyCutoffDivisor(), 2);
         }
 
         return round($regularPayableHours * (float) ($rates['hourly_rate'] ?? 0), 2);
@@ -1355,10 +1522,10 @@ class PayrollComputationService
 
         if ($rateType === 'monthly') {
             $monthlyRate = $basicSalary;
-            $dailyRate = $monthlyRate > 0 ? ($monthlyRate * 12) / 365 : 0.0;
+            $dailyRate = $monthlyRate > 0 ? ($monthlyRate * $this->annualMonths()) / $this->annualDays() : 0.0;
         } else {
             $dailyRate = $basicSalary;
-            $monthlyRate = $dailyRate > 0 ? ($dailyRate * 365) / 12 : 0.0;
+            $monthlyRate = $dailyRate > 0 ? ($dailyRate * $this->annualDays()) / $this->annualMonths() : 0.0;
         }
 
         $hourlyRate = $dailyRate > 0 ? $dailyRate / $paidHoursPerDay : 0.0;
@@ -2069,8 +2236,8 @@ class PayrollComputationService
                 'hourly_rate' => round($hourlyRate, 4),
                 'amount' => $rowPay,
                 'formula' => $dayMultiplier > 1
-                    ? 'daily_rate / 8 * applicable premium-day rate * 130% * OT hours'
-                    : 'daily_rate / 8 * 125% * approved OT hours',
+                    ? sprintf('daily_rate / %s * applicable premium-day rate * %s%% * OT hours', $this->premiumService->standardDailyHours() + 0, round((float) config('payroll.premiums.premium_day_overtime_multiplier', 1.30) * 100, 2))
+                    : sprintf('daily_rate / %s * %s%% * approved OT hours', $this->premiumService->standardDailyHours() + 0, round((float) config('payroll.premiums.overtime_multiplier', 1.25) * 100, 2)),
                 'reason' => $adjustment->reason,
             ];
         }
@@ -2227,13 +2394,17 @@ class PayrollComputationService
             $isRegular = str_contains($type, 'regular');
 
             if ($isRegular) {
-                return $isRestDay ? 2.60 : 2.00;
+                return $isRestDay
+                    ? (float) config('payroll.day_multipliers.regular_holiday_rest_day', 2.60)
+                    : (float) config('payroll.holiday.regular_worked_multiplier', 2.00);
             }
 
-            return $isRestDay ? 1.50 : 1.30;
+            return $isRestDay
+                ? (float) config('payroll.day_multipliers.special_holiday_rest_day', 1.50)
+                : (float) config('payroll.holiday.special_worked_multiplier', 1.30);
         }
 
-        return $isRestDay ? 1.30 : 1.00;
+        return $isRestDay ? (float) config('payroll.holiday.rest_day_worked_multiplier', 1.30) : 1.00;
     }
 
     protected function applyAdjustmentEmployeeMatch($query, object $reference): void
@@ -3217,6 +3388,34 @@ class PayrollComputationService
     protected function dateString(mixed $date): string
     {
         return Carbon::parse($date)->toDateString();
+    }
+
+    /** @return Collection<int, PayrollRule> */
+    protected function rulesForPayroll(Payroll $payroll): Collection
+    {
+        if ($this->ruleOverride !== null) {
+            return $this->ruleOverride;
+        }
+
+        $start = Carbon::parse($payroll->period_start)->toDateString();
+        $end = Carbon::parse($payroll->period_end)->toDateString();
+
+        return $this->periodRules[$start.'|'.$end] ??= $this->ruleService->forPeriod($start, $end);
+    }
+
+    protected function annualMonths(): float
+    {
+        return max(1.0, (float) config('payroll.salary_rate.annual_months', 12));
+    }
+
+    protected function annualDays(): float
+    {
+        return max(1.0, (float) config('payroll.salary_rate.annual_days', 365));
+    }
+
+    protected function monthlyCutoffDivisor(): float
+    {
+        return max(1.0, (float) config('payroll.salary_rate.monthly_cutoff_divisor', 2));
     }
 
     protected function hoursPerDay(): float

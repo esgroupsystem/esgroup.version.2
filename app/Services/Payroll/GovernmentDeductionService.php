@@ -10,26 +10,6 @@ class GovernmentDeductionService
         private readonly SssContributionService $sssContributionService
     ) {}
 
-    private const PHILHEALTH_PREMIUM_RATE = 0.05;
-
-    private const PHILHEALTH_EMPLOYEE_SHARE = 0.50;
-
-    private const PHILHEALTH_EMPLOYER_SHARE = 0.50;
-
-    private const PHILHEALTH_INCOME_FLOOR = 10000.00;
-
-    private const PHILHEALTH_INCOME_CEILING = 100000.00;
-
-    private const PAGIBIG_LOW_EMPLOYEE_RATE = 0.01;
-
-    private const PAGIBIG_REGULAR_EMPLOYEE_RATE = 0.02;
-
-    private const PAGIBIG_EMPLOYER_RATE = 0.02;
-
-    private const PAGIBIG_LOW_SALARY_THRESHOLD = 1500.00;
-
-    private const PAGIBIG_MAXIMUM_FUND_SALARY = 10000.00;
-
     public function compute(array $data): array
     {
         $monthlyBasic = $this->money($data['monthly_basic'] ?? 0);
@@ -189,7 +169,7 @@ class GovernmentDeductionService
             ],
             'philhealth' => [
                 'schedule' => $this->normalizeSchedule($schedules['philhealth']),
-                'premium_rate' => (float) ($monthlyGovernment['philhealth_premium_rate'] ?? self::PHILHEALTH_PREMIUM_RATE),
+                'premium_rate' => (float) ($monthlyGovernment['philhealth_premium_rate'] ?? $this->rate('philhealth.premium_rate', 0.05)),
                 'salary_base' => $this->money($monthlyGovernment['philhealth_salary_base'] ?? 0),
                 'monthly_employee_share' => $this->money(
                     $monthlyGovernment['philhealth_employee'] ?? 0
@@ -207,7 +187,7 @@ class GovernmentDeductionService
                 'schedule' => $this->normalizeSchedule($schedules['pagibig']),
                 'fund_salary' => $this->money($monthlyGovernment['pagibig_fund_salary'] ?? 0),
                 'employee_rate' => (float) ($monthlyGovernment['pagibig_employee_rate'] ?? 0),
-                'employer_rate' => (float) ($monthlyGovernment['pagibig_employer_rate'] ?? self::PAGIBIG_EMPLOYER_RATE),
+                'employer_rate' => (float) ($monthlyGovernment['pagibig_employer_rate'] ?? $this->rate('pagibig.employer_rate', 0.02)),
                 'monthly_employee_share' => $this->money(
                     $monthlyGovernment['pagibig_employee'] ?? 0
                 ),
@@ -353,27 +333,27 @@ class GovernmentDeductionService
                 'employee' => 0.00,
                 'employer' => 0.00,
                 'salary_base' => 0.00,
-                'premium_rate' => self::PHILHEALTH_PREMIUM_RATE,
+                'premium_rate' => $this->rate('philhealth.premium_rate', 0.05),
                 'total' => 0.00,
             ];
         }
 
         $salaryBase = min(
-            max($monthlyBasic, self::PHILHEALTH_INCOME_FLOOR),
-            self::PHILHEALTH_INCOME_CEILING
+            max($monthlyBasic, $this->rate('philhealth.income_floor', 10000.00)),
+            $this->rate('philhealth.income_ceiling', 100000.00)
         );
 
-        $monthlyPremium = $salaryBase * self::PHILHEALTH_PREMIUM_RATE;
+        $monthlyPremium = $salaryBase * $this->rate('philhealth.premium_rate', 0.05);
 
         return [
             'employee' => $this->money(
-                $monthlyPremium * self::PHILHEALTH_EMPLOYEE_SHARE
+                $monthlyPremium * $this->rate('philhealth.employee_share', 0.50)
             ),
             'employer' => $this->money(
-                $monthlyPremium * self::PHILHEALTH_EMPLOYER_SHARE
+                $monthlyPremium * (1 - $this->rate('philhealth.employee_share', 0.50))
             ),
             'salary_base' => $this->money($salaryBase),
-            'premium_rate' => self::PHILHEALTH_PREMIUM_RATE,
+            'premium_rate' => $this->rate('philhealth.premium_rate', 0.05),
             'total' => $this->money($monthlyPremium),
         ];
     }
@@ -388,27 +368,33 @@ class GovernmentDeductionService
                 'employer' => 0.00,
                 'fund_salary' => 0.00,
                 'employee_rate' => 0.00,
-                'employer_rate' => self::PAGIBIG_EMPLOYER_RATE,
+                'employer_rate' => $this->rate('pagibig.employer_rate', 0.02),
                 'total' => 0.00,
             ];
         }
 
-        $fundSalary = min($monthlyBasic, self::PAGIBIG_MAXIMUM_FUND_SALARY);
-        $employeeRate = $monthlyBasic <= self::PAGIBIG_LOW_SALARY_THRESHOLD
-            ? self::PAGIBIG_LOW_EMPLOYEE_RATE
-            : self::PAGIBIG_REGULAR_EMPLOYEE_RATE;
+        $fundSalary = min($monthlyBasic, $this->rate('pagibig.maximum_fund_salary', 10000.00));
+        $employeeRate = $monthlyBasic <= $this->rate('pagibig.low_salary_threshold', 1500.00)
+            ? $this->rate('pagibig.low_employee_rate', 0.01)
+            : $this->rate('pagibig.regular_employee_rate', 0.02);
 
         $employee = $this->money($fundSalary * $employeeRate);
-        $employer = $this->money($fundSalary * self::PAGIBIG_EMPLOYER_RATE);
+        $employer = $this->money($fundSalary * $this->rate('pagibig.employer_rate', 0.02));
 
         return [
             'employee' => $employee,
             'employer' => $employer,
             'fund_salary' => $this->money($fundSalary),
             'employee_rate' => $employeeRate,
-            'employer_rate' => self::PAGIBIG_EMPLOYER_RATE,
+            'employer_rate' => $this->rate('pagibig.employer_rate', 0.02),
             'total' => $this->money($employee + $employer),
         ];
+    }
+
+    /** PhilHealth / Pag-IBIG value from Payroll Settings (config 'payroll.government.*'). */
+    private function rate(string $key, float $default): float
+    {
+        return max(0.0, (float) config('payroll.government.'.$key, $default));
     }
 
     private function money(mixed $value): float

@@ -3,6 +3,16 @@ import { Save, TriangleAlert, WandSparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTable, type DataTableColumn } from '@/components/data-table/data-table';
 import { useModal } from '@/components/modal/modal-context';
+import {
+    addMinutes,
+    DayOffPicker,
+    RowSelect,
+    SHIFT_OPTIONS,
+    STATUS_OPTIONS,
+    type ScheduleShift as Shift,
+    type ScheduleStatus as Status,
+    type WorkdayRule,
+} from '@/components/scheduling/schedule-fields';
 import { StatCard } from '@/components/page-header';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -10,13 +20,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { definePage } from '@/lib/define-page';
-import { cn } from '@/lib/utils';
 import type { Paginated } from '@/types';
-
-type Status = 'scheduled' | 'rest_day' | 'inactive';
-type Shift = 'Regular Shift' | 'Flexible Shift';
 
 interface ScheduleRow {
     employee_biometric_id: number;
@@ -42,14 +47,6 @@ interface EmployeeRow {
     };
 }
 
-interface WorkdayRule {
-    label: string;
-    short_label: string;
-    paid_hours: number;
-    lunch_minutes: number;
-    clock_minutes: number;
-}
-
 interface Props {
     employees: Paginated<EmployeeRow>;
     filters: { search: string; status: string; shift: string; group_name: string };
@@ -58,24 +55,6 @@ interface Props {
     workdayRules: Record<string, WorkdayRule>;
     weekdays: string[];
     urls: { index: string; save: string };
-}
-
-const STATUS_OPTIONS: { value: Status; label: string; help: string }[] = [
-    { value: 'scheduled', label: 'Scheduled', help: 'Normal attendance computation' },
-    { value: 'rest_day', label: 'Rest Day', help: 'Permanent rest-day status' },
-    { value: 'inactive', label: 'Inactive', help: 'Excluded from payroll attendance' },
-];
-
-const SHIFT_OPTIONS: Shift[] = ['Regular Shift', 'Flexible Shift'];
-
-/** Mirrors the save validation: Time Out = Time In + the workday's clock span. */
-function addMinutes(time: string, minutes: number): string {
-    const [hours, mins] = time.split(':').map(Number);
-    if (!Number.isFinite(hours) || !Number.isFinite(mins)) return '';
-
-    const total = (((hours * 60 + mins + minutes) % 1440) + 1440) % 1440;
-
-    return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
 }
 
 export default definePage<Props>({
@@ -492,77 +471,3 @@ function QuickFill({
         </Card>
     );
 }
-
-function RowSelect({
-    value,
-    onChange,
-    options,
-    className,
-    ariaLabel,
-}: {
-    value: string;
-    onChange: (value: string) => void;
-    options: { value: string; label: string }[];
-    className?: string;
-    ariaLabel?: string;
-}) {
-    return (
-        <Select value={value} onValueChange={onChange}>
-            <SelectTrigger className={cn('w-full', className)} aria-label={ariaLabel}>
-                <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-                {options.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                    </SelectItem>
-                ))}
-            </SelectContent>
-        </Select>
-    );
-}
-
-/** Compact Mon-Sun toggles; several days off may be selected. */
-function DayOffPicker({
-    weekdays,
-    value,
-    onChange,
-}: {
-    weekdays: string[];
-    value: string[];
-    onChange: (value: string[]) => void;
-}) {
-    const toggle = (day: string) =>
-        onChange(
-            value.includes(day)
-                ? value.filter((selected) => selected !== day)
-                : weekdays.filter((weekday) => weekday === day || value.includes(weekday)),
-        );
-
-    return (
-        <div className="flex gap-1" role="group" aria-label="Weekly days off">
-            {weekdays.map((day) => {
-                const active = value.includes(day);
-
-                return (
-                    <button
-                        key={day}
-                        type="button"
-                        title={day}
-                        aria-pressed={active}
-                        onClick={() => toggle(day)}
-                        className={cn(
-                            'h-8 w-9 rounded-md border text-xs font-medium transition-colors',
-                            active
-                                ? 'border-primary bg-primary text-primary-foreground'
-                                : 'bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                        )}
-                    >
-                        {day.slice(0, 2)}
-                    </button>
-                );
-            })}
-        </div>
-    );
-}
-

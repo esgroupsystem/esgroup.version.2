@@ -41,6 +41,8 @@ use App\Repositories\Contracts\Payroll\BenefitRecordRepositoryInterface;
 use App\Repositories\Contracts\Payroll\BenefitSettlementRepositoryInterface;
 use App\Repositories\Contracts\Payroll\PayrollAuditLogRepositoryInterface;
 use App\Repositories\Contracts\Payroll\PayrollRepositoryInterface;
+use App\Repositories\Contracts\Payroll\PayrollRuleRepositoryInterface;
+use App\Repositories\Contracts\Payroll\PayrollSettingVersionRepositoryInterface;
 use App\Repositories\Contracts\Scheduling\EmployeeSalaryRepositoryInterface;
 use App\Repositories\Contracts\Scheduling\HolidayRepositoryInterface;
 use App\Repositories\Contracts\Scheduling\PlottingScheduleRepositoryInterface;
@@ -77,6 +79,8 @@ use App\Repositories\Payroll\BenefitRecordRepository;
 use App\Repositories\Payroll\BenefitSettlementRepository;
 use App\Repositories\Payroll\PayrollAuditLogRepository;
 use App\Repositories\Payroll\PayrollRepository;
+use App\Repositories\Payroll\PayrollRuleRepository;
+use App\Repositories\Payroll\PayrollSettingVersionRepository;
 use App\Repositories\Scheduling\EmployeeSalaryRepository;
 use App\Repositories\Scheduling\HolidayRepository;
 use App\Repositories\Scheduling\PlottingScheduleRepository;
@@ -139,6 +143,8 @@ final class RepositoryServiceProvider extends ServiceProvider
         BenefitSettlementRepositoryInterface::class => BenefitSettlementRepository::class,
         PayrollAuditLogRepositoryInterface::class => PayrollAuditLogRepository::class,
         PayrollRepositoryInterface::class => PayrollRepository::class,
+        PayrollRuleRepositoryInterface::class => PayrollRuleRepository::class,
+        PayrollSettingVersionRepositoryInterface::class => PayrollSettingVersionRepository::class,
 
         // Scheduling & Rates
         EmployeeSalaryRepositoryInterface::class => EmployeeSalaryRepository::class,

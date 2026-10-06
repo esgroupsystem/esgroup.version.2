@@ -128,8 +128,12 @@ class PayrollPayslipService
             2
         );
 
-        if ($allowance <= 0 && $adjustment <= 0 && (float) $item->other_additions > 0) {
-            $allowance = round((float) $item->other_additions, 2);
+        $ruleEarnings = $this->ruleLines($item, 'earnings');
+        $ruleEarningTotal = round(array_sum(array_column($ruleEarnings, 'amount')), 2);
+        $legacyAdditions = round((float) $item->other_additions - $ruleEarningTotal, 2);
+
+        if ($allowance <= 0 && $adjustment <= 0 && $legacyAdditions > 0) {
+            $allowance = $legacyAdditions;
         }
 
         $regularDaysWorked = $this->regularDaysWorked(
@@ -148,7 +152,7 @@ class PayrollPayslipService
             $item,
             $regularDaysWorked,
             $allowance,
-            $adjustment,
+            $adjustment + $ruleEarningTotal,
             $overtimePay,
             $nightDifferentialPay,
             $restDayPay,
@@ -211,7 +215,25 @@ class PayrollPayslipService
                 'unit' => '',
                 'amount' => $adjustment,
             ],
+            ...array_map(fn (array $line): array => ['label' => $line['label'], 'unit' => '', 'amount' => $line['amount']], $ruleEarnings),
         ];
+    }
+
+    /**
+     * Payroll Rules lines (Payroll Settings) stored on the item, with an amount.
+     *
+     * @return list<array{label: string, amount: float}>
+     */
+    protected function ruleLines(PayrollItem $item, string $kind): array
+    {
+        return collect((array) data_get($item->meta, 'custom_rules.'.$kind, []))
+            ->map(fn ($line): array => [
+                'label' => (string) data_get($line, 'name', 'Rule'),
+                'amount' => round((float) data_get($line, 'amount', 0), 2),
+            ])
+            ->filter(fn (array $line): bool => $line['amount'] > 0)
+            ->values()
+            ->all();
     }
 
     protected function overtimePayslipBreakdown(PayrollItem $item): array
@@ -226,8 +248,8 @@ class PayrollPayslipService
         foreach ((array) data_get($item->meta, 'overtime_breakdown.details', []) as $detail) {
             $multiplier = round((float) ($detail['day_multiplier'] ?? 1), 2);
             $key = match (true) {
-                $multiplier >= 2.60 => 'regular_holiday_rest',
-                $multiplier >= 2.00 => 'regular_holiday',
+                $multiplier >= round((float) config('payroll.day_multipliers.regular_holiday_rest_day', 2.60), 2) => 'regular_holiday_rest',
+                $multiplier >= round((float) config('payroll.holiday.regular_worked_multiplier', 2.00), 2) => 'regular_holiday',
                 $multiplier > 1.00 => 'rest_special',
                 default => 'regular',
             };
@@ -522,6 +544,10 @@ class PayrollPayslipService
                 'label' => 'Salary Adjustment',
                 'amount' => $salaryAdjustmentDeduction,
             ]]);
+        }
+
+        foreach ($this->ruleLines($item, 'deductions') as $line) {
+            array_splice($lines, count($lines) - 1, 0, [$line]);
         }
 
         $totalDeductions = round(

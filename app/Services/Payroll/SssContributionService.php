@@ -85,6 +85,7 @@ class SssContributionService
         $maximumMsc = (float) $rules['maximum_msc'];
         $firstMiddleRange = (float) $rules['first_middle_range'];
         $maximumRangeStart = (float) $rules['maximum_range_start'];
+        $halfStep = max(0.01, (float) $rules['msc_increment'] / 2);
 
         if ($msc <= $minimumMsc) {
             return [0.00, $this->money($firstMiddleRange - 0.01)];
@@ -95,8 +96,8 @@ class SssContributionService
         }
 
         return [
-            $this->money($msc - 250.00),
-            $this->money($msc + 249.99),
+            $this->money($msc - $halfStep),
+            $this->money($msc + $halfStep - 0.01),
         ];
     }
 

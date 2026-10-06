@@ -94,6 +94,13 @@ interface Settlement {
     caps: { sss: number; philhealth: number; pagibig: number };
 }
 
+interface RuleLine {
+    name: string;
+    description: string;
+    amount: number;
+    error: string | null;
+}
+
 interface Props {
     payroll: { id: number; payroll_number: string; status: string; cutoff_label: string; period_start: string | null; period_end: string | null; period_label: string };
     item: Item;
@@ -103,6 +110,8 @@ interface Props {
     attendance: { worked_hours: number; late_minutes: number; undertime_minutes: number; holiday_worked: number; rest_day_worked: number };
     allowance: Record<string, number | string>;
     salaryDeductions: { name: string; schedule: string; balance_after: number | null; remarks: string | null; amount: number }[];
+    customRules: { earnings: RuleLine[]; deductions: RuleLine[] };
+    settingsVersion: string | null;
     adjustmentTags: { label: string; paid_this_cutoff: boolean; effect: string; date: string | null; amount: number; reason: string | null }[];
     settlement: Settlement | null;
     auditRows: AuditRow[];
@@ -216,8 +225,9 @@ function ItemContent(props: Props) {
     const lossDeducted = item.attendance_deducted_from_gross;
 
     const loans = props.salaryDeductions.reduce((sum, row) => sum + row.amount, 0);
-    // Whatever "other deductions" holds beyond itemised loans and salary adjustments.
-    const otherRemainder = Math.max(0, item.other_deductions - loans - item.salary_adjustment_deduction);
+    const ruleDeductions = props.customRules.deductions.reduce((sum, row) => sum + row.amount, 0);
+    // Whatever "other deductions" holds beyond itemised loans, salary adjustments and custom rules.
+    const otherRemainder = Math.max(0, item.other_deductions - loans - item.salary_adjustment_deduction - ruleDeductions);
 
     const allowanceTotal = Number(allowance.total_per_cutoff ?? 0);
     const additionLines: { label: string; amount: number; hint?: string }[] = [
@@ -229,6 +239,7 @@ function ItemContent(props: Props) {
         { label: 'Approved overtime', amount: item.overtime_pay, hint: `${item.overtime_hours.toFixed(2)} hr` },
         { label: 'Night differential', amount: item.night_differential_pay, hint: `${item.night_differential_hours.toFixed(2)} hr, 10PM-6AM` },
         { label: 'Salary adjustment', amount: item.salary_adjustment_addition },
+        ...props.customRules.earnings.map((rule) => ({ label: rule.name, amount: rule.amount, hint: rule.error ? `Error: ${rule.error}` : rule.description })),
     ];
     // Allowance total may include parts not itemised above.
     const allowanceRemainder = allowanceTotal - additionLines[0].amount - additionLines[1].amount;
@@ -301,7 +312,12 @@ function ItemContent(props: Props) {
                     ))}
                 </Breakdown>
 
-                <Breakdown title="Deductions" total={deductions} negative note={`Government schedule: ${item.government_schedule}`}>
+                <Breakdown
+                    title="Deductions"
+                    total={deductions}
+                    negative
+                    note={`Government schedule: ${item.government_schedule}${props.settingsVersion ? ` · Payroll Settings: ${props.settingsVersion}` : ''}`}
+                >
                     <Line label="SSS" amount={item.sss_employee} negative />
                     <Line label="PhilHealth" amount={item.philhealth_employee} negative />
                     <Line label="Pag-IBIG" amount={item.pagibig_employee} negative />
@@ -315,6 +331,11 @@ function ItemContent(props: Props) {
                         />
                     ))}
                     {item.salary_adjustment_deduction > 0 && <Line label="Salary adjustment" amount={item.salary_adjustment_deduction} negative />}
+                    {props.customRules.deductions
+                        .filter((rule) => rule.amount > 0.005)
+                        .map((rule, index) => (
+                            <Line key={`rule-${index}`} label={rule.name} hint={rule.error ? `Error: ${rule.error}` : rule.description} amount={rule.amount} negative />
+                        ))}
                     {otherRemainder > 0.005 && <Line label="Other deductions" amount={otherRemainder} negative />}
                 </Breakdown>
             </div>

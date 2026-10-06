@@ -53,6 +53,8 @@ interface Props {
     groupOptions: Record<string, string>;
     can: { update: boolean };
     urls: { index: string; update: string };
+    /** Set when shown inside the employee profile: the save returns to that profile and Cancel is hidden. */
+    returnProfile?: number;
 }
 
 const NONE = 'none';
@@ -79,13 +81,14 @@ function BackLink({ urls }: Props) {
     );
 }
 
-function BiometricEmployeeEdit({ employee, values, companies, hrEmployees, groupOptions, can, urls }: Props) {
+export function BiometricEmployeeEdit({ employee, values, companies, hrEmployees, groupOptions, can, urls, returnProfile }: Props) {
     const modal = useModal();
     const form = useForm<Values>(values);
     const errors = form.errors as Partial<Record<keyof Values, string>>;
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
+        if (returnProfile) form.transform((data) => ({ ...data, return_profile: returnProfile }));
         form.put(urls.update, modal.visit({ preserveScroll: true }));
     };
 
@@ -229,15 +232,16 @@ function BiometricEmployeeEdit({ employee, values, companies, hrEmployees, group
                                 </div>
 
                                 <div className="flex justify-end gap-2 md:col-span-2">
-                                    {modal.inModal ? (
-                                        <Button type="button" variant="outline" onClick={modal.close}>
-                                            Cancel
-                                        </Button>
-                                    ) : (
-                                        <Button type="button" variant="outline" asChild>
-                                            <Link href={urls.index}>Cancel</Link>
-                                        </Button>
-                                    )}
+                                    {!returnProfile &&
+                                        (modal.inModal ? (
+                                            <Button type="button" variant="outline" onClick={modal.close}>
+                                                Cancel
+                                            </Button>
+                                        ) : (
+                                            <Button type="button" variant="outline" asChild>
+                                                <Link href={urls.index}>Cancel</Link>
+                                            </Button>
+                                        ))}
                                     {can.update && (
                                         <Button type="submit" disabled={form.processing}>
                                             {form.processing ? <Loader2 className="animate-spin" /> : <Save />}
@@ -325,3 +329,5 @@ function Guide({ title, children }: { title: string; children: ReactNode }) {
         </div>
     );
 }
+
+export type BiometricEmployeeEditProps = Props;
