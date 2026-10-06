@@ -18,7 +18,8 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
- * Security → Users. Only a Developer sees, manages or assigns the Developer role. New accounts and
+ * Security → Users. The Developer role is never assigned or removed here (command line only); only a
+ * Developer sees or manages Developer accounts. New accounts and
  * password resets get a random temporary password (shown once) and must change it at next sign-in.
  * Deactivating an account or resetting its password signs it out of the mobile app.
  */
@@ -56,7 +57,7 @@ final class UserManagementService
      */
     public function create(User $actor, array $data): array
     {
-        $this->assertRoleAssignmentAllowed($actor, $data['role']);
+        $this->assertRoleAssignmentAllowed(null, $data['role']);
         $password = self::temporaryPassword();
 
         $user = DB::transaction(function () use ($data, $password): User {
@@ -84,7 +85,7 @@ final class UserManagementService
     {
         $user = $this->users->findOrFail($id);
         $this->assertTargetManageable($actor, $user);
-        $this->assertRoleAssignmentAllowed($actor, $data['role']);
+        $this->assertRoleAssignmentAllowed($user, $data['role']);
         if ($data['account_status'] !== 'active') {
             $this->assertNotSelf($actor, $user);
         }
@@ -158,11 +159,39 @@ final class UserManagementService
         ];
     }
 
-    private function assertRoleAssignmentAllowed(User $actor, string $role): void
+    /**
+     * The Developer role stays with the accounts that already have it and is never given from the app.
+     *
+     * @throws ValidationException
+     */
+    private function assertRoleAssignmentAllowed(?User $target, string $role): void
     {
-        if ($role === 'Developer' && ! $actor->isDeveloper()) {
-            throw new AccessDeniedHttpException('Only a Developer may assign the Developer role.');
+        $isDeveloperRole = strcasecmp($role, User::DEVELOPER_ROLE) === 0;
+        $targetIsDeveloper = $target?->isDeveloper() === true;
+
+        if ($isDeveloperRole && ! $targetIsDeveloper) {
+            throw ValidationException::withMessages(['role' => 'The Developer role cannot be assigned here.']);
         }
+
+        if ($targetIsDeveloper && ! $isDeveloperRole) {
+            throw ValidationException::withMessages(['role' => 'A Developer account keeps the Developer role.']);
+        }
+    }
+
+    /**
+     * Command line only (security:make-developer): give an existing account the Developer role.
+     */
+    public function makeDeveloper(string $username): User
+    {
+        $user = $this->users->findByUsername($username)
+            ?? throw ValidationException::withMessages(['username' => "No user with username \"{$username}\"."]);
+
+        DB::transaction(function () use ($user): void {
+            $this->users->update($user, ['role' => User::DEVELOPER_ROLE]);
+            $this->users->setRole($user, User::DEVELOPER_ROLE);
+        });
+
+        return $user;
     }
 
     private function assertTargetManageable(User $actor, User $target): void

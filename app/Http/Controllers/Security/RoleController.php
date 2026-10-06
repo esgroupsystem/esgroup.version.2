@@ -29,7 +29,7 @@ final class RoleController extends Controller
         $isDeveloper = $user?->isDeveloper() === true;
 
         try {
-            $data = $this->roleService->indexData($isDeveloper);
+            $data = $this->roleService->indexData();
         } catch (Throwable $e) {
             Log::error('Role index error', ['message' => $e->getMessage(), 'file' => $e->getFile(), 'line' => $e->getLine()]);
 
@@ -76,6 +76,8 @@ final class RoleController extends Controller
             $this->roleService->update($role, $request->validated('name'), $request->validated('permissions') ?? []);
 
             return back()->with('success', 'Role updated successfully.');
+        } catch (ValidationException $e) {
+            return back()->with('error', $e->getMessage());
         } catch (Throwable $e) {
             Log::error('Role update error', ['role_id' => $role->id, 'message' => $e->getMessage()]);
 

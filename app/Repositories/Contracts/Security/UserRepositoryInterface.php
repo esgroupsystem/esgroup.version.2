@@ -49,4 +49,6 @@ interface UserRepositoryInterface
 
     /** Signs the user out of the mobile app (deletes every API token). */
     public function revokeTokens(User $user): void;
+
+    public function findByUsername(string $username): ?User;
 }

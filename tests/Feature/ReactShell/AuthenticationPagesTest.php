@@ -102,7 +102,8 @@ final class AuthenticationPagesTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('can.create', true)
-                ->where('roles', fn ($roles) => collect($roles)->contains('name', 'Developer'))
+                // The Developer system role is never listed.
+                ->where('roles', fn ($roles) => ! collect($roles)->contains('name', 'Developer'))
                 ->where('permissionGroups', fn ($groups) => collect($groups)->contains('module', 'Users')));
 
         $this->as($developer)->post(route('roles.store'), ['name' => 'Auditor', 'permissions' => ['payroll.view', 'users.view']])->assertSessionHasNoErrors();

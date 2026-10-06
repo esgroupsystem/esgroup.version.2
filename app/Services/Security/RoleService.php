@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\Security;
 
+use App\Models\User;
 use App\Repositories\Contracts\Security\RoleRepositoryInterface;
 use App\Repositories\Contracts\Security\UserRepositoryInterface;
 use App\Services\Permissions\RoutePermissionSyncService;
@@ -28,9 +29,10 @@ final class RoleService
     /**
      * @return array{roles: Collection<int, Role>, permissionGroups: Collection<string, Collection<int, array<string, mixed>>>, risks: Collection<string, string>, missingRoutePermissions: Collection<int, string>, stats: array<string, int>}
      */
-    public function indexData(bool $includeDeveloper): array
+    public function indexData(): array
     {
-        $roles = $this->roles->roles($includeDeveloper);
+        // The Developer role is a system role: always every permission, never listed or edited.
+        $roles = $this->roles->roles(false);
         $permissions = $this->roles->permissions();
         $groups = $this->permissionGroups($permissions);
 
@@ -57,13 +59,15 @@ final class RoleService
     /** @param list<string> $permissions */
     public function update(Role $role, string $name, array $permissions): void
     {
+        $this->assertNotDeveloper($role);
+
         DB::transaction(fn () => $this->roles->update($role, $name, $permissions));
     }
 
     /** @throws ValidationException for the Developer role or a role still given to users */
     public function delete(Role $role): void
     {
-        if ($role->name === 'Developer') {
+        if (strcasecmp($role->name, User::DEVELOPER_ROLE) === 0) {
             throw ValidationException::withMessages(['role' => 'Developer role cannot be deleted.']);
         }
         if ($this->roles->hasUsers($role)) {
@@ -76,7 +80,18 @@ final class RoleService
     /** @return array{created_count: int, deleted_count: int} */
     public function syncRoutePermissions(): array
     {
-        return $this->routePermissions->sync();
+        $result = $this->routePermissions->sync();
+        $this->roles->grantAllToRole(User::DEVELOPER_ROLE);
+
+        return $result;
+    }
+
+    /** @throws ValidationException */
+    private function assertNotDeveloper(Role $role): void
+    {
+        if (strcasecmp($role->name, User::DEVELOPER_ROLE) === 0) {
+            throw ValidationException::withMessages(['role' => 'The Developer role is managed by the system and always has every permission.']);
+        }
     }
 
     /**

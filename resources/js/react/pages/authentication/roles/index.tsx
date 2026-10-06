@@ -129,7 +129,9 @@ export default function RolesIndex({ roles, permissionGroups, missingRoutePermis
                 <CardHeader className="flex flex-col gap-3 border-b py-4 md:flex-row md:items-center md:justify-between">
                     <div className="grid gap-1.5">
                         <CardTitle>Roles</CardTitle>
-                        <CardDescription>Each role lists its permissions and how many are high or medium risk.</CardDescription>
+                        <CardDescription>
+                            Each role lists its permissions and how many are high or medium risk. The Developer system role is not listed: it always has every permission, including new ones.
+                        </CardDescription>
                     </div>
                     <div className="relative">
                         <Search className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />

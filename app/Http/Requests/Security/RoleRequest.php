@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Security;
 
+use App\Models\User;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Spatie\Permission\Models\Role;
@@ -22,7 +23,18 @@ final class RoleRequest extends FormRequest
         $role = $this->route('role');
 
         return [
-            'name' => ['required', 'string', 'max:255', Rule::unique('roles', 'name')->where('guard_name', 'web')->ignore($role instanceof Role ? $role->id : null)],
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                Rule::unique('roles', 'name')->where('guard_name', 'web')->ignore($role instanceof Role ? $role->id : null),
+                // No second "developer" role: that name is the system role with every permission.
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    if (strcasecmp(trim((string) $value), User::DEVELOPER_ROLE) === 0) {
+                        $fail('"Developer" is a reserved system role name.');
+                    }
+                },
+            ],
             'permissions' => ['nullable', 'array'],
             'permissions.*' => ['string', Rule::exists('permissions', 'name')->where('guard_name', 'web')],
         ];

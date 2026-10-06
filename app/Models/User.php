@@ -29,6 +29,9 @@ use Spatie\Permission\Traits\HasRoles;
  */
 class User extends Authenticatable
 {
+    /** System role with every permission; hidden from Roles and never assignable from the app. */
+    public const DEVELOPER_ROLE = 'Developer';
+
     use HasApiTokens,
         HasFactory,
         HasRoles,
@@ -66,34 +69,32 @@ class User extends Authenticatable
      *
      * @return array<int, string>
      */
+    /**
+     * Roles the Users page may assign. The Developer role is never offered: it is a system role
+     * given only from the command line (php artisan security:make-developer). A Developer account
+     * keeps its role, so for that target the only option is Developer itself.
+     *
+     * @return list<string>
+     */
     public static function availableAssignableRoles(?self $actor, ?self $target = null): array
     {
-        $roleNames = \Spatie\Permission\Models\Role::query()
+        if ($target?->isDeveloper() === true) {
+            return [self::DEVELOPER_ROLE];
+        }
+
+        return \Spatie\Permission\Models\Role::query()
             ->where('guard_name', 'web')
+            ->whereRaw('LOWER(name) <> ?', [strtolower(self::DEVELOPER_ROLE)])
             ->orderBy('name')
             ->pluck('name')
+            ->values()
             ->all();
-
-        $isDeveloper = $actor?->hasRole('Developer') === true;
-        $targetIsDeveloper = $target?->hasRole('Developer') === true;
-
-        if (! $isDeveloper) {
-            $roleNames = array_values(array_filter(
-                $roleNames,
-                static fn (string $name): bool => $name !== 'Developer'
-            ));
-        }
-
-        if ($targetIsDeveloper && ! $isDeveloper) {
-            return ['Developer'];
-        }
-
-        return array_values(array_unique($roleNames));
     }
 
+    /** Developers hold every permission, old and new (Gate::before in AppServiceProvider). */
     public function isDeveloper(): bool
     {
-        return $this->hasRole('Developer');
+        return $this->hasRole(self::DEVELOPER_ROLE);
     }
 
     /** @return BelongsTo<Location, $this> */

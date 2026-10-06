@@ -27,7 +27,7 @@ final class UpdateUserRequest extends FormRequest
             'full_name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:191', 'alpha_dash', Rule::unique('users', 'username')->ignore($ignoreId)],
             'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')->ignore($ignoreId)],
-            'role' => ['required', 'string', Rule::in(array_values(array_unique(array_merge($roles, ['Developer']))))],
+            'role' => ['required', 'string', Rule::in($roles)],
             'location_id' => ['nullable', 'integer', 'exists:locations,id'],
             'account_status' => ['required', Rule::in(['active', 'deactivated'])],
         ];

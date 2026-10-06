@@ -29,4 +29,7 @@ interface RoleRepositoryInterface
     public function hasUsers(Role $role): bool;
 
     public function delete(Role $role): void;
+
+    /** Give a role every permission that exists (the Developer role). No-op when the role is missing. */
+    public function grantAllToRole(string $roleName): void;
 }

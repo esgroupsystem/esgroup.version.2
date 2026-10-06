@@ -70,4 +70,9 @@ final class UserRepository implements UserRepositoryInterface
     {
         $user->tokens()->delete();
     }
+
+    public function findByUsername(string $username): ?User
+    {
+        return User::query()->where('username', $username)->first();
+    }
 }

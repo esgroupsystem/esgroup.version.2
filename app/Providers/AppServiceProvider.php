@@ -32,6 +32,8 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Throwable;
 
 final class AppServiceProvider extends ServiceProvider
@@ -59,6 +61,16 @@ final class AppServiceProvider extends ServiceProvider
         // after their role was last synced. Returning null (not false) for
         // everyone else keeps normal role/permission checks in charge.
         Gate::before(static fn ($user): ?bool => $user instanceof User && $user->isDeveloper() ? true : null);
+
+        // The stored Developer role also gets every new permission (route sync, migrations, seeders),
+        // so it always lists 100% of them even though Gate::before already allows everything.
+        Permission::created(static function (Permission $permission): void {
+            Role::query()
+                ->where('name', User::DEVELOPER_ROLE)
+                ->where('guard_name', $permission->guard_name)
+                ->first()
+                ?->givePermissionTo($permission);
+        });
 
         Schema::defaultStringLength(191);
 

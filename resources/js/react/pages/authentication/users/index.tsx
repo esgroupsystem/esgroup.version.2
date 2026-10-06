@@ -278,6 +278,8 @@ function UserDialog({ user, roles, locations, storeUrl, onClose }: { user: UserR
         role: user?.role_name || roles[0] || '',
         account_status: user?.account_status ?? 'active',
     });
+    // A Developer account keeps its role; the app never offers Developer as a choice.
+    const isDeveloper = user?.role_name === 'Developer';
     const errors = form.errors as Record<string, string>;
 
     const submit = (event: FormEvent) => {
@@ -320,7 +322,18 @@ function UserDialog({ user, roles, locations, storeUrl, onClose }: { user: UserR
                                 </SelectContent>
                             </Select>
                         </FormField>
-                        <FormField id="user-role" label="Role" required error={errors.role}>
+                        {isDeveloper ? (
+                            <FormField id="user-role" label="Role" error={errors.role} hint="System role with every permission. It can only be changed from the server command line.">
+                                <Input id="user-role" value="Developer" readOnly className="bg-muted/50" />
+                            </FormField>
+                        ) : (
+                        <FormField
+                            id="user-role"
+                            label="Role"
+                            required
+                            error={errors.role}
+                            hint={roles.length === 0 ? 'No roles yet. Create one in Security → Roles first.' : undefined}
+                        >
                             <Select value={form.data.role} onValueChange={(value) => form.setData('role', value)}>
                                 <SelectTrigger id="user-role" className="w-full" aria-invalid={!!errors.role}>
                                     <SelectValue placeholder="Select role" />
@@ -334,6 +347,7 @@ function UserDialog({ user, roles, locations, storeUrl, onClose }: { user: UserR
                                 </SelectContent>
                             </Select>
                         </FormField>
+                        )}
                         {user && (
                             <FormField id="user-status" label="Account status" required error={errors.account_status}>
                                 <Select value={form.data.account_status} onValueChange={(value) => form.setData('account_status', value)}>

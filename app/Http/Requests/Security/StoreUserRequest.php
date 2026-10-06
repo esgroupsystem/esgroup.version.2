@@ -24,7 +24,7 @@ final class StoreUserRequest extends FormRequest
             'full_name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:191', 'alpha_dash', 'unique:users,username'],
             'email' => ['required', 'email:rfc', 'max:255', 'unique:users,email'],
-            'role' => ['required', 'string', Rule::in(array_values(array_unique(array_merge($roles, ['Developer']))))],
+            'role' => ['required', 'string', Rule::in($roles)],
             'location_id' => ['nullable', 'integer', 'exists:locations,id'],
         ];
     }

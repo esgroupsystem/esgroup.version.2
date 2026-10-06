@@ -55,4 +55,11 @@ final class RoleRepository implements RoleRepositoryInterface
     {
         $role->delete();
     }
+
+    public function grantAllToRole(string $roleName): void
+    {
+        $role = Role::query()->where('name', $roleName)->where('guard_name', 'web')->first();
+
+        $role?->syncPermissions(Permission::query()->where('guard_name', 'web')->get());
+    }
 }

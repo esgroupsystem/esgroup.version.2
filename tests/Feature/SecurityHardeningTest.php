@@ -46,7 +46,8 @@ final class SecurityHardeningTest extends TestCase
             'location_id' => null,
         ]);
 
-        $response->assertForbidden();
+        // Developer is never an allowed choice, so it is a validation error for everyone.
+        $response->assertSessionHasErrors('role');
         $this->assertDatabaseMissing('users', ['username' => 'escalation']);
     }
 
