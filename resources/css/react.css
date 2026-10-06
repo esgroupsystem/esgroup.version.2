@@ -127,4 +127,20 @@
     body {
         @apply bg-background text-foreground antialiased;
     }
+
+    /*
+     * Table cells never wrap (shadcn's whitespace-nowrap on <td>). A box with a capped or fixed
+     * width inside a cell (max-w-56, w-52, ...) would then let long text run out of the box and
+     * over the next columns. Such boxes wrap instead. `truncate` or `whitespace-nowrap` set on
+     * the box itself still win (utilities beat this base rule).
+     */
+    td :where(
+            [class*='max-w-'],
+            [class^='w-1'], [class*=' w-1'], [class^='w-2'], [class*=' w-2'], [class^='w-3'], [class*=' w-3'],
+            [class^='w-4'], [class*=' w-4'], [class^='w-5'], [class*=' w-5'], [class^='w-6'], [class*=' w-6'],
+            [class^='w-7'], [class*=' w-7'], [class^='w-8'], [class*=' w-8'], [class^='w-9'], [class*=' w-9']
+        ) {
+        white-space: normal;
+        overflow-wrap: break-word;
+    }
 }

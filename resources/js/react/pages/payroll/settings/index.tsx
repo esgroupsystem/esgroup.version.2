@@ -89,9 +89,9 @@ function SettingsIndex({ versions, current, sections, urls }: Props) {
                         <CardContent>
                             <dl className="divide-y text-sm">
                                 {section.fields.map((field) => (
-                                    <div key={field.key} className="flex items-start justify-between gap-4 py-1.5">
-                                        <dt className="min-w-0 text-muted-foreground">{field.label}</dt>
-                                        <dd className="shrink-0 text-right font-medium tabular-nums">{formatSetting(field, current.values[field.key])}</dd>
+                                    <div key={field.key} className="grid grid-cols-[minmax(0,1fr)_minmax(0,auto)] items-start gap-4 py-1.5">
+                                        <dt className="min-w-0 break-words text-muted-foreground">{field.label}</dt>
+                                        <dd className="max-w-[14rem] min-w-0 text-right font-medium break-words tabular-nums">{formatSetting(field, current.values[field.key])}</dd>
                                     </div>
                                 ))}
                             </dl>

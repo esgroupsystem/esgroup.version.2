@@ -116,7 +116,7 @@ function DepartmentsIndex({ departments, can, urls }: Props) {
 
     return (
         <>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 <StatCard label="Departments" value={departments.length.toLocaleString()} />
                 <StatCard label="Positions" value={positionCount.toLocaleString()} />
                 <StatCard label="Without positions" value={empty.toLocaleString()} />

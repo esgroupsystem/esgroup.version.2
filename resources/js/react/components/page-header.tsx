@@ -23,7 +23,7 @@ export function PageHeader({
 export function StatCard({ label, value, hint }: { label: string; value: ReactNode; hint?: string }) {
     return (
         <div className="rounded-xl border bg-card p-4 shadow-xs">
-            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className="text-sm [overflow-wrap:anywhere] text-muted-foreground">{label}</p>
             <p className="mt-1 text-2xl font-semibold tabular-nums">{value}</p>
             {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
         </div>
