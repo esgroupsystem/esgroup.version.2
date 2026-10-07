@@ -1,12 +1,17 @@
 import { useForm } from '@inertiajs/react';
-import { Save, TriangleAlert, WandSparkles } from 'lucide-react';
+import { CalendarDays, Save, TriangleAlert, WandSparkles } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { DataTable, type DataTableColumn } from '@/components/data-table/data-table';
 import { useModal } from '@/components/modal/modal-context';
 import {
     addMinutes,
     DayOffPicker,
+    fillWeeklyTimes,
+    PatternToggle,
     RowSelect,
+    WeeklyTimesEditor,
+    weeklySummary,
+    type WeeklyTimes,
     SHIFT_OPTIONS,
     STATUS_OPTIONS,
     type ScheduleShift as Shift,
@@ -18,6 +23,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { definePage } from '@/lib/define-page';
@@ -30,6 +36,8 @@ interface ScheduleRow {
     workday_type: string;
     time_in: string;
     time_out: string;
+    /** Empty = same time every day. */
+    weekly_times: WeeklyTimes;
     grace_minutes: number | string;
     day_offs: string[];
     remarks: string;
@@ -83,6 +91,8 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
                     workday_type: employee.schedule.workday_type,
                     time_in: timeIn,
                     time_out: employee.schedule.time_out ?? addMinutes(timeIn, rule.clock_minutes),
+                    // Kept as is on save, so a grid save never drops someone's per-day times.
+                    weekly_times: { ...(employee.schedule.weekly_times ?? {}) },
                     grace_minutes: employee.schedule.grace_minutes,
                     day_offs: employee.schedule.day_offs,
                     remarks: employee.schedule.remarks ?? '',
@@ -106,6 +116,10 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
                 if ('time_in' in changes || 'workday_type' in changes) {
                     const rule = workdayRules[next.workday_type];
                     if (rule && next.time_in) next.time_out = addMinutes(next.time_in, rule.clock_minutes);
+                }
+
+                if ('day_offs' in changes && Object.keys(next.weekly_times).length > 0) {
+                    next.weekly_times = fillWeeklyTimes(weekdays, next.day_offs, next.weekly_times, { time_in: next.time_in, time_out: next.time_out, workday_type: next.workday_type });
                 }
 
                 return next;
@@ -219,17 +233,31 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
             key: 'time',
             exportValue: (employee) => {
                 const { row } = edit(employee);
-                return row ? row.status === 'scheduled' && row.shift_name !== 'Flexible Shift' ? `${row.time_in} – ${row.time_out} · ${row.grace_minutes} min grace` : `${row.grace_minutes} min grace` : "";
+                if (!row) return '';
+                if (row.status !== 'scheduled' || row.shift_name === 'Flexible Shift') return `${row.grace_minutes} min grace`;
+                return Object.keys(row.weekly_times).length > 0
+                    ? `${weeklySummary(row.weekly_times)} · ${row.grace_minutes} min grace`
+                    : `${row.time_in} – ${row.time_out} · ${row.grace_minutes} min grace`;
             },
             header: 'Time in / out & grace',
             className: 'align-top',
             cell: (employee) => {
-                const { row, error, change } = edit(employee);
+                const { row, error, change, index } = edit(employee);
                 if (!row) return null;
                 const disabled = row.status !== 'scheduled' || row.shift_name === 'Flexible Shift';
+                const perDay = Object.keys(row.weekly_times).length > 0;
+                const weeklyError = Object.entries(errors).find(([key]) => key.startsWith(`schedule.${index}.weekly_times`))?.[1];
 
                 return (
-                    <div className="grid w-32 gap-1.5">
+                    <div className="grid w-36 gap-1.5">
+                        {perDay && !disabled ? (
+                            <div className="grid gap-1 rounded-md border bg-muted/40 p-2 text-xs">
+                                <span className="font-medium">Different per day</span>
+                                <span className="w-32 whitespace-normal text-muted-foreground">{weeklySummary(row.weekly_times)}</span>
+                                {weeklyError && <span className="w-32 whitespace-normal text-destructive">{weeklyError}</span>}
+                            </div>
+                        ) : (
+                        <>
                         <Input
                             type="time"
                             aria-label={`Time in ${employee.name}`}
@@ -246,6 +274,17 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
                             aria-invalid={Boolean(error('time_out'))}
                             onChange={(event) => change({ time_out: event.target.value })}
                         />
+                        </>
+                        )}
+                        {!disabled && (
+                            <PerDayDialog
+                                name={employee.name}
+                                row={row}
+                                weekdays={weekdays}
+                                rules={workdayRules}
+                                onSave={(weekly_times) => change({ weekly_times })}
+                            />
+                        )}
                         <div className="flex items-center rounded-md border shadow-xs focus-within:ring-[3px] focus-within:ring-ring/50">
                             <Input
                                 type="number"
@@ -348,7 +387,7 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
                 workdayRules={workdayRules}
                 weekdays={weekdays}
                 disabled={form.data.schedule.length === 0}
-                onApply={(values) => form.setData('schedule', form.data.schedule.map((row) => ({ ...row, ...values })))}
+                onApply={(values) => form.setData('schedule', form.data.schedule.map((row) => ({ ...row, ...values, weekly_times: {} })))}
             />
 
             <DataTable
@@ -376,7 +415,7 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
     );
 }
 
-type QuickFillValues = Omit<ScheduleRow, 'employee_biometric_id' | 'remarks'>;
+type QuickFillValues = Omit<ScheduleRow, 'employee_biometric_id' | 'remarks' | 'weekly_times'>;
 
 function QuickFill({
     workdayRules,
@@ -415,7 +454,7 @@ function QuickFill({
                     <WandSparkles className="size-4" />
                     Quick Fill visible rows
                 </CardTitle>
-                <CardDescription>Applies these values to every employee on this page. Nothing is saved until you click Save.</CardDescription>
+                <CardDescription>Applies these values to every employee on this page (and sets them back to the same time every day). Nothing is saved until you click Save.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-wrap items-end gap-3">
                 <div className="grid gap-1.5 w-40">
@@ -469,5 +508,70 @@ function QuickFill({
                 </Button>
             </CardContent>
         </Card>
+    );
+}
+
+/** Per-day times of one row, edited in a dialog so the grid stays compact. */
+function PerDayDialog({
+    name,
+    row,
+    weekdays,
+    rules,
+    onSave,
+}: {
+    name: string;
+    row: ScheduleRow;
+    weekdays: string[];
+    rules: Record<string, WorkdayRule>;
+    onSave: (weekly: WeeklyTimes) => void;
+}) {
+    const [open, setOpen] = useState(false);
+    const fallback = { time_in: row.time_in, time_out: row.time_out, workday_type: row.workday_type };
+    const [weekly, setWeekly] = useState<WeeklyTimes>(row.weekly_times);
+    const perDay = Object.keys(weekly).length > 0;
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={(next) => {
+                if (next) setWeekly(row.weekly_times);
+                setOpen(next);
+            }}
+        >
+            <DialogTrigger asChild>
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs">
+                    <CalendarDays />
+                    {Object.keys(row.weekly_times).length > 0 ? 'Edit per day' : 'Per day…'}
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Time per day — {name}</DialogTitle>
+                    <DialogDescription>Use this when the employee works different hours on different days. Click Save Schedule on the page afterwards.</DialogDescription>
+                </DialogHeader>
+                <PatternToggle perDay={perDay} onChange={(on) => setWeekly(on ? fillWeeklyTimes(weekdays, row.day_offs, {}, fallback) : {})} />
+                {perDay ? (
+                    <WeeklyTimesEditor weekdays={weekdays} dayOffs={row.day_offs} value={weekly} rules={rules} onChange={setWeekly} />
+                ) : (
+                    <p className="text-sm text-muted-foreground">
+                        Same every day: {row.time_in} – {row.time_out}.
+                    </p>
+                )}
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button
+                        type="button"
+                        onClick={() => {
+                            onSave(weekly);
+                            setOpen(false);
+                        }}
+                    >
+                        Apply
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }

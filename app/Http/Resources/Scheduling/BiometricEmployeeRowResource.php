@@ -61,11 +61,16 @@ final class BiometricEmployeeRowResource extends JsonResource
             : null;
 
         return [
-            'label' => $schedule->resolvedWorkdayType()->shortLabel(),
-            'hours' => match ($schedule->status) {
-                'rest_day' => 'Rest-day status',
-                'inactive' => 'Inactive schedule',
-                default => $schedule->shift_name === 'Flexible Shift' ? 'Flexible shift' : $time,
+            'label' => $schedule->hasWeeklyTimes() ? 'Different time per day' : $schedule->resolvedWorkdayType()->shortLabel(),
+            'hours' => match (true) {
+                $schedule->status === 'rest_day' => 'Rest-day status',
+                $schedule->status === 'inactive' => 'Inactive schedule',
+                $schedule->shift_name === 'Flexible Shift' => 'Flexible shift',
+                $schedule->hasWeeklyTimes() => collect($schedule->weeklyTimes())
+                    ->map(fn (array $times, string $day): string => substr($day, 0, 3).' '.date('g:i', strtotime($times['time_in'])).'–'.date('g:i A', strtotime($times['time_out'])))
+                    ->take(2)
+                    ->implode(', ').(count($schedule->weeklyTimes()) > 2 ? ' …' : ''),
+                default => $time,
             },
         ];
     }

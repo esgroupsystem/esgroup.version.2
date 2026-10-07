@@ -76,7 +76,7 @@ final class BiometricsAttendanceService
 
             foreach (CarbonPeriod::create($start->copy()->startOfDay(), $end) as $date) {
                 $day = $date->toDateString();
-                $schedule = $dated->get($employeeKey.'_'.$day) ?? $permanent->get($employeeKey);
+                $schedule = ($dated->get($employeeKey.'_'.$day) ?? $permanent->get($employeeKey))?->forDate($day);
                 $log = $logs->get($employeeKey.'_'.$day);
 
                 $row = [

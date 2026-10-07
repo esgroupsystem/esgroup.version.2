@@ -44,6 +44,8 @@ final class WorkScheduleRowResource extends JsonResource
                 'workday_type' => $schedule?->resolvedWorkdayType()->value ?? WorkdayType::EightHours->value,
                 'time_in' => $schedule?->time_in ? substr((string) $schedule->time_in, 0, 5) : null,
                 'time_out' => $schedule?->time_out ? substr((string) $schedule->time_out, 0, 5) : null,
+                // Empty object = the same time every day.
+                'weekly_times' => (object) ($schedule?->weeklyTimes() ?? []),
                 'grace_minutes' => $schedule->grace_minutes ?? EmployeePlottingSchedule::DEFAULT_GRACE_MINUTES,
                 'day_offs' => $schedule?->resolvedDayOffs() ?? [],
                 'remarks' => $schedule->remarks ?? '',

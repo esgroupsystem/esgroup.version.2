@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\WorkdayType;
 use App\Support\PayrollEmployeeNameFormatter;
 use Carbon\Carbon;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -64,6 +65,7 @@ class EmployeePlottingSchedule extends Model
         'lunch_break_minutes',
         'time_in',
         'time_out',
+        'weekly_times',
         'grace_minutes',
         'status',
         'day_off',
@@ -81,6 +83,7 @@ class EmployeePlottingSchedule extends Model
             'lunch_break_minutes' => 'integer',
             'grace_minutes' => 'integer',
             'day_offs' => 'array',
+            'weekly_times' => 'array',
         ];
     }
 
@@ -156,6 +159,70 @@ class EmployeePlottingSchedule extends Model
     public function paidWorkHours(): float
     {
         return round($this->paidWorkMinutes() / 60, 2);
+    }
+
+    /**
+     * Per-weekday times of a "different time per day" schedule, only valid entries.
+     * Empty = the same time every working day.
+     *
+     * @return array<string, array{time_in: string, time_out: string, workday_type: string}>
+     */
+    public function weeklyTimes(): array
+    {
+        $raw = $this->getAttribute('weekly_times');
+        $times = [];
+
+        foreach (is_array($raw) ? $raw : [] as $day => $entry) {
+            $day = ucfirst(strtolower(trim((string) $day)));
+            $type = WorkdayType::tryFrom((string) data_get($entry, 'workday_type', ''));
+            $in = self::cleanTime(data_get($entry, 'time_in'));
+            $out = self::cleanTime(data_get($entry, 'time_out'));
+
+            if (in_array($day, self::WEEKDAYS, true) && $type !== null && $in !== null && $out !== null) {
+                $times[$day] = ['time_in' => $in, 'time_out' => $out, 'workday_type' => $type->value];
+            }
+        }
+
+        return $times;
+    }
+
+    public function hasWeeklyTimes(): bool
+    {
+        return $this->weeklyTimes() !== [];
+    }
+
+    /**
+     * This schedule as it applies on one date: a "different time per day" permanent schedule
+     * swaps in that weekday's time in / out and work hours. The copy is for reading only and
+     * must never be saved. Dated schedules and fixed schedules come back unchanged.
+     */
+    public function forDate(CarbonInterface|string $date): static
+    {
+        $day = ($date instanceof CarbonInterface ? $date : Carbon::parse($date))->format('l');
+        $times = $this->work_date === null ? ($this->weeklyTimes()[$day] ?? null) : null;
+
+        if ($times === null) {
+            return $this;
+        }
+
+        $type = WorkdayType::from($times['workday_type']);
+        $copy = clone $this;
+        $copy->setRawAttributes(array_merge($this->getAttributes(), [
+            'time_in' => $times['time_in'].':00',
+            'time_out' => $times['time_out'].':00',
+            'workday_type' => $type->value,
+            'paid_work_minutes' => $type->paidMinutes(),
+            'lunch_break_minutes' => $type->lunchMinutes(),
+        ]), true);
+
+        return $copy;
+    }
+
+    private static function cleanTime(mixed $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return preg_match('/^([01]\d|2[0-3]):[0-5]\d/', $value) ? substr($value, 0, 5) : null;
     }
 
     public function resolvedDayOffs(): array

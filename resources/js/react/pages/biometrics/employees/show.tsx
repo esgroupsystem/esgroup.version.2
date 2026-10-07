@@ -8,7 +8,11 @@ import { FormField } from '@/components/form-field';
 import {
     addMinutes,
     DayOffPicker,
+    fillWeeklyTimes,
+    PatternToggle,
     RowSelect,
+    WeeklyTimesEditor,
+    type WeeklyTimes,
     SHIFT_OPTIONS,
     STATUS_OPTIONS,
     type ScheduleShift,
@@ -56,6 +60,7 @@ interface ScheduleTab {
             workday_type: string;
             time_in: string | null;
             time_out: string | null;
+            weekly_times: WeeklyTimes;
             grace_minutes: number | string;
             day_offs: string[];
             remarks: string;
@@ -281,6 +286,7 @@ interface ScheduleValues {
     workday_type: string;
     time_in: string;
     time_out: string;
+    weekly_times: WeeklyTimes;
     grace_minutes: number | string;
     day_offs: string[];
     remarks: string;
@@ -301,6 +307,7 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
             workday_type: saved.workday_type,
             time_in: timeIn,
             time_out: saved.time_out ?? addMinutes(timeIn, rule.clock_minutes),
+            weekly_times: { ...(saved.weekly_times ?? {}) },
             grace_minutes: saved.grace_minutes,
             day_offs: saved.day_offs,
             remarks: saved.remarks ?? '',
@@ -314,6 +321,7 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
     const error = (field: string) => errors[`schedule.0.${field}`];
     const readOnly = !tab.canUpdate;
     const timesDisabled = readOnly || row.status !== 'scheduled' || row.shift_name === 'Flexible Shift';
+    const perDay = Object.keys(row.weekly_times).length > 0;
 
     const change = (changes: Partial<ScheduleValues>) => {
         const next = { ...row, ...changes };
@@ -321,11 +329,28 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
             const nextRule = tab.workdayRules[next.workday_type];
             if (nextRule) next.time_out = addMinutes(next.time_in, nextRule.clock_minutes);
         }
+        // Per-day times follow the working days.
+        if ('day_offs' in changes && Object.keys(next.weekly_times).length > 0) {
+            next.weekly_times = fillWeeklyTimes(tab.weekdays, next.day_offs, next.weekly_times, { time_in: next.time_in, time_out: next.time_out, workday_type: next.workday_type });
+        }
         form.setData('schedule', [next]);
     };
 
+    const setPerDay = (on: boolean) =>
+        change({
+            weekly_times: on ? fillWeeklyTimes(tab.weekdays, row.day_offs, {}, { time_in: row.time_in, time_out: row.time_out, workday_type: row.workday_type }) : {},
+        });
+
     const save = () => {
-        form.transform((data) => ({ ...data, return_profile: employeeId }));
+        form.transform((data) => ({
+            ...data,
+            schedule: data.schedule.map((entry) => {
+                // The fixed fields mirror the first working day, so other screens still have a time.
+                const first = Object.values(entry.weekly_times)[0];
+                return first ? { ...entry, time_in: first.time_in, time_out: first.time_out, workday_type: first.workday_type } : entry;
+            }),
+            return_profile: employeeId,
+        }));
         form.post(tab.urls.save, modal.visit({ preserveScroll: true }));
     };
 
@@ -341,7 +366,9 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
                     )}
                 </CardTitle>
                 <CardDescription>
-                    {rule.lunch_minutes > 0 ? `${rule.paid_hours} paid hours + ${rule.lunch_minutes / 60} unpaid lunch hour` : `${rule.paid_hours} paid hours straight, no lunch`}.
+                    {perDay
+                        ? 'Different time per day.'
+                        : `${rule.lunch_minutes > 0 ? `${rule.paid_hours} paid hours + ${rule.lunch_minutes / 60} unpaid lunch hour` : `${rule.paid_hours} paid hours straight, no lunch`}.`}{' '}
                     Time out follows time in and work hours automatically.
                 </CardDescription>
             </CardHeader>
@@ -351,6 +378,14 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
                         <TriangleAlert className="mt-0.5 size-3.5 shrink-0" />
                         This employee is not in payroll (inactive or payroll inclusion off), so the schedule is kept but not used until they are included again.
                     </p>
+                )}
+                {row.status === 'scheduled' && row.shift_name === 'Regular Shift' && (
+                    <div className="grid gap-2">
+                        <PatternToggle perDay={perDay} onChange={setPerDay} disabled={readOnly} />
+                        <p className="text-xs text-muted-foreground">
+                            {perDay ? 'Each working day has its own time in, work hours and time out (e.g. Monday 9:00 AM – 6:00 PM, Tuesday 6:00 AM – 3:00 PM).' : 'The same time in and time out every working day.'}
+                        </p>
+                    </div>
                 )}
                 <div className="grid gap-4 md:grid-cols-3">
                     <FormField id="schedule-status" label="Status" error={error('status')} hint={STATUS_OPTIONS.find((option) => option.value === row.status)?.help}>
@@ -371,6 +406,7 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
                             options={SHIFT_OPTIONS.map((shift) => ({ value: shift, label: shift }))}
                         />
                     </FormField>
+                    {!perDay && (
                     <FormField id="schedule-hours" label="Work hours" error={error('workday_type')}>
                         <RowSelect
                             id="schedule-hours"
@@ -380,12 +416,17 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
                             options={Object.entries(tab.workdayRules).map(([value, option]) => ({ value, label: option.label }))}
                         />
                     </FormField>
-                    <FormField id="schedule-in" label="Time in" error={error('time_in')}>
-                        <Input id="schedule-in" type="time" value={row.time_in} disabled={timesDisabled} onChange={(event) => change({ time_in: event.target.value })} />
-                    </FormField>
-                    <FormField id="schedule-out" label="Time out" error={error('time_out')}>
-                        <Input id="schedule-out" type="time" value={row.time_out} disabled={timesDisabled} onChange={(event) => change({ time_out: event.target.value })} />
-                    </FormField>
+                    )}
+                    {!perDay && (
+                        <>
+                            <FormField id="schedule-in" label="Time in" error={error('time_in')}>
+                                <Input id="schedule-in" type="time" value={row.time_in} disabled={timesDisabled} onChange={(event) => change({ time_in: event.target.value })} />
+                            </FormField>
+                            <FormField id="schedule-out" label="Time out" error={error('time_out')}>
+                                <Input id="schedule-out" type="time" value={row.time_out} disabled={timesDisabled} onChange={(event) => change({ time_out: event.target.value })} />
+                            </FormField>
+                        </>
+                    )}
                     <FormField id="schedule-grace" label="Grace (min)" error={error('grace_minutes')} hint="0 or blank uses the company default.">
                         <Input
                             id="schedule-grace"
@@ -404,6 +445,20 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
                         <Input id="schedule-remarks" maxLength={255} value={row.remarks} disabled={readOnly} onChange={(event) => change({ remarks: event.target.value })} />
                     </FormField>
                 </div>
+                {perDay && !timesDisabled && (
+                    <div className="grid gap-2 rounded-lg border p-3">
+                        <p className="text-sm font-medium">Time per day</p>
+                        <WeeklyTimesEditor
+                            weekdays={tab.weekdays}
+                            dayOffs={row.day_offs}
+                            value={row.weekly_times}
+                            rules={tab.workdayRules}
+                            disabled={readOnly}
+                            onChange={(weekly_times) => change({ weekly_times })}
+                            error={(day) => error(`weekly_times.${day}.time_out`) ?? error(`weekly_times.${day}.time_in`)}
+                        />
+                    </div>
+                )}
                 {tab.canUpdate && (
                     <div className="flex flex-wrap items-center justify-between gap-2">
                         <p className="text-xs text-muted-foreground">After saving, rebuild Attendance Summary before regenerating a draft payroll.</p>

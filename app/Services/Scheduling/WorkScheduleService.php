@@ -106,6 +106,34 @@ final class WorkScheduleService
     }
 
     /** @param array<string, mixed> $row */
+    /**
+     * "Different time per day" entries for working days only (days off are dropped).
+     * Null when empty, so the schedule is the same every day.
+     *
+     * @param  list<string>  $dayOffs
+     * @return array<string, array{time_in: string, time_out: string, workday_type: string}>|null
+     */
+    private function weeklyTimes(mixed $weekly, array $dayOffs): ?array
+    {
+        $times = [];
+
+        foreach (EmployeePlottingSchedule::WEEKDAYS as $day) {
+            $entry = is_array($weekly) ? ($weekly[$day] ?? null) : null;
+
+            if (! is_array($entry) || in_array($day, $dayOffs, true)) {
+                continue;
+            }
+
+            $times[$day] = [
+                'time_in' => substr((string) $entry['time_in'], 0, 5),
+                'time_out' => substr((string) $entry['time_out'], 0, 5),
+                'workday_type' => WorkdayType::from((string) $entry['workday_type'])->value,
+            ];
+        }
+
+        return $times === [] ? null : $times;
+    }
+
     private function savePermanentSchedule(array $row): void
     {
         $employee = $this->biometrics->findForUpdate((int) $row['employee_biometric_id']);
@@ -135,6 +163,7 @@ final class WorkScheduleService
             'lunch_break_minutes' => $workdayType->lunchMinutes(),
             'time_in' => $noClock ? null : ($row['time_in'] ?? null),
             'time_out' => $noClock ? null : ($row['time_out'] ?? null),
+            'weekly_times' => $noClock ? null : $this->weeklyTimes($row['weekly_times'] ?? null, $dayOffs),
             'grace_minutes' => (int) ($row['grace_minutes'] ?? EmployeePlottingSchedule::DEFAULT_GRACE_MINUTES),
             'status' => $status,
             'day_offs' => $dayOffs,

@@ -453,14 +453,16 @@ class DailyAttendanceSummaryService
                 ->first();
 
             if ($permanentSchedule) {
-                return $permanentSchedule;
+                // A "different time per day" schedule uses this weekday's times.
+                return $permanentSchedule->forDate($workDate);
             }
         }
 
         return (clone $baseQuery)
             ->latest('updated_at')
             ->latest('id')
-            ->first();
+            ->first()
+            ?->forDate($workDate);
     }
 
     protected function storeSummary(

@@ -68,6 +68,12 @@ final class SaveWorkScheduleRequest extends FormRequest
             // Duplicates within one row are already removed in prepareForValidation().
             'schedule.*.day_offs.*' => ['required', 'string', Rule::in(EmployeePlottingSchedule::WEEKDAYS)],
             'schedule.*.remarks' => ['nullable', 'string', 'max:255'],
+            // "Different time per day": weekday => time in / out + work hours.
+            'schedule.*.weekly_times' => ['nullable', 'array', 'max:7'],
+            'schedule.*.weekly_times.*' => ['array'],
+            'schedule.*.weekly_times.*.time_in' => ['required', 'date_format:H:i'],
+            'schedule.*.weekly_times.*.time_out' => ['required', 'date_format:H:i'],
+            'schedule.*.weekly_times.*.workday_type' => ['required', Rule::enum(WorkdayType::class)],
         ];
     }
 
@@ -86,6 +92,24 @@ final class SaveWorkScheduleRequest extends FormRequest
 
                 if ($status !== 'scheduled' || $shiftName !== 'Regular Shift') {
                     continue;
+                }
+
+                // Each weekday of a "different time per day" schedule follows the same span rule.
+                foreach ((array) ($row['weekly_times'] ?? []) as $day => $times) {
+                    if (! in_array($day, EmployeePlottingSchedule::WEEKDAYS, true)) {
+                        $validator->errors()->add("schedule.{$index}.weekly_times", "Unknown weekday \"{$day}\".");
+
+                        continue;
+                    }
+
+                    $this->checkSpan(
+                        $validator,
+                        "schedule.{$index}.weekly_times.{$day}.time_out",
+                        $times['time_in'] ?? null,
+                        $times['time_out'] ?? null,
+                        WorkdayType::tryFrom((string) ($times['workday_type'] ?? '')),
+                        "{$day}: "
+                    );
                 }
 
                 if (blank($timeIn) || blank($timeOut)) {
@@ -137,6 +161,31 @@ final class SaveWorkScheduleRequest extends FormRequest
             'schedule.*.employee_biometric_id.distinct' => 'An employee can only appear once in the submitted schedule.',
             'schedule.*.day_offs.max' => 'A maximum of seven weekly days off may be selected.',
         ];
+    }
+
+    private function checkSpan(Validator $validator, string $key, mixed $timeIn, mixed $timeOut, ?WorkdayType $type, string $prefix): void
+    {
+        if (blank($timeIn) || blank($timeOut) || $type === null || ! preg_match('/^\d{2}:\d{2}$/', (string) $timeIn) || ! preg_match('/^\d{2}:\d{2}$/', (string) $timeOut)) {
+            return;
+        }
+
+        if ($timeIn === $timeOut) {
+            $validator->errors()->add($key, $prefix.'Time In and Time Out cannot be the same.');
+
+            return;
+        }
+
+        $clockMinutes = $this->clockMinutesBetween((string) $timeIn, (string) $timeOut);
+
+        if ($clockMinutes !== $type->clockMinutes()) {
+            $validator->errors()->add($key, sprintf(
+                '%s%s requires exactly %d clock hours. Current span is %s.',
+                $prefix,
+                $type->shortLabel(),
+                (int) ($type->clockMinutes() / 60),
+                $this->formatMinutes($clockMinutes)
+            ));
+        }
     }
 
     private function clockMinutesBetween(string $timeIn, string $timeOut): int

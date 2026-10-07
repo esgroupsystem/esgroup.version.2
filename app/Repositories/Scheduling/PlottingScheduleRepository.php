@@ -19,13 +19,14 @@ final class PlottingScheduleRepository implements PlottingScheduleRepositoryInte
 
     public function scheduleOn(int $employeeBiometricId, string $date): ?EmployeePlottingSchedule
     {
-        return EmployeePlottingSchedule::query()
+        return (EmployeePlottingSchedule::query()
             ->where('employee_biometric_id', $employeeBiometricId)
             ->whereDate('work_date', $date)
             ->latest('updated_at')
             ->latest('id')
             ->first()
-            ?? $this->permanent($employeeBiometricId)->latest('updated_at')->latest('id')->first();
+            ?? $this->permanent($employeeBiometricId)->latest('updated_at')->latest('id')->first())
+            ?->forDate($date);
     }
 
     public function replacePermanent(int $employeeBiometricId, array $attributes): EmployeePlottingSchedule
