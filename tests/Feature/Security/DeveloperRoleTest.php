@@ -84,8 +84,11 @@ final class DeveloperRoleTest extends TestCase
         $otherDeveloper = $this->makeUser('dev2', 'Developer');
         $clerk = $this->makeUser('clerk', 'Clerk');
 
+        // Developer accounts are never listed, not even for a Developer.
         $this->as($developer)->get(route('authentication.users.index'))->assertOk()->assertInertia(fn (Assert $page) => $page
-            ->where('roles', ['Clerk']));
+            ->where('roles', ['Clerk'])
+            ->where('users.data', fn ($users) => collect($users)->pluck('username')->all() === ['clerk'])
+            ->where('users.total', 1));
 
         // Creating a Developer from the app is refused, even by a Developer.
         $this->as($developer)->post(route('authentication.users.store'), [

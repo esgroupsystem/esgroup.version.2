@@ -50,7 +50,11 @@ function ModalWindow({ entry, depth }: { entry: ModalEntry; depth: number }) {
             <DialogContent
                 ref={dialogRef}
                 className={cn('flex max-h-[94vh] flex-col gap-0 overflow-hidden p-0', SIZE_CLASS[size])}
-                style={{ zIndex: 50 + depth * 2, ...(fitWidth ? { maxWidth: fitWidth } : {}) }}
+                // Same layer as every other dialog / dropdown (z-50): the newest one is added last and so
+                // sits on top. A higher z-index here (it was 50 + depth × 2) hid dialogs, selects and date
+                // pickers opened from a second-level modal behind it (e.g. "File Adjustment" on a payroll item).
+                style={{ zIndex: 50, ...(fitWidth ? { maxWidth: fitWidth } : {}) }}
+                data-modal-depth={depth}
                 aria-describedby={undefined}>
                 {/* Header actions and body share the modal context (useModal()). */}
                 <ModalScope id={entry.id}>

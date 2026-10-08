@@ -42,7 +42,8 @@ final class UserManagementService
     /** @return LengthAwarePaginator<int, User> */
     public function paginate(User $actor, string $search): LengthAwarePaginator
     {
-        return $this->users->paginate(trim($search), $actor->isDeveloper());
+        // Developer accounts are system accounts: never listed, not even for a Developer.
+        return $this->users->paginate(trim($search), false);
     }
 
     /** @return Collection<int, string> role names the actor may assign, by name */

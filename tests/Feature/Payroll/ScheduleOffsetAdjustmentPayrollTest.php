@@ -334,6 +334,41 @@ final class ScheduleOffsetAdjustmentPayrollTest extends TestCase
             ->all());
     }
 
+    public function test_file_adjustment_from_a_payroll_item_saves_and_recomputes_that_item(): void
+    {
+        $this->setSchedule(WorkdayType::EightHours, '08:00', '17:00');
+        $this->createSalary();
+        $this->workWholeCutoff();
+        $item = $this->generatePayrollItem();
+        $grossBefore = (float) $item->gross_pay;
+
+        // The "File Adjustment" dialog on the payroll item page sends recompute_payroll_item_id.
+        $this->asPayrollUser()
+            ->post(route('payroll-attendance-adjustments.store'), $this->offsetIdentity() + [
+                'adjustment_type' => PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT,
+                'work_date' => '2026-10-01',
+                'amount' => '750',
+                'reason' => 'Filed from the payroll item',
+                'recompute_payroll_item_id' => $item->id,
+            ])
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('payroll.items.show', [$item->payroll_id, $item->id]))
+            ->assertSessionHas('success', fn (string $message): bool => str_contains($message, 'automatically recomputed'));
+
+        $this->assertEqualsWithDelta($grossBefore + 750, (float) $item->fresh()->gross_pay, 0.01);
+
+        // Outside the payroll's cutoff it is refused with a field error.
+        $this->asPayrollUser()
+            ->post(route('payroll-attendance-adjustments.store'), $this->offsetIdentity() + [
+                'adjustment_type' => PayrollAttendanceAdjustment::TYPE_CASH_ADJUSTMENT,
+                'work_date' => '2026-11-20',
+                'amount' => '100',
+                'reason' => 'Wrong cutoff',
+                'recompute_payroll_item_id' => $item->id,
+            ])
+            ->assertSessionHasErrors();
+    }
+
     public function test_salary_adjustment_addition_and_deduction_flow_through_payroll(): void
     {
         $this->setSchedule(WorkdayType::EightHours, '08:00', '17:00');

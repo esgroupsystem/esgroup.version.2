@@ -30,7 +30,9 @@ final class UserRepository implements UserRepositoryInterface
     {
         return User::query()
             ->with('roles')
-            ->when(! $includeDevelopers, fn (Builder $query) => $query->whereDoesntHave('roles', fn (Builder $role) => $role->where('name', 'Developer')))
+            ->when(! $includeDevelopers, fn (Builder $query) => $query
+                ->whereDoesntHave('roles', fn (Builder $role) => $role->where('name', User::DEVELOPER_ROLE))
+                ->where(fn (Builder $column) => $column->whereNull('role')->orWhere('role', '!=', User::DEVELOPER_ROLE)))
             ->when($search !== '', fn (Builder $query) => $query->where(fn (Builder $inner) => $inner
                 ->where('full_name', 'like', "%{$search}%")
                 ->orWhere('username', 'like', "%{$search}%")
