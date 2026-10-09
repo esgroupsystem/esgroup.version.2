@@ -41,6 +41,7 @@ final class WorkScheduleRowResource extends JsonResource
             'schedule' => [
                 'status' => $schedule->status ?? EmployeePlottingSchedule::DEFAULT_STATUS,
                 'shift_name' => $schedule->shift_name ?? EmployeePlottingSchedule::REGULAR_SHIFT,
+                'flexible_mode' => $schedule?->resolvedFlexibleMode() ?? EmployeePlottingSchedule::FLEXIBLE_MODE_ANYTIME,
                 'workday_type' => $schedule?->resolvedWorkdayType()->value ?? WorkdayType::EightHours->value,
                 'time_in' => $schedule?->time_in ? substr((string) $schedule->time_in, 0, 5) : null,
                 'time_out' => $schedule?->time_out ? substr((string) $schedule->time_out, 0, 5) : null,

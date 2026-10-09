@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $employee_name
  * @property \Carbon\CarbonInterface|null $work_date
  * @property string|null $shift_name
+ * @property string|null $flexible_mode
  * @property WorkdayType|null $workday_type
  * @property int|null $paid_work_minutes
  * @property int|null $lunch_break_minutes
@@ -48,6 +49,20 @@ class EmployeePlottingSchedule extends Model
 
     public const FLEXIBLE_SHIFT = 'Flexible Shift';
 
+    /**
+     * Flexible Shift sub-modes:
+     * - anytime: no clock-in window, must complete the required clock hours any time in the day (legacy default).
+     * - condition: must clock in within a window (time_in..time_out); clock-out is whenever the required clock hours are completed.
+     * - custom: fixed time_in/time_out, late/undertime computed the same way as Regular Shift.
+     */
+    public const FLEXIBLE_MODE_ANYTIME = 'anytime';
+
+    public const FLEXIBLE_MODE_CONDITION = 'condition';
+
+    public const FLEXIBLE_MODE_CUSTOM = 'custom';
+
+    public const FLEXIBLE_MODES = [self::FLEXIBLE_MODE_ANYTIME, self::FLEXIBLE_MODE_CONDITION, self::FLEXIBLE_MODE_CUSTOM];
+
     public const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
     public const DEFAULT_GRACE_MINUTES = 15;
@@ -60,6 +75,7 @@ class EmployeePlottingSchedule extends Model
         'employee_name',
         'work_date',
         'shift_name',
+        'flexible_mode',
         'workday_type',
         'paid_work_minutes',
         'lunch_break_minutes',
@@ -124,6 +140,18 @@ class EmployeePlottingSchedule extends Model
     public function getIsFlexibleAttribute(): bool
     {
         return str_contains(strtolower((string) $this->shift_name), 'flexible');
+    }
+
+    /** Null when not a Flexible Shift; otherwise a valid mode, defaulting legacy rows to "anytime". */
+    public function resolvedFlexibleMode(): ?string
+    {
+        if (! $this->is_flexible) {
+            return null;
+        }
+
+        $mode = strtolower(trim((string) $this->flexible_mode));
+
+        return in_array($mode, self::FLEXIBLE_MODES, true) ? $mode : self::FLEXIBLE_MODE_ANYTIME;
     }
 
     public function getIsPermanentAttribute(): bool

@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 
 export type ScheduleStatus = 'scheduled' | 'rest_day' | 'inactive';
 export type ScheduleShift = 'Regular Shift' | 'Flexible Shift';
+export type FlexibleMode = 'anytime' | 'condition' | 'custom';
 
 export interface WorkdayRule {
     label: string;
@@ -22,6 +23,39 @@ export const STATUS_OPTIONS: { value: ScheduleStatus; label: string; help: strin
 ];
 
 export const SHIFT_OPTIONS: ScheduleShift[] = ['Regular Shift', 'Flexible Shift'];
+
+/** Flexible Shift sub-modes. "anytime" is the legacy default: no clock-in window at all. */
+export const FLEXIBLE_MODE_OPTIONS: { value: FlexibleMode; label: string; help: string }[] = [
+    { value: 'anytime', label: 'Anytime', help: 'No clock-in window. Must complete the required clock hours any time in the day.' },
+    { value: 'condition', label: 'Condition (clock-in window)', help: 'Must clock in within the window below; clock-out is whenever the required clock hours are completed.' },
+    { value: 'custom', label: 'Custom time in/out', help: 'Fixed time in and time out; late/undertime work the same way as Regular Shift.' },
+];
+
+/** Quick-fill presets for a time in / time out pair. Not a restricted list — any time may still be typed. */
+export const TIME_PRESETS: { label: string; time_in: string; time_out: string }[] = [
+    { label: '6:00 AM – 3:00 PM', time_in: '06:00', time_out: '15:00' },
+    { label: '9:00 AM – 6:00 PM', time_in: '09:00', time_out: '18:00' },
+    { label: '8:00 AM – 5:00 PM', time_in: '08:00', time_out: '17:00' },
+];
+
+/** Tappable presets that fill a time in / time out pair, e.g. a Flexible (Condition) clock-in window. */
+export function TimePresetButtons({ onPick, disabled }: { onPick: (preset: { time_in: string; time_out: string }) => void; disabled?: boolean }) {
+    return (
+        <div className="flex flex-wrap gap-1">
+            {TIME_PRESETS.map((preset) => (
+                <button
+                    key={preset.label}
+                    type="button"
+                    disabled={disabled}
+                    onClick={() => onPick({ time_in: preset.time_in, time_out: preset.time_out })}
+                    className="rounded-md border px-1.5 py-0.5 text-xs whitespace-nowrap text-muted-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+                >
+                    {preset.label}
+                </button>
+            ))}
+        </div>
+    );
+}
 
 /** Mirrors the save validation: Time Out = Time In + the workday's clock span. */
 export function addMinutes(time: string, minutes: number): string {

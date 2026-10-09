@@ -318,7 +318,8 @@ class DailyAttendanceSummary extends Model
     public function requiresFixedScheduleTimes(): bool
     {
         if ($this->isFlexibleShift()) {
-            return false;
+            // Flexible Shift (Custom) behaves like Regular Shift and does require fixed times.
+            return strtolower(trim((string) data_get($this->meta, 'flexible_mode', ''))) === 'custom';
         }
 
         $attendanceStatus = strtolower(str_replace([' ', '-'], '_', (string) $this->attendance_status));

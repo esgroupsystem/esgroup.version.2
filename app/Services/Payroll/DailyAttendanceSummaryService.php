@@ -649,6 +649,7 @@ class DailyAttendanceSummaryService
         }
 
         $isFlexible = $this->isFlexibleShift($shiftName);
+        $flexibleMode = $isFlexible ? $this->resolveFlexibleMode($schedule) : null;
 
         $hasValidInOut = $actualTimeIn && $actualTimeOut && $actualTimeOut->gt($actualTimeIn);
         $hasAttendanceProof = $hasRawBiometrics
@@ -786,7 +787,64 @@ class DailyAttendanceSummaryService
             $payableHours = $halfDayPayableHours;
 
             $remarks[] = 'No valid time out. Half day paid based on company policy.';
-        } elseif ($isFlexible) {
+        } elseif ($isFlexible && $flexibleMode === EmployeePlottingSchedule::FLEXIBLE_MODE_CONDITION) {
+            // Flexible Shift (Condition): must clock in within the window
+            // [scheduledTimeIn, scheduledTimeOut]; clock-out is whenever the
+            // required clock minutes are completed from the actual time in.
+            $rawLateMinutes = 0;
+
+            if ($actualTimeIn && $scheduledTimeOut) {
+                $windowEnd = Carbon::parse($workDate->toDateString().' '.$scheduledTimeOut, 'Asia/Manila');
+
+                if ($scheduledTimeIn) {
+                    $windowStart = Carbon::parse($workDate->toDateString().' '.$scheduledTimeIn, 'Asia/Manila');
+
+                    if ($windowEnd->lessThanOrEqualTo($windowStart)) {
+                        $windowEnd->addDay();
+                    }
+                }
+
+                if ($actualTimeIn->gt($windowEnd)) {
+                    $rawLateMinutes = (int) $windowEnd->diffInMinutes($actualTimeIn);
+                }
+            }
+
+            $lateMinutes = $this->roundedLateDeductionMinutes($rawLateMinutes, $graceMinutes);
+
+            if ($clockWorkedMinutes >= $scheduledClockMinutes) {
+                $undertimeMinutes = 0;
+            } else {
+                $rawUndertimeMinutes = max(0, $scheduledClockMinutes - $clockWorkedMinutes);
+                $undertimeMinutes = $this->roundedUndertimeDeductionMinutes($rawUndertimeMinutes);
+            }
+
+            if ($lateMinutes > 0 && $undertimeMinutes > 0) {
+                $attendanceStatus = 'late_undertime';
+            } elseif ($lateMinutes > 0) {
+                $attendanceStatus = 'late';
+            } elseif ($undertimeMinutes > 0) {
+                $attendanceStatus = 'undertime';
+            } else {
+                $attendanceStatus = 'present';
+            }
+
+            if ($attendanceStatus === 'present') {
+                $payableDays = self::FULL_DAY_PAYABLE_DAYS;
+                $payableHours = $fullDayPayableHours;
+            } else {
+                $deductionMinutes = max(0, (int) $lateMinutes + (int) $undertimeMinutes);
+                [$payableDays, $payableHours] = $this->payUnitsAfterDeductions($deductionMinutes, $paidMinutesPerDay);
+            }
+
+            $remarks[] = sprintf(
+                'Flexible shift (clock-in window %s–%s). Clocked in at %s%s. Requires %s clock hours including lunch.',
+                $scheduledTimeIn ? Carbon::parse($scheduledTimeIn)->format('h:i A') : '—',
+                $scheduledTimeOut ? Carbon::parse($scheduledTimeOut)->format('h:i A') : '—',
+                $actualTimeIn ? $actualTimeIn->format('h:i A') : '—',
+                $lateMinutes > 0 ? ' (after the clock-in window)' : '',
+                round($scheduledClockMinutes / 60, 2)
+            );
+        } elseif ($isFlexible && $flexibleMode !== EmployeePlottingSchedule::FLEXIBLE_MODE_CUSTOM) {
             if ($clockWorkedMinutes >= $scheduledClockMinutes) {
                 $attendanceStatus = 'present';
                 $payableDays = self::FULL_DAY_PAYABLE_DAYS;
@@ -1013,6 +1071,7 @@ class DailyAttendanceSummaryService
                 'computed_at' => now('Asia/Manila'),
                 'meta' => [
                     'schedule_mode' => $isFlexible ? 'flexible' : ($schedule ? 'regular' : 'none'),
+                    'flexible_mode' => $flexibleMode,
                     'has_configured_schedule' => $schedule !== null,
                     'workday_type' => $workdayType,
                     'paid_work_hours' => $fullDayPayableHours,
@@ -1661,6 +1720,16 @@ class DailyAttendanceSummaryService
     protected function isFlexibleShift(?string $shiftName): bool
     {
         return str_contains(strtolower((string) $shiftName), 'flexible');
+    }
+
+    /** Legacy flexible rows (no flexible_mode saved) default to "anytime", preserving today's behaviour. */
+    protected function resolveFlexibleMode(?EmployeePlottingSchedule $schedule): string
+    {
+        $mode = strtolower(trim((string) $schedule?->flexible_mode));
+
+        return in_array($mode, EmployeePlottingSchedule::FLEXIBLE_MODES, true)
+            ? $mode
+            : EmployeePlottingSchedule::FLEXIBLE_MODE_ANYTIME;
     }
 
     protected function isLegacyDateBasedSchedule(EmployeePlottingSchedule $schedule): bool

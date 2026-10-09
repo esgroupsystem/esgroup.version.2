@@ -144,9 +144,15 @@ final class WorkScheduleService
         $snapshot = $this->identity->snapshot($employee);
         $status = (string) ($row['status'] ?? EmployeePlottingSchedule::DEFAULT_STATUS);
         $shiftName = (string) ($row['shift_name'] ?? EmployeePlottingSchedule::REGULAR_SHIFT);
+        $isFlexible = $shiftName === EmployeePlottingSchedule::FLEXIBLE_SHIFT;
+        $flexibleModeInput = (string) ($row['flexible_mode'] ?? EmployeePlottingSchedule::FLEXIBLE_MODE_ANYTIME);
+        $flexibleMode = in_array($flexibleModeInput, EmployeePlottingSchedule::FLEXIBLE_MODES, true)
+            ? $flexibleModeInput
+            : EmployeePlottingSchedule::FLEXIBLE_MODE_ANYTIME;
         $workdayType = WorkdayType::from((string) ($row['workday_type'] ?? WorkdayType::EightHours->value));
         $dayOffs = $this->normalizeDayOffs($row['day_offs'] ?? []);
-        $noClock = $shiftName === EmployeePlottingSchedule::FLEXIBLE_SHIFT || in_array($status, ['rest_day', 'inactive'], true);
+        $noClock = ($isFlexible && $flexibleMode === EmployeePlottingSchedule::FLEXIBLE_MODE_ANYTIME)
+            || in_array($status, ['rest_day', 'inactive'], true);
 
         if ($status === 'inactive') {
             $employee->markPayrollInactive($row['remarks'] ?? 'Marked inactive from permanent work schedule.');
@@ -158,6 +164,7 @@ final class WorkScheduleService
             'employee_no' => $snapshot['employee_no'],
             'employee_name' => $snapshot['employee_name'],
             'shift_name' => $shiftName,
+            'flexible_mode' => $isFlexible ? $flexibleMode : null,
             'workday_type' => $workdayType->value,
             'paid_work_minutes' => $workdayType->paidMinutes(),
             'lunch_break_minutes' => $workdayType->lunchMinutes(),

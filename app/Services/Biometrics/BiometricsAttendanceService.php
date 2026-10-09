@@ -88,6 +88,7 @@ final class BiometricsAttendanceService
                     'has_schedule' => false,
                     'schedule_status' => null,
                     'shift_name' => null,
+                    'flexible_mode' => null,
                     'scheduled_time_in' => null,
                     'scheduled_time_out' => null,
                     'grace_minutes' => 15,
@@ -191,6 +192,7 @@ final class BiometricsAttendanceService
             'has_schedule' => true,
             'schedule_status' => $schedule->isDayOffOn($date) ? 'rest_day' : ($schedule->status ?: 'scheduled'),
             'shift_name' => $schedule->shift_name ?: 'Regular Shift',
+            'flexible_mode' => $schedule->resolvedFlexibleMode(),
             'scheduled_time_in' => $time($schedule->time_in),
             'scheduled_time_out' => $time($schedule->time_out),
             'grace_minutes' => (int) ($schedule->grace_minutes ?? 15),
@@ -212,6 +214,9 @@ final class BiometricsAttendanceService
         $date = Carbon::parse($row['log_date']);
         $status = $row['schedule_status'];
         $isFlexible = str_contains(strtolower((string) $row['shift_name']), 'flexible');
+        $flexibleMode = $row['flexible_mode'] ?? null;
+        $isFlexibleCondition = $isFlexible && $flexibleMode === 'condition';
+        $isFlexibleCustom = $isFlexible && $flexibleMode === 'custom';
         $scheduledIn = ! empty($row['scheduled_time_in']) ? Carbon::parse($date->toDateString().' '.$row['scheduled_time_in']) : null;
         $scheduledOut = ! empty($row['scheduled_time_out']) ? Carbon::parse($date->toDateString().' '.$row['scheduled_time_out']) : null;
         if ($scheduledIn && $scheduledOut && $scheduledOut->lessThanOrEqualTo($scheduledIn)) {
@@ -242,7 +247,22 @@ final class BiometricsAttendanceService
                 [$note, $tone] = ['Absent', 'danger'];
             } elseif ((int) $row['log_count'] < 2) {
                 [$note, $tone] = ['Incomplete biometric logs.', 'warning'];
-            } elseif ($isFlexible) {
+            } elseif ($isFlexibleCondition) {
+                if ($worked === null) {
+                    [$note, $tone] = ['Incomplete biometric logs.', 'warning'];
+                } else {
+                    if ($scheduledOut && $actualIn && $actualIn->gt($scheduledOut->copy()->addMinutes($grace))) {
+                        $late = (int) $scheduledOut->diffInMinutes($actualIn);
+                    }
+                    if ($worked < $requiredMinutes) {
+                        $undertime = $requiredMinutes - $worked;
+                    }
+                    $parts = array_filter([$late > 0 ? 'Late (outside clock-in window)' : null, $undertime > 0 ? 'Incomplete Flexible Hours' : null]);
+                    [$note, $tone] = $parts === []
+                        ? ['Completed Flexible '.round($requiredMinutes / 60, 2).' Clock Hours', 'success']
+                        : [implode(' / ', $parts), 'warning'];
+                }
+            } elseif ($isFlexible && ! $isFlexibleCustom) {
                 if ($worked === null) {
                     [$note, $tone] = ['Incomplete biometric logs.', 'warning'];
                 } elseif ($worked >= $requiredMinutes) {
@@ -252,7 +272,7 @@ final class BiometricsAttendanceService
                     [$note, $tone] = ['Incomplete Flexible Hours', 'warning'];
                 }
             } elseif (! $scheduledIn || ! $scheduledOut) {
-                [$note, $tone] = ['Regular Shift needs plotted Time In and Time Out.', 'warning'];
+                [$note, $tone] = [$isFlexibleCustom ? 'Flexible Shift (Custom) needs plotted Time In and Time Out.' : 'Regular Shift needs plotted Time In and Time Out.', 'warning'];
             } else {
                 $allowedIn = $scheduledIn->copy()->addMinutes($grace);
                 if ($actualIn && $actualIn->gt($allowedIn)) {
@@ -268,8 +288,8 @@ final class BiometricsAttendanceService
 
         return [
             ...$row,
-            'shift_mode' => $isFlexible ? 'Flexible' : 'Regular',
-            'required_hours_label' => $isFlexible ? self::hours($requiredMinutes) : '—',
+            'shift_mode' => $isFlexible ? ('Flexible ('.ucfirst((string) ($flexibleMode ?: 'anytime')).')') : 'Regular',
+            'required_hours_label' => $isFlexible && ! $isFlexibleCustom ? self::hours($requiredMinutes) : '—',
             'late_minutes' => $late,
             'undertime_minutes' => $undertime,
             'worked_hours_label' => self::hours($worked),

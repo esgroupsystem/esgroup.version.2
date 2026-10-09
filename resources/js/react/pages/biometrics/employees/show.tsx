@@ -11,10 +11,13 @@ import {
     fillWeeklyTimes,
     PatternToggle,
     RowSelect,
+    TimePresetButtons,
     WeeklyTimesEditor,
     type WeeklyTimes,
+    FLEXIBLE_MODE_OPTIONS,
     SHIFT_OPTIONS,
     STATUS_OPTIONS,
+    type FlexibleMode,
     type ScheduleShift,
     type ScheduleStatus,
     type WorkdayRule,
@@ -57,6 +60,7 @@ interface ScheduleTab {
         schedule: {
             status: ScheduleStatus;
             shift_name: ScheduleShift;
+            flexible_mode: FlexibleMode;
             workday_type: string;
             time_in: string | null;
             time_out: string | null;
@@ -283,6 +287,7 @@ interface ScheduleValues {
     employee_biometric_id: number;
     status: ScheduleStatus;
     shift_name: ScheduleShift;
+    flexible_mode: FlexibleMode;
     workday_type: string;
     time_in: string;
     time_out: string;
@@ -304,6 +309,7 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
             employee_biometric_id: tab.row.employee_biometric_id,
             status: saved.status,
             shift_name: saved.shift_name,
+            flexible_mode: saved.flexible_mode,
             workday_type: saved.workday_type,
             time_in: timeIn,
             time_out: saved.time_out ?? addMinutes(timeIn, rule.clock_minutes),
@@ -320,12 +326,18 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
     const errors = form.errors as Record<string, string | undefined>;
     const error = (field: string) => errors[`schedule.0.${field}`];
     const readOnly = !tab.canUpdate;
-    const timesDisabled = readOnly || row.status !== 'scheduled' || row.shift_name === 'Flexible Shift';
-    const perDay = Object.keys(row.weekly_times).length > 0;
+    const isFlexibleAnytime = row.shift_name === 'Flexible Shift' && row.flexible_mode === 'anytime';
+    const isFlexibleCondition = row.shift_name === 'Flexible Shift' && row.flexible_mode === 'condition';
+    const isFlexibleCustom = row.shift_name === 'Flexible Shift' && row.flexible_mode === 'custom';
+    const timesDisabled = readOnly || row.status !== 'scheduled' || isFlexibleAnytime;
+    const allowPerDay = !readOnly && row.status === 'scheduled' && (row.shift_name === 'Regular Shift' || isFlexibleCustom);
+    const perDay = allowPerDay && Object.keys(row.weekly_times).length > 0;
 
     const change = (changes: Partial<ScheduleValues>) => {
         const next = { ...row, ...changes };
-        if (('time_in' in changes || 'workday_type' in changes) && next.time_in) {
+        if (changes.shift_name === 'Regular Shift') next.flexible_mode = 'anytime';
+        const nextIsCondition = next.shift_name === 'Flexible Shift' && next.flexible_mode === 'condition';
+        if (!nextIsCondition && ('time_in' in changes || 'workday_type' in changes) && next.time_in) {
             const nextRule = tab.workdayRules[next.workday_type];
             if (nextRule) next.time_out = addMinutes(next.time_in, nextRule.clock_minutes);
         }
@@ -369,7 +381,7 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
                     {perDay
                         ? 'Different time per day.'
                         : `${rule.lunch_minutes > 0 ? `${rule.paid_hours} paid hours + ${rule.lunch_minutes / 60} unpaid lunch hour` : `${rule.paid_hours} paid hours straight, no lunch`}.`}{' '}
-                    Time out follows time in and work hours automatically.
+                    {isFlexibleCondition ? 'Time out follows time in and work hours automatically for the clock-in window length.' : isFlexibleAnytime ? '' : 'Time out follows time in and work hours automatically.'}
                 </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -379,7 +391,7 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
                         This employee is not in payroll (inactive or payroll inclusion off), so the schedule is kept but not used until they are included again.
                     </p>
                 )}
-                {row.status === 'scheduled' && row.shift_name === 'Regular Shift' && (
+                {row.status === 'scheduled' && allowPerDay && (
                     <div className="grid gap-2">
                         <PatternToggle perDay={perDay} onChange={setPerDay} disabled={readOnly} />
                         <p className="text-xs text-muted-foreground">
@@ -397,7 +409,7 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
                             options={STATUS_OPTIONS.map(({ value, label }) => ({ value, label }))}
                         />
                     </FormField>
-                    <FormField id="schedule-shift" label="Shift" error={error('shift_name')} hint={row.shift_name === 'Flexible Shift' ? `Needs ${rule.clock_minutes / 60} clock hours any time.` : undefined}>
+                    <FormField id="schedule-shift" label="Shift" error={error('shift_name')}>
                         <RowSelect
                             id="schedule-shift"
                             value={row.shift_name}
@@ -406,6 +418,22 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
                             options={SHIFT_OPTIONS.map((shift) => ({ value: shift, label: shift }))}
                         />
                     </FormField>
+                    {row.shift_name === 'Flexible Shift' && (
+                        <FormField
+                            id="schedule-flexible-mode"
+                            label="Flexible mode"
+                            error={error('flexible_mode')}
+                            hint={FLEXIBLE_MODE_OPTIONS.find((option) => option.value === row.flexible_mode)?.help}
+                        >
+                            <RowSelect
+                                id="schedule-flexible-mode"
+                                value={row.flexible_mode}
+                                disabled={readOnly}
+                                onChange={(flexible_mode) => change({ flexible_mode: flexible_mode as FlexibleMode })}
+                                options={FLEXIBLE_MODE_OPTIONS.map((option) => ({ value: option.value, label: option.label }))}
+                            />
+                        </FormField>
+                    )}
                     {!perDay && (
                     <FormField id="schedule-hours" label="Work hours" error={error('workday_type')}>
                         <RowSelect
@@ -419,12 +447,17 @@ function ScheduleEditor({ employeeId, tab }: { employeeId: number; tab: Schedule
                     )}
                     {!perDay && (
                         <>
-                            <FormField id="schedule-in" label="Time in" error={error('time_in')}>
+                            <FormField id="schedule-in" label={isFlexibleCondition ? 'Window start' : 'Time in'} error={error('time_in')}>
                                 <Input id="schedule-in" type="time" value={row.time_in} disabled={timesDisabled} onChange={(event) => change({ time_in: event.target.value })} />
                             </FormField>
-                            <FormField id="schedule-out" label="Time out" error={error('time_out')}>
+                            <FormField id="schedule-out" label={isFlexibleCondition ? 'Window end' : 'Time out'} error={error('time_out')}>
                                 <Input id="schedule-out" type="time" value={row.time_out} disabled={timesDisabled} onChange={(event) => change({ time_out: event.target.value })} />
                             </FormField>
+                            {isFlexibleCondition && !timesDisabled && (
+                                <FormField label="Presets">
+                                    <TimePresetButtons onPick={(preset) => change({ time_in: preset.time_in, time_out: preset.time_out })} />
+                                </FormField>
+                            )}
                         </>
                     )}
                     <FormField id="schedule-grace" label="Grace (min)" error={error('grace_minutes')} hint="0 or blank uses the company default.">

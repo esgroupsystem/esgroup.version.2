@@ -58,6 +58,7 @@ final class SaveWorkScheduleRequest extends FormRequest
             ],
             'schedule.*.status' => ['required', 'string', Rule::in(EmployeePlottingSchedule::STATUSES)],
             'schedule.*.shift_name' => ['required', 'string', Rule::in(EmployeePlottingSchedule::SHIFTS)],
+            'schedule.*.flexible_mode' => ['nullable', 'string', Rule::in(EmployeePlottingSchedule::FLEXIBLE_MODES)],
             'schedule.*.workday_type' => ['required', Rule::enum(WorkdayType::class)],
             'schedule.*.time_in' => ['nullable', 'date_format:H:i'],
             'schedule.*.time_out' => ['nullable', 'date_format:H:i'],
@@ -87,12 +88,46 @@ final class SaveWorkScheduleRequest extends FormRequest
 
                 $status = (string) ($row['status'] ?? 'scheduled');
                 $shiftName = (string) ($row['shift_name'] ?? 'Regular Shift');
+                $flexibleModeInput = (string) ($row['flexible_mode'] ?? EmployeePlottingSchedule::FLEXIBLE_MODE_ANYTIME);
+                $flexibleMode = in_array($flexibleModeInput, EmployeePlottingSchedule::FLEXIBLE_MODES, true)
+                    ? $flexibleModeInput
+                    : EmployeePlottingSchedule::FLEXIBLE_MODE_ANYTIME;
                 $timeIn = $row['time_in'] ?? null;
                 $timeOut = $row['time_out'] ?? null;
 
-                if ($status !== 'scheduled' || $shiftName !== 'Regular Shift') {
+                if ($status !== 'scheduled') {
                     continue;
                 }
+
+                $isFlexible = $shiftName === EmployeePlottingSchedule::FLEXIBLE_SHIFT;
+
+                // Flexible Shift (Condition): just needs a clock-in window, not an exact clock-hour span.
+                if ($isFlexible && $flexibleMode === EmployeePlottingSchedule::FLEXIBLE_MODE_CONDITION) {
+                    if (blank($timeIn) || blank($timeOut)) {
+                        $validator->errors()->add(
+                            "schedule.{$index}.time_in",
+                            'Flexible Shift (Condition) requires a clock-in window start and end.'
+                        );
+
+                        continue;
+                    }
+
+                    if ($timeIn === $timeOut) {
+                        $validator->errors()->add(
+                            "schedule.{$index}.time_out",
+                            'Clock-in window start and end cannot be the same.'
+                        );
+                    }
+
+                    continue;
+                }
+
+                // Flexible Shift (Anytime): no time fields to validate.
+                if ($isFlexible && $flexibleMode === EmployeePlottingSchedule::FLEXIBLE_MODE_ANYTIME) {
+                    continue;
+                }
+
+                // Regular Shift and Flexible Shift (Custom) must span exactly the workday's clock hours.
 
                 // Each weekday of a "different time per day" schedule follows the same span rule.
                 foreach ((array) ($row['weekly_times'] ?? []) as $day => $times) {
@@ -115,7 +150,9 @@ final class SaveWorkScheduleRequest extends FormRequest
                 if (blank($timeIn) || blank($timeOut)) {
                     $validator->errors()->add(
                         "schedule.{$index}.time_in",
-                        'Regular Shift requires both Time In and Time Out.'
+                        $isFlexible
+                            ? 'Flexible Shift (Custom) requires both Time In and Time Out.'
+                            : 'Regular Shift requires both Time In and Time Out.'
                     );
 
                     continue;
