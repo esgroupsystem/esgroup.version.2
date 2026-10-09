@@ -1467,6 +1467,10 @@ Route::middleware(['auth', ForceLockscreen::class])->group(function () {
                 ->middleware('permission:job-orders.view')
                 ->name('show');
 
+            Route::delete('/{jobOrderMaintenance}', 'destroy')
+                ->middleware('permission:job-orders.delete')
+                ->name('destroy');
+
             Route::get('/{jobOrderMaintenance}/edit-status', 'editStatus')
                 ->middleware('permission:job-orders.update-status')
                 ->name('edit-status');

@@ -55,6 +55,8 @@ interface JobOrderMaintenanceRepositoryInterface
     /** @param array<string, mixed> $attributes */
     public function update(JobOrderMaintenance $jobOrder, array $attributes): void;
 
+    public function delete(JobOrderMaintenance $jobOrder): void;
+
     /** Ends every open status period at $endedAt. */
     public function endOpenPeriods(JobOrderMaintenance $jobOrder, \DateTimeInterface $endedAt): void;
 

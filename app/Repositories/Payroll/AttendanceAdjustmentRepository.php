@@ -7,6 +7,7 @@ namespace App\Repositories\Payroll;
 use App\Models\Payroll;
 use App\Models\PayrollAttendanceAdjustment;
 use App\Repositories\Contracts\Payroll\AttendanceAdjustmentRepositoryInterface;
+use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -51,6 +52,8 @@ final class AttendanceAdjustmentRepository implements AttendanceAdjustmentReposi
     {
         return PayrollAttendanceAdjustment::query()
             ->whereIn('adjustment_type', $types)
+            // A rejected adjustment has no effect on payroll and must not block a new filing.
+            ->whereIn('status', [PayrollAttendanceAdjustment::STATUS_PENDING, PayrollAttendanceAdjustment::STATUS_APPROVED])
             ->when($ignoreId !== null, fn (Builder $query) => $query->whereKeyNot($ignoreId))
             ->when(
                 $employeeBiometricId === null,
@@ -78,13 +81,15 @@ final class AttendanceAdjustmentRepository implements AttendanceAdjustmentReposi
 
     public function overtimeFilingsOn(int $employeeBiometricId, string $date, ?int $ignoreId): Collection
     {
+        $target = Carbon::parse($date);
+
         return PayrollAttendanceAdjustment::query()
             ->where('adjustment_type', PayrollAttendanceAdjustment::TYPE_OVERTIME)
             ->where('employee_biometric_id', $employeeBiometricId)
-            ->whereDate('work_date', $date)
+            ->whereBetween('work_date', [$target->copy()->subDay()->toDateString(), $target->copy()->addDay()->toDateString()])
             ->whereIn('status', [PayrollAttendanceAdjustment::STATUS_PENDING, PayrollAttendanceAdjustment::STATUS_APPROVED])
             ->when($ignoreId !== null, fn (Builder $query) => $query->whereKeyNot($ignoreId))
-            ->get(['id', 'adjusted_time_in', 'adjusted_time_out', 'status']);
+            ->get(['id', 'work_date', 'adjusted_time_in', 'adjusted_time_out', 'status']);
     }
 
     public function countPendingApproval(string $start, string $end, array $employeeBiometricIds): int

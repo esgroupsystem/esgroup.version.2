@@ -79,10 +79,13 @@ final class OvertimeCheckService
         $others = $this->adjustments->overtimeFilingsOn($employeeBiometricId, $date->toDateString(), $ignoreAdjustmentId ?: null);
 
         foreach ($others as $other) {
-            if (! $other->adjusted_time_in || ! $other->adjusted_time_out) {
+            if (! $other->adjusted_time_in || ! $other->adjusted_time_out || ! $other->work_date) {
                 continue;
             }
-            [$otherStart, $otherEnd] = self::interval($date, (string) $other->adjusted_time_in, (string) $other->adjusted_time_out);
+            // Anchor to the OTHER filing's own work_date: an overnight OT is stored under its
+            // start day, so a filing one calendar day away can still overlap $date in real time.
+            $otherDate = Carbon::parse($other->work_date, 'Asia/Manila')->startOfDay();
+            [$otherStart, $otherEnd] = self::interval($otherDate, (string) $other->adjusted_time_in, (string) $other->adjusted_time_out);
             if ($start->lessThan($otherEnd) && $otherStart->lessThan($end)) {
                 $errors[] = sprintf(
                     'This overlaps another %s OT filing for the same day (%s – %s).',

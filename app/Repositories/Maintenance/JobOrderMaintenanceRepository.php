@@ -78,6 +78,11 @@ final class JobOrderMaintenanceRepository implements JobOrderMaintenanceReposito
         $jobOrder->forceFill($attributes)->save();
     }
 
+    public function delete(JobOrderMaintenance $jobOrder): void
+    {
+        $jobOrder->delete();
+    }
+
     public function endOpenPeriods(JobOrderMaintenance $jobOrder, DateTimeInterface $endedAt): void
     {
         $jobOrder->statusPeriods()->whereNull('ended_at')->lockForUpdate()->update(['ended_at' => $endedAt, 'updated_at' => $endedAt]);

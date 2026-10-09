@@ -1,6 +1,7 @@
 import { Link, router } from '@inertiajs/react';
-import { CheckCircle2, ClipboardList, Eye, FileSpreadsheet, FileText, Filter, Pencil, Plus, RotateCcw, Search, Timer, UserCog } from 'lucide-react';
+import { CheckCircle2, ClipboardList, Eye, FileSpreadsheet, FileText, Filter, Pencil, Plus, RotateCcw, Search, Timer, Trash2, UserCog } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { ConfirmAction, IconButton } from '@/components/confirm-action';
 import { DataPagination } from '@/components/data-pagination';
 import { FormField } from '@/components/form-field';
 import { JobStatusBadge, RepairTypeBadge, type Option } from '@/components/maintenance/job-order-parts';
@@ -37,6 +38,7 @@ interface Row {
     created_time: string;
     show_url: string;
     edit_status_url: string;
+    destroy_url: string;
 }
 
 interface Filters {
@@ -55,7 +57,7 @@ interface Props {
     statusCards: (Option & { count: number })[];
     statuses: Option[];
     filters: Filters;
-    can: { create: boolean; updateStatus: boolean };
+    can: { create: boolean; updateStatus: boolean; delete: boolean };
     urls: { index: string; create: string; export: string };
 }
 
@@ -288,6 +290,20 @@ export default function JobOrdersIndex({ jobOrders, buses, statusCards, statuses
                                                         <Pencil />
                                                     </Link>
                                                 </Button>
+                                            )}
+                                            {can.delete && (
+                                                <ConfirmAction
+                                                    title="Delete job order?"
+                                                    description={`This removes ${row.job_order_no} from the maintenance list. This cannot be undone from here.`}
+                                                    confirmLabel="Delete"
+                                                    destructive
+                                                    onConfirm={() => router.delete(row.destroy_url, { preserveScroll: true })}
+                                                    trigger={
+                                                        <IconButton label={`Delete ${row.job_order_no}`}>
+                                                            <Trash2 />
+                                                        </IconButton>
+                                                    }
+                                                />
                                             )}
                                         </div>
                                     </TableCell>

@@ -9,9 +9,12 @@ import {
     fillWeeklyTimes,
     PatternToggle,
     RowSelect,
+    ShiftOptionsDialog,
+    shiftOptionsSummary,
     TimePresetButtons,
     WeeklyTimesEditor,
     weeklySummary,
+    type ShiftOption,
     type WeeklyTimes,
     FLEXIBLE_MODE_OPTIONS,
     SHIFT_OPTIONS,
@@ -40,8 +43,10 @@ interface ScheduleRow {
     workday_type: string;
     time_in: string;
     time_out: string;
-    /** Empty = same time every day. */
+    /** Empty = same time every day. Regular Shift only. */
     weekly_times: WeeklyTimes;
+    /** Flexible Shift (Custom) only: the exact shift times the employee may clock into. */
+    flexible_shift_options: ShiftOption[];
     grace_minutes: number | string;
     day_offs: string[];
     remarks: string;
@@ -98,6 +103,7 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
                     time_out: employee.schedule.time_out ?? addMinutes(timeIn, rule.clock_minutes),
                     // Kept as is on save, so a grid save never drops someone's per-day times.
                     weekly_times: { ...(employee.schedule.weekly_times ?? {}) },
+                    flexible_shift_options: [...(employee.schedule.flexible_shift_options ?? [])],
                     grace_minutes: employee.schedule.grace_minutes,
                     day_offs: employee.schedule.day_offs,
                     remarks: employee.schedule.remarks ?? '',
@@ -122,9 +128,7 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
                     next.flexible_mode = 'anytime';
                 }
 
-                const isCondition = next.shift_name === 'Flexible Shift' && next.flexible_mode === 'condition';
-
-                if (!isCondition && ('time_in' in changes || 'workday_type' in changes)) {
+                if ('time_in' in changes || 'workday_type' in changes) {
                     const rule = workdayRules[next.workday_type];
                     if (rule && next.time_in) next.time_out = addMinutes(next.time_in, rule.clock_minutes);
                 }
@@ -222,8 +226,7 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
 
                 const flexibleHelp: Record<FlexibleMode, string> = {
                     anytime: `Flexible: requires ${rule.clock_minutes / 60} clock hours any time. `,
-                    condition: `Flexible: clock in within the window, then complete ${rule.clock_minutes / 60} clock hours. `,
-                    custom: `Flexible: fixed time in/out, same late/undertime rules as Regular Shift. `,
+                    custom: `Flexible: pick one or more shift times; matched to the closest actual time in. `,
                 };
 
                 return (
@@ -262,9 +265,9 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
                 const { row } = edit(employee);
                 if (!row) return '';
                 const isFlexibleAnytime = row.shift_name === 'Flexible Shift' && row.flexible_mode === 'anytime';
-                const isFlexibleCondition = row.shift_name === 'Flexible Shift' && row.flexible_mode === 'condition';
+                const isFlexibleCustom = row.shift_name === 'Flexible Shift' && row.flexible_mode === 'custom';
                 if (row.status !== 'scheduled' || isFlexibleAnytime) return `${row.grace_minutes} min grace`;
-                if (isFlexibleCondition) return `Window ${row.time_in} – ${row.time_out} · ${row.grace_minutes} min grace`;
+                if (isFlexibleCustom) return `${shiftOptionsSummary(row.flexible_shift_options)} · ${row.grace_minutes} min grace`;
                 return Object.keys(row.weekly_times).length > 0
                     ? `${weeklySummary(row.weekly_times)} · ${row.grace_minutes} min grace`
                     : `${row.time_in} – ${row.time_out} · ${row.grace_minutes} min grace`;
@@ -272,15 +275,15 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
             header: 'Time in / out & grace',
             className: 'align-top',
             cell: (employee) => {
-                const { row, error, change, index } = edit(employee);
+                const { row, rule, error, change, index } = edit(employee);
                 if (!row) return null;
                 const isFlexibleAnytime = row.shift_name === 'Flexible Shift' && row.flexible_mode === 'anytime';
-                const isFlexibleCondition = row.shift_name === 'Flexible Shift' && row.flexible_mode === 'condition';
                 const isFlexibleCustom = row.shift_name === 'Flexible Shift' && row.flexible_mode === 'custom';
                 const timeDisabled = row.status !== 'scheduled' || isFlexibleAnytime;
-                const allowPerDay = row.status === 'scheduled' && (row.shift_name === 'Regular Shift' || isFlexibleCustom);
+                const allowPerDay = row.status === 'scheduled' && row.shift_name === 'Regular Shift';
                 const perDay = allowPerDay && Object.keys(row.weekly_times).length > 0;
                 const weeklyError = Object.entries(errors).find(([key]) => key.startsWith(`schedule.${index}.weekly_times`))?.[1];
+                const optionsError = Object.entries(errors).find(([key]) => key.startsWith(`schedule.${index}.flexible_shift_options`))?.[1];
 
                 return (
                     <div className="grid w-36 gap-1.5">
@@ -290,29 +293,33 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
                                 <span className="w-32 whitespace-normal text-muted-foreground">{weeklySummary(row.weekly_times)}</span>
                                 {weeklyError && <span className="w-32 whitespace-normal text-destructive">{weeklyError}</span>}
                             </div>
+                        ) : isFlexibleCustom ? (
+                            <div className="grid gap-1 rounded-md border bg-muted/40 p-2 text-xs">
+                                <span className="font-medium">
+                                    {row.flexible_shift_options.length} shift option{row.flexible_shift_options.length === 1 ? '' : 's'}
+                                </span>
+                                <span className="w-32 whitespace-normal text-muted-foreground">{shiftOptionsSummary(row.flexible_shift_options) || 'None set'}</span>
+                                {optionsError && <span className="w-32 whitespace-normal text-destructive">{optionsError}</span>}
+                            </div>
                         ) : (
-                        <>
-                        {isFlexibleCondition && <span className="text-xs font-medium text-muted-foreground">Clock-in window</span>}
-                        <Input
-                            type="time"
-                            aria-label={isFlexibleCondition ? `Window start ${employee.name}` : `Time in ${employee.name}`}
-                            value={row.time_in}
-                            disabled={timeDisabled}
-                            aria-invalid={Boolean(error('time_in'))}
-                            onChange={(event) => change({ time_in: event.target.value })}
-                        />
-                        <Input
-                            type="time"
-                            aria-label={isFlexibleCondition ? `Window end ${employee.name}` : `Time out ${employee.name}`}
-                            value={row.time_out}
-                            disabled={timeDisabled}
-                            aria-invalid={Boolean(error('time_out'))}
-                            onChange={(event) => change({ time_out: event.target.value })}
-                        />
-                        {isFlexibleCondition && !timeDisabled && (
-                            <TimePresetButtons onPick={(preset) => change({ time_in: preset.time_in, time_out: preset.time_out })} />
-                        )}
-                        </>
+                            <>
+                                <Input
+                                    type="time"
+                                    aria-label={`Time in ${employee.name}`}
+                                    value={row.time_in}
+                                    disabled={timeDisabled}
+                                    aria-invalid={Boolean(error('time_in'))}
+                                    onChange={(event) => change({ time_in: event.target.value })}
+                                />
+                                <Input
+                                    type="time"
+                                    aria-label={`Time out ${employee.name}`}
+                                    value={row.time_out}
+                                    disabled={timeDisabled}
+                                    aria-invalid={Boolean(error('time_out'))}
+                                    onChange={(event) => change({ time_out: event.target.value })}
+                                />
+                            </>
                         )}
                         {allowPerDay && (
                             <PerDayDialog
@@ -321,6 +328,14 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
                                 weekdays={weekdays}
                                 rules={workdayRules}
                                 onSave={(weekly_times) => change({ weekly_times })}
+                            />
+                        )}
+                        {isFlexibleCustom && row.status === 'scheduled' && (
+                            <ShiftOptionsDialog
+                                name={employee.name}
+                                options={row.flexible_shift_options}
+                                rule={rule}
+                                onSave={(flexible_shift_options) => change({ flexible_shift_options })}
                             />
                         )}
                         <div className="flex items-center rounded-md border shadow-xs focus-within:ring-[3px] focus-within:ring-ring/50">
@@ -378,7 +393,7 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
                 if (!row) return null;
 
                 const isFlexibleAnytime = row.shift_name === 'Flexible Shift' && row.flexible_mode === 'anytime';
-                const isFlexibleCondition = row.shift_name === 'Flexible Shift' && row.flexible_mode === 'condition';
+                const isFlexibleCustom = row.shift_name === 'Flexible Shift' && row.flexible_mode === 'custom';
 
                 return (
                     <>
@@ -388,10 +403,7 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
                         </div>
                         <div>{rule.short_label}</div>
                         {row.status === 'scheduled' && !isFlexibleAnytime && (
-                            <div className="tabular-nums">
-                                {isFlexibleCondition ? 'Window: ' : ''}
-                                {row.time_in || '—'} to {row.time_out || '—'}
-                            </div>
+                            <div className="tabular-nums">{isFlexibleCustom ? shiftOptionsSummary(row.flexible_shift_options) || '—' : `${row.time_in || '—'} to ${row.time_out || '—'}`}</div>
                         )}
                         <div>Days off: {row.day_offs.length ? row.day_offs.map((day) => day.slice(0, 3)).join(', ') : 'None'}</div>
                     </>
@@ -432,14 +444,24 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
                 workdayRules={workdayRules}
                 weekdays={weekdays}
                 disabled={form.data.schedule.length === 0}
-                onApply={(values) => form.setData('schedule', form.data.schedule.map((row) => ({ ...row, ...values, weekly_times: {} })))}
+                onApply={(values) =>
+                    form.setData(
+                        'schedule',
+                        form.data.schedule.map((row) => ({
+                            ...row,
+                            ...values,
+                            weekly_times: {},
+                            flexible_shift_options: values.shift_name === 'Flexible Shift' && values.flexible_mode === 'custom' ? [{ time_in: values.time_in, time_out: values.time_out }] : [],
+                        })),
+                    )
+                }
             />
 
             <DataTable
                 title="Employee work schedule"
                 description={
                     <>
-                        Regular Shift and Flexible Shift (Custom) must span exactly the workday's clock hours. Flexible Shift (Condition) only needs a clock-in window. Flexible Shift (Anytime) needs no times at all.
+                        Regular Shift must span exactly the workday's clock hours. Flexible Shift (Custom) needs one or more exact shift-time options; the actual time in is matched to the closest one. Flexible Shift (Anytime) needs no times at all.
                         {form.isDirty && <span className="ml-2 font-medium text-amber-700 dark:text-amber-400">Unsaved changes — save before changing filters or pages.</span>}
                     </>
                 }
@@ -460,7 +482,7 @@ function PlottingEditor({ employees, filters, groups, stats, workdayRules, weekd
     );
 }
 
-type QuickFillValues = Omit<ScheduleRow, 'employee_biometric_id' | 'remarks' | 'weekly_times'>;
+type QuickFillValues = Omit<ScheduleRow, 'employee_biometric_id' | 'remarks' | 'weekly_times' | 'flexible_shift_options'>;
 
 function QuickFill({
     workdayRules,
@@ -484,13 +506,13 @@ function QuickFill({
         day_offs: [],
     });
     const timeDisabled = values.shift_name === 'Flexible Shift' && values.flexible_mode === 'anytime';
-    const isCondition = values.shift_name === 'Flexible Shift' && values.flexible_mode === 'condition';
+    const isFlexibleCustom = values.shift_name === 'Flexible Shift' && values.flexible_mode === 'custom';
 
     const change = (changes: Partial<QuickFillValues>) => {
         const next = { ...values, ...changes };
         if (changes.shift_name === 'Regular Shift') next.flexible_mode = 'anytime';
         const rule = workdayRules[next.workday_type];
-        if (!isCondition && rule && next.time_in && ('time_in' in changes || 'workday_type' in changes)) {
+        if (rule && next.time_in && ('time_in' in changes || 'workday_type' in changes)) {
             next.time_out = addMinutes(next.time_in, rule.clock_minutes);
         }
         setValues(next);
@@ -541,14 +563,14 @@ function QuickFill({
                     />
                 </div>
                 <div className="grid gap-1.5 w-32">
-                    <Label>{isCondition ? 'Window start' : 'Time in'}</Label>
+                    <Label>Time in</Label>
                     <Input type="time" value={values.time_in} disabled={timeDisabled} onChange={(event) => change({ time_in: event.target.value })} />
                 </div>
                 <div className="grid gap-1.5 w-32">
-                    <Label>{isCondition ? 'Window end' : 'Time out'}</Label>
+                    <Label>Time out</Label>
                     <Input type="time" value={values.time_out} disabled={timeDisabled} onChange={(event) => change({ time_out: event.target.value })} />
                 </div>
-                {isCondition && (
+                {isFlexibleCustom && (
                     <div className="grid gap-1.5">
                         <Label>Presets</Label>
                         <TimePresetButtons onPick={(preset) => change({ time_in: preset.time_in, time_out: preset.time_out })} />

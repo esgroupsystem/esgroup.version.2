@@ -17,8 +17,9 @@ use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /**
- * Flexible Shift sub-modes: Anytime (legacy, no clock window), Condition (clock-in window,
- * then complete the required clock hours) and Custom (fixed time in/out, Regular Shift rules).
+ * Flexible Shift sub-modes: Anytime (legacy, no fixed time) and Custom (one or more exact
+ * shift-time options, e.g. 8:00 AM-5:00 PM or 9:00 AM-6:00 PM; the actual time in picks the
+ * closest option, then late/undertime are computed the same way as Regular Shift).
  */
 final class FlexibleShiftModesTest extends TestCase
 {
@@ -49,125 +50,90 @@ final class FlexibleShiftModesTest extends TestCase
 
     public function test_anytime_mode_keeps_no_fixed_times(): void
     {
-        $this->save(['flexible_mode' => 'anytime', 'time_in' => '08:00', 'time_out' => '17:00'])
-            ->assertSessionHasNoErrors();
+        $this->save('anytime', [])->assertSessionHasNoErrors();
 
         $schedule = EmployeePlottingSchedule::query()->where('employee_biometric_id', $this->employee->id)->sole();
         $this->assertSame('anytime', $schedule->flexible_mode);
         $this->assertNull($schedule->time_in);
         $this->assertNull($schedule->time_out);
+        $this->assertSame([], $schedule->resolvedShiftOptions());
     }
 
-    public function test_condition_mode_requires_a_clock_in_window(): void
+    public function test_custom_mode_requires_at_least_one_option(): void
     {
-        $this->save(['flexible_mode' => 'condition', 'time_in' => '', 'time_out' => ''])
-            ->assertSessionHasErrors('schedule.0.time_in');
+        $this->save('custom', [])->assertSessionHasErrors('schedule.0.flexible_shift_options');
         $this->assertSame(0, EmployeePlottingSchedule::query()->count());
+    }
 
-        $this->save(['flexible_mode' => 'condition', 'time_in' => '06:00', 'time_out' => '06:00'])
-            ->assertSessionHasErrors('schedule.0.time_out');
+    public function test_custom_mode_requires_each_option_to_span_the_exact_clock_hours(): void
+    {
+        $this->save('custom', [['time_in' => '08:00', 'time_out' => '14:00']])
+            ->assertSessionHasErrors('schedule.0.flexible_shift_options.0.time_out');
         $this->assertSame(0, EmployeePlottingSchedule::query()->count());
-
-        $this->save(['flexible_mode' => 'condition', 'time_in' => '06:00', 'time_out' => '10:00'])
-            ->assertSessionHasNoErrors();
-
-        $schedule = EmployeePlottingSchedule::query()->where('employee_biometric_id', $this->employee->id)->sole();
-        $this->assertSame('condition', $schedule->flexible_mode);
-        $this->assertSame('06:00:00', $schedule->time_in);
-        $this->assertSame('10:00:00', $schedule->time_out);
     }
 
-    public function test_condition_mode_is_on_time_inside_the_window_and_present_once_hours_are_completed(): void
+    public function test_custom_mode_saves_multiple_options_and_mirrors_the_first_one(): void
     {
-        $this->save(['flexible_mode' => 'condition', 'time_in' => '06:00', 'time_out' => '10:00'])
-            ->assertSessionHasNoErrors();
-
-        // Clocked in at 07:00, inside the 06:00-10:00 window. 9 clock hours later = 16:00.
-        $this->punch('2026-10-05 07:00:00');
-        $this->punch('2026-10-05 16:00:00');
-
-        $summary = $this->buildDay('2026-10-05');
-
-        $this->assertSame(0, (int) $summary->late_minutes);
-        $this->assertSame(0, (int) $summary->undertime_minutes);
-        $this->assertSame('present', $summary->attendance_status);
-        $this->assertSame(1.0, (float) $summary->payable_days);
-    }
-
-    public function test_condition_mode_is_late_when_clocking_in_after_the_window(): void
-    {
-        $this->save(['flexible_mode' => 'condition', 'time_in' => '06:00', 'time_out' => '10:00'])
-            ->assertSessionHasNoErrors();
-
-        // Clocked in at 10:30, 30 minutes after the window end (10:00), past the 15-min grace.
-        $this->punch('2026-10-05 10:30:00');
-        $this->punch('2026-10-05 19:30:00');
-
-        $summary = $this->buildDay('2026-10-05');
-
-        $this->assertGreaterThan(0, (int) $summary->late_minutes);
-        $this->assertSame(0, (int) $summary->undertime_minutes, 'The full 9 clock hours were still completed.');
-        $this->assertSame('late', $summary->attendance_status);
-        $this->assertLessThan(1.0, (float) $summary->payable_days);
-    }
-
-    public function test_condition_mode_is_undertime_when_the_required_hours_are_not_completed(): void
-    {
-        $this->save(['flexible_mode' => 'condition', 'time_in' => '06:00', 'time_out' => '10:00'])
-            ->assertSessionHasNoErrors();
-
-        // On time in, but leaves early: only 5 clock hours worked instead of 9.
-        $this->punch('2026-10-05 07:00:00');
-        $this->punch('2026-10-05 12:00:00');
-
-        $summary = $this->buildDay('2026-10-05');
-
-        $this->assertSame(0, (int) $summary->late_minutes);
-        $this->assertGreaterThan(0, (int) $summary->undertime_minutes);
-        $this->assertSame('undertime', $summary->attendance_status);
-    }
-
-    public function test_custom_mode_requires_an_exact_clock_hour_span(): void
-    {
-        $this->save(['flexible_mode' => 'custom', 'time_in' => '', 'time_out' => ''])
-            ->assertSessionHasErrors('schedule.0.time_in');
-
-        $this->save(['flexible_mode' => 'custom', 'time_in' => '08:00', 'time_out' => '14:00'])
-            ->assertSessionHasErrors('schedule.0.time_out');
-        $this->assertSame(0, EmployeePlottingSchedule::query()->count());
-
-        $this->save(['flexible_mode' => 'custom', 'time_in' => '08:00', 'time_out' => '17:00'])
-            ->assertSessionHasNoErrors();
+        $this->save('custom', [
+            ['time_in' => '08:00', 'time_out' => '17:00'],
+            ['time_in' => '09:00', 'time_out' => '18:00'],
+        ])->assertSessionHasNoErrors();
 
         $schedule = EmployeePlottingSchedule::query()->where('employee_biometric_id', $this->employee->id)->sole();
         $this->assertSame('custom', $schedule->flexible_mode);
-        $this->assertSame('08:00:00', $schedule->time_in);
+        $this->assertSame('08:00:00', $schedule->time_in, 'The first option mirrors into the single time_in column.');
         $this->assertSame('17:00:00', $schedule->time_out);
+        $this->assertSame(
+            [['time_in' => '08:00', 'time_out' => '17:00'], ['time_in' => '09:00', 'time_out' => '18:00']],
+            $schedule->resolvedShiftOptions()
+        );
     }
 
-    public function test_custom_mode_computes_late_and_undertime_like_regular_shift(): void
+    public function test_custom_mode_detects_which_option_the_employee_clocked_into(): void
     {
-        $this->save(['flexible_mode' => 'custom', 'time_in' => '08:00', 'time_out' => '17:00'])
-            ->assertSessionHasNoErrors();
+        $this->save('custom', [
+            ['time_in' => '08:00', 'time_out' => '17:00'],
+            ['time_in' => '09:00', 'time_out' => '18:00'],
+        ])->assertSessionHasNoErrors();
 
-        // In at 08:40 (40 min late against 08:00 + 15 min grace) and leaves on time.
-        $this->punch('2026-10-05 08:40:00');
+        // Clocks in near 9:00 (the second option), on time, leaves on time.
+        $this->punch('2026-10-05 09:05:00');
+        $this->punch('2026-10-05 18:00:00');
+
+        $summary = $this->buildDay('2026-10-05');
+
+        $this->assertSame(['09:00', '18:00'], [substr((string) $summary->scheduled_time_in, 0, 5), substr((string) $summary->scheduled_time_out, 0, 5)]);
+        $this->assertSame(0, (int) $summary->late_minutes, '5 minutes is within the 15-min grace.');
+        $this->assertSame(0, (int) $summary->undertime_minutes);
+        $this->assertSame('present', $summary->attendance_status);
+        $this->assertTrue($summary->requiresFixedScheduleTimes());
+    }
+
+    public function test_custom_mode_is_late_against_the_matched_option(): void
+    {
+        $this->save('custom', [
+            ['time_in' => '08:00', 'time_out' => '17:00'],
+            ['time_in' => '09:00', 'time_out' => '18:00'],
+        ])->assertSessionHasNoErrors();
+
+        // Closer to the 8:00 option (25 min away) than the 9:00 one (35 min away), and late against it.
+        $this->punch('2026-10-05 08:25:00');
         $this->punch('2026-10-05 17:00:00');
 
         $summary = $this->buildDay('2026-10-05');
 
         $this->assertSame(['08:00', '17:00'], [substr((string) $summary->scheduled_time_in, 0, 5), substr((string) $summary->scheduled_time_out, 0, 5)]);
         $this->assertGreaterThan(0, (int) $summary->late_minutes);
-        $this->assertTrue($summary->requiresFixedScheduleTimes());
     }
 
-    /** @param  array{flexible_mode: string, time_in: string, time_out: string}  $overrides */
-    private function save(array $overrides): \Illuminate\Testing\TestResponse
+    /** @param  list<array{time_in: string, time_out: string}>  $options */
+    private function save(string $flexibleMode, array $options): \Illuminate\Testing\TestResponse
     {
-        return $this->client()->post(route('payroll-plotting.save'), ['schedule' => [array_merge([
+        return $this->client()->post(route('payroll-plotting.save'), ['schedule' => [[
             'employee_biometric_id' => $this->employee->id, 'status' => 'scheduled', 'shift_name' => 'Flexible Shift',
+            'flexible_mode' => $flexibleMode, 'flexible_shift_options' => $options,
             'workday_type' => WorkdayType::EightHours->value, 'grace_minutes' => 15, 'day_offs' => [], 'remarks' => '',
-        ], $overrides)]]);
+        ]]]);
     }
 
     private function punch(string $dateTime): void

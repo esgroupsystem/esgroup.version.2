@@ -2983,7 +2983,11 @@ class PayrollComputationService
         $qualified = $qualifiedByLogs || $qualifiedByException;
 
         $otherwiseUnworkedRestRows = $rows->filter(function ($row): bool {
-            return $this->isRestDayRow($row) && ! $this->isRestDayWorked($row);
+            // isHolidayRow() can find a holiday the stored attendance_status doesn't know about yet
+            // (e.g. a Holiday Calendar entry added/corrected after this row's summary was built).
+            // Without this exclusion such a day would be paid as both an unworked day off here and
+            // an unworked holiday in computeHolidayPay().
+            return $this->isRestDayRow($row) && ! $this->isRestDayWorked($row) && ! $this->isHolidayRow($row);
         });
 
         $unpaidRestDayCount = $qualified ? 0 : $otherwiseUnworkedRestRows->count();

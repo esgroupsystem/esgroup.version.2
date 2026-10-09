@@ -38,8 +38,9 @@ interface AttendanceAdjustmentRepositoryInterface
     public function count(array $filters, string $status, ?array $types = null, ?string $onlyStatus = null): int;
 
     /**
-     * Another adjustment of the same kind overlapping the dates. Disaster types are one per work date
-     * for everybody; other types are per employee and date range.
+     * A pending or approved adjustment of the same kind overlapping the dates (rejected rows never
+     * count — they have no effect on payroll and must not block a new filing). Disaster types are
+     * one per work date for everybody; other types are per employee and date range.
      *
      * @param  list<string>  $types
      */
@@ -48,7 +49,13 @@ interface AttendanceAdjustmentRepositoryInterface
     /** @return Collection<int, PayrollAttendanceAdjustment> non-rejected offsets that may use $date as a source */
     public function offsetsUsingSourceDate(int $employeeBiometricId, string $date, ?int $ignoreId): Collection;
 
-    /** @return Collection<int, PayrollAttendanceAdjustment> pending / approved OT filings on the date */
+    /**
+     * Pending / approved OT filings whose work_date is $date or an adjacent calendar day.
+     * An overnight filing is stored under its start day, so a filing that actually overlaps
+     * $date in real time can have a work_date one day before or after it.
+     *
+     * @return Collection<int, PayrollAttendanceAdjustment>
+     */
     public function overtimeFilingsOn(int $employeeBiometricId, string $date, ?int $ignoreId): Collection;
 
     /**

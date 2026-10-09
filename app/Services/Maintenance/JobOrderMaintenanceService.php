@@ -191,6 +191,24 @@ final class JobOrderMaintenanceService
         }, 3);
     }
 
+    /** Ends any open downtime period, then soft-deletes the job order. */
+    public function delete(JobOrderMaintenance $jobOrderMaintenance, ?int $userId): void
+    {
+        DB::transaction(function () use ($jobOrderMaintenance, $userId): void {
+            $jobOrder = $this->jobOrders->findForUpdate((int) $jobOrderMaintenance->getKey());
+
+            $this->jobOrders->endOpenPeriods($jobOrder, now());
+            $this->jobOrders->addHistory($jobOrder, [
+                'action' => 'Job order deleted',
+                'old_value' => $jobOrder->status->label(),
+                'new_value' => null,
+                'remarks' => null,
+                'user_id' => $userId,
+            ]);
+            $this->jobOrders->delete($jobOrder);
+        }, 3);
+    }
+
     public function updateJobOrderNumber(JobOrderMaintenance $jobOrderMaintenance, string $jobOrderNo, ?int $userId, ?string $remarks = null): JobOrderMaintenance
     {
         return DB::transaction(function () use ($jobOrderMaintenance, $jobOrderNo, $userId, $remarks): JobOrderMaintenance {

@@ -1,3 +1,7 @@
+import { CalendarClock, Plus, Trash2 } from 'lucide-react';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
@@ -6,7 +10,7 @@ import { cn } from '@/lib/utils';
 
 export type ScheduleStatus = 'scheduled' | 'rest_day' | 'inactive';
 export type ScheduleShift = 'Regular Shift' | 'Flexible Shift';
-export type FlexibleMode = 'anytime' | 'condition' | 'custom';
+export type FlexibleMode = 'anytime' | 'custom';
 
 export interface WorkdayRule {
     label: string;
@@ -24,11 +28,10 @@ export const STATUS_OPTIONS: { value: ScheduleStatus; label: string; help: strin
 
 export const SHIFT_OPTIONS: ScheduleShift[] = ['Regular Shift', 'Flexible Shift'];
 
-/** Flexible Shift sub-modes. "anytime" is the legacy default: no clock-in window at all. */
+/** Flexible Shift sub-modes. "anytime" is the legacy default: no fixed time at all. */
 export const FLEXIBLE_MODE_OPTIONS: { value: FlexibleMode; label: string; help: string }[] = [
-    { value: 'anytime', label: 'Anytime', help: 'No clock-in window. Must complete the required clock hours any time in the day.' },
-    { value: 'condition', label: 'Condition (clock-in window)', help: 'Must clock in within the window below; clock-out is whenever the required clock hours are completed.' },
-    { value: 'custom', label: 'Custom time in/out', help: 'Fixed time in and time out; late/undertime work the same way as Regular Shift.' },
+    { value: 'anytime', label: 'Anytime', help: 'No fixed time at all. Must complete the required clock hours any time in the day.' },
+    { value: 'custom', label: 'Scheduled shift option(s)', help: 'One or more exact shift times (e.g. 8:00 AM or 9:00 AM). The employee’s actual time in is matched to the closest one, then late/undertime work the same way as Regular Shift.' },
 ];
 
 /** Quick-fill presets for a time in / time out pair. Not a restricted list — any time may still be typed. */
@@ -38,7 +41,7 @@ export const TIME_PRESETS: { label: string; time_in: string; time_out: string }[
     { label: '8:00 AM – 5:00 PM', time_in: '08:00', time_out: '17:00' },
 ];
 
-/** Tappable presets that fill a time in / time out pair, e.g. a Flexible (Condition) clock-in window. */
+/** Tappable presets that fill a time in / time out pair. Not a restricted list — any time may still be typed. */
 export function TimePresetButtons({ onPick, disabled }: { onPick: (preset: { time_in: string; time_out: string }) => void; disabled?: boolean }) {
     return (
         <div className="flex flex-wrap gap-1">
@@ -54,6 +57,132 @@ export function TimePresetButtons({ onPick, disabled }: { onPick: (preset: { tim
                 </button>
             ))}
         </div>
+    );
+}
+
+/** One exact shift-time option of a Flexible Shift (Custom) schedule, e.g. "8:00 AM–5:00 PM". */
+export interface ShiftOption {
+    time_in: string;
+    time_out: string;
+}
+
+/** "8:00–17:00, 9:00–18:00" */
+export function shiftOptionsSummary(options: ShiftOption[]): string {
+    return options.map((option) => `${option.time_in}–${option.time_out}`).join(', ');
+}
+
+/**
+ * Add / edit / remove the shift-time options of a Flexible Shift (Custom) schedule. At least one
+ * option is kept. Time Out follows Time In and the row's work hours, same as a fixed schedule.
+ */
+export function ShiftOptionsDialog({
+    name,
+    options,
+    rule,
+    onSave,
+    disabled,
+}: {
+    name: string;
+    options: ShiftOption[];
+    rule: WorkdayRule;
+    onSave: (options: ShiftOption[]) => void;
+    disabled?: boolean;
+}) {
+    const [open, setOpen] = useState(false);
+    const fallback: ShiftOption[] = [{ time_in: '08:00', time_out: addMinutes('08:00', rule.clock_minutes) }];
+    const [draft, setDraft] = useState<ShiftOption[]>(options.length > 0 ? options : fallback);
+
+    const change = (index: number, changes: Partial<ShiftOption>) =>
+        setDraft((current) =>
+            current.map((option, i) => {
+                if (i !== index) return option;
+                const next = { ...option, ...changes };
+                if ('time_in' in changes && next.time_in) next.time_out = addMinutes(next.time_in, rule.clock_minutes);
+                return next;
+            }),
+        );
+
+    const add = (preset?: ShiftOption) => {
+        const value = preset ?? { time_in: '08:00', time_out: addMinutes('08:00', rule.clock_minutes) };
+        setDraft((current) => (current.some((option) => option.time_in === value.time_in && option.time_out === value.time_out) ? current : [...current, value]));
+    };
+
+    const remove = (index: number) => setDraft((current) => (current.length > 1 ? current.filter((_, i) => i !== index) : current));
+
+    return (
+        <Dialog
+            open={open}
+            onOpenChange={(next) => {
+                if (next) setDraft(options.length > 0 ? options : fallback);
+                setOpen(next);
+            }}
+        >
+            <DialogTrigger asChild>
+                <Button type="button" variant="outline" size="sm" className="h-7 text-xs" disabled={disabled}>
+                    <CalendarClock />
+                    {options.length > 0 ? 'Edit shift options…' : 'Add shift options…'}
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
+                <DialogHeader>
+                    <DialogTitle>Shift time options — {name}</DialogTitle>
+                    <DialogDescription>
+                        Add every time the employee may clock in for (e.g. 8:00 AM or 9:00 AM). The actual time in is matched to the closest one. Click Save Schedule on the page afterwards.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-2">
+                    {draft.map((option, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                            <Input
+                                type="time"
+                                aria-label={`Shift option ${index + 1} time in`}
+                                value={option.time_in}
+                                onChange={(event) => change(index, { time_in: event.target.value })}
+                            />
+                            <span className="text-sm text-muted-foreground">to</span>
+                            <Input
+                                type="time"
+                                aria-label={`Shift option ${index + 1} time out`}
+                                value={option.time_out}
+                                onChange={(event) => change(index, { time_out: event.target.value })}
+                            />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                className="shrink-0 text-muted-foreground hover:text-destructive"
+                                disabled={draft.length <= 1}
+                                aria-label={`Remove shift option ${index + 1}`}
+                                onClick={() => remove(index)}
+                            >
+                                <Trash2 />
+                            </Button>
+                        </div>
+                    ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button type="button" variant="outline" size="sm" onClick={() => add()}>
+                        <Plus />
+                        Add another time
+                    </Button>
+                    <TimePresetButtons onPick={add} />
+                </div>
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                        Cancel
+                    </Button>
+                    <Button
+                        type="button"
+                        onClick={() => {
+                            onSave(draft);
+                            setOpen(false);
+                        }}
+                    >
+                        Apply
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
     );
 }
 

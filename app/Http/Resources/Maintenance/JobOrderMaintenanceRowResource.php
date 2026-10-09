@@ -34,6 +34,7 @@ final class JobOrderMaintenanceRowResource extends JsonResource
             'created_time' => $this->created_at->format('h:i A'),
             'show_url' => route('maintenance.job-orders.show', $this->resource),
             'edit_status_url' => route('maintenance.job-orders.edit-status', $this->resource),
+            'destroy_url' => route('maintenance.job-orders.destroy', $this->resource),
         ];
     }
 

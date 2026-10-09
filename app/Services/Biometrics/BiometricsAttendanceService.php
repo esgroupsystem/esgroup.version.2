@@ -67,8 +67,11 @@ final class BiometricsAttendanceService
 
         $employeeNos = $people->pluck('employee_no')->map(fn (mixed $value): string => trim((string) $value))->filter()->unique()->values();
         $biometricIds = $people->pluck('biometric_employee_id')->map(fn (mixed $value): string => trim((string) $value))->filter()->unique()->values();
-        $logs = $this->logsByEmployeeDate($this->logs->forPeople($employeeNos, $biometricIds, $start, $end));
+        // Fetch one extra day past the end so an overnight shift on the cutoff's last day can still
+        // find its checkout punch the next morning.
+        $logs = $this->logsByEmployeeDate($this->logs->forPeople($employeeNos, $biometricIds, $start, $end->copy()->addDay()));
         [$dated, $permanent] = $this->schedulesByKey($this->schedules->forPeople($employeeNos, $biometricIds), $start, $end);
+        $consumedNextDayPunches = [];
 
         $rows = collect();
         foreach ($people as $person) {
@@ -78,6 +81,29 @@ final class BiometricsAttendanceService
                 $day = $date->toDateString();
                 $schedule = ($dated->get($employeeKey.'_'.$day) ?? $permanent->get($employeeKey))?->forDate($day);
                 $log = $logs->get($employeeKey.'_'.$day);
+
+                // Overnight shift (e.g. 10:00 PM-6:00 AM): a lone check-in that day with no time out
+                // pairs with the next morning's first punch, the same convention OvertimeCheckService
+                // uses for overnight OT. That punch then belongs to this day, not to the next one.
+                if ($schedule !== null && empty($log['actual_time_out']) && $this->isOvernightSchedule($schedule)) {
+                    $nextDay = $date->copy()->addDay()->toDateString();
+                    $nextLog = $logs->get($employeeKey.'_'.$nextDay);
+
+                    if ($nextLog !== null && ! empty($nextLog['actual_time_in']) && Carbon::parse($nextLog['actual_time_in'])->format('H:i') < '12:00') {
+                        $log = [
+                            'actual_time_in' => $log['actual_time_in'] ?? $nextLog['actual_time_in'],
+                            'actual_time_out' => $nextLog['actual_time_in'],
+                            'log_count' => (int) ($log['log_count'] ?? 0) + 1,
+                        ];
+                        $consumedNextDayPunches[$employeeKey.'_'.$nextDay] = true;
+                    }
+                }
+
+                // A punch already paired with the previous day's overnight shift isn't also this
+                // day's own lone opening punch.
+                if (($log['log_count'] ?? 0) === 1 && ($consumedNextDayPunches[$employeeKey.'_'.$day] ?? false)) {
+                    $log = null;
+                }
 
                 $row = [
                     'employee_key' => $employeeKey,
@@ -89,6 +115,7 @@ final class BiometricsAttendanceService
                     'schedule_status' => null,
                     'shift_name' => null,
                     'flexible_mode' => null,
+                    'shift_options' => [],
                     'scheduled_time_in' => null,
                     'scheduled_time_out' => null,
                     'grace_minutes' => 15,
@@ -182,6 +209,16 @@ final class BiometricsAttendanceService
         return [$dated, $schedules->unique($key)->keyBy($key)];
     }
 
+    /** Time out at or before time in means the shift crosses midnight. */
+    private function isOvernightSchedule(EmployeePlottingSchedule $schedule): bool
+    {
+        if (empty($schedule->time_in) || empty($schedule->time_out)) {
+            return false;
+        }
+
+        return Carbon::parse($schedule->time_out)->format('H:i') <= Carbon::parse($schedule->time_in)->format('H:i');
+    }
+
     /** @return array<string, mixed> */
     private function schedulePayload(EmployeePlottingSchedule $schedule, Carbon $date): array
     {
@@ -193,6 +230,7 @@ final class BiometricsAttendanceService
             'schedule_status' => $schedule->isDayOffOn($date) ? 'rest_day' : ($schedule->status ?: 'scheduled'),
             'shift_name' => $schedule->shift_name ?: 'Regular Shift',
             'flexible_mode' => $schedule->resolvedFlexibleMode(),
+            'shift_options' => $schedule->resolvedShiftOptions(),
             'scheduled_time_in' => $time($schedule->time_in),
             'scheduled_time_out' => $time($schedule->time_out),
             'grace_minutes' => (int) ($schedule->grace_minutes ?? 15),
@@ -215,7 +253,6 @@ final class BiometricsAttendanceService
         $status = $row['schedule_status'];
         $isFlexible = str_contains(strtolower((string) $row['shift_name']), 'flexible');
         $flexibleMode = $row['flexible_mode'] ?? null;
-        $isFlexibleCondition = $isFlexible && $flexibleMode === 'condition';
         $isFlexibleCustom = $isFlexible && $flexibleMode === 'custom';
         $scheduledIn = ! empty($row['scheduled_time_in']) ? Carbon::parse($date->toDateString().' '.$row['scheduled_time_in']) : null;
         $scheduledOut = ! empty($row['scheduled_time_out']) ? Carbon::parse($date->toDateString().' '.$row['scheduled_time_out']) : null;
@@ -226,6 +263,36 @@ final class BiometricsAttendanceService
         $actualOut = ! empty($row['actual_time_out']) ? Carbon::parse($row['actual_time_out'])->startOfMinute() : null;
         $grace = (int) $row['grace_minutes'];
         $requiredMinutes = max(60, (int) $row['required_clock_minutes']);
+
+        if ($isFlexibleCustom) {
+            // The employee may clock in for any of several exact shift options; detect which
+            // one from the actual time in, then evaluate late/undertime against that option.
+            $options = is_array($row['shift_options'] ?? null) ? $row['shift_options'] : [];
+            $best = null;
+            $bestDiff = null;
+
+            foreach ($options as $option) {
+                if (empty($option['time_in']) || empty($option['time_out'])) {
+                    continue;
+                }
+
+                $optionIn = Carbon::parse($date->toDateString().' '.$option['time_in']);
+                $diff = $actualIn ? abs($optionIn->diffInMinutes($actualIn)) : 0;
+
+                if ($bestDiff === null || $diff < $bestDiff) {
+                    $best = $option;
+                    $bestDiff = $diff;
+                }
+            }
+
+            if ($best !== null) {
+                $scheduledIn = Carbon::parse($date->toDateString().' '.$best['time_in']);
+                $scheduledOut = Carbon::parse($date->toDateString().' '.$best['time_out']);
+                if ($scheduledOut->lessThanOrEqualTo($scheduledIn)) {
+                    $scheduledOut->addDay();
+                }
+            }
+        }
 
         $late = 0;
         $undertime = 0;
@@ -247,21 +314,6 @@ final class BiometricsAttendanceService
                 [$note, $tone] = ['Absent', 'danger'];
             } elseif ((int) $row['log_count'] < 2) {
                 [$note, $tone] = ['Incomplete biometric logs.', 'warning'];
-            } elseif ($isFlexibleCondition) {
-                if ($worked === null) {
-                    [$note, $tone] = ['Incomplete biometric logs.', 'warning'];
-                } else {
-                    if ($scheduledOut && $actualIn && $actualIn->gt($scheduledOut->copy()->addMinutes($grace))) {
-                        $late = (int) $scheduledOut->diffInMinutes($actualIn);
-                    }
-                    if ($worked < $requiredMinutes) {
-                        $undertime = $requiredMinutes - $worked;
-                    }
-                    $parts = array_filter([$late > 0 ? 'Late (outside clock-in window)' : null, $undertime > 0 ? 'Incomplete Flexible Hours' : null]);
-                    [$note, $tone] = $parts === []
-                        ? ['Completed Flexible '.round($requiredMinutes / 60, 2).' Clock Hours', 'success']
-                        : [implode(' / ', $parts), 'warning'];
-                }
             } elseif ($isFlexible && ! $isFlexibleCustom) {
                 if ($worked === null) {
                     [$note, $tone] = ['Incomplete biometric logs.', 'warning'];
@@ -274,12 +326,13 @@ final class BiometricsAttendanceService
             } elseif (! $scheduledIn || ! $scheduledOut) {
                 [$note, $tone] = [$isFlexibleCustom ? 'Flexible Shift (Custom) needs plotted Time In and Time Out.' : 'Regular Shift needs plotted Time In and Time Out.', 'warning'];
             } else {
-                $allowedIn = $scheduledIn->copy()->addMinutes($grace);
-                if ($actualIn && $actualIn->gt($allowedIn)) {
-                    $late = (int) $allowedIn->diffInMinutes($actualIn);
+                // Same grace-cliff + block-rounding rule payroll uses: below grace is 0, at/over
+                // grace rounds the full raw minutes up to the next block (not raw-minus-grace).
+                if ($actualIn && $actualIn->gt($scheduledIn)) {
+                    $late = $this->roundedLateMinutes((int) $scheduledIn->diffInMinutes($actualIn), $grace);
                 }
                 if ($actualOut && $actualOut->lt($scheduledOut)) {
-                    $undertime = (int) $actualOut->diffInMinutes($scheduledOut);
+                    $undertime = $this->roundedUndertimeMinutes((int) $actualOut->diffInMinutes($scheduledOut));
                 }
                 $parts = array_filter([$late > 0 ? 'Late' : null, $undertime > 0 ? 'Undertime' : null]);
                 [$note, $tone] = [$parts === [] ? 'On Time' : implode(' / ', $parts), $parts === [] ? 'success' : 'warning'];
@@ -298,6 +351,36 @@ final class BiometricsAttendanceService
             'attendance_note' => $note,
             'attendance_class' => $tone,
         ];
+    }
+
+    /** Mirrors DailyAttendanceSummaryService::roundedLateDeductionMinutes so this preview agrees with payroll. */
+    private function roundedLateMinutes(int $rawMinutes, int $graceMinutes): int
+    {
+        if ($rawMinutes <= $graceMinutes) {
+            return 0;
+        }
+
+        $blockMinutes = max(1, (int) config('payroll.attendance.late_deduction_block_minutes', 30));
+
+        return (int) (ceil($rawMinutes / $blockMinutes) * $blockMinutes);
+    }
+
+    /** Mirrors DailyAttendanceSummaryService::roundedUndertimeDeductionMinutes. */
+    private function roundedUndertimeMinutes(int $rawMinutes): int
+    {
+        if ($rawMinutes <= 0) {
+            return 0;
+        }
+
+        $graceMinutes = max(0, (int) config('payroll.attendance.undertime_grace_minutes', 5));
+
+        if ($rawMinutes <= $graceMinutes) {
+            return 0;
+        }
+
+        $blockMinutes = max(1, (int) config('payroll.attendance.undertime_deduction_block_minutes', 30));
+
+        return (int) (ceil($rawMinutes / $blockMinutes) * $blockMinutes);
     }
 
     /** `HH:MM`, or "—" for none. */

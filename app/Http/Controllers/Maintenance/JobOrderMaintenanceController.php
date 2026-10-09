@@ -52,6 +52,7 @@ final class JobOrderMaintenanceController extends Controller
             'can' => [
                 'create' => (bool) $user?->can('job-orders.create'),
                 'updateStatus' => (bool) $user?->can('job-orders.update-status'),
+                'delete' => (bool) $user?->can('job-orders.delete'),
             ],
             'urls' => [
                 'index' => route('maintenance.job-orders.index'),
@@ -133,6 +134,19 @@ final class JobOrderMaintenanceController extends Controller
                 'editStatus' => route('maintenance.job-orders.edit-status', $jobOrder),
             ],
         ]);
+    }
+
+    public function destroy(Request $request, JobOrderMaintenance $jobOrderMaintenance): RedirectResponse
+    {
+        try {
+            $this->jobOrderMaintenanceService->delete($jobOrderMaintenance, $request->user()?->id);
+
+            return redirect()->route('maintenance.job-orders.index')->with('success', 'Maintenance job order deleted successfully.');
+        } catch (Throwable $e) {
+            $this->logFailure('Maintenance job order deletion failed', $e, $request, ['job_order_maintenance_id' => $jobOrderMaintenance->id]);
+
+            return back()->with('error', 'Failed to delete maintenance job order. Please try again.');
+        }
     }
 
     public function editStatus(JobOrderMaintenance $jobOrderMaintenance): InertiaResponse

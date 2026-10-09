@@ -134,6 +134,30 @@ final class WorkScheduleService
         return $times === [] ? null : $times;
     }
 
+    /**
+     * Flexible Shift (Custom) shift-time options, e.g. an employee who may clock in for
+     * either an 8:00 AM or a 9:00 AM shift. Invalid or empty entries are dropped.
+     *
+     * @return list<array{time_in: string, time_out: string}>
+     */
+    private function normalizeShiftOptions(mixed $options): array
+    {
+        $normalized = [];
+
+        foreach (is_array($options) ? $options : [] as $entry) {
+            if (! is_array($entry) || empty($entry['time_in']) || empty($entry['time_out'])) {
+                continue;
+            }
+
+            $normalized[] = [
+                'time_in' => substr((string) $entry['time_in'], 0, 5),
+                'time_out' => substr((string) $entry['time_out'], 0, 5),
+            ];
+        }
+
+        return array_slice($normalized, 0, EmployeePlottingSchedule::MAX_FLEXIBLE_SHIFT_OPTIONS);
+    }
+
     private function savePermanentSchedule(array $row): void
     {
         $employee = $this->biometrics->findForUpdate((int) $row['employee_biometric_id']);
@@ -151,8 +175,13 @@ final class WorkScheduleService
             : EmployeePlottingSchedule::FLEXIBLE_MODE_ANYTIME;
         $workdayType = WorkdayType::from((string) ($row['workday_type'] ?? WorkdayType::EightHours->value));
         $dayOffs = $this->normalizeDayOffs($row['day_offs'] ?? []);
+        $isCustomFlexible = $isFlexible && $flexibleMode === EmployeePlottingSchedule::FLEXIBLE_MODE_CUSTOM;
         $noClock = ($isFlexible && $flexibleMode === EmployeePlottingSchedule::FLEXIBLE_MODE_ANYTIME)
             || in_array($status, ['rest_day', 'inactive'], true);
+        $shiftOptions = $isCustomFlexible && ! $noClock
+            ? $this->normalizeShiftOptions($row['flexible_shift_options'] ?? null)
+            : [];
+        $firstOption = $shiftOptions[0] ?? null;
 
         if ($status === 'inactive') {
             $employee->markPayrollInactive($row['remarks'] ?? 'Marked inactive from permanent work schedule.');
@@ -165,12 +194,16 @@ final class WorkScheduleService
             'employee_name' => $snapshot['employee_name'],
             'shift_name' => $shiftName,
             'flexible_mode' => $isFlexible ? $flexibleMode : null,
+            'flexible_shift_options' => $isCustomFlexible ? $shiftOptions : null,
             'workday_type' => $workdayType->value,
             'paid_work_minutes' => $workdayType->paidMinutes(),
             'lunch_break_minutes' => $workdayType->lunchMinutes(),
-            'time_in' => $noClock ? null : ($row['time_in'] ?? null),
-            'time_out' => $noClock ? null : ($row['time_out'] ?? null),
-            'weekly_times' => $noClock ? null : $this->weeklyTimes($row['weekly_times'] ?? null, $dayOffs),
+            'time_in' => $isCustomFlexible ? ($firstOption['time_in'] ?? null) : ($noClock ? null : ($row['time_in'] ?? null)),
+            'time_out' => $isCustomFlexible ? ($firstOption['time_out'] ?? null) : ($noClock ? null : ($row['time_out'] ?? null)),
+            // "Different time per day" only applies to Regular Shift; Flexible Shift (Custom) uses flexible_shift_options instead.
+            'weekly_times' => $shiftName === EmployeePlottingSchedule::REGULAR_SHIFT && ! $noClock
+                ? $this->weeklyTimes($row['weekly_times'] ?? null, $dayOffs)
+                : null,
             'grace_minutes' => (int) ($row['grace_minutes'] ?? EmployeePlottingSchedule::DEFAULT_GRACE_MINUTES),
             'status' => $status,
             'day_offs' => $dayOffs,

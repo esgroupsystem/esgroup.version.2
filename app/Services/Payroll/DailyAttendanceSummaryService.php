@@ -534,6 +534,19 @@ class DailyAttendanceSummaryService
         $scheduledTimeIn = $this->normalizeTime($schedule?->time_in);
         $scheduledTimeOut = $this->normalizeTime($schedule?->time_out);
 
+        if ($schedule && $this->isFlexibleShift($shiftName) && $this->resolveFlexibleMode($schedule) === EmployeePlottingSchedule::FLEXIBLE_MODE_CUSTOM) {
+            // Flexible Shift (Custom): the employee may clock in for any of several exact shift
+            // options (e.g. 8:00 AM or 9:00 AM). Detect which one from the actual time in, then
+            // compute late/undertime against that option exactly like Regular Shift below.
+            $matchedOption = $schedule->matchShiftOption($workDate, $actualTimeIn);
+
+            if ($matchedOption !== null) {
+                $scheduledTimeIn = $matchedOption['time_in'];
+                $scheduledTimeOut = $matchedOption['time_out'];
+                $remarks[] = sprintf('Matched to the %s–%s shift option.', $matchedOption['time_in'], $matchedOption['time_out']);
+            }
+        }
+
         $isHoliday = ! is_null($holiday);
         $holidayName = $this->holidayName($holiday);
         $holidayType = $this->holidayType($holiday);
@@ -787,63 +800,6 @@ class DailyAttendanceSummaryService
             $payableHours = $halfDayPayableHours;
 
             $remarks[] = 'No valid time out. Half day paid based on company policy.';
-        } elseif ($isFlexible && $flexibleMode === EmployeePlottingSchedule::FLEXIBLE_MODE_CONDITION) {
-            // Flexible Shift (Condition): must clock in within the window
-            // [scheduledTimeIn, scheduledTimeOut]; clock-out is whenever the
-            // required clock minutes are completed from the actual time in.
-            $rawLateMinutes = 0;
-
-            if ($actualTimeIn && $scheduledTimeOut) {
-                $windowEnd = Carbon::parse($workDate->toDateString().' '.$scheduledTimeOut, 'Asia/Manila');
-
-                if ($scheduledTimeIn) {
-                    $windowStart = Carbon::parse($workDate->toDateString().' '.$scheduledTimeIn, 'Asia/Manila');
-
-                    if ($windowEnd->lessThanOrEqualTo($windowStart)) {
-                        $windowEnd->addDay();
-                    }
-                }
-
-                if ($actualTimeIn->gt($windowEnd)) {
-                    $rawLateMinutes = (int) $windowEnd->diffInMinutes($actualTimeIn);
-                }
-            }
-
-            $lateMinutes = $this->roundedLateDeductionMinutes($rawLateMinutes, $graceMinutes);
-
-            if ($clockWorkedMinutes >= $scheduledClockMinutes) {
-                $undertimeMinutes = 0;
-            } else {
-                $rawUndertimeMinutes = max(0, $scheduledClockMinutes - $clockWorkedMinutes);
-                $undertimeMinutes = $this->roundedUndertimeDeductionMinutes($rawUndertimeMinutes);
-            }
-
-            if ($lateMinutes > 0 && $undertimeMinutes > 0) {
-                $attendanceStatus = 'late_undertime';
-            } elseif ($lateMinutes > 0) {
-                $attendanceStatus = 'late';
-            } elseif ($undertimeMinutes > 0) {
-                $attendanceStatus = 'undertime';
-            } else {
-                $attendanceStatus = 'present';
-            }
-
-            if ($attendanceStatus === 'present') {
-                $payableDays = self::FULL_DAY_PAYABLE_DAYS;
-                $payableHours = $fullDayPayableHours;
-            } else {
-                $deductionMinutes = max(0, (int) $lateMinutes + (int) $undertimeMinutes);
-                [$payableDays, $payableHours] = $this->payUnitsAfterDeductions($deductionMinutes, $paidMinutesPerDay);
-            }
-
-            $remarks[] = sprintf(
-                'Flexible shift (clock-in window %s–%s). Clocked in at %s%s. Requires %s clock hours including lunch.',
-                $scheduledTimeIn ? Carbon::parse($scheduledTimeIn)->format('h:i A') : '—',
-                $scheduledTimeOut ? Carbon::parse($scheduledTimeOut)->format('h:i A') : '—',
-                $actualTimeIn ? $actualTimeIn->format('h:i A') : '—',
-                $lateMinutes > 0 ? ' (after the clock-in window)' : '',
-                round($scheduledClockMinutes / 60, 2)
-            );
         } elseif ($isFlexible && $flexibleMode !== EmployeePlottingSchedule::FLEXIBLE_MODE_CUSTOM) {
             if ($clockWorkedMinutes >= $scheduledClockMinutes) {
                 $attendanceStatus = 'present';

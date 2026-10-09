@@ -58,7 +58,7 @@ final class MaintenanceLayeredStructureTest extends TestCase
             'parts-out' => ['view', 'create', 'rollback'],
             'receivings' => ['view', 'create', 'rollback'],
             'stock-transfers' => ['view', 'create', 'rollback'],
-            'job-orders' => ['view', 'create', 'update-status', 'update-number'],
+            'job-orders' => ['view', 'create', 'update-status', 'update-number', 'delete'],
             'users' => ['view', 'create', 'update'],
             'roles' => ['view', 'create', 'update', 'delete'],
         ] as $module => $abilities) {
@@ -179,6 +179,12 @@ final class MaintenanceLayeredStructureTest extends TestCase
             ->assertOk()->assertHeader('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')->assertSee('Change brake pads');
         $single = $this->client()->get(route('maintenance.job-orders.export-single', ['jobOrderMaintenance' => $jobOrder, 'export_type' => 'csv']));
         $this->assertStringContainsString('Job order created', $single->streamedContent());
+
+        $this->client()->delete(route('maintenance.job-orders.destroy', $jobOrder))
+            ->assertRedirect(route('maintenance.job-orders.index'))
+            ->assertSessionHas('success', 'Maintenance job order deleted successfully.');
+        $this->assertSoftDeleted($jobOrder);
+        $this->assertNotNull($jobOrder->statusPeriods()->first()->ended_at, 'Deleting closes the open downtime period.');
     }
 
     public function test_temporary_password_is_random_and_works(): void

@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Carbon\CarbonInterface|null $work_date
  * @property string|null $shift_name
  * @property string|null $flexible_mode
+ * @property array<int, mixed>|null $flexible_shift_options
  * @property WorkdayType|null $workday_type
  * @property int|null $paid_work_minutes
  * @property int|null $lunch_break_minutes
@@ -51,17 +52,17 @@ class EmployeePlottingSchedule extends Model
 
     /**
      * Flexible Shift sub-modes:
-     * - anytime: no clock-in window, must complete the required clock hours any time in the day (legacy default).
-     * - condition: must clock in within a window (time_in..time_out); clock-out is whenever the required clock hours are completed.
-     * - custom: fixed time_in/time_out, late/undertime computed the same way as Regular Shift.
+     * - anytime: no fixed time at all, must complete the required clock hours any time in the day (legacy default).
+     * - custom: one or more exact shift-time options (see `flexible_shift_options`); the actual time in is
+     *   matched to the closest option, then late/undertime are computed the same way as Regular Shift.
      */
     public const FLEXIBLE_MODE_ANYTIME = 'anytime';
 
-    public const FLEXIBLE_MODE_CONDITION = 'condition';
-
     public const FLEXIBLE_MODE_CUSTOM = 'custom';
 
-    public const FLEXIBLE_MODES = [self::FLEXIBLE_MODE_ANYTIME, self::FLEXIBLE_MODE_CONDITION, self::FLEXIBLE_MODE_CUSTOM];
+    public const FLEXIBLE_MODES = [self::FLEXIBLE_MODE_ANYTIME, self::FLEXIBLE_MODE_CUSTOM];
+
+    public const MAX_FLEXIBLE_SHIFT_OPTIONS = 10;
 
     public const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -76,6 +77,7 @@ class EmployeePlottingSchedule extends Model
         'work_date',
         'shift_name',
         'flexible_mode',
+        'flexible_shift_options',
         'workday_type',
         'paid_work_minutes',
         'lunch_break_minutes',
@@ -100,6 +102,7 @@ class EmployeePlottingSchedule extends Model
             'grace_minutes' => 'integer',
             'day_offs' => 'array',
             'weekly_times' => 'array',
+            'flexible_shift_options' => 'array',
         ];
     }
 
@@ -152,6 +155,71 @@ class EmployeePlottingSchedule extends Model
         $mode = strtolower(trim((string) $this->flexible_mode));
 
         return in_array($mode, self::FLEXIBLE_MODES, true) ? $mode : self::FLEXIBLE_MODE_ANYTIME;
+    }
+
+    /**
+     * Flexible Shift (Custom) shift-time options, only valid entries. Falls back to the single
+     * time_in/time_out pair (legacy rows saved before multiple options existed).
+     *
+     * @return list<array{time_in: string, time_out: string}>
+     */
+    public function resolvedShiftOptions(): array
+    {
+        $raw = $this->getAttribute('flexible_shift_options');
+        $options = [];
+
+        foreach (is_array($raw) ? $raw : [] as $entry) {
+            $in = self::cleanTime(data_get($entry, 'time_in'));
+            $out = self::cleanTime(data_get($entry, 'time_out'));
+
+            if ($in !== null && $out !== null) {
+                $options[] = ['time_in' => $in, 'time_out' => $out];
+            }
+        }
+
+        if ($options !== []) {
+            return $options;
+        }
+
+        $in = self::cleanTime($this->time_in);
+        $out = self::cleanTime($this->time_out);
+
+        return $in !== null && $out !== null ? [['time_in' => $in, 'time_out' => $out]] : [];
+    }
+
+    /**
+     * The shift-time option whose time in is closest to the employee's actual time in
+     * ("detect" which of the employee's two-or-more allowed schedules they clocked into).
+     * Falls back to the first option when there is no actual time in to match against.
+     *
+     * @return array{time_in: string, time_out: string}|null
+     */
+    public function matchShiftOption(Carbon $workDate, ?CarbonInterface $actualTimeIn): ?array
+    {
+        $options = $this->resolvedShiftOptions();
+
+        if ($options === []) {
+            return null;
+        }
+
+        if ($actualTimeIn === null) {
+            return $options[0];
+        }
+
+        $best = null;
+        $bestDiff = null;
+
+        foreach ($options as $option) {
+            $scheduledIn = Carbon::parse($workDate->toDateString().' '.$option['time_in'], 'Asia/Manila');
+            $diff = abs($scheduledIn->diffInMinutes($actualTimeIn));
+
+            if ($bestDiff === null || $diff < $bestDiff) {
+                $best = $option;
+                $bestDiff = $diff;
+            }
+        }
+
+        return $best;
     }
 
     public function getIsPermanentAttribute(): bool

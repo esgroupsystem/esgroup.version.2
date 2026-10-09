@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Services\Payroll;
 
+use App\Models\Holiday;
 use App\Models\Payroll;
 use App\Models\PayrollAttendanceAdjustment;
 use App\Models\PayrollItem;
@@ -11,11 +12,14 @@ use App\Services\Payroll\DailyAttendanceSummaryService;
 use App\Services\Payroll\PayrollComputationService;
 use App\Services\Payroll\PayrollPayslipService;
 use Carbon\Carbon;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use ReflectionMethod;
 use Tests\TestCase;
 
 class AttendancePayrollRulesTest extends TestCase
 {
+    use RefreshDatabase;
+
     private DailyAttendanceSummaryService $dailySummaryService;
 
     private PayrollComputationService $payrollComputationService;
@@ -375,6 +379,40 @@ class AttendancePayrollRulesTest extends TestCase
         $this->assertSame(0, $result['scheduled_unworked_rest_days']);
         $this->assertSame(0, $result['unpaid_rest_day_count']);
         $this->assertSame(0.00, $result['deduction']);
+    }
+
+    /**
+     * A day's Daily Attendance Summary is normally built with attendance_status='holiday' (not
+     * 'rest_day') when both apply, because DailyAttendanceSummaryService checks holidays first.
+     * But if a Holiday Calendar entry is added/corrected AFTER that summary row was already saved
+     * as 'rest_day' and the payroll is then (re)computed, isHolidayRow() finds the holiday live
+     * while computeRestDayQualification() must not also still count that day as an unworked rest
+     * day — otherwise it is paid once as a day off and once as an unworked holiday.
+     */
+    public function test_a_day_that_is_both_a_late_added_holiday_and_a_stale_rest_day_status_is_not_double_counted(): void
+    {
+        config()->set('payroll.attendance.rest_day_minimum_valid_log_days', 3);
+
+        Holiday::query()->create([
+            'name' => 'Added after the fact', 'actual_date' => '2026-08-13', 'observed_date' => '2026-08-13',
+            'holiday_type' => Holiday::TYPE_REGULAR, 'not_worked_multiplier' => 1.00, 'worked_multiplier' => 2.00,
+            'is_active' => true,
+        ]);
+
+        $rows = collect([
+            $this->attendanceRow('2026-08-11', 'present', true, '07:00', '16:00'),
+            $this->attendanceRow('2026-08-12', 'present', true, '07:00', '16:00'),
+            $this->attendanceRow('2026-08-13', 'rest_day', false), // stale status: the holiday above was added after this row was built
+        ]);
+
+        $result = $this->invokeProtected(
+            $this->payrollComputationService,
+            'computeRestDayQualification',
+            [$rows, ['daily_rate' => 800.00], true]
+        );
+
+        $this->assertSame(0, $result['scheduled_unworked_rest_days'], 'The holiday day must not also be counted as an unworked rest day.');
+        $this->assertSame([], $result['unworked_rest_day_dates']);
     }
 
     public function test_biometric_seconds_are_ignored_before_late_undertime_and_flexible_hours_are_computed(): void
