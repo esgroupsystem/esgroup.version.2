@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { definePage } from '@/lib/define-page';
 import { peso } from '@/lib/format';
 import {
+    contributionBasis,
     estimatedLastPayment,
     fixedDeductionToCutoff,
     monthlyBasicSalary,
@@ -25,6 +26,8 @@ import {
     salaryRates,
     sssBreakdown,
     type CutoffKey,
+    type GovernmentBasis,
+    type GovernmentRules,
     type SssRules,
 } from '@/lib/salary-preview';
 
@@ -53,6 +56,9 @@ interface Props {
     cutoffLabels: { first: string; second: string };
     sssRules: SssRules;
     sssCircular: { number: string; effective: string };
+    /** Payroll Settings: what each contribution is computed from, and the PhilHealth / Pag-IBIG rates. */
+    governmentBasis?: GovernmentBasis;
+    governmentRules?: GovernmentRules;
     urls: { index: string; submit: string };
     /** Set when shown inside the employee profile: the save returns to that profile and Cancel is hidden. */
     returnProfile?: number;
@@ -91,7 +97,7 @@ function BackLink({ urls }: Props) {
     );
 }
 
-export function EmployeeSalaryForm({ salary, values, people, workday, scheduleOptions, cutoffLabels, sssRules, sssCircular, urls, returnProfile }: Props) {
+export function EmployeeSalaryForm({ salary, values, people, workday, scheduleOptions, cutoffLabels, sssRules, sssCircular, governmentBasis = {}, governmentRules = {}, urls, returnProfile }: Props) {
     const isEdit = salary !== null;
     const modal = useModal();
     const form = useForm<Values>(values);
@@ -110,9 +116,12 @@ export function EmployeeSalaryForm({ salary, values, people, workday, scheduleOp
         const basic = num(data.basic_salary);
         const rates = salaryRates(rateType, basic, hours.paid);
         const monthlyBasic = monthlyBasicSalary(rateType, basic);
-        const sss = sssBreakdown(monthlyBasic, sssRules);
-        const pagibig = pagibigEmployeeShare(monthlyBasic);
-        const philhealth = philhealthEmployeeShare(monthlyBasic);
+        // Same pay figure the payroll uses: "actual gross" = basic + allowances at full attendance.
+        const monthlyGross = monthlyBasic + num(data.allowance) + num(data.sim_load_allowance);
+        const sssBasis = contributionBasis(governmentBasis.sss, 'actual_cycle_basic', monthlyGross, monthlyBasic);
+        const sss = sssBreakdown(sssBasis, sssRules);
+        const pagibig = pagibigEmployeeShare(contributionBasis(governmentBasis.pagibig, 'fixed_monthly_basic', monthlyGross, monthlyBasic), governmentRules);
+        const philhealth = philhealthEmployeeShare(contributionBasis(governmentBasis.philhealth, 'fixed_monthly_basic', monthlyGross, monthlyBasic), governmentRules);
 
         const cutoff = (key: CutoffKey) => {
             const government =
@@ -131,9 +140,9 @@ export function EmployeeSalaryForm({ salary, values, people, workday, scheduleOp
             return { gross, deductions, net: gross - deductions };
         };
 
-        return { rates, monthlyBasic, sss, pagibig, philhealth, first: cutoff('first'), second: cutoff('second') };
+        return { rates, monthlyBasic, sssBasis, sss, pagibig, philhealth, first: cutoff('first'), second: cutoff('second') };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [data, hours.paid, sssRules]);
+    }, [data, hours.paid, sssRules, governmentBasis, governmentRules]);
 
     const choosePerson = (person: PersonOption | null) => {
         const chosen = person as SalaryPerson | null;
@@ -260,7 +269,8 @@ export function EmployeeSalaryForm({ salary, values, people, workday, scheduleOp
                             <ScheduleField id="pagibig_contribution_cutoff" label="Pag-IBIG deduction schedule" value={str('pagibig_contribution_cutoff')} options={scheduleOptions} onChange={set} />
                             <ScheduleField id="philhealth_contribution_cutoff" label="PhilHealth deduction schedule" value={str('philhealth_contribution_cutoff')} options={scheduleOptions} onChange={set} />
                         </div>
-                        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
+                        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-4">
+                            <PreviewBox label="SSS compensation / month" value={preview.sssBasis} hint="Full attendance; payroll uses the actual month" />
                             <PreviewBox label="SSS monthly salary credit" value={preview.sss.msc} hint="Official bracket basis" />
                             <PreviewBox label="SSS employee share (5%)" value={preview.sss.employee} hint="Payroll deduction" />
                             <PreviewBox label="SSS employer share (10%)" value={preview.sss.employer} hint="Excludes EC" />

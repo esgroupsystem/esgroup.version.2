@@ -40,6 +40,7 @@ use App\Repositories\Contracts\Payroll\AttendanceSummaryRepositoryInterface;
 use App\Repositories\Contracts\Payroll\BenefitRecordRepositoryInterface;
 use App\Repositories\Contracts\Payroll\BenefitSettlementRepositoryInterface;
 use App\Repositories\Contracts\Payroll\PayrollAuditLogRepositoryInterface;
+use App\Repositories\Contracts\Payroll\PayrollDataResetRepositoryInterface;
 use App\Repositories\Contracts\Payroll\PayrollRepositoryInterface;
 use App\Repositories\Contracts\Payroll\PayrollRuleRepositoryInterface;
 use App\Repositories\Contracts\Payroll\PayrollSettingVersionRepositoryInterface;
@@ -78,6 +79,7 @@ use App\Repositories\Payroll\AttendanceSummaryRepository;
 use App\Repositories\Payroll\BenefitRecordRepository;
 use App\Repositories\Payroll\BenefitSettlementRepository;
 use App\Repositories\Payroll\PayrollAuditLogRepository;
+use App\Repositories\Payroll\PayrollDataResetRepository;
 use App\Repositories\Payroll\PayrollRepository;
 use App\Repositories\Payroll\PayrollRuleRepository;
 use App\Repositories\Payroll\PayrollSettingVersionRepository;
@@ -142,6 +144,7 @@ final class RepositoryServiceProvider extends ServiceProvider
         BenefitRecordRepositoryInterface::class => BenefitRecordRepository::class,
         BenefitSettlementRepositoryInterface::class => BenefitSettlementRepository::class,
         PayrollAuditLogRepositoryInterface::class => PayrollAuditLogRepository::class,
+        PayrollDataResetRepositoryInterface::class => PayrollDataResetRepository::class,
         PayrollRepositoryInterface::class => PayrollRepository::class,
         PayrollRuleRepositoryInterface::class => PayrollRuleRepository::class,
         PayrollSettingVersionRepositoryInterface::class => PayrollSettingVersionRepository::class,

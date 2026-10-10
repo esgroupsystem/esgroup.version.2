@@ -923,7 +923,9 @@ class PayrollComputationService
         $monthlyCycleBasis = $this->monthlyCycleGovernmentBasis(
             $payroll,
             $first,
-            $currentGovernmentBasis
+            $currentGovernmentBasis,
+            $allowancePerCutoff,
+            round((float) ($rates['allowance'] ?? 0) + (float) ($rates['sim_load_allowance'] ?? 0), 2)
         );
 
         $actualCycleBasic = round((float) $monthlyCycleBasis['amount'], 2);
@@ -1920,11 +1922,45 @@ class PayrollComputationService
         return $government;
     }
 
-    protected function monthlyCycleGovernmentBasis(Payroll $payroll, object $summary, float $currentBasis): array
-    {
+    protected function monthlyCycleGovernmentBasis(
+        Payroll $payroll,
+        object $summary,
+        float $currentBasis,
+        float $cutoffAllowance = 0.0,
+        float $monthlyAllowance = 0.0
+    ): array {
         $basis = max(0, round($currentBasis, 2));
         $previousItem = null;
         $previousBasis = 0.00;
+
+        if ($payroll->cutoff_type === 'second') {
+            /*
+             * Business 1st cutoff (26-10) opens the contribution month, so only
+             * half of the month is known. Estimate the month as this cutoff's
+             * earned pay twice plus the monthly allowances (counted once, so an
+             * allowance released only on this cutoff is not doubled). The
+             * 11-25 cutoff is reconciled to the exact SSS table amount on the
+             * real monthly gross when it is finalized
+             * (MonthlyGovernmentReconciliationService).
+             *
+             * Without this, "Split across both cutoffs" took half of the SSS for
+             * HALF a month's pay (₱20,000/month: ₱250 on 26-10, ₱750 on 11-25
+             * instead of ₱500 + ₱500).
+             */
+            $earned = max(0, round($basis - $cutoffAllowance, 2));
+            $estimate = round(($earned * 2) + max(0, $monthlyAllowance), 2);
+
+            return [
+                'amount' => $estimate,
+                'current_cutoff_basis' => round($currentBasis, 2),
+                'previous_cutoff_basis' => 0.00,
+                'previous_second_payroll_item_id' => null,
+                'estimated' => true,
+                'basis_source' => 'gross_pay_before_government_and_salary_loan_deductions',
+                'cycle_rule' => 'business_1st_26_10_estimate_earned_x2_plus_monthly_allowance',
+                'warning' => null,
+            ];
+        }
 
         if ($payroll->cutoff_type === 'first') {
             /*

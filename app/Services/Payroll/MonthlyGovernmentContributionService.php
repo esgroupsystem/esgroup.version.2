@@ -33,11 +33,13 @@ class MonthlyGovernmentContributionService
         $monthlyGross = $this->money($firstGross + $secondGross);
         $monthlyBasic = $this->money($fixedMonthlyBasicSalary);
 
+        // Same "Computed from" choice (Payroll Settings) as the cutoff drafts,
+        // so finalizing never switches a program to a different basis.
         $government = $this->governmentDeductionService->compute([
             'monthly_basic' => $monthlyGross,
-            'sss_monthly_basic' => $monthlyGross,
-            'philhealth_monthly_basic' => $monthlyBasic,
-            'pagibig_monthly_basic' => $monthlyBasic,
+            'sss_monthly_basic' => $this->basis('sss', 'actual_cycle_basic', $monthlyGross, $monthlyBasic),
+            'philhealth_monthly_basic' => $this->basis('philhealth', 'fixed_monthly_basic', $monthlyGross, $monthlyBasic),
+            'pagibig_monthly_basic' => $this->basis('pagibig', 'fixed_monthly_basic', $monthlyGross, $monthlyBasic),
             'taxable_cutoff_compensation' => $monthlyGross,
         ]);
 
@@ -47,6 +49,19 @@ class MonthlyGovernmentContributionService
         $government['fixed_monthly_basic_salary'] = $monthlyBasic;
 
         return $government;
+    }
+
+    /** Mirrors PayrollComputationService::resolveGovernmentContributionBasis. */
+    private function basis(string $program, string $default, float $monthlyGross, float $monthlyBasic): float
+    {
+        $type = strtolower(trim((string) config('payroll.government_basis.'.$program, $default)));
+        $type = (string) preg_replace('/_+/', '_', str_replace([' ', '-', '/'], '_', $type));
+
+        return match ($type) {
+            'fixed_monthly_basic', 'fixed', 'monthly', 'monthly_basic' => $monthlyBasic,
+            'none', 'no', 'disabled' => 0.00,
+            default => $monthlyGross,
+        };
     }
 
     private function money(mixed $value): float

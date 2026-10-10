@@ -47,6 +47,8 @@ trait BuildsEmployeeRateForm
                 'second' => "{$second} ({$secondRange})",
             ],
             'sssRules' => config('sss.business_employee'),
+            'governmentBasis' => config('payroll.government_basis'),
+            'governmentRules' => config('payroll.government'),
             'sssCircular' => [
                 'number' => config('sss.business_employee.circular_number', '2024-006'),
                 'effective' => Carbon::parse(config('sss.business_employee.effective_from', '2025-01-01'))->format('F Y'),

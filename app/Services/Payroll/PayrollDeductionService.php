@@ -64,12 +64,15 @@ class PayrollDeductionService
     public function salaryPreview(PayrollEmployeeSalary $salary): array
     {
         $monthlyBasic = $this->monthlyBasicSalary($salary);
+        // Full-attendance gross for the month: payroll's "actual gross" basis
+        // includes the allowances, so the preview must too.
+        $monthlyGross = round($monthlyBasic + (float) $salary->allowance + (float) $salary->sim_load_allowance, 2);
 
         $government = $this->governmentDeductionService->compute([
             'monthly_basic' => $monthlyBasic,
-            'sss_monthly_basic' => $monthlyBasic,
-            'philhealth_monthly_basic' => $monthlyBasic,
-            'pagibig_monthly_basic' => $monthlyBasic,
+            'sss_monthly_basic' => $this->previewBasis('sss', 'actual_cycle_basic', $monthlyGross, $monthlyBasic),
+            'philhealth_monthly_basic' => $this->previewBasis('philhealth', 'fixed_monthly_basic', $monthlyGross, $monthlyBasic),
+            'pagibig_monthly_basic' => $this->previewBasis('pagibig', 'fixed_monthly_basic', $monthlyGross, $monthlyBasic),
         ]);
 
         $monthlyGovernment = [
@@ -211,6 +214,19 @@ class PayrollDeductionService
             'monthly_basic' => $monthlySalary,
             'philhealth_monthly_basic' => $monthlySalary,
         ])['philhealth_employee'], 2);
+    }
+
+    /** The Payroll Settings "Computed from" choice for a program (same rule as the payroll engine). */
+    public function previewBasis(string $program, string $default, float $monthlyGross, float $monthlyBasic): float
+    {
+        $type = strtolower(trim((string) config('payroll.government_basis.'.$program, $default)));
+        $type = (string) preg_replace('/_+/', '_', str_replace([' ', '-', '/'], '_', $type));
+
+        return match ($type) {
+            'fixed_monthly_basic', 'fixed', 'monthly', 'monthly_basic' => $monthlyBasic,
+            'none', 'no', 'disabled' => 0.00,
+            default => $monthlyGross,
+        };
     }
 
     public function monthlyToCutoffAmount(float $monthlyAmount, string $schedule, string $cutoff): float

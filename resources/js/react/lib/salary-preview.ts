@@ -69,16 +69,46 @@ export function sssBreakdown(monthlySalary: number, rules: SssRules) {
     return { msc, employee, employer, ec, total: employee + employer + ec };
 }
 
-export function pagibigEmployeeShare(monthlySalary: number): number {
-    if (monthlySalary <= 0) return 0;
-    const base = Math.min(monthlySalary, 10000);
-    return base * (base <= 1500 ? 0.01 : 0.02);
+/** Payroll Settings `payroll.government` (PhilHealth / Pag-IBIG rates). Missing values use the starting rules. */
+export interface GovernmentRules {
+    philhealth?: { premium_rate?: number | string; employee_share?: number | string; income_floor?: number | string; income_ceiling?: number | string };
+    pagibig?: {
+        low_employee_rate?: number | string;
+        regular_employee_rate?: number | string;
+        low_salary_threshold?: number | string;
+        maximum_fund_salary?: number | string;
+    };
 }
 
-export function philhealthEmployeeShare(monthlySalary: number): number {
+/** Payroll Settings "Computed from" per program (`payroll.government_basis`). */
+export type GovernmentBasis = Partial<Record<'sss' | 'philhealth' | 'pagibig', string>>;
+
+const rule = (value: unknown, fallback: number): number => (value === undefined || value === null || value === '' ? fallback : num(value));
+
+/**
+ * The pay a program is computed from, mirroring the payroll engine:
+ * "actual gross" = full-attendance month (basic + allowances), "fixed monthly basic" = basic only.
+ */
+export function contributionBasis(basis: string | undefined, fallback: string, monthlyGross: number, monthlyBasic: number): number {
+    const type = (basis ?? fallback).toLowerCase().trim().replace(/[\s/-]+/g, '_');
+    if (['fixed_monthly_basic', 'fixed', 'monthly', 'monthly_basic'].includes(type)) return monthlyBasic;
+    if (['none', 'no', 'disabled'].includes(type)) return 0;
+    return monthlyGross;
+}
+
+export function pagibigEmployeeShare(monthlySalary: number, rules: GovernmentRules = {}): number {
     if (monthlySalary <= 0) return 0;
-    const base = Math.min(Math.max(monthlySalary, 10000), 100000);
-    return (base * 0.05) / 2;
+    const p = rules.pagibig ?? {};
+    const base = Math.min(monthlySalary, rule(p.maximum_fund_salary, 10000));
+    const rate = monthlySalary <= rule(p.low_salary_threshold, 1500) ? rule(p.low_employee_rate, 0.01) : rule(p.regular_employee_rate, 0.02);
+    return base * rate;
+}
+
+export function philhealthEmployeeShare(monthlySalary: number, rules: GovernmentRules = {}): number {
+    if (monthlySalary <= 0) return 0;
+    const p = rules.philhealth ?? {};
+    const base = Math.min(Math.max(monthlySalary, rule(p.income_floor, 10000)), rule(p.income_ceiling, 100000));
+    return base * rule(p.premium_rate, 0.05) * rule(p.employee_share, 0.5);
 }
 
 export function monthlyToCutoff(monthlyAmount: number, schedule: string, cutoff: CutoffKey): number {
