@@ -21,7 +21,7 @@
         "phpoffice/phpspreadsheet": "^1.30.6",
         "pusher/pusher-php-server": "^7.3.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
-        "spatie/laravel-permission": "^6.25",
+        "spatie/laravel-permission": "^8.3",
         "symfony/yaml": "^7.4.17"
     },
     "require-dev": {
